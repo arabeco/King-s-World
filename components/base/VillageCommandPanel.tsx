@@ -1,11 +1,16 @@
 "use client";
 
-import { CheckCircle2, Crown, Shield, ShieldAlert, Sparkles, Swords, TrendingUp, Users, Wrench, Zap } from "lucide-react";
+import { CheckCircle2, Crown, Shield, ShieldAlert, Sparkles, Swords, TrendingUp, Users, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { calculateVillageDevelopment } from "@/core/GameBalance";
 import type { BuildingId } from "@/lib/buildings";
-import { useImperialState, type ImperialResources, type ImperialTroops } from "@/lib/imperial-state";
+import {
+  projectStructureLevelsToBuildingLevels,
+  useImperialState,
+  type ImperialResources,
+  type ImperialTroops,
+} from "@/lib/imperial-state";
 import type { VillageSummary } from "@/lib/mock-data";
 import { emitUiFeedback } from "@/lib/ui-feedback";
 
@@ -18,8 +23,6 @@ type VillageLite = Pick<
   | "type"
   | "materials"
   | "supplies"
-  | "energy"
-  | "influence"
   | "buildingLevels"
   | "kingHere"
   | "underAttack"
@@ -53,10 +56,10 @@ type ActionFeedback = {
 
 const HERO_POOL = [
   { id: "engineer", label: "Engenheiro", bonus: "Obras e muralha" },
-  { id: "marshal", label: "Marechal", bonus: "Ataque e moral" },
-  { id: "navigator", label: "Navegador", bonus: "ETA e deslocamento" },
-  { id: "intendente", label: "Intendente", bonus: "Fluxo de recursos" },
-  { id: "erudite", label: "Erudito", bonus: "Pesquisa local" },
+  { id: "marshal", label: "General", bonus: "Ataque e moral" },
+  { id: "navigator", label: "Explorador", bonus: "Mapa e deslocamento" },
+  { id: "intendente", label: "Administrador", bonus: "Suprimentos e fluxo" },
+  { id: "erudite", label: "Sabio", bonus: "Pesquisa e legado" },
 ] as const;
 
 const RECRUITMENT: RecruitPlan[] = [
@@ -65,28 +68,28 @@ const RECRUITMENT: RecruitPlan[] = [
     label: "Milicia",
     amount: 12,
     role: "Linha de choque",
-    cost: { materials: 110, supplies: 90, energy: 18, influence: 0 },
+    cost: { materials: 110, supplies: 90, influence: 0 },
   },
   {
     key: "shooters",
     label: "Atiradores",
     amount: 8,
     role: "Dano de media distancia",
-    cost: { materials: 140, supplies: 85, energy: 24, influence: 0 },
+    cost: { materials: 140, supplies: 85, influence: 0 },
   },
   {
     key: "scouts",
     label: "Batedores",
     amount: 7,
     role: "Visao e flanco",
-    cost: { materials: 120, supplies: 70, energy: 28, influence: 0 },
+    cost: { materials: 120, supplies: 70, influence: 0 },
   },
   {
     key: "machinery",
     label: "Maquinaria",
     amount: 2,
     role: "Cerco e ruptura",
-    cost: { materials: 240, supplies: 120, energy: 75, influence: 6 },
+    cost: { materials: 240, supplies: 120, influence: 0 },
   },
 ];
 
@@ -95,7 +98,7 @@ const LOCAL_COMMAND_META: Record<LocalCommand, { label: string; summary: string 
   drill: { label: "Treino", summary: "Lote maior e custo menor no recrutamento da Capital." },
   sortie: { label: "Sortida", summary: "Prepara a cidade para saques e ataques escolhidos no mapa." },
   fortify: { label: "Blindar", summary: "Puxa muralha, seguranca local e segurar horda." },
-  rations: { label: "Racao", summary: "Poupa suprimento e energia em campanha longa." },
+  rations: { label: "Racao", summary: "Poupa suprimento em campanha longa." },
 };
 
 function formatCompact(value: number): string {
@@ -137,8 +140,7 @@ function calcRecruitCost(plan: RecruitPlan, localCommand: LocalCommand): Imperia
   return {
     materials: Math.round(plan.cost.materials * mod.costMult),
     supplies: Math.round(plan.cost.supplies * mod.costMult),
-    energy: Math.round(plan.cost.energy * mod.costMult),
-    influence: Math.round(plan.cost.influence * mod.costMult),
+    influence: 0,
   };
 }
 
@@ -163,7 +165,7 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
   const effectiveLevels = useMemo(
     () => ({
       ...village.buildingLevels,
-      ...levelOverrides,
+      ...projectStructureLevelsToBuildingLevels(levelOverrides),
     }),
     [levelOverrides, village.buildingLevels],
   );
@@ -271,12 +273,7 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
 
   const canAfford = (plan: RecruitPlan) => {
     const cost = calcRecruitCost(plan, localCommand);
-    return (
-      centralResources.materials >= cost.materials &&
-      centralResources.supplies >= cost.supplies &&
-      centralResources.energy >= cost.energy &&
-      centralResources.influence >= cost.influence
-    );
+    return centralResources.materials >= cost.materials && centralResources.supplies >= cost.supplies;
   };
 
   const recruit = (plan: RecruitPlan) => {
@@ -303,8 +300,7 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
       resources: {
         materials: current.resources.materials - cost.materials,
         supplies: current.resources.supplies - cost.supplies,
-        energy: current.resources.energy - cost.energy,
-        influence: current.resources.influence - cost.influence,
+        influence: current.resources.influence,
       },
       troops: {
         ...current.troops,
@@ -461,7 +457,7 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
             <p className="kw-card-meta">{formatCompact(availableTroops)} prontas</p>
           </div>
           <div className="kw-glass-soft kw-status-card">
-            <div className="kw-icon-core"><Zap className="h-5 w-5 text-amber-300" /></div>
+            <div className="kw-icon-core"><Wrench className="h-5 w-5 text-amber-300" /></div>
             <p className="kw-card-title mt-2">Postura</p>
             <p className="kw-card-meta">{LOCAL_COMMAND_META[localCommand].label}</p>
           </div>
@@ -481,11 +477,9 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
           </div>
         </div>
 
-        <div className="mt-2 grid grid-cols-4 gap-1.5 text-[11px] font-semibold text-slate-100">
+        <div className="mt-2 grid grid-cols-2 gap-1.5 text-[11px] font-semibold text-slate-100">
           <div className="kw-glass-soft rounded-lg p-1.5 text-center">M {formatCompact(centralResources.materials)}</div>
           <div className="kw-glass-soft rounded-lg p-1.5 text-center">S {formatCompact(centralResources.supplies)}</div>
-          <div className="kw-glass-soft rounded-lg p-1.5 text-center">E {formatCompact(centralResources.energy)}</div>
-          <div className="kw-glass-soft rounded-lg p-1.5 text-center">I {formatCompact(centralResources.influence)}</div>
         </div>
 
         <p className="mt-2 text-[11px] text-slate-300">
@@ -549,41 +543,12 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
             <p className="kw-card-title">Heroi da cidade</p>
             <span className="kw-badge static">{assignedHero === "none" ? "Vazio" : "Ativo"}</span>
           </div>
-          <select
-            value={assignedHero}
-            onChange={(event) => {
-              const value = event.target.value;
-              const heroLabel = HERO_POOL.find((hero) => hero.id === value)?.label ?? value;
-              setImperialState((current) => ({
-                ...current,
-                heroByVillage: { ...current.heroByVillage, [village.id]: value },
-              }));
-              registerAction(
-                "hero",
-                {
-                  title: value === "none" ? "Heroi removido" : "Heroi designado",
-                  detail:
-                    value === "none"
-                      ? "A cidade voltou a operar sem especialista local."
-                      : `${heroLabel} agora acelera a cidade.`,
-                  tone: "info",
-                  delta: value === "none" ? undefined : "+especialista",
-                },
-                "tap",
-                "light",
-              );
-              appendLog(value === "none" ? `${village.name}: slot de heroi esvaziado` : `${village.name}: heroi ${heroLabel} alocado`);
-            }}
-            className="w-full rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-sm font-semibold text-slate-100"
-          >
-            <option value="none">Sem heroi</option>
-            {HERO_POOL.map((hero) => (
-              <option key={hero.id} value={hero.id}>{hero.label}</option>
-            ))}
-          </select>
+          <div className="rounded-xl border border-white/12 bg-white/6 px-3 py-2 text-sm font-semibold text-slate-100">
+            {assignedHero === "none" ? "Contrate no Governo" : HERO_POOL.find((hero) => hero.id === assignedHero)?.label ?? assignedHero}
+          </div>
           <p className="mt-1 text-[11px] text-slate-300">
             {assignedHero === "none"
-              ? "Nenhum especialista alocado nesta cidade."
+              ? "O heroi agora custa caro, ocupa o slot da cidade e so entra pelo modal de Governo."
               : HERO_POOL.find((hero) => hero.id === assignedHero)?.bonus}
           </p>
         </div>

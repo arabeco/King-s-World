@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const DEV_AUTH_COOKIE = "kw_dev_auth";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_PUBLIC_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
@@ -10,6 +11,7 @@ const SUPABASE_PUBLIC_KEY =
 function isProtectedPath(pathname: string): boolean {
   return (
     pathname.startsWith("/lobby") ||
+    pathname.startsWith("/premium") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/world") ||
     pathname.startsWith("/api/worlds")
@@ -21,6 +23,22 @@ function isAuthPath(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  const devAuthEnabled = process.env.NODE_ENV !== "production" || process.env.KW_SMOKE === "1";
+  const smokeHeader = devAuthEnabled && request.headers.get("x-kw-smoke") === "1";
+  const devUser = devAuthEnabled && (request.cookies.get(DEV_AUTH_COOKIE)?.value === "1" || smokeHeader);
+  const pathname = request.nextUrl.pathname;
+
+  if (devUser && isAuthPath(pathname)) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/lobby";
+    redirectUrl.searchParams.delete("next");
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (devUser) {
+    return NextResponse.next();
+  }
+
   if (!SUPABASE_URL || !SUPABASE_PUBLIC_KEY) {
     return NextResponse.next();
   }
@@ -54,8 +72,6 @@ export async function middleware(request: NextRequest) {
 
   const { data } = await supabase.auth.getUser();
   const user = data.user;
-  const pathname = request.nextUrl.pathname;
-
   if (isProtectedPath(pathname) && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";

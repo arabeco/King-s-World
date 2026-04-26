@@ -2,9 +2,9 @@
 
 ## ETA para Centro (Navegador + Branch Flow)
 
-- Antes: 51.84h
-- Depois (Navegador + Flow): 51.84h (P90: 57.04h)
-- % no alvo 48-60h: 100%
+- Antes: 44.52h
+- Depois (Navegador + Flow): 44.52h (P90: 56.58h)
+- % no alvo 48-60h: 85.39%
 
 ## Impacto do Custo 3x de Maravilhas (pico 2500)
 

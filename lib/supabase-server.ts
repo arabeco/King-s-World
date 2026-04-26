@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
+import { buildDevUser, DEV_AUTH_COOKIE, isDevAuthEnabled } from "@/lib/dev-auth";
 import { SUPABASE_PUBLIC_KEY, SUPABASE_URL, hasPublicSupabaseEnv } from "@/lib/supabase-env";
 
 export function createSupabaseServerClient() {
@@ -28,6 +29,10 @@ export function createSupabaseServerClient() {
 }
 
 export async function getAuthenticatedUser(): Promise<User | null> {
+  if (isDevAuthEnabled() && cookies().get(DEV_AUTH_COOKIE)?.value === "1") {
+    return buildDevUser();
+  }
+
   if (!hasPublicSupabaseEnv()) {
     return null;
   }

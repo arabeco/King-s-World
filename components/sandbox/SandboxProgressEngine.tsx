@@ -18,9 +18,26 @@ function cloneState(state: ImperialState): ImperialState {
     resources: { ...state.resources },
     troops: { ...state.troops },
     heroByVillage: { ...state.heroByVillage },
+    heroBuildByVillage: { ...state.heroBuildByVillage },
     diplomatByVillage: { ...state.diplomatByVillage },
     cityClassByVillage: { ...state.cityClassByVillage },
     cityClassLockedByVillage: { ...state.cityClassLockedByVillage },
+    villageNameByVillage: { ...state.villageNameByVillage },
+    populationByVillage: { ...state.populationByVillage },
+    productionWorkersByVillage: Object.fromEntries(
+      Object.entries(state.productionWorkersByVillage).map(([villageId, workers]) => [villageId, { ...workers }]),
+    ),
+    jobsByVillage: Object.fromEntries(Object.entries(state.jobsByVillage).map(([villageId, jobs]) => [villageId, { ...jobs }])),
+    recruitsByVillage: Object.fromEntries(Object.entries(state.recruitsByVillage).map(([villageId, recruits]) => [villageId, { ...recruits }])),
+    defenseRecruitsByVillage: Object.fromEntries(
+      Object.entries(state.defenseRecruitsByVillage).map(([villageId, recruits]) => [villageId, { ...recruits }]),
+    ),
+    buildingSkillsByVillage: Object.fromEntries(
+      Object.entries(state.buildingSkillsByVillage).map(([villageId, buildings]) => [
+        villageId,
+        Object.fromEntries(Object.entries(buildings).map(([buildingId, dots]) => [buildingId, { ...dots }])),
+      ]),
+    ),
     deployedByVillage: { ...state.deployedByVillage },
     buildingLevelsByVillage: Object.fromEntries(
       Object.entries(state.buildingLevelsByVillage).map(([villageId, levels]) => [villageId, { ...levels }]),
@@ -32,6 +49,35 @@ function cloneState(state: ImperialState): ImperialState {
       buildingLevels: { ...village.buildingLevels },
       deficits: [...village.deficits],
     })),
+    workforceByFocus: { ...state.workforceByFocus },
+    militaryTechTree: { ...state.militaryTechTree },
+    dragonChoice: state.dragonChoice,
+    productionFocusByVillage: { ...state.productionFocusByVillage },
+    societyFocusByVillage: { ...state.societyFocusByVillage },
+    barracksFocusByVillage: { ...state.barracksFocusByVillage },
+    defenseProtocolByVillage: { ...state.defenseProtocolByVillage },
+    promotedHeroByVillage: { ...state.promotedHeroByVillage },
+    kingProfileId: state.kingProfileId,
+    kingName: state.kingName,
+    royalCapitalVillageId: state.royalCapitalVillageId,
+    capitalTransfer: { ...state.capitalTransfer },
+    senate: {
+      ...state.senate,
+      activeMeeting: state.senate.activeMeeting
+        ? {
+            ...state.senate.activeMeeting,
+            choices: state.senate.activeMeeting.choices.map((choice) => ({
+              ...choice,
+              effect: { ...choice.effect },
+            })),
+            sourceTags: [...state.senate.activeMeeting.sourceTags],
+          }
+        : null,
+      resolvedMeetingIds: [...state.senate.resolvedMeetingIds],
+      dismissedHeroes: [...state.senate.dismissedHeroes],
+    },
+    mapMovements: state.mapMovements.map((movement) => ({ ...movement, route: [...movement.route], meta: { ...movement.meta } })),
+    mobilization: { ...state.mobilization },
     sandboxCompletedActionIds: [...state.sandboxCompletedActionIds],
     sandboxSnapshots: { ...state.sandboxSnapshots },
     logs: [...state.logs],
@@ -43,6 +89,7 @@ function createSnapshot(state: ImperialState): SandboxSnapshot {
     resources: { ...state.resources },
     troops: { ...state.troops },
     heroByVillage: { ...state.heroByVillage },
+    heroBuildByVillage: { ...state.heroBuildByVillage },
     diplomatByVillage: { ...state.diplomatByVillage },
     recruitedDiplomats: state.recruitedDiplomats,
     recruitedTribeEnvoys: state.recruitedTribeEnvoys,
@@ -50,6 +97,22 @@ function createSnapshot(state: ImperialState): SandboxSnapshot {
     annexEnvoysCommitted: state.annexEnvoysCommitted,
     cityClassByVillage: { ...state.cityClassByVillage },
     cityClassLockedByVillage: { ...state.cityClassLockedByVillage },
+    villageNameByVillage: { ...state.villageNameByVillage },
+    populationByVillage: { ...state.populationByVillage },
+    productionWorkersByVillage: Object.fromEntries(
+      Object.entries(state.productionWorkersByVillage).map(([villageId, workers]) => [villageId, { ...workers }]),
+    ),
+    jobsByVillage: Object.fromEntries(Object.entries(state.jobsByVillage).map(([villageId, jobs]) => [villageId, { ...jobs }])),
+    recruitsByVillage: Object.fromEntries(Object.entries(state.recruitsByVillage).map(([villageId, recruits]) => [villageId, { ...recruits }])),
+    defenseRecruitsByVillage: Object.fromEntries(
+      Object.entries(state.defenseRecruitsByVillage).map(([villageId, recruits]) => [villageId, { ...recruits }]),
+    ),
+    buildingSkillsByVillage: Object.fromEntries(
+      Object.entries(state.buildingSkillsByVillage).map(([villageId, buildings]) => [
+        villageId,
+        Object.fromEntries(Object.entries(buildings).map(([buildingId, dots]) => [buildingId, { ...dots }])),
+      ]),
+    ),
     deployedByVillage: { ...state.deployedByVillage },
     buildingLevelsByVillage: Object.fromEntries(
       Object.entries(state.buildingLevelsByVillage).map(([villageId, levels]) => [villageId, { ...levels }]),
@@ -67,6 +130,39 @@ function createSnapshot(state: ImperialState): SandboxSnapshot {
     sandboxWondersBuilt: state.sandboxWondersBuilt,
     sandboxDomeActive: state.sandboxDomeActive,
     sandboxMarchStarted: state.sandboxMarchStarted,
+    workforceByFocus: { ...state.workforceByFocus },
+    militaryTechTree: { ...state.militaryTechTree },
+    dragonChoice: state.dragonChoice,
+    productionFocusByVillage: { ...state.productionFocusByVillage },
+    societyFocusByVillage: { ...state.societyFocusByVillage },
+    barracksFocusByVillage: { ...state.barracksFocusByVillage },
+    defenseProtocolByVillage: { ...state.defenseProtocolByVillage },
+    promotedHeroByVillage: { ...state.promotedHeroByVillage },
+    kingProfileId: state.kingProfileId,
+    kingName: state.kingName,
+    royalCapitalVillageId: state.royalCapitalVillageId,
+    capitalTransfer: { ...state.capitalTransfer },
+    senate: {
+      ...state.senate,
+      activeMeeting: state.senate.activeMeeting
+        ? {
+            ...state.senate.activeMeeting,
+            choices: state.senate.activeMeeting.choices.map((choice) => ({
+              ...choice,
+              effect: { ...choice.effect },
+            })),
+            sourceTags: [...state.senate.activeMeeting.sourceTags],
+          }
+        : null,
+      resolvedMeetingIds: [...state.senate.resolvedMeetingIds],
+      dismissedHeroes: [...state.senate.dismissedHeroes],
+    },
+    mapMovements: state.mapMovements.map((movement) => ({ ...movement, route: [...movement.route], meta: { ...movement.meta } })),
+    mobilization: { ...state.mobilization },
+    exploredCoordKeys: [...state.exploredCoordKeys],
+    discoveriesByCoord: Object.fromEntries(
+      Object.entries(state.discoveriesByCoord).map(([coordKey, discovery]) => [coordKey, { ...discovery }]),
+    ),
     logs: [...state.logs],
   };
 }
@@ -77,6 +173,7 @@ function restoreSnapshot(state: ImperialState, snapshot: SandboxSnapshot, day: n
     resources: { ...snapshot.resources },
     troops: { ...snapshot.troops },
     heroByVillage: { ...snapshot.heroByVillage },
+    heroBuildByVillage: { ...snapshot.heroBuildByVillage },
     diplomatByVillage: { ...snapshot.diplomatByVillage },
     recruitedDiplomats: snapshot.recruitedDiplomats,
     recruitedTribeEnvoys: snapshot.recruitedTribeEnvoys,
@@ -84,6 +181,22 @@ function restoreSnapshot(state: ImperialState, snapshot: SandboxSnapshot, day: n
     annexEnvoysCommitted: snapshot.annexEnvoysCommitted,
     cityClassByVillage: { ...snapshot.cityClassByVillage },
     cityClassLockedByVillage: { ...snapshot.cityClassLockedByVillage },
+    villageNameByVillage: { ...snapshot.villageNameByVillage },
+    populationByVillage: { ...snapshot.populationByVillage },
+    productionWorkersByVillage: Object.fromEntries(
+      Object.entries(snapshot.productionWorkersByVillage).map(([villageId, workers]) => [villageId, { ...workers }]),
+    ),
+    jobsByVillage: Object.fromEntries(Object.entries(snapshot.jobsByVillage).map(([villageId, jobs]) => [villageId, { ...jobs }])),
+    recruitsByVillage: Object.fromEntries(Object.entries(snapshot.recruitsByVillage).map(([villageId, recruits]) => [villageId, { ...recruits }])),
+    defenseRecruitsByVillage: Object.fromEntries(
+      Object.entries(snapshot.defenseRecruitsByVillage).map(([villageId, recruits]) => [villageId, { ...recruits }]),
+    ),
+    buildingSkillsByVillage: Object.fromEntries(
+      Object.entries(snapshot.buildingSkillsByVillage).map(([villageId, buildings]) => [
+        villageId,
+        Object.fromEntries(Object.entries(buildings).map(([buildingId, dots]) => [buildingId, { ...dots }])),
+      ]),
+    ),
     deployedByVillage: { ...snapshot.deployedByVillage },
     buildingLevelsByVillage: Object.fromEntries(
       Object.entries(snapshot.buildingLevelsByVillage).map(([villageId, levels]) => [villageId, { ...levels }]),
@@ -101,6 +214,35 @@ function restoreSnapshot(state: ImperialState, snapshot: SandboxSnapshot, day: n
     sandboxWondersBuilt: snapshot.sandboxWondersBuilt,
     sandboxDomeActive: snapshot.sandboxDomeActive,
     sandboxMarchStarted: snapshot.sandboxMarchStarted,
+    workforceByFocus: { ...snapshot.workforceByFocus },
+    militaryTechTree: { ...snapshot.militaryTechTree },
+    dragonChoice: snapshot.dragonChoice,
+    productionFocusByVillage: { ...snapshot.productionFocusByVillage },
+    societyFocusByVillage: { ...snapshot.societyFocusByVillage },
+    barracksFocusByVillage: { ...snapshot.barracksFocusByVillage },
+    defenseProtocolByVillage: { ...snapshot.defenseProtocolByVillage },
+    promotedHeroByVillage: { ...snapshot.promotedHeroByVillage },
+    kingProfileId: snapshot.kingProfileId,
+    kingName: snapshot.kingName,
+    royalCapitalVillageId: snapshot.royalCapitalVillageId,
+    capitalTransfer: { ...snapshot.capitalTransfer },
+    senate: {
+      ...snapshot.senate,
+      activeMeeting: snapshot.senate.activeMeeting
+        ? {
+            ...snapshot.senate.activeMeeting,
+            choices: snapshot.senate.activeMeeting.choices.map((choice) => ({
+              ...choice,
+              effect: { ...choice.effect },
+            })),
+            sourceTags: [...snapshot.senate.activeMeeting.sourceTags],
+          }
+        : null,
+      resolvedMeetingIds: [...snapshot.senate.resolvedMeetingIds],
+      dismissedHeroes: [...snapshot.senate.dismissedHeroes],
+    },
+    mapMovements: snapshot.mapMovements.map((movement) => ({ ...movement, route: [...movement.route], meta: { ...movement.meta } })),
+    mobilization: { ...snapshot.mobilization },
     sandboxLastSyncedDay: day,
     logs: [...snapshot.logs],
   };
@@ -148,7 +290,6 @@ function passiveDailyIncome(state: ImperialState, villages: VillageSummary[], da
     resources: {
       materials: state.resources.materials + resolution.resources.materials,
       supplies: state.resources.supplies + resolution.resources.supplies,
-      energy: state.resources.energy + resolution.resources.energy,
       influence: state.resources.influence + resolution.resources.influence,
     },
     troops: {

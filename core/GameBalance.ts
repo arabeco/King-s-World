@@ -1,4 +1,4 @@
-﻿import { axialDistance, type AxialCoord } from "@/lib/hex-grid";
+import { axialDistance, type AxialCoord } from "@/lib/hex-grid";
 import {
   BUILDINGS_BY_ID,
   type BuildingDefinition,
@@ -7,7 +7,7 @@ import {
 } from "@/lib/buildings";
 
 export type BalancePhase = "phase_1" | "phase_2";
-export type ProtocolType = "focus_supply" | "focus_energy" | "focus_influence" | "focus_defense";
+export type ProtocolType = "focus_supply" | "focus_influence" | "focus_defense";
 
 export const GAME_BALANCE_CONSTANTS = Object.freeze({
   worldDays: 120,
@@ -22,28 +22,60 @@ export const GAME_BALANCE_CONSTANTS = Object.freeze({
   buildingTimeGrowth: 1.09,
 });
 
+// Regra oficial:
+// - Influencia e score soberano vivo, nao moeda operacional.
+// - O alvo real de sobrevivencia e 1500 para desafiar o Centro/Portal.
+// - 2500 e o teto teorico do mundo; alcancavel, mas raro e dependente de posicao + sorte + execucao forte.
 export const SOVEREIGNTY_SCORE_MAX = 2500;
 export const SOVEREIGNTY_PORTAL_CUT = 1500;
+export const SOVEREIGNTY_AREA_MAX = 500;
+export const SOVEREIGNTY_MILITARY_SCORE_CAP = 400;
+export const WONDER_REQUIRED_CITY_DEVELOPMENT = 100;
+const SOVEREIGNTY_AREA_MAX_BY_ID = {
+  production: 1000,
+  government: 500,
+  military: SOVEREIGNTY_MILITARY_SCORE_CAP,
+  society: 300,
+  legacy: 300,
+} as const;
 export const TRIBE_LOYALTY_STAGE_COUNT = 5;
-export const TRIBE_LOYALTY_FULL_BONUS = 200;
+export const TRIBE_LOYALTY_FULL_BONUS = 100;
 export const TRIBE_LOYALTY_STAGE_BONUS = TRIBE_LOYALTY_FULL_BONUS / TRIBE_LOYALTY_STAGE_COUNT;
+export const TRIBE_PACT_DAY = Math.ceil(GAME_BALANCE_CONSTANTS.worldDays / 4);
+export const TRIBE_CHAMBER_DAY = Math.ceil(GAME_BALANCE_CONSTANTS.worldDays / 2);
+export const FINAL_EXODUS_DAY = GAME_BALANCE_CONSTANTS.phase1EndDay + 1;
+export const PORTAL_MANDATE_DAY = Math.ceil(GAME_BALANCE_CONSTANTS.worldDays * 0.54);
+export const PORTAL_PRESSURE_DAY = Math.ceil(GAME_BALANCE_CONSTANTS.worldDays * 0.58);
 export const CITY_DIPLOMAT_UNLOCK_DEVELOPMENT = 60;
 export const MAX_CITY_DIPLOMATS = 9;
 export const MAX_TRIBE_ENVOYS = 2;
 export const MAX_TOTAL_DIPLOMATS = MAX_CITY_DIPLOMATS + MAX_TRIBE_ENVOYS;
 
-const SOVEREIGNTY_BUILDING_IDS: BuildingId[] = [
-  "palace",
-  "senate",
-  "mines",
-  "farms",
-  "housing",
-  "research",
-  "barracks",
-  "arsenal",
-  "wall",
-  "wonder",
-];
+const SOVEREIGNTY_BUILDING_IDS: BuildingId[] = ["palace", "mines", "housing", "barracks", "wall"];
+export const CITY_POPULATION_MAX = 100;
+export const POPULATION_PER_HOUSING_LEVEL = 10;
+export const POPULATION_ALLOCATION_STEP = 5;
+const SOVEREIGNTY_SECTOR_IDS = ["crown", "economy", "society", "recruitment", "defense"] as const;
+type SovereigntySectorId = (typeof SOVEREIGNTY_SECTOR_IDS)[number];
+
+export type SovereigntyAreaId = "production" | "government" | "military" | "society" | "legacy";
+
+export type SovereigntyAreaScore = {
+  id: SovereigntyAreaId;
+  current: number;
+  max: number;
+};
+
+export type SovereigntyVillageState = {
+  type?: "Capital" | "Colonia" | string;
+  underAttack?: boolean;
+  cityClass?: string | null;
+  buildingLevels: Partial<Record<BuildingId, number>>;
+};
+
+export type SovereigntyWorkforceState = Partial<
+  Record<"treasury" | "supply" | "forge" | "watch" | "lore", number>
+>;
 
 export type TerrainModifiers = {
   terrainCostMultiplier?: number;
@@ -61,9 +93,9 @@ export type EvolutionMode =
   | "flow";
 
 export type SovereignArchetype =
-  | "sovereign_industrial" // Heavy energy focus, efficient materials
-  | "sovereign_citadel"    // Heavy materials focus, efficient energy
-  | "sovereign_logistic"   // High energy for expansion, balanced materials
+  | "sovereign_industrial"
+  | "sovereign_citadel"
+  | "sovereign_logistic"
   | "sovereign_vanguard";  // Offensive frontier build with heavier supply burn
 
 type BuildingCategory =
@@ -198,14 +230,99 @@ export type EconomyTroops = {
 export type EconomyResources = {
   materials: number;
   supplies: number;
-  energy: number;
   influence: number;
+};
+
+export type CityProductionFocusId = "materials" | "supplies" | "commerce" | "logistics";
+export type CitySocietyJobId = "medics" | "crafts" | "order" | "scholars";
+export type CityHeroBuildId = "leadership" | "logistics" | "discipline" | "lore" | "none";
+export type CitySkillDots = Partial<Record<"a" | "b" | "c" | "d", number>>;
+
+export type CityDailyProductionInput = {
+  cityClass?: string | null;
+  terrainKind?: string | null;
+  heroBuild?: CityHeroBuildId | null;
+  productionFocus?: CityProductionFocusId | null;
+  societyFocus?: "medics" | "crafts" | "order" | "scholars" | null;
+  levels: Partial<Record<BuildingId, number>>;
+  productionWorkers?: Partial<Record<CityProductionFocusId, number>>;
+  jobs?: Partial<Record<CitySocietyJobId, number>>;
+  crownSkillDots?: CitySkillDots;
+  economySkillDots?: CitySkillDots;
+  societySkillDots?: CitySkillDots;
+  populationCurrent?: number;
+  underAttack?: boolean;
+  kingResourceProductionMultiplier?: number;
+  kingSatisfactionDelta?: number;
+  kingCrisisRiskDelta?: number;
+  worldSpeedMultiplier?: number;
+};
+
+export type CityDailyProductionResult = {
+  materials: number;
+  supplies: number;
+  influence: number;
+  logistics: number;
+  stability: number;
+  breakdown: {
+    cityClass: string;
+    terrain: string;
+    sectors: {
+      government: number;
+      production: number;
+      society: number;
+      recruitment: number;
+      defense: number;
+    };
+    workers: Record<CityProductionFocusId, number>;
+    jobs: Record<CitySocietyJobId, number>;
+    modifiers: {
+      materials: number;
+      supplies: number;
+      influence: number;
+      logistics: number;
+      stability: number;
+    };
+  };
+};
+
+export type CitySocietyBand = "colapso" | "pressao" | "estavel" | "alta" | "radiante";
+
+export type CitySocietyStateInput = {
+  cityClass?: string | null;
+  terrainKind?: string | null;
+  heroBuild?: CityHeroBuildId | null;
+  levels: Partial<Record<BuildingId, number>>;
+  societySkillDots?: CitySkillDots;
+  productionWorkers?: Partial<Record<CityProductionFocusId, number>>;
+  jobs?: Partial<Record<CitySocietyJobId, number>>;
+  recruitedPopulation?: number;
+  defendedPopulation?: number;
+  populationCurrent?: number;
+  underAttack?: boolean;
+  deficitsCount?: number;
+  kingSatisfactionDelta?: number;
+  kingCrisisRiskDelta?: number;
+};
+
+export type CitySocietyStateResult = {
+  satisfaction: number;
+  band: CitySocietyBand;
+  productionMultiplier: number;
+  defenseMultiplier: number;
+  crisisRisk: number;
+  breakdown: {
+    housingPressure: number;
+    employmentPressure: number;
+    warPressure: number;
+    attackPressure: number;
+    deficitPressure: number;
+  };
 };
 
 export type CatastropheMultipliers = {
   materialsMult?: number;
   suppliesMult?: number;
-  energyMult?: number;
   influenceMult?: number;
   upkeepMult?: number;
 };
@@ -225,10 +342,8 @@ export type DailyEconomyInput = TerrainModifiers & {
 export type DailyEconomyResult = {
   production: EconomyResources;
   upkeep: number;
-  villageConsumptionEnergy: number;
   stocksAfterTick: EconomyResources;
   supplyPenaltyRatio: number;
-  energyPenaltyRatio: number;
   offenseMultiplierAfterPenalty: number;
   defenseMultiplierAfterPenalty: number;
 };
@@ -308,8 +423,218 @@ function safeMultiplier(value: number | undefined): number {
   return value;
 }
 
+function sanitizeCitySkillDots(dots: CitySkillDots | undefined): Record<"a" | "b" | "c" | "d", number> {
+  return {
+    a: clamp(Math.floor(dots?.a ?? 0), 0, 3),
+    b: clamp(Math.floor(dots?.b ?? 0), 0, 3),
+    c: clamp(Math.floor(dots?.c ?? 0), 0, 3),
+    d: clamp(Math.floor(dots?.d ?? 0), 0, 3),
+  };
+}
+
+function resolveCityClassYieldModifiers(cityClass?: string | null): {
+  label: string;
+  materials: number;
+  supplies: number;
+  influence: number;
+  logistics: number;
+  stability: number;
+} {
+  switch (cityClass) {
+    case "metropole":
+      return { label: "Metropole", materials: 1.08, supplies: 0.98, influence: 1.16, logistics: 1.02, stability: 1.04 };
+    case "celeiro":
+      return { label: "Celeiro", materials: 0.94, supplies: 1.18, influence: 0.98, logistics: 1.12, stability: 1.06 };
+    case "posto_avancado":
+      return { label: "Posto Avancado", materials: 1.05, supplies: 0.95, influence: 1.08, logistics: 1.08, stability: 0.94 };
+    case "bastiao":
+      return { label: "Bastiao", materials: 1.02, supplies: 1.04, influence: 0.96, logistics: 0.98, stability: 1.18 };
+    default:
+      return { label: "Neutra", materials: 1, supplies: 1, influence: 1, logistics: 1, stability: 1 };
+  }
+}
+
+function resolveTerrainYieldModifiers(terrainKind?: string | null): {
+  label: string;
+  materials: number;
+  supplies: number;
+  influence: number;
+  logistics: number;
+  stability: number;
+} {
+  switch (terrainKind) {
+    case "crown_heartland":
+      return { label: "Coracao da Coroa", materials: 1.08, supplies: 1.04, influence: 1.12, logistics: 1.04, stability: 1.08 };
+    case "riverlands":
+      return { label: "Varzea dos Rios", materials: 0.96, supplies: 1.16, influence: 1.02, logistics: 1.14, stability: 1.04 };
+    case "frontier_pass":
+      return { label: "Passagem de Fronteira", materials: 1.04, supplies: 0.95, influence: 1.06, logistics: 1.08, stability: 0.94 };
+    case "ironridge":
+      return { label: "Escarpa de Ferro", materials: 1.14, supplies: 0.96, influence: 0.98, logistics: 0.96, stability: 1.12 };
+    default:
+      return { label: "Campos de Cinza", materials: 0.94, supplies: 0.94, influence: 0.96, logistics: 0.92, stability: 0.92 };
+  }
+}
+
+function resolveHeroYieldModifiers(heroBuild?: CityHeroBuildId | null): {
+  materials: number;
+  supplies: number;
+  influence: number;
+  logistics: number;
+  stability: number;
+} {
+  switch (heroBuild) {
+    case "leadership":
+      return { materials: 1, supplies: 1, influence: 1.15, logistics: 1.02, stability: 1.08 };
+    case "logistics":
+      return { materials: 1.05, supplies: 1.05, influence: 1.02, logistics: 1.16, stability: 1 };
+    case "discipline":
+      return { materials: 0.98, supplies: 0.98, influence: 1.04, logistics: 1.02, stability: 1.12 };
+    case "lore":
+      return { materials: 1.02, supplies: 1, influence: 1.12, logistics: 1.04, stability: 1.04 };
+    default:
+      return { materials: 1, supplies: 1, influence: 1, logistics: 1, stability: 1 };
+  }
+}
+
+export function calculateCitySocietyState(input: CitySocietyStateInput): CitySocietyStateResult {
+  const government = getVillageGovernmentLevel(input.levels);
+  const society = getVillageSocietyLevel(input.levels);
+  const defense = getVillageDefenseLevel(input.levels);
+  const societyDots = sanitizeCitySkillDots(input.societySkillDots);
+  const cityClass = resolveCityClassYieldModifiers(input.cityClass);
+  const terrain = resolveTerrainYieldModifiers(input.terrainKind);
+  const hero = resolveHeroYieldModifiers(input.heroBuild);
+
+  const productionWorkers = Object.values(input.productionWorkers ?? {}).reduce((sum, value) => sum + clamp(Math.floor(value ?? 0), 0, 100), 0);
+  const jobs = {
+    medics: clamp(Math.floor(input.jobs?.medics ?? 0), 0, 100),
+    crafts: clamp(Math.floor(input.jobs?.crafts ?? 0), 0, 100),
+    order: clamp(Math.floor(input.jobs?.order ?? 0), 0, 100),
+    scholars: clamp(Math.floor(input.jobs?.scholars ?? 0), 0, 100),
+  };
+  const recruitedPopulation = clamp(Math.floor(input.recruitedPopulation ?? 0), 0, 100);
+  const defendedPopulation = clamp(Math.floor(input.defendedPopulation ?? 0), 0, 100);
+  const usedPopulation = productionWorkers + Object.values(jobs).reduce((sum, value) => sum + value, 0) + recruitedPopulation + defendedPopulation;
+  const populationCap = Math.max(1, calculateVillagePopulationCap(input.levels));
+  const populationCurrent = clamp(Math.floor(input.populationCurrent ?? populationCap), usedPopulation, populationCap);
+  const idlePopulation = Math.max(0, populationCurrent - usedPopulation);
+
+  const housingPressure = clamp((populationCurrent / populationCap) * 100, 0, 100);
+  const employmentPressure = populationCurrent > 0 ? clamp((idlePopulation / populationCurrent) * 100, 0, 100) : 0;
+  const warPressure = populationCurrent > 0 ? clamp(((recruitedPopulation + defendedPopulation) / populationCurrent) * 100, 0, 100) : 0;
+  const attackPressure = input.underAttack ? 100 : 0;
+  const deficitPressure = clamp((input.deficitsCount ?? 0) * 18, 0, 100);
+
+  const baseSatisfaction =
+    38 +
+    society * 5 +
+    government * 2 +
+    defense * 2 +
+    societyDots.a * 2 +
+    societyDots.c * 4 +
+    societyDots.d * 2 +
+    jobs.medics * 1.4 +
+    jobs.order * 1.7 +
+    jobs.scholars * 0.6 +
+    jobs.crafts * 0.5;
+
+  const rawSatisfaction =
+    baseSatisfaction -
+    Math.max(0, housingPressure - 82) * 0.7 -
+    employmentPressure * 0.18 -
+    Math.max(0, warPressure - 30) * 0.35 -
+    (input.underAttack ? 12 : 0) -
+    (input.deficitsCount ?? 0) * 6 +
+    (input.kingSatisfactionDelta ?? 0);
+
+  const satisfaction = clamp(
+    round(rawSatisfaction * cityClass.stability * terrain.stability * hero.stability),
+    0,
+    100,
+  );
+
+  const band: CitySocietyBand =
+    satisfaction >= 85 ? "radiante" : satisfaction >= 68 ? "alta" : satisfaction >= 50 ? "estavel" : satisfaction >= 32 ? "pressao" : "colapso";
+  const productionMultiplier =
+    satisfaction >= 85 ? 1.12 : satisfaction >= 68 ? 1.06 : satisfaction >= 50 ? 1 : satisfaction >= 32 ? 0.92 : 0.82;
+  const defenseMultiplier =
+    satisfaction >= 85 ? 1.08 : satisfaction >= 68 ? 1.04 : satisfaction >= 50 ? 1 : satisfaction >= 32 ? 0.94 : 0.86;
+  const crisisRisk = clamp(
+    round(
+      100 -
+        satisfaction +
+        Math.max(0, warPressure - 35) * 0.4 +
+        (input.underAttack ? 10 : 0) +
+        (input.deficitsCount ?? 0) * 5 +
+        (input.kingCrisisRiskDelta ?? 0),
+    ),
+    0,
+    100,
+  );
+
+  return {
+    satisfaction,
+    band,
+    productionMultiplier,
+    defenseMultiplier,
+    crisisRisk,
+    breakdown: {
+      housingPressure: round(housingPressure),
+      employmentPressure: round(employmentPressure),
+      warPressure: round(warPressure),
+      attackPressure,
+      deficitPressure: round(deficitPressure),
+    },
+  };
+}
+
 function resolveBuilding(building: BuildingId | BuildingDefinition): BuildingDefinition {
   return typeof building === "string" ? BUILDINGS_BY_ID[building] : building;
+}
+
+function readVillageLevel(levels: Partial<Record<BuildingId, number>>, ...keys: string[]): number {
+  const rawLevels = levels as Record<string, unknown>;
+  return keys.reduce((best, key) => {
+    const raw = rawLevels[key];
+    const next = typeof raw === "number" && Number.isFinite(raw) ? clamp(Math.floor(raw), 0, 10) : 0;
+    return Math.max(best, next);
+  }, 0);
+}
+
+export function getVillageGovernmentLevel(levels: Partial<Record<BuildingId, number>>): number {
+  return readVillageLevel(levels, "crown", "palace", "senate");
+}
+
+export function getVillageProductionLevel(levels: Partial<Record<BuildingId, number>>): number {
+  return readVillageLevel(levels, "economy", "mines", "farms", "roads");
+}
+
+export function getVillageSocietyLevel(levels: Partial<Record<BuildingId, number>>): number {
+  return readVillageLevel(levels, "society", "housing", "research");
+}
+
+export function getVillageRecruitmentLevel(levels: Partial<Record<BuildingId, number>>): number {
+  return readVillageLevel(levels, "recruitment", "barracks", "arsenal");
+}
+
+export function getVillageDefenseLevel(levels: Partial<Record<BuildingId, number>>): number {
+  return readVillageLevel(levels, "defense", "wall");
+}
+
+function getVillageSectorLevel(levels: Partial<Record<BuildingId, number>>, sectorId: SovereigntySectorId): number {
+  switch (sectorId) {
+    case "crown":
+      return getVillageGovernmentLevel(levels);
+    case "economy":
+      return getVillageProductionLevel(levels);
+    case "society":
+      return getVillageSocietyLevel(levels);
+    case "recruitment":
+      return getVillageRecruitmentLevel(levels);
+    case "defense":
+      return getVillageDefenseLevel(levels);
+  }
 }
 
 function getBuildingCategory(buildingId: BuildingId): BuildingCategory {
@@ -376,23 +701,16 @@ export function calculateBuildingUpgradeCost(
 
   const evolution = resolveEvolutionMultipliers(options.evolutionMode, definition.id);
 
-  // Dynamic Energy/Resource footprint based on Archetype Strategy
-  // This prevents a single "optimal" development path by shifting costs based on chosen playstyle
-  let archetypeEnergyMult = 1.3;
   let archetypeMaterialMult = 1.0;
   let archetypeSupplyMult = 1.0;
 
   if (options.archetype === "sovereign_industrial") {
-    archetypeEnergyMult = 1.6; // High energy dependency
-    archetypeMaterialMult = 0.85; // Refined material usage
+    archetypeMaterialMult = 0.85;
   } else if (options.archetype === "sovereign_citadel") {
-    archetypeEnergyMult = 1.1; // Energy efficiency
-    archetypeMaterialMult = 1.4; // Massive material requirements
+    archetypeMaterialMult = 1.4;
   } else if (options.archetype === "sovereign_logistic") {
-    archetypeEnergyMult = 1.5; // High power for logistics
-    archetypeSupplyMult = 1.25; // High upkeep for supply lines
+    archetypeSupplyMult = 1.25;
   } else if (options.archetype === "sovereign_vanguard") {
-    archetypeEnergyMult = 1.22;
     archetypeMaterialMult = 1.08;
     archetypeSupplyMult = 1.32;
   }
@@ -409,7 +727,6 @@ export function calculateBuildingUpgradeCost(
   return {
     materials: round(definition.baseCost.materials * totalScalar * archetypeMaterialMult),
     supplies: round(definition.baseCost.supplies * totalScalar * archetypeSupplyMult),
-    energy: round(definition.baseCost.energy * totalScalar * archetypeEnergyMult),
     // Influence is now a threshold (score required), not a consumable cost.
     influence: 0,
     requiredInfluence: round(definition.baseCost.influence * totalScalar),
@@ -457,7 +774,6 @@ export function calculateBuildingBenefit(
 export type BuildingActionDelta = {
   materials: number;
   supplies: number;
-  energy: number;
   influence: number;
   note: string;
 };
@@ -471,7 +787,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: round(Math.max(80, benefit * 0.92)),
         supplies: 0,
-        energy: -round(24 + safeLevel * 4),
         influence: round(4 + safeLevel * 1.4),
         note: "Extracao acelerada de materiais",
       };
@@ -479,7 +794,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: 0,
         supplies: round(Math.max(80, benefit * 0.9)),
-        energy: -round(20 + safeLevel * 3),
         influence: round(3 + safeLevel * 1.3),
         note: "Pulso de abastecimento",
       };
@@ -487,7 +801,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: -round(28 + safeLevel * 5),
         supplies: round(34 + safeLevel * 6),
-        energy: -round(10 + safeLevel * 2),
         influence: round(6 + safeLevel * 1.8),
         note: "Mobilizacao civil",
       };
@@ -495,7 +808,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: -round(26 + safeLevel * 6),
         supplies: 0,
-        energy: -round(30 + safeLevel * 4),
         influence: round(20 + safeLevel * 3),
         note: "Aceleracao cientifica",
       };
@@ -503,7 +815,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: -round(34 + safeLevel * 7),
         supplies: -round(16 + safeLevel * 3),
-        energy: -round(12 + safeLevel * 2),
         influence: round(28 + safeLevel * 4),
         note: "Decreto imperial",
       };
@@ -511,7 +822,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: -round(24 + safeLevel * 5),
         supplies: -round(22 + safeLevel * 4),
-        energy: -round(14 + safeLevel * 2),
         influence: round(32 + safeLevel * 4.5),
         note: "Negociacao politica",
       };
@@ -519,7 +829,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: -round(20 + safeLevel * 4),
         supplies: -round(58 + safeLevel * 10),
-        energy: -round(34 + safeLevel * 6),
         influence: round(8 + safeLevel * 2),
         note: "Treino de tropa",
       };
@@ -527,7 +836,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: -round(62 + safeLevel * 12),
         supplies: -round(28 + safeLevel * 5),
-        energy: -round(42 + safeLevel * 7),
         influence: round(10 + safeLevel * 2.2),
         note: "Forja militar",
       };
@@ -535,7 +843,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: -round(54 + safeLevel * 10),
         supplies: -round(22 + safeLevel * 4),
-        energy: -round(18 + safeLevel * 3),
         influence: round(7 + safeLevel * 1.8),
         note: "Reforco de muralha",
       };
@@ -543,7 +850,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: -round(120 + safeLevel * 20),
         supplies: -round(60 + safeLevel * 9),
-        energy: -round(72 + safeLevel * 11),
         influence: round(36 + safeLevel * 5),
         note: "Impulso de legado",
       };
@@ -551,7 +857,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: -round(48 + safeLevel * 8),
         supplies: -round(20 + safeLevel * 3),
-        energy: -round(36 + safeLevel * 6),
         influence: round(8 + safeLevel * 1.8),
         note: "Operacao logistica",
       };
@@ -559,7 +864,6 @@ export function calculateBuildingActionDelta(buildingId: BuildingId, level: numb
       return {
         materials: 0,
         supplies: 0,
-        energy: 0,
         influence: 0,
         note: "Sem efeito",
       };
@@ -571,6 +875,7 @@ export function calculateInfluenceCap(palaceLevel: number, senateLevel: number):
 }
 
 export type SovereigntyScoreInput = {
+  villages?: SovereigntyVillageState[];
   villageDevelopments: number[];
   councilHeroes: number;
   militaryRankingPoints: number;
@@ -580,6 +885,16 @@ export type SovereigntyScoreInput = {
   hasTribeDome?: boolean;
   tribeLoyaltyStage?: number;
   kingAlive?: boolean;
+  workforce?: SovereigntyWorkforceState;
+  unlockedMilitaryTechs?: number;
+  dragonChoice?: "none" | "fire" | "ice";
+  populationCurrent?: number;
+  populationCapacity?: number;
+  employedPopulation?: number;
+  recruitedPopulation?: number;
+  senateSatisfaction?: number;
+  troopPower?: number;
+  defensePower?: number;
 };
 
 export type SovereigntyScoreBreakdown = {
@@ -589,6 +904,7 @@ export type SovereigntyScoreBreakdown = {
   eraQuests: number;
   wonders: number;
   tribeDome: number;
+  areas: SovereigntyAreaScore[];
   tribeLoyaltyStage: number;
   tribeLoyaltyNextDay: number | null;
   total: number;
@@ -598,20 +914,196 @@ export type SovereigntyScoreBreakdown = {
 };
 
 export function calculateVillageDevelopment(levels: Partial<Record<BuildingId, number>>): number {
-  return SOVEREIGNTY_BUILDING_IDS.reduce((acc, buildingId) => {
-    const definition = BUILDINGS_BY_ID[buildingId];
-    const rawLevel = levels[buildingId] ?? 0;
-    const sanitizedLevel = clamp(Math.floor(rawLevel), 0, definition?.maxLevel ?? 10);
-    const villageDevelopmentPerLevel = definition?.villageDevelopmentPerLevel ?? 1;
-    const villageDevelopmentCap =
-      definition?.villageDevelopmentCap ?? (definition?.maxLevel ?? 10) * villageDevelopmentPerLevel;
-
+  return SOVEREIGNTY_SECTOR_IDS.reduce((acc, sectorId) => {
+    const sanitizedLevel = getVillageSectorLevel(levels, sectorId);
+    const villageDevelopmentPerLevel = 2;
+    const villageDevelopmentCap = 20;
     return acc + clamp(sanitizedLevel * villageDevelopmentPerLevel, 0, villageDevelopmentCap);
   }, 0);
 }
 
+export function canStartWonder(levels: Partial<Record<BuildingId, number>>): boolean {
+  return calculateVillageDevelopment(levels) >= WONDER_REQUIRED_CITY_DEVELOPMENT;
+}
+
 export function calculateVillageInfluencePoints(development: number): number {
   return clamp(Math.floor(development), 0, 100);
+}
+
+export function calculateVillagePopulationCap(levels: Partial<Record<BuildingId, number>>): number {
+  const societyLevel = getVillageSocietyLevel(levels);
+  return clamp(societyLevel * POPULATION_PER_HOUSING_LEVEL, 0, CITY_POPULATION_MAX);
+}
+
+export function calculateVillageRecruitCapacity(levels: Partial<Record<BuildingId, number>>): number {
+  const recruitmentLevel = getVillageRecruitmentLevel(levels);
+  return recruitmentLevel * POPULATION_ALLOCATION_STEP * 2;
+}
+
+export function calculateVillageDefenseCapacity(levels: Partial<Record<BuildingId, number>>): number {
+  const defenseLevel = getVillageDefenseLevel(levels);
+  return defenseLevel * POPULATION_ALLOCATION_STEP * 2;
+}
+
+export function calculateBarracksUnlocks(levels: Partial<Record<BuildingId, number>>): {
+  militia: boolean;
+  shooters: boolean;
+  scouts: boolean;
+  machinery: boolean;
+} {
+  const barracksLevel = getVillageRecruitmentLevel(levels);
+  return {
+    militia: barracksLevel >= 1,
+    shooters: barracksLevel >= 3,
+    scouts: barracksLevel >= 5,
+    machinery: barracksLevel >= 7,
+  };
+}
+
+export function calculateWallDefenseUnlocks(levels: Partial<Record<BuildingId, number>>): {
+  guards: boolean;
+  archers: boolean;
+  ballistae: boolean;
+} {
+  const wallLevel = getVillageDefenseLevel(levels);
+  return {
+    guards: wallLevel >= 1,
+    archers: wallLevel >= 4,
+    ballistae: wallLevel >= 7,
+  };
+}
+
+export function calculateTroopPower(troops: Partial<Record<"militia" | "shooters" | "scouts" | "machinery", number>>): number {
+  return (
+    Math.max(0, Math.floor(troops.militia ?? 0)) * 1 +
+    Math.max(0, Math.floor(troops.shooters ?? 0)) * 2 +
+    Math.max(0, Math.floor(troops.scouts ?? 0)) * 2 +
+    Math.max(0, Math.floor(troops.machinery ?? 0)) * 4
+  );
+}
+
+export function calculateDefensePower(defenders: Partial<Record<"guards" | "archers" | "ballistae", number>>): number {
+  return (
+    Math.max(0, Math.floor(defenders.guards ?? 0)) * 1 +
+    Math.max(0, Math.floor(defenders.archers ?? 0)) * 2 +
+    Math.max(0, Math.floor(defenders.ballistae ?? 0)) * 4
+  );
+}
+
+function workforceRatio(workforce: SovereigntyWorkforceState | undefined, key: keyof NonNullable<SovereigntyWorkforceState>): number {
+  return clamp(Math.floor(Number(workforce?.[key] ?? 0)), 0, 10) / 10;
+}
+
+function villageBuildingRatio(villages: SovereigntyVillageState[], buildingId: BuildingId | SovereigntySectorId): number {
+  const totalLevels = villages.reduce((sum, village) => {
+    const rawLevel =
+      buildingId === "crown" || buildingId === "economy" || buildingId === "society" || buildingId === "recruitment" || buildingId === "defense"
+        ? getVillageSectorLevel(village.buildingLevels, buildingId)
+        : clamp(Math.floor(village.buildingLevels[buildingId] ?? 0), 0, 10);
+    return sum + rawLevel;
+  }, 0);
+  return clamp(totalLevels / 100, 0, 1);
+}
+
+function villageBuildingTotal(villages: SovereigntyVillageState[], buildingId: BuildingId | SovereigntySectorId): number {
+  return villages.reduce((sum, village) => {
+    const rawLevel =
+      buildingId === "crown" || buildingId === "economy" || buildingId === "society" || buildingId === "recruitment" || buildingId === "defense"
+        ? getVillageSectorLevel(village.buildingLevels, buildingId)
+        : clamp(Math.floor(village.buildingLevels[buildingId] ?? 0), 0, 10);
+    return sum + rawLevel;
+  }, 0);
+}
+
+export function calculateOfficialSovereigntyAreas(input: SovereigntyScoreInput): SovereigntyAreaScore[] | null {
+  if (!input.villages || input.villages.length <= 0) {
+    return null;
+  }
+
+  const villages = input.villages.slice(0, 10);
+  const stableCities = villages.filter((village) => !village.underAttack).length;
+  const totalInfrastructureLevels =
+    villageBuildingTotal(villages, "crown") +
+    villageBuildingTotal(villages, "economy") +
+    villageBuildingTotal(villages, "society") +
+    villageBuildingTotal(villages, "recruitment") +
+    villageBuildingTotal(villages, "defense");
+  const governmentTotal = villageBuildingTotal(villages, "crown");
+  const recruitmentTotal = villageBuildingTotal(villages, "recruitment");
+  const defenseTotal = villageBuildingTotal(villages, "defense");
+  const heroCount = clamp(Math.max(0, Math.floor(input.councilHeroes ?? 0)), 0, 10);
+  const techCount = clamp(Math.max(0, Math.floor(input.unlockedMilitaryTechs ?? 0)), 0, 10);
+  const questCount = clamp(Math.max(0, Math.floor(input.eraQuestsCompleted ?? 0)), 0, 3);
+  const wonderCount = clamp(Math.max(0, Math.floor(input.wondersControlled ?? 0)), 0, 5);
+  const tribeStage = input.hasTribeDome === false ? 0 : clamp(Math.max(0, Math.floor(input.tribeLoyaltyStage ?? 0)), 0, TRIBE_LOYALTY_STAGE_COUNT);
+  const stabilityRatio = villages.length > 0 ? clamp(stableCities / villages.length, 0, 1) : 0;
+  const dragonRatio = input.dragonChoice && input.dragonChoice !== "none" ? 1 : 0;
+  const populationFillRatio =
+    input.populationCapacity && input.populationCapacity > 0
+      ? clamp(input.populationCurrent ?? 0, 0, input.populationCapacity) / input.populationCapacity
+      : 0;
+  const employmentRatio =
+    input.populationCurrent && input.populationCurrent > 0
+      ? clamp(input.employedPopulation ?? 0, 0, input.populationCurrent) / input.populationCurrent
+      : 0;
+  const recruitmentRatio =
+    input.populationCurrent && input.populationCurrent > 0
+      ? clamp(input.recruitedPopulation ?? 0, 0, input.populationCurrent) / input.populationCurrent
+      : 0;
+
+  const infrastructureScore = clamp(totalInfrastructureLevels * 2, 0, SOVEREIGNTY_AREA_MAX_BY_ID.production);
+  const satisfactionRatio = clamp(input.senateSatisfaction ?? 0, 0, 100) / 100;
+  const governmentScore = clamp(heroCount * 50, 0, SOVEREIGNTY_AREA_MAX_BY_ID.government);
+  const militaryScore = clamp(
+    round(clamp(input.troopPower ?? 0, 0, 250) * 0.8) +
+    round(clamp(input.defensePower ?? 0, 0, 250) * 0.8) +
+      recruitmentTotal * 1.4 +
+      defenseTotal * 1.2 +
+      techCount * 12 +
+      (dragonRatio > 0 ? 30 : 0),
+    0,
+    SOVEREIGNTY_AREA_MAX_BY_ID.military,
+  );
+  const societyScore = clamp(
+    round(satisfactionRatio * 130 + populationFillRatio * 90 + employmentRatio * 80 + stabilityRatio * 50),
+    0,
+    SOVEREIGNTY_AREA_MAX_BY_ID.society,
+  );
+  const legacyScore = clamp(
+    round((questCount / 3) * 100) + clamp(wonderCount, 0, 2) * 50 + tribeStage * TRIBE_LOYALTY_STAGE_BONUS,
+    0,
+    SOVEREIGNTY_AREA_MAX_BY_ID.legacy,
+  );
+
+  const areas: SovereigntyAreaScore[] = [
+    {
+      id: "production",
+      current: infrastructureScore,
+      max: SOVEREIGNTY_AREA_MAX_BY_ID.production,
+    },
+    {
+      id: "government",
+      current: governmentScore,
+      max: SOVEREIGNTY_AREA_MAX_BY_ID.government,
+    },
+    {
+      id: "military",
+      current: militaryScore,
+      max: SOVEREIGNTY_AREA_MAX_BY_ID.military,
+    },
+    {
+      id: "society",
+      current: societyScore,
+      max: SOVEREIGNTY_AREA_MAX_BY_ID.society,
+    },
+    {
+      id: "legacy",
+      current: legacyScore,
+      max: SOVEREIGNTY_AREA_MAX_BY_ID.legacy,
+    },
+  ];
+
+  return areas;
 }
 
 export function calculateTribeProgressStage(input: {
@@ -629,10 +1121,10 @@ export function calculateTribeProgressStage(input: {
   }
 
   let stage = 1;
-  if (input.currentDay >= 30) stage = 2;
-  if (input.currentDay >= 60) stage = 3;
-  if (input.currentDay >= 91) stage = 4;
-  if (input.currentDay >= 91 && envoys >= 2) stage = 5;
+  if (input.currentDay >= TRIBE_PACT_DAY) stage = 2;
+  if (input.currentDay >= TRIBE_CHAMBER_DAY) stage = 3;
+  if (input.currentDay >= FINAL_EXODUS_DAY) stage = 4;
+  if (input.currentDay >= FINAL_EXODUS_DAY && envoys >= 2) stage = 5;
   return clamp(stage, 0, TRIBE_LOYALTY_STAGE_COUNT);
 }
 
@@ -650,22 +1142,22 @@ export function describeNextTribeStep(input: {
   const envoys = clamp(Math.floor(input.tribeEnvoysCommitted ?? 0), 0, MAX_TRIBE_ENVOYS);
 
   if (stage <= 0) {
-    return "Recrute e envie o 1o enviado tribal para abrir Representacao e ganhar os primeiros 40.";
+    return "Recrute e envie o 1o enviado tribal para abrir Representacao e ganhar os primeiros 20.";
   }
   if (stage === 1) {
-    return "Permaneça leal ate o Dia 30 para fechar Pacto e ganhar +40.";
+    return `Permaneça leal ate o Dia ${TRIBE_PACT_DAY} para fechar Pacto e ganhar +20.`;
   }
   if (stage === 2) {
-    return "Segure a filiacao tribal ate o Dia 60 para abrir Camara e ganhar +40.";
+    return `Segure a filiacao tribal ate o Dia ${TRIBE_CHAMBER_DAY} para abrir Camara e ganhar +20.`;
   }
   if (stage === 3) {
-    return "Entre vivo na Fase IV (Dia 91) para abrir o penultimo +40 da Tribo.";
+    return `Entre vivo na Fase IV (Dia ${FINAL_EXODUS_DAY}) para abrir o penultimo +20 da Tribo.`;
   }
   if (stage === 4 && envoys < 2) {
-    return "Recrute e envie o 2o enviado tribal na fase final para fechar os ultimos +40.";
+    return "Recrute e envie o 2o enviado tribal na fase final para fechar os ultimos +20.";
   }
   if (stage === 4) {
-    return "Envie o 2o enviado tribal e mantenha a ligacao ate consolidar o ultimo selo de 40.";
+    return "Envie o 2o enviado tribal e mantenha a ligacao ate consolidar o ultimo selo de 20.";
   }
   return "Trilha tribal completa. Os 200 pontos da Tribo ja estao fechados.";
 }
@@ -691,22 +1183,25 @@ export function calculateBuildingUpgradeLoad(buildingId: BuildingId, nextLevel: 
 }
 
 export function calculateVillageConstructionLoad(levels: Partial<Record<BuildingId, number>>): number {
-  const buildingIds = Object.keys(BUILDINGS_BY_ID) as BuildingId[];
-
-  return buildingIds.reduce((acc, buildingId) => {
-    if (buildingId === "roads") {
-      return acc;
-    }
-
-    const definition = BUILDINGS_BY_ID[buildingId];
-    const level = clamp(Math.floor(levels[buildingId] ?? 0), 0, definition.maxLevel);
+  return SOVEREIGNTY_SECTOR_IDS.reduce((acc, sectorId) => {
+    const canonicalBuildingId =
+      sectorId === "crown"
+        ? "palace"
+        : sectorId === "economy"
+          ? "mines"
+          : sectorId === "society"
+            ? "housing"
+            : sectorId === "recruitment"
+              ? "barracks"
+              : "wall";
+    const level = getVillageSectorLevel(levels, sectorId);
     if (level <= 1) {
       return acc;
     }
 
     let load = acc;
     for (let currentLevel = 2; currentLevel <= level; currentLevel += 1) {
-      load += calculateBuildingUpgradeLoad(buildingId, currentLevel);
+      load += calculateBuildingUpgradeLoad(canonicalBuildingId, currentLevel);
     }
     return load;
   }, 0);
@@ -716,19 +1211,15 @@ export function calculateVillageConstructionCapacity(
   levels: Partial<Record<BuildingId, number>>,
   hasEngineer = false,
 ): number {
-  const palace = clamp(Math.floor(levels.palace ?? 0), 0, 10);
-  const senate = clamp(Math.floor(levels.senate ?? 0), 0, 10);
-  const housing = clamp(Math.floor(levels.housing ?? 0), 0, 10);
-  const research = clamp(Math.floor(levels.research ?? 0), 0, 10);
-  const wall = clamp(Math.floor(levels.wall ?? 0), 0, 10);
+  const government = getVillageGovernmentLevel(levels);
+  const society = getVillageSocietyLevel(levels);
+  const defense = getVillageDefenseLevel(levels);
 
   return (
     40 +
-    palace * 6 +
-    senate * 5 +
-    housing * 4 +
-    research * 3 +
-    wall * 2 +
+    government * 11 +
+    society * 7 +
+    defense * 2 +
     (hasEngineer ? 10 : 0)
   );
 }
@@ -817,6 +1308,69 @@ export function processSocialResonance(state: ResonanceState, deltaResonance: nu
 }
 
 export function calculateSovereigntyScore(input: SovereigntyScoreInput): SovereigntyScoreBreakdown {
+  if (input.kingAlive === false) {
+    const loyalty = calculateTribeLoyaltyProgress({
+      currentDay: input.currentDay,
+      hasTribeDome: input.hasTribeDome,
+      kingAlive: input.kingAlive,
+      explicitStage: input.tribeLoyaltyStage,
+    });
+
+    return {
+      buildingLevels: 0,
+      militaryRanking: 0,
+      heroesCouncil: 0,
+      eraQuests: 0,
+      wonders: 0,
+      tribeDome: 0,
+      areas: [
+        { id: "production", current: 0, max: SOVEREIGNTY_AREA_MAX_BY_ID.production },
+        { id: "government", current: 0, max: SOVEREIGNTY_AREA_MAX_BY_ID.government },
+        { id: "military", current: 0, max: SOVEREIGNTY_AREA_MAX_BY_ID.military },
+        { id: "society", current: 0, max: SOVEREIGNTY_AREA_MAX_BY_ID.society },
+        { id: "legacy", current: 0, max: SOVEREIGNTY_AREA_MAX_BY_ID.legacy },
+      ],
+      tribeLoyaltyStage: loyalty.stage,
+      tribeLoyaltyNextDay: loyalty.nextStageDay,
+      total: 0,
+      max: SOVEREIGNTY_SCORE_MAX,
+      portalCut: SOVEREIGNTY_PORTAL_CUT,
+      portalEligible: false,
+    };
+  }
+
+  const officialAreas = calculateOfficialSovereigntyAreas(input);
+  if (officialAreas) {
+    const areaById = Object.fromEntries(officialAreas.map((area) => [area.id, area.current])) as Record<SovereigntyAreaId, number>;
+    const loyalty = calculateTribeLoyaltyProgress({
+      currentDay: input.currentDay,
+      hasTribeDome: input.hasTribeDome,
+      kingAlive: input.kingAlive,
+      explicitStage: input.tribeLoyaltyStage,
+    });
+    const total = clamp(
+      officialAreas.reduce((sum, area) => sum + area.current, 0),
+      0,
+      SOVEREIGNTY_SCORE_MAX,
+    );
+
+    return {
+      buildingLevels: areaById.production,
+      militaryRanking: areaById.military,
+      heroesCouncil: areaById.government,
+      eraQuests: areaById.legacy,
+      wonders: areaById.society,
+      tribeDome: 0,
+      areas: officialAreas,
+      tribeLoyaltyStage: loyalty.stage,
+      tribeLoyaltyNextDay: loyalty.nextStageDay,
+      total,
+      max: SOVEREIGNTY_SCORE_MAX,
+      portalCut: SOVEREIGNTY_PORTAL_CUT,
+      portalEligible: total >= SOVEREIGNTY_PORTAL_CUT,
+    };
+  }
+
   const cappedDevelopments = input.villageDevelopments.slice(0, 10);
   const buildingLevels = clamp(
     round(cappedDevelopments.reduce((acc, value) => acc + calculateVillageInfluencePoints(value), 0)),
@@ -824,21 +1378,43 @@ export function calculateSovereigntyScore(input: SovereigntyScoreInput): Soverei
     1000,
   );
 
-  const militaryRanking = clamp(round(input.militaryRankingPoints), 0, 500);
-  const heroesCouncil = clamp(Math.floor(input.councilHeroes), 0, 5) * 50;
-  const eraQuests = clamp(Math.floor(input.eraQuestsCompleted ?? 0), 0, 3) * 100;
-  const wonders = clamp(Math.floor(input.wondersControlled ?? 0), 0, 5) * 50;
-
+  const militaryRanking = clamp(round(input.militaryRankingPoints), 0, SOVEREIGNTY_MILITARY_SCORE_CAP);
+  const heroesCouncil = clamp(Math.floor(input.councilHeroes), 0, 10) * 50;
+  const questCount = clamp(Math.floor(input.eraQuestsCompleted ?? 0), 0, 3);
+  const wonderCount = clamp(Math.floor(input.wondersControlled ?? 0), 0, 5);
+  const satisfactionRatio = clamp(input.senateSatisfaction ?? 0, 0, 100) / 100;
+  const populationFillRatio =
+    input.populationCapacity && input.populationCapacity > 0
+      ? clamp(input.populationCurrent ?? 0, 0, input.populationCapacity) / input.populationCapacity
+      : 0;
+  const employmentRatio =
+    input.populationCurrent && input.populationCurrent > 0
+      ? clamp(input.employedPopulation ?? 0, 0, input.populationCurrent) / input.populationCurrent
+      : 0;
+  const averageDevelopment =
+    cappedDevelopments.length > 0 ? cappedDevelopments.reduce((sum, value) => sum + value, 0) / cappedDevelopments.length : 0;
+  const stabilityRatio = clamp(averageDevelopment / 100, 0, 1);
   const loyalty = calculateTribeLoyaltyProgress({
     currentDay: input.currentDay,
     hasTribeDome: input.hasTribeDome,
     kingAlive: input.kingAlive,
     explicitStage: input.tribeLoyaltyStage,
   });
-  const tribeDome = loyalty.points;
+  const society = clamp(
+    round(satisfactionRatio * 130 + populationFillRatio * 90 + employmentRatio * 80 + stabilityRatio * 50),
+    0,
+    SOVEREIGNTY_AREA_MAX_BY_ID.society,
+  );
+  const eraQuests = clamp(
+    round((questCount / 3) * 100) + clamp(wonderCount, 0, 2) * 50 + loyalty.stage * TRIBE_LOYALTY_STAGE_BONUS,
+    0,
+    SOVEREIGNTY_AREA_MAX_BY_ID.legacy,
+  );
+  const wonders = society;
+  const tribeDome = 0;
 
   const total = clamp(
-    buildingLevels + militaryRanking + heroesCouncil + eraQuests + wonders + tribeDome,
+    buildingLevels + militaryRanking + heroesCouncil + society + eraQuests,
     0,
     SOVEREIGNTY_SCORE_MAX,
   );
@@ -850,6 +1426,13 @@ export function calculateSovereigntyScore(input: SovereigntyScoreInput): Soverei
     eraQuests,
     wonders,
     tribeDome,
+    areas: [
+      { id: "production", current: buildingLevels, max: 1000 },
+      { id: "government", current: heroesCouncil, max: 500 },
+      { id: "military", current: militaryRanking, max: SOVEREIGNTY_MILITARY_SCORE_CAP },
+      { id: "society", current: society, max: SOVEREIGNTY_AREA_MAX_BY_ID.society },
+      { id: "legacy", current: eraQuests, max: SOVEREIGNTY_AREA_MAX_BY_ID.legacy },
+    ],
     tribeLoyaltyStage: loyalty.stage,
     tribeLoyaltyNextDay: loyalty.nextStageDay,
     total,
@@ -994,7 +1577,7 @@ export function deriveOutcomeDecisionInput(scenario: OutcomeScenario): OutcomeDe
   const expansionRatio = clamp(scenario.activeVillageCount / totalVillageCap, 0, 1);
   const attackPressure = scenario.activeVillageCount > 0 ? scenario.underAttackVillageCount / scenario.activeVillageCount : 0;
   const developmentRatio = clamp(averageDevelopment / 100, 0, 1);
-  const militaryRatio = clamp(scenario.militaryRankingPoints / 500, 0, 1);
+  const militaryRatio = clamp(scenario.militaryRankingPoints / SOVEREIGNTY_MILITARY_SCORE_CAP, 0, 1);
   const wonderRatio = clamp(scenario.wondersControlled / 5, 0, 1);
   const questRatio = clamp(scenario.eraQuestsCompleted / 3, 0, 1);
   const resilienceRatio = clamp(1 - attackPressure, 0, 1);
@@ -1077,10 +1660,6 @@ export function calculateDailyEconomy(input: DailyEconomyInput): DailyEconomyRes
       input.villages *
       (160 + input.structures.economy * 21 + input.research.economy * 12) *
       (0.88 + input.traits.economyFocus * 0.47),
-    energy:
-      input.villages *
-      (125 + input.structures.infrastructure * 19 + input.research.logistics * 11) *
-      (0.9 + input.traits.economyFocus * 0.18),
     influence:
       input.villages *
       (22 + input.structures.governance * 4 + input.research.governance * 3) *
@@ -1089,41 +1668,23 @@ export function calculateDailyEconomy(input: DailyEconomyInput): DailyEconomyRes
 
   let materials = productionBase.materials * terrainProductionMultiplier;
   let supplies = productionBase.supplies * terrainProductionMultiplier;
-  let energy = productionBase.energy * terrainProductionMultiplier;
-  let influence = productionBase.influence * terrainProductionMultiplier;
   let upkeep =
     (input.villages * 42 + input.troops.offense * 0.052 + input.troops.defense * 0.047) *
     upkeepMult;
 
   materials *= safeMultiplier(catastrophe.materialsMult);
   supplies *= safeMultiplier(catastrophe.suppliesMult);
-  energy *= safeMultiplier(catastrophe.energyMult);
-  influence *= safeMultiplier(catastrophe.influenceMult);
   upkeep *= safeMultiplier(catastrophe.upkeepMult);
 
   if (input.activeProtocol === "focus_supply") {
     supplies *= 1.22;
     materials *= 0.92;
-  } else if (input.activeProtocol === "focus_energy") {
-    energy *= 1.22;
-    materials *= 0.95;
-  } else if (input.activeProtocol === "focus_influence") {
-    influence *= 1.3;
-    supplies *= 0.94;
   }
-
-  const villageConsumptionEnergy =
-    input.villages * 18 +
-    input.structures.infrastructure * 9 +
-    input.structures.military * 6;
 
   let materialsStock = input.resources.materials + round(materials);
   let suppliesStock = input.resources.supplies + round(supplies - upkeep);
-  let energyStock = input.resources.energy + round(energy - villageConsumptionEnergy);
-  let influenceStock = input.resources.influence + round(influence);
 
   let supplyPenaltyRatio = 0;
-  let energyPenaltyRatio = 0;
   let offenseMultiplierAfterPenalty = 1;
   let defenseMultiplierAfterPenalty = 1;
 
@@ -1134,31 +1695,165 @@ export function calculateDailyEconomy(input: DailyEconomyInput): DailyEconomyRes
     suppliesStock = 0;
   }
 
-  if (energyStock < 0) {
-    energyPenaltyRatio = clamp(Math.abs(energyStock) / 1800, 0.04, 0.22);
-    defenseMultiplierAfterPenalty *= 1 - energyPenaltyRatio * 0.35;
-    energyStock = 0;
-  }
-
   return {
     production: {
       materials: round(materials),
       supplies: round(supplies),
-      energy: round(energy),
-      influence: round(influence),
+      influence: 0,
     },
     upkeep: round(upkeep),
-    villageConsumptionEnergy: round(villageConsumptionEnergy),
     stocksAfterTick: {
       materials: Math.max(0, materialsStock),
       supplies: Math.max(0, suppliesStock),
-      energy: Math.max(0, energyStock),
-      influence: Math.max(0, influenceStock),
+      influence: 0,
     },
     supplyPenaltyRatio,
-    energyPenaltyRatio,
     offenseMultiplierAfterPenalty,
     defenseMultiplierAfterPenalty,
+  };
+}
+
+export function calculateCityDailyProduction(input: CityDailyProductionInput): CityDailyProductionResult {
+  const government = getVillageGovernmentLevel(input.levels);
+  const production = getVillageProductionLevel(input.levels);
+  const society = getVillageSocietyLevel(input.levels);
+  const recruitment = getVillageRecruitmentLevel(input.levels);
+  const defense = getVillageDefenseLevel(input.levels);
+
+  const economyDots = sanitizeCitySkillDots(input.economySkillDots);
+  const societyDots = sanitizeCitySkillDots(input.societySkillDots);
+  const crownDots = sanitizeCitySkillDots(input.crownSkillDots);
+
+  const workers: Record<CityProductionFocusId, number> = {
+    materials: clamp(Math.floor(input.productionWorkers?.materials ?? 0), 0, 100),
+    supplies: clamp(Math.floor(input.productionWorkers?.supplies ?? 0), 0, 100),
+    commerce: clamp(Math.floor(input.productionWorkers?.commerce ?? 0), 0, 100),
+    logistics: clamp(Math.floor(input.productionWorkers?.logistics ?? 0), 0, 100),
+  };
+  const jobs: Record<CitySocietyJobId, number> = {
+    medics: clamp(Math.floor(input.jobs?.medics ?? 0), 0, 100),
+    crafts: clamp(Math.floor(input.jobs?.crafts ?? 0), 0, 100),
+    order: clamp(Math.floor(input.jobs?.order ?? 0), 0, 100),
+    scholars: clamp(Math.floor(input.jobs?.scholars ?? 0), 0, 100),
+  };
+
+  const cityClass = resolveCityClassYieldModifiers(input.cityClass);
+  const terrain = resolveTerrainYieldModifiers(input.terrainKind);
+  const hero = resolveHeroYieldModifiers(input.heroBuild);
+  const societyState = calculateCitySocietyState({
+    cityClass: input.cityClass,
+    terrainKind: input.terrainKind,
+    heroBuild: input.heroBuild,
+    levels: input.levels,
+    societySkillDots: input.societySkillDots,
+    productionWorkers: workers,
+    jobs,
+    populationCurrent: input.populationCurrent,
+    underAttack: input.underAttack,
+    kingSatisfactionDelta: input.kingSatisfactionDelta,
+    kingCrisisRiskDelta: input.kingCrisisRiskDelta,
+  });
+
+  const focusMaterials = input.productionFocus === "materials" ? 1.12 : 1;
+  const focusSupplies = input.productionFocus === "supplies" ? 1.12 : 1;
+  const focusInfluence = input.productionFocus === "commerce" ? 1.12 : 1;
+  const focusLogistics = input.productionFocus === "logistics" ? 1.14 : 1;
+  const societyFocusStability = input.societyFocus === "medics" || input.societyFocus === "order" ? 1.08 : 1;
+  const societyFocusInfluence = input.societyFocus === "scholars" ? 1.08 : 1;
+
+  const populationPressure =
+    typeof input.populationCurrent === "number" && input.populationCurrent > 0
+      ? clamp(input.populationCurrent / Math.max(10, calculateVillagePopulationCap(input.levels)), 0.55, 1)
+      : 1;
+  const attackPressure = input.underAttack ? 0.92 : 1;
+  const kingResourceProduction = safeMultiplier(input.kingResourceProductionMultiplier);
+  const worldResourceSpeed = safeMultiplier(input.worldSpeedMultiplier);
+
+  const baseMaterials = 30 + production * 8 + economyDots.a * 6 + jobs.crafts * 0.8;
+  const baseSupplies = 28 + production * 7 + economyDots.b * 6 + jobs.medics * 0.3;
+  const baseInfluence = 10 + government * 4 + crownDots.a * 2 + crownDots.b * 3 + jobs.scholars * 0.7 + jobs.order * 0.5;
+  const baseLogistics = 6 + production * 2 + economyDots.d * 2 + workers.logistics * 0.8;
+  const baseStability =
+    42 +
+    society * 5 +
+    defense * 2 +
+    societyDots.c * 4 +
+    jobs.medics * 1.2 +
+    jobs.order * 1.5 -
+    workers.commerce * 0.35 -
+    workers.logistics * 0.15;
+
+  const materials =
+    (baseMaterials + workers.materials * (6 + production * 0.4) + workers.logistics * 0.8) *
+    (1 + economyDots.a * 0.03) *
+    cityClass.materials *
+    terrain.materials *
+    hero.materials *
+    focusMaterials *
+    kingResourceProduction *
+    worldResourceSpeed *
+    populationPressure *
+    attackPressure *
+    societyState.productionMultiplier;
+  const supplies =
+    (baseSupplies + workers.supplies * (6 + production * 0.35) + workers.logistics * 0.5) *
+    (1 + economyDots.b * 0.03) *
+    cityClass.supplies *
+    terrain.supplies *
+    hero.supplies *
+    focusSupplies *
+    kingResourceProduction *
+    worldResourceSpeed *
+    populationPressure *
+    attackPressure *
+    societyState.productionMultiplier;
+  const influence =
+    (baseInfluence + workers.commerce * (1.8 + production * 0.12) + jobs.scholars * 0.8 + jobs.order * 0.35) *
+    (1 + economyDots.c * 0.04 + crownDots.a * 0.02 + crownDots.b * 0.015) *
+    cityClass.influence *
+    terrain.influence *
+    hero.influence *
+    focusInfluence *
+    societyFocusInfluence *
+    attackPressure *
+    (0.92 + societyState.satisfaction / 125);
+  const logistics =
+    (baseLogistics + workers.logistics * (1.1 + production * 0.1) + jobs.crafts * 0.25) *
+    cityClass.logistics *
+    terrain.logistics *
+    hero.logistics *
+    focusLogistics *
+    kingResourceProduction *
+    worldResourceSpeed *
+    societyState.productionMultiplier;
+  const stability = societyState.satisfaction;
+
+  return {
+    materials: round(materials),
+    supplies: round(supplies),
+    influence: round(influence),
+    logistics: round(logistics),
+    stability: clamp(round(stability), 0, 100),
+    breakdown: {
+      cityClass: cityClass.label,
+      terrain: terrain.label,
+      sectors: {
+        government,
+        production,
+        society,
+        recruitment,
+        defense,
+      },
+      workers,
+      jobs,
+      modifiers: {
+        materials: round(cityClass.materials * terrain.materials * hero.materials * focusMaterials * kingResourceProduction * worldResourceSpeed * 100) / 100,
+        supplies: round(cityClass.supplies * terrain.supplies * hero.supplies * focusSupplies * kingResourceProduction * worldResourceSpeed * 100) / 100,
+        influence: round(cityClass.influence * terrain.influence * hero.influence * focusInfluence * societyFocusInfluence * 100) / 100,
+        logistics: round(cityClass.logistics * terrain.logistics * hero.logistics * focusLogistics * kingResourceProduction * worldResourceSpeed * 100) / 100,
+        stability: round(cityClass.stability * terrain.stability * hero.stability * societyFocusStability * 100) / 100,
+      },
+    },
   };
 }
 
@@ -1302,7 +1997,6 @@ export type MapConstructionOptions = TerrainModifiers & {
 
 export type MapConstructionCost = {
   materials: number;
-  energy: number;
   influence: number;
   buildMinutes: number;
 };
@@ -1329,8 +2023,8 @@ export function calculateMapConstructionCost(
 
   const base =
     construction === "road"
-      ? { materials: 170, energy: 64, influence: 0, minutes: 11, distanceGrowth: 1.05 }
-      : { materials: 1820, energy: 760, influence: 0, minutes: 38, distanceGrowth: 1.12 };
+      ? { materials: 170, influence: 0, minutes: 11, distanceGrowth: 1.05 }
+      : { materials: 1820, influence: 0, minutes: 38, distanceGrowth: 1.12 };
 
   const distanceScalar = base.distanceGrowth ** distance;
 
@@ -1340,7 +2034,6 @@ export function calculateMapConstructionCost(
 
     return {
       materials: round(base.materials * distanceScalar * terrainCost * logisticsDiscount * expansionPressure * targetDiscount),
-      energy: round(base.energy * distanceScalar * terrainCost * logisticsDiscount * (0.96 + ownedVillages * 0.04) * targetDiscount),
       influence: round((influencePressure + distance * 18) * targetDiscount),
       buildMinutes: Math.max(1, round(base.minutes * distanceScalar * terrainTime * logisticsDiscount * (0.92 + ownedVillages * 0.05))),
     };
@@ -1348,7 +2041,6 @@ export function calculateMapConstructionCost(
 
   return {
     materials: round(base.materials * distanceScalar * terrainCost * logisticsDiscount),
-    energy: round(base.energy * distanceScalar * terrainCost * logisticsDiscount),
     influence: round(base.influence * distanceScalar * terrainCost),
     buildMinutes: Math.max(1, round(base.minutes * distanceScalar * terrainTime * logisticsDiscount)),
   };
@@ -1397,7 +2089,6 @@ export type LegacySliceBuildingCurve = {
   level: number;
   baseCost: {
     materials: number;
-    energy: number;
     influence: number;
   };
   baseTimeMin: number;
@@ -1406,7 +2097,6 @@ export type LegacySliceBuildingCurve = {
 
 export type LegacySliceUpgradeCost = {
   materials: number;
-  energy: number;
   influence: number;
   timeMin: number;
 };
@@ -1421,7 +2111,6 @@ export function calculateLegacySliceUpgradeCost(
 
   return {
     materials: round(building.baseCost.materials * factor * costMult),
-    energy: round(building.baseCost.energy * factor * costMult),
     influence: round(building.baseCost.influence * factor * costMult),
     timeMin: Math.max(6, round(building.baseTimeMin * factor * timeMult)),
   };
@@ -1450,8 +2139,7 @@ export function calculateLegacySliceEconomyTick(input: LegacySliceEconomyInput):
   const income = {
     materials: 210 + input.palaceLevel * 9 + input.roadsLevel * 4,
     supplies: 185 + input.palaceLevel * 5 + input.roadsLevel * 3,
-    energy: 140 + input.roadsLevel * 10 + input.bastionLevel * 2,
-    influence: 22 + input.palaceLevel * 3 + Math.floor(input.roadsLevel * 0.8),
+    influence: 0,
   };
 
   const upkeep = 92 + input.arsenalLevel * 7 + input.bastionLevel * 4;
@@ -1461,28 +2149,10 @@ export function calculateLegacySliceEconomyTick(input: LegacySliceEconomyInput):
     nextResources: {
       materials: Math.max(0, input.resources.materials + income.materials),
       supplies: Math.max(0, input.resources.supplies + income.supplies - upkeep),
-      energy: Math.max(0, input.resources.energy + income.energy),
-      influence: Math.max(0, Math.min(influenceCap, input.resources.influence + income.influence)),
+      influence: 0,
     },
     income,
     upkeep,
     influenceCap,
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,6 +1,7 @@
-"use client";
+﻿﻿"use client";
 
-import { Compass, Minus, Plus, RotateCcw } from "lucide-react";
+import Link from "next/link";
+import { Globe2, MapPin, Minus, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import {
@@ -13,19 +14,23 @@ import {
   hexLine,
   pixelToAxial,
   type AxialCoord,
-  type HexLayout,
   type PixelPoint,
 } from "@/lib/hex-grid";
 import {
   CITY_DIPLOMAT_UNLOCK_DEVELOPMENT,
+  FINAL_EXODUS_DAY,
   MAX_CITY_DIPLOMATS,
+  SOVEREIGNTY_MILITARY_SCORE_CAP,
   SOVEREIGNTY_PORTAL_CUT,
+  calculateDefensePower,
+  calculateTroopPower,
   calculateMapConstructionCost,
   calculateMarchTimeMinutes,
   calculateSovereigntyScore,
   calculateTribeProgressStage,
   calculateSpyOperationCost,
   calculateVillageDevelopment,
+  getVillageDefenseLevel,
   canEnterPortal,
   type TerrainModifiers,
 } from "@/core/GameBalance";
@@ -37,11 +42,21 @@ import {
   type TerrainKind,
 } from "@/lib/cities";
 import { useImperialState } from "@/lib/imperial-state";
+import { resolveKingGameplayModifiers } from "@/lib/king-profiles";
+import type {
+  CityDefenseAllocations,
+  CityDefenseProtocol,
+  ExplorationDiscoveryType,
+  HeroBuildId,
+  ImperialExplorationDiscovery,
+  ImperialVillageClaim,
+} from "@/lib/imperial-state";
 import { emitUiFeedback } from "@/lib/ui-feedback";
 import { useLiveWorld } from "@/lib/world-runtime";
 import { getDefaultBuildingLevels, getZeroBuildingLevels } from "@/lib/buildings";
+import { processKingsWorldCombat, type CombatArmy, type CombatResult } from "@/lib/combat-engine";
 import type { BoardSite } from "@/lib/mock-data";
-import type { VillageSummary } from "@/lib/mock-data";
+import { ExplorationRevealModal } from "./ExplorationRevealModal";
 import {
   CORE_RING_LIMIT,
   MID_RING_LIMIT,
@@ -49,185 +64,260 @@ import {
   WORLD_HEX_TILE_COUNT,
   WORLD_HEX_TILE_SIZE_PX,
 } from "@/lib/world-map-config";
-
-type Faction = "self" | "tribe" | "ally" | "enemy" | "abandoned" | "neutral";
-type RelationFilter = "all" | "self" | "tribe" | "ally" | "enemy" | "abandoned";
-type MapZone = "outer" | "mid" | "core";
-type DistrictId = "A" | "B" | "C" | "D" | "E" | "F";
-type HotspotKind = "oasis" | "ruins" | "rare_mine";
-
-type MapSite = BoardSite & {
-  id: string;
-  q: number;
-  r: number;
-  coordKey: string;
-  faction: Faction;
-  occupationKind?: CityOriginKind;
-  terrainKind?: TerrainKind;
-  terrainLabel?: string;
-  recommendedCityClass?: CityClass;
-};
-
-type WorldHexTile = {
-  q: number;
-  r: number;
-  coordKey: string;
-  distance: number;
-  zone: MapZone;
-  district: DistrictId;
-  terrainKind: TerrainKind;
-  isCentralThrone: boolean;
-  center: PixelPoint;
-  points: string;
-};
-
-type DistrictLabel = {
-  district: DistrictId;
-  x: number;
-  y: number;
-};
-
-type FrontierLine = {
-  id: string;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-};
-
-type ScenicDecoration = {
-  key: string;
-  d: string;
-  fill: string;
-  opacity: number;
-};
-
-type Hotspot = {
-  id: string;
-  q: number;
-  r: number;
-  coordKey: string;
-  district: DistrictId;
-  kind: HotspotKind;
-  name: string;
-  terrainBonus: TerrainModifiers;
-};
-
-type FactionInfluenceOverlay = {
-  coordKey: string;
-  points: string;
-  faction: Faction;
-  strength: number;
-};
-
-type BuiltWorld = {
-  width: number;
-  height: number;
-  layout: HexLayout;
-  tiles: WorldHexTile[];
-  centerByKey: Map<string, PixelPoint>;
-  districtLabels: DistrictLabel[];
-  frontierLines: FrontierLine[];
-  centerPoint: PixelPoint;
-};
-
-type StrategicMapProps = {
-  worldId: string;
-  tribeName: string;
-  sites: BoardSite[];
-  villages: Pick<VillageSummary, "id" | "name" | "type" | "materials" | "supplies" | "energy" | "influence" | "buildingLevels">[];
-  currentDay: number;
-  sovereigntyScore: number;
-};
-
-type TileActionKind = "inspect" | "build" | "go" | "attack" | "annex" | "spy";
-
-type ActionStep = "choose" | "configure";
-
-type TileActionOption = {
-  kind: TileActionKind;
-  label: string;
-  enabled: boolean;
-  reason?: string;
-};
+import {
+  DEFAULT_WORLD_ZOOM,
+  DETAIL_RING_LIMIT,
+  DETAIL_ZOOM_THRESHOLD,
+  DISTRICT_IDS,
+  DISTRICT_META,
+  EXPLORATION_ACTION_COST_BASE,
+  FOG_VISUAL_DISABLED,
+  HOTSPOT_META,
+  HOTSPOT_TARGET,
+  INTERNAL_AID_SPEED_MULT,
+  MACRO_VISION_THRESHOLD,
+  MAP_IMAGE_CALIBRATION,
+  MICRO_VISION_THRESHOLD,
+  PHASE4_REGROUP_SPEED_MULT,
+  PLAYER_VILLAGE_CAP,
+  TERRAIN_VISUAL_META,
+  THRONE_TOOLTIP,
+  TILE_STYLE_BY_ZONE,
+  TROOP_LABELS,
+  TROOP_ORDER,
+  WORLD_MAP_IMAGE_SRC,
+  WORLD_OVERVIEW_ZOOM,
+  ZOOM_LEVEL_SCALE,
+} from "./strategic-map-config";
+import {
+  actionTone,
+  relationFilterLabel,
+  relationFilterTone,
+} from "./strategic-map-copy";
+import {
+  buildHexWorld,
+  buildBattleLogLine,
+  buildTargetDefense,
+  cityDetailImageSrc,
+  cityIconSrcForSite,
+  cityMicroSurfaceStyle,
+  clampNumber,
+  classifyFaction,
+  createClaimedVillageName,
+  factionInfluenceColor,
+  findBoardSiteByCoord,
+  formatLegacyCoord,
+  generateAmbientSites,
+  generateHotspots,
+  hashSeed,
+  influenceRadiusForSite,
+  influenceWeight,
+  isVillageSite,
+  labelClass,
+  markerBorderClass,
+  markerFillClass,
+  markerGlowStyle,
+  normalizeAxial,
+  mergeLoot,
+  siteMarkerText,
+  strategicNodeTone,
+  subtractArmyLosses,
+} from "./strategic-map-model";
+import type {
+  ActionStep,
+  BuildMode,
+  BuiltWorld,
+  DistrictId,
+  DistrictLabel,
+  Faction,
+  FactionInfluenceOverlay,
+  FrontierLine,
+  Hotspot,
+  HotspotKind,
+  MapSite,
+  MapZone,
+  MovementDraft,
+  RelationFilter,
+  StrategicMapProps,
+  StrategicNode,
+  StrategicNodeState,
+  StoredMapMovement,
+  TileActionKind,
+  TileActionOption,
+  TroopPreset,
+  TroopSelection,
+  TroopTypeId,
+  WorldHexTile,
+  ZoomLevel,
+} from "./strategic-map-types";
 
 function describeTileAction(kind: TileActionKind): string {
-  if (kind === "build") return "Funda rota ou cidade";
-  if (kind === "go") return "Marcha, apoio ou portal";
-  if (kind === "attack") return "Tomada por combate";
-  if (kind === "annex") return "Posse diplomatica";
-  if (kind === "spy") return "Leitura do alvo";
-  return "Leitura do hex";
+  if (kind === "build") return "Criar estrada ou cidade";
+  if (kind === "go") return "Enviar marcha ou apoio";
+  if (kind === "attack") return "Tentar tomar a cidade";
+  if (kind === "annex") return "Tomar cidade vazia";
+  if (kind === "explore") return "Revelar a área e descobrir riscos";
+  if (kind === "spy") return "Revelar alvo hostil";
+  return "Apenas olhar";
 }
-
-function actionTone(kind: TileActionKind): string {
-  if (kind === "attack") return "border-rose-300/45 bg-rose-500/12 text-rose-100";
-  if (kind === "annex") return "border-cyan-300/45 bg-cyan-500/12 text-cyan-100";
-  if (kind === "build") return "border-emerald-300/45 bg-emerald-500/12 text-emerald-100";
-  if (kind === "go") return "border-amber-300/45 bg-amber-500/12 text-amber-100";
-  if (kind === "spy") return "border-violet-300/45 bg-violet-500/12 text-violet-100";
-  return "border-white/20 bg-white/8 text-slate-100";
-}
-
-function relationFilterLabel(filter: RelationFilter): string {
-  if (filter === "all") return "Tudo";
-  if (filter === "self") return "So eu";
-  if (filter === "tribe") return "Tribo";
-  if (filter === "ally") return "Aliados";
-  if (filter === "enemy") return "Inimigos";
-  return "Abandonadas";
-}
-
-function relationFilterTone(filter: RelationFilter, active: boolean): string {
-  if (!active) {
-    return "border-white/15 bg-white/6 text-slate-200";
-  }
-
-  if (filter === "all") return "border-sky-300/80 bg-sky-500/18 text-sky-100";
-  if (filter === "self") return "border-yellow-300/80 bg-yellow-400/18 text-yellow-50";
-  if (filter === "tribe") return "border-rose-300/80 bg-rose-500/18 text-rose-100";
-  if (filter === "ally") return "border-violet-300/80 bg-violet-500/18 text-violet-100";
-  if (filter === "enemy") return "border-emerald-300/80 bg-emerald-500/18 text-emerald-100";
-  return "border-amber-300/80 bg-amber-500/18 text-amber-100";
-}
-
-type TroopTypeId = "militia" | "shooters" | "scouts" | "machinery";
-
-type TroopSelection = Record<TroopTypeId, number>;
-
-type TroopPreset = "light" | "balanced" | "heavy" | "custom";
-
-type MovementDraft = {
-  action: Exclude<TileActionKind, "inspect">;
-  from: AxialCoord;
-  to: AxialCoord;
-  etaMinutes: number;
-  route: AxialCoord[];
-};
 
 const ZERO_AXIAL: AxialCoord = { q: 0, r: 0 };
-const ZOOM_MIN = 0.42;
-const ZOOM_MAX = 5;
-const DEFAULT_WORLD_ZOOM = 1;
-const ZOOM_STEP = 0.2;
-const DETAIL_ZOOM_THRESHOLD = 3;
-const DETAIL_RING_LIMIT = MID_RING_LIMIT - 1;
-const HOTSPOT_TARGET = 30;
-const PHASE4_REGROUP_SPEED_MULT = 5;
-const INTERNAL_AID_SPEED_MULT = 5;
-const THRONE_TOOLTIP = "Trono de Kingsworld - acesso condicionado a Influencia minima de 1500";
-const PLAYER_VILLAGE_CAP = 10;
+function clampZoomLevel(level: number): ZoomLevel {
+  if (level <= 1) return 1;
+  if (level === 2) return 2;
+  if (level === 3) return 3;
+  return 4;
+}
 
-const DISTRICT_IDS: DistrictId[] = ["A", "B", "C", "D", "E", "F"];
+function explorationSeed(worldId: string, coordKey: string): number {
+  return hashSeed(`${worldId}:${coordKey}:explore`);
+}
 
-const TROOP_ORDER: TroopTypeId[] = ["militia", "shooters", "scouts", "machinery"];
+function buildExplorationDiscovery(
+  worldId: string,
+  tile: WorldHexTile,
+  routeSummary: { hexCount: number },
+): ImperialExplorationDiscovery {
+  const roll = explorationSeed(worldId, tile.coordKey) % 100;
+  const farFromCenter = tile.distance >= MID_RING_LIMIT;
+  const type: ExplorationDiscoveryType =
+    roll < 34
+      ? "empty"
+      : roll < 58
+        ? "opportunity"
+        : roll < 82
+          ? farFromCenter ? "threat" : "ruins"
+          : farFromCenter
+            ? "dragon"
+            : "threat";
 
-const TROOP_LABELS: Record<TroopTypeId, { label: string; short: string; qualityWeight: number }> = {
-  militia: { label: "Milicia", short: "MI", qualityWeight: 1 },
-  shooters: { label: "Atiradores", short: "AT", qualityWeight: 1.4 },
-  scouts: { label: "Batedores", short: "BD", qualityWeight: 1.8 },
-  machinery: { label: "Maquinaria", short: "MQ", qualityWeight: 2.8 },
-};
+  if (type === "opportunity") {
+    return {
+      coordKey: tile.coordKey,
+      type,
+      status: "new",
+      title: "Oportunidade revelada",
+      summary: "Batedores encontraram sinais de riqueza e posição boa para expansão. A área merece atenção antes que outro reino chegue.",
+      imageSrc: "/images/card-opportunity.jpg",
+      riskLabel: "Risco médio",
+      rewardLabel: "Bônus de fundação",
+      actionLabel: "Marcar oportunidade",
+    };
+  }
+
+  if (type === "ruins") {
+    return {
+      coordKey: tile.coordKey,
+      type,
+      status: "new",
+      title: "Ruínas antigas",
+      summary: "A estrutura está caída, mas o terreno guarda fundações aproveitáveis. Bom ponto para cidade ou evento futuro.",
+      imageSrc: "/images/threat-empty-ruins.jpg",
+      riskLabel: "Risco leve",
+      rewardLabel: "Ruína útil",
+      actionLabel: "Marcar ruína",
+    };
+  }
+
+  if (type === "threat") {
+    const demon = explorationSeed(worldId, `${tile.coordKey}:threat`) % 2 === 0;
+    return {
+      coordKey: tile.coordKey,
+      type,
+      status: "new",
+      title: demon ? "Presença demoníaca" : "Saqueadores avistados",
+      summary: demon
+        ? "A área pulsa com corrupção e atividade hostil. Ignorar agora pode deixar a fronteira mais cara depois."
+        : "Grupos armados leves rondam a região. Não é uma guerra, mas já pressiona qualquer fundação próxima.",
+      imageSrc: demon ? "/images/threat-demons.jpg" : "/images/threat-raiders.jpg",
+      riskLabel: demon ? "Risco alto" : "Risco médio",
+      rewardLabel: "Alvo militar",
+      actionLabel: "Marcar ameaça",
+    };
+  }
+
+  if (type === "dragon") {
+    return {
+      coordKey: tile.coordKey,
+      type,
+      status: "new",
+      title: "Dragão à vista",
+      summary: "Os exploradores recuaram vivos, mas a mensagem é clara: há uma presença rara dominando a área. Isso vira história, risco e valor.",
+      imageSrc: "/images/dragon-in-sight.jpg",
+      riskLabel: "Risco extremo",
+      rewardLabel: "Evento raro",
+      actionLabel: "Marcar criatura",
+    };
+  }
+
+  return {
+    coordKey: tile.coordKey,
+    type: "empty",
+    status: "new",
+    title: "Território conhecido",
+    summary: routeSummary.hexCount > 5
+      ? "Nada decisivo apareceu, mas a área agora está registrada. É um corredor seguro para leitura e expansão futura."
+      : "A área não revelou ameaça imediata. Terreno livre, sem dono visível, bom para planejar a próxima rota.",
+    imageSrc: "/images/territory-known-empty.jpg",
+    riskLabel: "Sem ameaça",
+    rewardLabel: "Área conhecida",
+    actionLabel: "Marcar terreno",
+  };
+}
+
+function discoveryTypeLabel(type: ExplorationDiscoveryType): string {
+  switch (type) {
+    case "opportunity":
+      return "Oportunidade";
+    case "threat":
+      return "Ameaça";
+    case "ruins":
+      return "Ruína";
+    case "dragon":
+      return "Criatura rara";
+    default:
+      return "Território";
+  }
+}
+
+function discoveryAccent(type: ExplorationDiscoveryType): {
+  chip: string;
+  panel: string;
+  glow: string;
+} {
+  switch (type) {
+    case "opportunity":
+      return {
+        chip: "border-amber-300/45 bg-amber-500/12 text-amber-100",
+        panel: "border-amber-300/25 bg-amber-500/10",
+        glow: "rgba(251,191,36,0.26)",
+      };
+    case "threat":
+      return {
+        chip: "border-rose-300/45 bg-rose-500/12 text-rose-100",
+        panel: "border-rose-300/25 bg-rose-500/10",
+        glow: "rgba(244,63,94,0.24)",
+      };
+    case "ruins":
+      return {
+        chip: "border-violet-300/45 bg-violet-500/12 text-violet-100",
+        panel: "border-violet-300/25 bg-violet-500/10",
+        glow: "rgba(168,85,247,0.22)",
+      };
+    case "dragon":
+      return {
+        chip: "border-orange-300/50 bg-orange-500/14 text-orange-100",
+        panel: "border-orange-300/30 bg-orange-500/10",
+        glow: "rgba(249,115,22,0.26)",
+      };
+    default:
+      return {
+        chip: "border-cyan-300/35 bg-cyan-500/10 text-cyan-100",
+        panel: "border-cyan-300/20 bg-cyan-500/10",
+        glow: "rgba(34,211,238,0.22)",
+      };
+  }
+}
 
 function presetRatio(preset: Exclude<TroopPreset, "custom">): number {
   return preset === "light" ? 0.28 : preset === "heavy" ? 0.78 : 0.52;
@@ -261,759 +351,6 @@ function sameTroopSelection(a: TroopSelection, b: TroopSelection): boolean {
 }
 
 
-const TILE_STYLE_BY_ZONE: Record<MapZone, { fill: string; stroke: string }> = {
-  outer: {
-    fill: "rgba(15, 23, 42, 0.32)",
-    stroke: "rgba(148, 163, 184, 0.22)",
-  },
-  mid: {
-    fill: "rgba(30, 41, 59, 0.34)",
-    stroke: "rgba(125, 211, 252, 0.24)",
-  },
-  core: {
-    fill: "rgba(56, 189, 248, 0.16)",
-    stroke: "rgba(186, 230, 253, 0.36)",
-  },
-};
-
-const DISTRICT_META: Record<DistrictId, { tint: string; badge: string }> = {
-  A: { tint: "rgba(56, 189, 248, 0.05)", badge: "border-cyan-300/55 bg-cyan-400/15 text-cyan-100" },
-  B: { tint: "rgba(52, 211, 153, 0.05)", badge: "border-emerald-300/55 bg-emerald-400/15 text-emerald-100" },
-  C: { tint: "rgba(147, 197, 253, 0.05)", badge: "border-blue-300/55 bg-blue-400/15 text-blue-100" },
-  D: { tint: "rgba(196, 181, 253, 0.05)", badge: "border-violet-300/55 bg-violet-400/15 text-violet-100" },
-  E: { tint: "rgba(251, 191, 36, 0.05)", badge: "border-amber-300/55 bg-amber-400/15 text-amber-100" },
-  F: { tint: "rgba(244, 114, 182, 0.05)", badge: "border-pink-300/55 bg-pink-400/15 text-pink-100" },
-};
-
-const HOTSPOT_META: Record<HotspotKind, { icon: string; label: string; chipClass: string }> = {
-  oasis: { icon: "O", label: "Oasis", chipClass: "border-cyan-300/80 bg-cyan-500/30 text-cyan-100" },
-  ruins: { icon: "R", label: "Ruinas", chipClass: "border-amber-300/80 bg-amber-500/30 text-amber-100" },
-  rare_mine: { icon: "M", label: "Mina Rara", chipClass: "border-emerald-300/80 bg-emerald-500/30 text-emerald-100" },
-};
-
-const TERRAIN_VISUAL_META: Record<TerrainKind, { tint: string; badgeClass: string; short: string }> = {
-  crown_heartland: {
-    tint: "rgba(120, 184, 120, 0.06)",
-    badgeClass: "border-slate-200/60 bg-slate-200/10 text-slate-100",
-    short: "Metro",
-  },
-  riverlands: {
-    tint: "rgba(66, 153, 104, 0.06)",
-    badgeClass: "border-cyan-300/60 bg-cyan-400/10 text-cyan-100",
-    short: "Celeiro",
-  },
-  frontier_pass: {
-    tint: "rgba(116, 123, 138, 0.08)",
-    badgeClass: "border-amber-300/60 bg-amber-400/10 text-amber-100",
-    short: "Posto",
-  },
-  ironridge: {
-    tint: "rgba(98, 107, 124, 0.08)",
-    badgeClass: "border-rose-300/60 bg-rose-400/10 text-rose-100",
-    short: "Bastiao",
-  },
-  ashen_fields: {
-    tint: "rgba(106, 138, 96, 0.05)",
-    badgeClass: "border-sky-300/45 bg-sky-400/8 text-sky-100",
-    short: "Neutra",
-  },
-};
-
-function scenicTreePath(center: PixelPoint, scale = 1): string {
-  const w = WORLD_HEX_TILE_SIZE_PX * 0.92 * scale;
-  const h = WORLD_HEX_TILE_SIZE_PX * 1.06 * scale;
-  const trunkW = WORLD_HEX_TILE_SIZE_PX * 0.18 * scale;
-  const trunkH = WORLD_HEX_TILE_SIZE_PX * 0.28 * scale;
-  const topY = center.y - h * 0.62;
-  const midY = center.y - h * 0.12;
-  const baseY = center.y + h * 0.34;
-  const trunkTopY = center.y + h * 0.16;
-  const trunkBottomY = trunkTopY + trunkH;
-
-  return [
-    `M ${center.x.toFixed(2)} ${topY.toFixed(2)}`,
-    `L ${(center.x - w * 0.42).toFixed(2)} ${(topY + h * 0.38).toFixed(2)}`,
-    `L ${(center.x - w * 0.18).toFixed(2)} ${(midY).toFixed(2)}`,
-    `L ${(center.x - w * 0.5).toFixed(2)} ${baseY.toFixed(2)}`,
-    `L ${(center.x - trunkW / 2).toFixed(2)} ${baseY.toFixed(2)}`,
-    `L ${(center.x - trunkW / 2).toFixed(2)} ${trunkBottomY.toFixed(2)}`,
-    `L ${(center.x + trunkW / 2).toFixed(2)} ${trunkBottomY.toFixed(2)}`,
-    `L ${(center.x + trunkW / 2).toFixed(2)} ${baseY.toFixed(2)}`,
-    `L ${(center.x + w * 0.5).toFixed(2)} ${baseY.toFixed(2)}`,
-    `L ${(center.x + w * 0.18).toFixed(2)} ${midY.toFixed(2)}`,
-    `L ${(center.x + w * 0.42).toFixed(2)} ${(topY + h * 0.38).toFixed(2)}`,
-    "Z",
-    `M ${(center.x - trunkW / 2).toFixed(2)} ${trunkTopY.toFixed(2)}`,
-    `L ${(center.x + trunkW / 2).toFixed(2)} ${trunkTopY.toFixed(2)}`,
-    `L ${(center.x + trunkW / 2).toFixed(2)} ${trunkBottomY.toFixed(2)}`,
-    `L ${(center.x - trunkW / 2).toFixed(2)} ${trunkBottomY.toFixed(2)}`,
-    "Z",
-  ].join(" ");
-}
-
-function scenicMountainPath(center: PixelPoint, scale = 1): string {
-  const w = WORLD_HEX_TILE_SIZE_PX * 1.2 * scale;
-  const h = WORLD_HEX_TILE_SIZE_PX * 0.96 * scale;
-  const leftX = center.x - w * 0.62;
-  const rightX = center.x + w * 0.62;
-  const baseY = center.y + h * 0.42;
-  const saddleY = center.y - h * 0.04;
-  const leftPeakX = center.x - w * 0.2;
-  const rightPeakX = center.x + w * 0.3;
-  const leftPeakY = center.y - h * 0.82;
-  const rightPeakY = center.y - h * 0.68;
-
-  return [
-    `M ${leftX.toFixed(2)} ${baseY.toFixed(2)}`,
-    `L ${leftPeakX.toFixed(2)} ${leftPeakY.toFixed(2)}`,
-    `L ${center.x.toFixed(2)} ${saddleY.toFixed(2)}`,
-    `L ${rightPeakX.toFixed(2)} ${rightPeakY.toFixed(2)}`,
-    `L ${rightX.toFixed(2)} ${baseY.toFixed(2)}`,
-    "Z",
-  ].join(" ");
-}
-
-function scenicForestBandPath(center: PixelPoint, scale = 1): string {
-  const w = WORLD_HEX_TILE_SIZE_PX * 1.28 * scale;
-  const h = WORLD_HEX_TILE_SIZE_PX * 0.88 * scale;
-  const leftX = center.x - w * 0.52;
-  const rightX = center.x + w * 0.52;
-  const baseY = center.y + h * 0.42;
-
-  return [
-    `M ${leftX.toFixed(2)} ${baseY.toFixed(2)}`,
-    `L ${(center.x - w * 0.26).toFixed(2)} ${(center.y - h * 0.44).toFixed(2)}`,
-    `L ${(center.x - w * 0.08).toFixed(2)} ${(center.y + h * 0.08).toFixed(2)}`,
-    `L ${center.x.toFixed(2)} ${(center.y - h * 0.62).toFixed(2)}`,
-    `L ${(center.x + w * 0.12).toFixed(2)} ${(center.y + h * 0.04).toFixed(2)}`,
-    `L ${(center.x + w * 0.3).toFixed(2)} ${(center.y - h * 0.38).toFixed(2)}`,
-    `L ${rightX.toFixed(2)} ${baseY.toFixed(2)}`,
-    "Z",
-  ].join(" ");
-}
-
-function buildScenicDecoration(tile: WorldHexTile): ScenicDecoration | null {
-  const scenicSeed = hashSeed(`scenic:${tile.coordKey}`);
-  const center = tile.center;
-
-  if (tile.terrainKind === "ironridge" || tile.terrainKind === "frontier_pass") {
-    if (scenicSeed % 100 >= 58) {
-      return null;
-    }
-
-    return {
-      key: `scenic-${tile.coordKey}`,
-      d: scenicMountainPath(
-        {
-          x: center.x + ((scenicSeed % 7) - 3) * 0.4,
-          y: center.y + ((Math.floor(scenicSeed / 7) % 7) - 3) * 0.25,
-        },
-        1 + (scenicSeed % 3) * 0.08,
-      ),
-      fill: tile.terrainKind === "ironridge" ? "rgba(220,226,235,0.72)" : "rgba(202,210,222,0.68)",
-      opacity: 1,
-    };
-  }
-
-  if (scenicSeed % 100 >= 34) {
-    return null;
-  }
-
-  const forestScale = tile.terrainKind === "riverlands" ? 1.06 : tile.terrainKind === "crown_heartland" ? 1 : 0.94;
-  const forestPath = scenicSeed % 2 === 0 ? scenicForestBandPath(center, forestScale) : scenicTreePath(center, forestScale);
-
-  return {
-    key: `scenic-${tile.coordKey}`,
-    d: forestPath,
-    fill: tile.terrainKind === "riverlands" ? "rgba(46,126,87,0.76)" : "rgba(58,118,72,0.74)",
-    opacity: 1,
-  };
-}
-
-function parseLegacyCoord(coord: string): AxialCoord {
-  const normalized = coord.includes(":") ? coord : coord.replace(",", ":");
-  const [sq, sr] = normalized.split(":");
-  const q = Number.parseInt(sq ?? "", 10);
-  const r = Number.parseInt(sr ?? "", 10);
-  if (Number.isNaN(q) || Number.isNaN(r)) {
-    return { q: 0, r: 0 };
-  }
-  return { q, r };
-}
-
-function formatLegacyCoord(coord: AxialCoord): string {
-  return `${String(coord.q).padStart(2, "0")}:${String(coord.r).padStart(2, "0")}`;
-}
-
-function zoneForDistance(distance: number): MapZone {
-  if (distance <= CORE_RING_LIMIT) {
-    return "core";
-  }
-  if (distance <= MID_RING_LIMIT) {
-    return "mid";
-  }
-  return "outer";
-}
-
-function districtForCoord(coord: AxialCoord): DistrictId {
-  if (coord.q === 0 && coord.r === 0) {
-    return "A";
-  }
-
-  const x = Math.sqrt(3) * (coord.q + coord.r / 2);
-  const y = 1.5 * coord.r;
-  const angle = Math.atan2(y, x);
-  const normalized = angle < 0 ? angle + Math.PI * 2 : angle;
-  const sector = Math.floor(normalized / (Math.PI / 3)) % 6;
-  return DISTRICT_IDS[sector] ?? "A";
-}
-
-function clampAxialToRadius(coord: AxialCoord): AxialCoord {
-  const distance = axialDistance(coord, ZERO_AXIAL);
-  if (distance <= WORLD_HEX_RADIUS) {
-    return coord;
-  }
-
-  const factor = WORLD_HEX_RADIUS / Math.max(1, distance);
-  return axialRound({
-    q: coord.q * factor,
-    r: coord.r * factor,
-  });
-}
-
-function normalizeAxial(site: BoardSite): AxialCoord {
-  const raw = site.axial && Number.isFinite(site.axial.q) && Number.isFinite(site.axial.r)
-    ? { q: site.axial.q, r: site.axial.r }
-    : parseLegacyCoord(site.coord);
-
-  return clampAxialToRadius(raw);
-}
-
-function hashSeed(input: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < input.length; i += 1) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return Math.abs(h >>> 0);
-}
-
-function classifyFaction(site: BoardSite, tribeName: string): Faction {
-  if (site.relation === "Proprio") {
-    return "self";
-  }
-  if (site.owner === tribeName) {
-    return "tribe";
-  }
-  if (site.relation === "Aliado") {
-    return "ally";
-  }
-  if (site.relation === "Inimigo") {
-    return "enemy";
-  }
-
-  if (site.occupationKind === "abandoned_city") {
-    return "abandoned";
-  }
-
-  if (site.occupationKind === "frontier_ruins" || site.occupationKind === "wild_empty" || site.occupationKind === "hotspot") {
-    return "neutral";
-  }
-
-  const hint = `${site.type} ${site.state} ${site.owner}`.toLowerCase();
-  if (hint.includes("aband") || hint.includes("devast") || hint.includes("ruina") || site.owner === "Neutro") {
-    return "abandoned";
-  }
-
-  return "neutral";
-}
-
-function terrainKindForDistrict(district: DistrictId, roll: number): TerrainKind {
-  switch (district) {
-    case "A":
-      return roll % 3 === 0 ? "riverlands" : "crown_heartland";
-    case "B":
-      return roll % 2 === 0 ? "riverlands" : "crown_heartland";
-    case "C":
-      return roll % 3 === 0 ? "ashen_fields" : "frontier_pass";
-    case "D":
-      return roll % 4 === 0 ? "riverlands" : "ironridge";
-    case "E":
-      return roll % 3 === 0 ? "ashen_fields" : "ironridge";
-    default:
-      return roll % 2 === 0 ? "frontier_pass" : "ashen_fields";
-  }
-}
-
-function terrainKindForCoord(coord: AxialCoord): TerrainKind {
-  const district = districtForCoord(coord);
-  const seed = hashSeed(`terrain:${coord.q},${coord.r}`);
-  return terrainKindForDistrict(district, seed);
-}
-
-function occupationKindForRoll(roll: number): CityOriginKind {
-  if (roll < 28) {
-    return "abandoned_city";
-  }
-  if (roll < 62) {
-    return "frontier_ruins";
-  }
-  return "wild_empty";
-}
-
-function buildHexWorld(): BuiltWorld {
-  const coords: AxialCoord[] = [];
-  for (let q = -WORLD_HEX_RADIUS; q <= WORLD_HEX_RADIUS; q += 1) {
-    const rMin = Math.max(-WORLD_HEX_RADIUS, -q - WORLD_HEX_RADIUS);
-    const rMax = Math.min(WORLD_HEX_RADIUS, -q + WORLD_HEX_RADIUS);
-    for (let r = rMin; r <= rMax; r += 1) {
-      coords.push({ q, r });
-    }
-  }
-
-  const baseLayout = {
-    orientation: "pointy" as const,
-    size: WORLD_HEX_TILE_SIZE_PX,
-    origin: { x: 0, y: 0 },
-  };
-
-  let minX = Number.POSITIVE_INFINITY;
-  let maxX = Number.NEGATIVE_INFINITY;
-  let minY = Number.POSITIVE_INFINITY;
-  let maxY = Number.NEGATIVE_INFINITY;
-
-  for (const coord of coords) {
-    const center = axialToPixel(coord, baseLayout);
-    minX = Math.min(minX, center.x - WORLD_HEX_TILE_SIZE_PX);
-    maxX = Math.max(maxX, center.x + WORLD_HEX_TILE_SIZE_PX);
-    minY = Math.min(minY, center.y - WORLD_HEX_TILE_SIZE_PX);
-    maxY = Math.max(maxY, center.y + WORLD_HEX_TILE_SIZE_PX);
-  }
-
-  const padding = WORLD_HEX_TILE_SIZE_PX * 2;
-  const shiftedLayout = {
-    orientation: "pointy" as const,
-    size: WORLD_HEX_TILE_SIZE_PX,
-    origin: {
-      x: padding - minX,
-      y: padding - minY,
-    },
-  };
-
-  const tiles: WorldHexTile[] = [];
-  const centerByKey = new Map<string, PixelPoint>();
-
-  for (const coord of coords) {
-    const center = axialToPixel(coord, shiftedLayout);
-    const corners = hexCorners(coord, shiftedLayout);
-    const points = corners.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ");
-    const distance = axialDistance(coord, ZERO_AXIAL);
-    const zone = zoneForDistance(distance);
-    const district = districtForCoord(coord);
-    const terrainKind = terrainKindForCoord(coord);
-    const coordKey = axialKey(coord);
-
-    tiles.push({
-      q: coord.q,
-      r: coord.r,
-      coordKey,
-      distance,
-      zone,
-      district,
-      terrainKind,
-      isCentralThrone: distance <= 1,
-      center,
-      points,
-    });
-
-    centerByKey.set(coordKey, center);
-  }
-
-  const tileByKey = new Map(tiles.map((tile) => [tile.coordKey, tile] as const));
-  const frontierLines: FrontierLine[] = [];
-
-  for (const tile of tiles) {
-    for (let direction = 0; direction < 6; direction += 1) {
-      const neighborCoord = axialNeighbor({ q: tile.q, r: tile.r }, direction);
-      const neighbor = tileByKey.get(axialKey(neighborCoord));
-      if (!neighbor || neighbor.district === tile.district) {
-        continue;
-      }
-      if (tile.coordKey > neighbor.coordKey) {
-        continue;
-      }
-
-      frontierLines.push({
-        id: `${tile.coordKey}-${neighbor.coordKey}`
-          + "",
-        x1: tile.center.x,
-        y1: tile.center.y,
-        x2: neighbor.center.x,
-        y2: neighbor.center.y,
-      });
-    }
-  }
-
-  const width = Math.ceil(maxX - minX + padding * 2);
-  const height = Math.ceil(maxY - minY + padding * 2);
-  const centerPoint = centerByKey.get(axialKey(ZERO_AXIAL)) ?? { x: width / 2, y: height / 2 };
-  const labelRadius = Math.min(width, height) * 0.34;
-  const districtLabels: DistrictLabel[] = DISTRICT_IDS.map((district, index) => {
-    const angle = (index + 0.5) * (Math.PI / 3);
-    return {
-      district,
-      x: centerPoint.x + Math.cos(angle) * labelRadius,
-      y: centerPoint.y + Math.sin(angle) * labelRadius,
-    };
-  });
-
-  return {
-    width,
-    height,
-    layout: shiftedLayout,
-    tiles,
-    centerByKey,
-    districtLabels,
-    frontierLines,
-    centerPoint,
-  };
-}
-
-function generateAmbientSites(worldId: string, existing: Set<string>): MapSite[] {
-  const generated: MapSite[] = [];
-  let seed = hashSeed(worldId);
-
-  const nextRand = () => {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    return seed;
-  };
-
-  const target = 42;
-  let guard = 0;
-
-  while (generated.length < target && guard < 20000) {
-    guard += 1;
-
-    const q = (nextRand() % (WORLD_HEX_RADIUS * 2 + 1)) - WORLD_HEX_RADIUS;
-    const r = (nextRand() % (WORLD_HEX_RADIUS * 2 + 1)) - WORLD_HEX_RADIUS;
-
-    if (axialDistance({ q, r }, ZERO_AXIAL) > WORLD_HEX_RADIUS) {
-      continue;
-    }
-
-    const coordKey = axialKey({ q, r });
-    if (existing.has(coordKey)) {
-      continue;
-    }
-    existing.add(coordKey);
-
-    const terrainKind = terrainKindForCoord({ q, r });
-    const terrainMeta = TERRAIN_META[terrainKind];
-    const occupationKind = occupationKindForRoll(nextRand() % 100);
-    const index = generated.length + 1;
-    if (occupationKind === "wild_empty") {
-      continue;
-    }
-
-    const abandoned = occupationKind === "abandoned_city";
-
-    generated.push({
-      id: `ambient-${index}`,
-      name: abandoned ? `Cidade Ruinosa ${index}` : `Fundacao Instavel ${index}`,
-      owner: "Neutro",
-      type: abandoned ? "Cidade" : "Colonia",
-      relation: "Neutro",
-      occupationKind,
-      terrainKind,
-      terrainLabel: terrainMeta.label,
-      recommendedCityClass: abandoned ? "neutral" : terrainMeta.recommendedCityClass,
-      coord: formatLegacyCoord({ q, r }),
-      axial: { q, r },
-      state: abandoned ? "Cidade abandonada com muralhas antigas" : "Ruinas leves prontas para estabilizacao",
-      q,
-      r,
-      coordKey,
-      faction: abandoned ? "abandoned" : "neutral",
-    });
-  }
-
-  return generated;
-}
-
-function terrainBonusForKind(kind: HotspotKind): TerrainModifiers {
-  if (kind === "oasis") {
-    return {
-      terrainProductionMultiplier: 1.08,
-      terrainMovementMultiplier: 1.06,
-    };
-  }
-  if (kind === "ruins") {
-    return {
-      terrainCombatMultiplier: 1.08,
-      terrainCostMultiplier: 0.96,
-    };
-  }
-  return {
-    terrainProductionMultiplier: 1.12,
-    terrainCostMultiplier: 0.94,
-  };
-}
-
-function generateHotspots(worldId: string, world: BuiltWorld): Hotspot[] {
-  let seed = hashSeed(`${worldId}:hotspots:v1`);
-  const nextRand = () => {
-    seed = (seed * 1103515245 + 12345) >>> 0;
-    return seed;
-  };
-
-  const candidates = world.tiles.filter((tile) => !tile.isCentralThrone && tile.distance > 3);
-  const byDistrict = new Map<DistrictId, WorldHexTile[]>();
-  for (const district of DISTRICT_IDS) {
-    byDistrict.set(district, candidates.filter((tile) => tile.district === district));
-  }
-
-  const selectedKeys = new Set<string>();
-  const hotspots: Hotspot[] = [];
-  const requiredByDistrict = Math.floor(HOTSPOT_TARGET / DISTRICT_IDS.length);
-
-  const pickKind = (): HotspotKind => {
-    const roll = nextRand() % 3;
-    if (roll === 0) return "oasis";
-    if (roll === 1) return "ruins";
-    return "rare_mine";
-  };
-
-  const makeHotspot = (tile: WorldHexTile, index: number): Hotspot => {
-    const kind = pickKind();
-    const label = HOTSPOT_META[kind].label;
-    return {
-      id: `hotspot-${index}-${tile.coordKey}`
-        + "",
-      q: tile.q,
-      r: tile.r,
-      coordKey: tile.coordKey,
-      district: tile.district,
-      kind,
-      name: `${label} ${index + 1}`
-        + "",
-      terrainBonus: terrainBonusForKind(kind),
-    };
-  };
-
-  let serial = 0;
-
-  for (const district of DISTRICT_IDS) {
-    const pool = [...(byDistrict.get(district) ?? [])];
-    let guard = 0;
-    while (pool.length && guard < 800 && hotspots.length < HOTSPOT_TARGET) {
-      guard += 1;
-      if (hotspots.filter((entry) => entry.district === district).length >= requiredByDistrict) {
-        break;
-      }
-
-      const idx = nextRand() % pool.length;
-      const tile = pool.splice(idx, 1)[0];
-      if (!tile || selectedKeys.has(tile.coordKey)) {
-        continue;
-      }
-
-      selectedKeys.add(tile.coordKey);
-      hotspots.push(makeHotspot(tile, serial));
-      serial += 1;
-    }
-  }
-
-  const leftovers = candidates.filter((tile) => !selectedKeys.has(tile.coordKey));
-  while (hotspots.length < HOTSPOT_TARGET && leftovers.length) {
-    const idx = nextRand() % leftovers.length;
-    const tile = leftovers.splice(idx, 1)[0];
-    if (!tile) {
-      continue;
-    }
-    selectedKeys.add(tile.coordKey);
-    hotspots.push(makeHotspot(tile, serial));
-    serial += 1;
-  }
-
-  return hotspots;
-}
-
-function markerBorderClass(faction: Faction): string {
-  switch (faction) {
-    case "self":
-      return "border-yellow-300/95";
-    case "tribe":
-      return "border-rose-300/95";
-    case "ally":
-      return "border-violet-300/95";
-    case "enemy":
-      return "border-emerald-300/95";
-    case "abandoned":
-      return "border-amber-300/95";
-    default:
-      return "border-sky-300/90";
-  }
-}
-
-function markerFillClass(faction: Faction): string {
-  switch (faction) {
-    case "self":
-      return "bg-yellow-300";
-    case "tribe":
-      return "bg-rose-400";
-    case "ally":
-      return "bg-violet-400";
-    case "enemy":
-      return "bg-emerald-400";
-    case "abandoned":
-      return "bg-amber-400";
-    default:
-      return "bg-sky-400";
-  }
-}
-
-function labelClass(faction: Faction): string {
-  switch (faction) {
-    case "self":
-      return "border-yellow-300/80 bg-yellow-400/20 text-yellow-50";
-    case "tribe":
-      return "border-rose-300/80 bg-rose-500/20 text-rose-100";
-    case "ally":
-      return "border-violet-300/80 bg-violet-500/20 text-violet-100";
-    case "enemy":
-      return "border-emerald-300/80 bg-emerald-500/20 text-emerald-100";
-    case "abandoned":
-      return "border-amber-300/80 bg-amber-500/20 text-amber-100";
-    default:
-      return "border-sky-300/70 bg-sky-500/20 text-sky-100";
-  }
-}
-
-function markerGlowStyle(faction: Faction, selected: boolean, muted: boolean): CSSProperties {
-  const blur = selected ? 18 : 12;
-  const spread = selected ? 6 : 2;
-  const opacity = muted ? 0.16 : selected ? 0.92 : 0.6;
-
-  const color =
-    faction === "self"
-      ? `rgba(253, 224, 71, ${opacity})`
-      : faction === "tribe"
-        ? `rgba(251, 113, 133, ${opacity})`
-        : faction === "ally"
-          ? `rgba(167, 139, 250, ${opacity})`
-          : faction === "enemy"
-            ? `rgba(74, 222, 128, ${opacity})`
-            : faction === "abandoned"
-              ? `rgba(251, 191, 36, ${opacity})`
-              : `rgba(56, 189, 248, ${opacity})`;
-
-  return {
-    boxShadow: `0 0 ${blur}px ${spread}px ${color}`,
-  };
-}
-
-function factionInfluenceColor(faction: Faction, opacity: number): string {
-  if (faction === "self") return `rgba(253, 224, 71, ${opacity})`;
-  if (faction === "tribe") return `rgba(251, 113, 133, ${opacity})`;
-  if (faction === "ally") return `rgba(167, 139, 250, ${opacity})`;
-  if (faction === "enemy") return `rgba(74, 222, 128, ${opacity})`;
-  if (faction === "abandoned") return `rgba(251, 191, 36, ${opacity})`;
-  return `rgba(56, 189, 248, ${opacity})`;
-}
-
-function influenceRadiusForSite(site: MapSite): number {
-  if (site.faction === "self") return isVillageSite(site) ? 3 : 2;
-  if (site.faction === "tribe") return isVillageSite(site) ? 3 : 2;
-  if (site.faction === "ally") return isVillageSite(site) ? 2 : 1;
-  if (site.faction === "enemy") return isVillageSite(site) ? 3 : 2;
-  if (site.faction === "abandoned") return 1;
-  return 1;
-}
-
-function influenceWeight(site: MapSite, distance: number): number {
-  const base =
-    site.faction === "self"
-      ? 1.18
-      : site.faction === "tribe"
-        ? 1.08
-        : site.faction === "ally"
-          ? 0.96
-          : site.faction === "enemy"
-            ? 1.02
-            : site.faction === "abandoned"
-              ? 0.72
-              : 0.64;
-
-  const siteBonus =
-    site.type.toLowerCase().includes("capital")
-      ? 0.28
-      : isVillageSite(site)
-        ? 0.18
-        : 0;
-
-  return Math.max(0.16, base + siteBonus - distance * 0.28);
-}
-
-function isVillageSite(site: MapSite): boolean {
-  const haystack = `${site.type} ${site.name}`.toLowerCase();
-  return (
-    haystack.includes("capital") ||
-    haystack.includes("colonia") ||
-    haystack.includes("aldeia") ||
-    haystack.includes("cidade") ||
-    haystack.includes("cidadela") ||
-    haystack.includes("citadel") ||
-    haystack.includes("outpost")
-  );
-}
-
-function siteMarkerText(site: MapSite): string {
-  const typeText = site.type.toLowerCase();
-  if (typeText.includes("capital")) return "K";
-  if (typeText.includes("cidadela") || typeText.includes("citadel")) return "C";
-  if (typeText.includes("ruina") || typeText.includes("ruin")) return "R";
-  if (typeText.includes("colonia") || typeText.includes("cidade") || typeText.includes("outpost")) return "V";
-  return site.name.slice(0, 1).toUpperCase();
-}
-
-function createClaimedVillageName(index: number): string {
-  return `Nova Cidade ${index}`;
-}
-
-type BuildMode = "outpost" | "road";
-
-type StoredMapMovement = {
-  id: string;
-  worldId: string;
-  sourceCoord: string;
-  targetCoord: string;
-  movementType: "attack" | "annex" | "support" | "spy" | "transport";
-  commandAction: Exclude<TileActionKind, "inspect">;
-  launchedAt: string;
-  arrivalAt: string;
-  etaMinutes: number;
-  route: string[];
-  status: "traveling" | "arrived" | "failed";
-  meta: {
-    buildMode: BuildMode | null;
-    district: DistrictId;
-    settlementOrigin?: CityOriginKind;
-    settlementTerrainKind?: TerrainKind;
-    settlementTerrainLabel?: string;
-    settlementRecommendedClass?: CityClass;
-    portalGateRequired?: number;
-    sovereigntyAtLaunch?: number;
-    regroupMode?: "phase4_free_mobilization";
-    troopsSent?: TroopSelection;
-    troopsTotal?: number;
-    troopsQuality?: number;
-    troopPreset?: TroopPreset;
-    annexConsumesDiplomat?: boolean;
-    diplomatToken?: string;
-    targetLabel?: string;
-  };
-};
-
 const HAS_SPY_HERO = true;
 
 function edgeKeyByCoord(a: AxialCoord, b: AxialCoord): string {
@@ -1029,7 +366,7 @@ function formatMinutesLabel(totalMinutes: number): string {
   return hh > 0 ? `${hh}h ${String(mm).padStart(2, "0")}m` : `${mm}m`;
 }
 
-function mapActionToMovementType(action: Exclude<TileActionKind, "inspect">): StoredMapMovement["movementType"] {
+function mapActionToMovementType(action: Exclude<TileActionKind, "inspect" | "explore">): StoredMapMovement["movementType"] {
   if (action === "attack") {
     return "attack";
   }
@@ -1067,8 +404,8 @@ async function registerMapMovement(
     worldId,
     sourceCoord: axialKey(draft.from),
     targetCoord: axialKey(draft.to),
-    movementType: mapActionToMovementType(draft.action),
-    commandAction: draft.action,
+    movementType: mapActionToMovementType(draft.action as Exclude<TileActionKind, "inspect" | "explore">),
+    commandAction: draft.action as StoredMapMovement["commandAction"],
     launchedAt,
     arrivalAt,
     etaMinutes: draft.etaMinutes,
@@ -1077,61 +414,104 @@ async function registerMapMovement(
     meta,
   };
 
-  if (typeof window !== "undefined") {
-    try {
-      const key = `map_movements:${worldId}`;
-      const current = window.localStorage.getItem(key);
-      const parsed = current ? (JSON.parse(current) as StoredMapMovement[]) : [];
-      parsed.unshift(stored);
-      window.localStorage.setItem(key, JSON.stringify(parsed.slice(0, 1200)));
-    } catch {
-      // Silencioso: sem bloqueio de UX se localStorage indisponivel.
-    }
-  }
-
   await new Promise((resolve) => setTimeout(resolve, 180));
   return stored;
 }
 
-function readStoredMovements(worldId: string): StoredMapMovement[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const key = `map_movements:${worldId}`;
-    const current = window.localStorage.getItem(key);
-    return current ? (JSON.parse(current) as StoredMapMovement[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: initialDay, sovereigntyScore: initialSovereigntyScore }: StrategicMapProps) {
+export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: initialDay, sovereigntyScore: initialSovereigntyScore, readOnly = false }: StrategicMapProps) {
   const { world: liveWorld } = useLiveWorld(worldId);
   const currentDay = liveWorld.day ?? initialDay;
   const { imperialState, setImperialState } = useImperialState(worldId, villages);
+  const kingModifiers = useMemo(() => resolveKingGameplayModifiers(imperialState.kingProfileId), [imperialState.kingProfileId]);
   const tribeInfluenceStage = calculateTribeProgressStage({
     currentDay,
     tribeEnvoysCommitted: imperialState.tribeEnvoysCommitted ?? 0,
     kingAlive: liveWorld.sovereignty.kingAlive,
   });
+  const assignedHeroCount = useMemo(
+    () => Object.values(imperialState.heroByVillage).filter((entry) => entry && entry !== "none").length,
+    [imperialState.heroByVillage],
+  );
+  const populationSummary = useMemo(() => {
+    return villages.reduce(
+      (summary, village) => {
+        const cap = Math.min(100, Math.max(0, Math.floor((village.buildingLevels.housing ?? 0) * 10)));
+        const productionWorkers = imperialState.productionWorkersByVillage[village.id] ?? { materials: 0, supplies: 0, commerce: 0, logistics: 0 };
+        const jobs = imperialState.jobsByVillage[village.id] ?? { medics: 0, crafts: 0, order: 0, scholars: 0 };
+        const recruits = imperialState.recruitsByVillage[village.id] ?? { militia: 0, shooters: 0, scouts: 0, machinery: 0 };
+        const defenders = imperialState.defenseRecruitsByVillage[village.id] ?? { guards: 0, archers: 0, ballistae: 0 };
+        const used =
+          Object.values(productionWorkers).reduce((sum, value) => sum + value, 0) +
+          Object.values(jobs).reduce((sum, value) => sum + value, 0) +
+          Object.values(recruits).reduce((sum, value) => sum + value, 0) +
+          Object.values(defenders).reduce((sum, value) => sum + value, 0);
+        const current = Math.min(cap, Math.max(used, imperialState.populationByVillage[village.id] ?? cap));
+        return {
+          current: summary.current + current,
+          cap: summary.cap + cap,
+          employed: summary.employed + Object.values(productionWorkers).reduce((sum, value) => sum + value, 0) + Object.values(jobs).reduce((sum, value) => sum + value, 0),
+          recruited: summary.recruited + Object.values(recruits).reduce((sum, value) => sum + value, 0),
+          defended: summary.defended + Object.values(defenders).reduce((sum, value) => sum + value, 0),
+        };
+      },
+      { current: 0, cap: 0, employed: 0, recruited: 0, defended: 0 },
+    );
+  }, [
+    imperialState.defenseRecruitsByVillage,
+    imperialState.jobsByVillage,
+    imperialState.populationByVillage,
+    imperialState.productionWorkersByVillage,
+    imperialState.recruitsByVillage,
+    villages,
+  ]);
+  const unlockedTechs = useMemo(
+    () => Object.values(imperialState.militaryTechTree).reduce((sum, value) => sum + (value ? 1 : 0), 0),
+    [imperialState.militaryTechTree],
+  );
   const sovereigntyScore = useMemo(
     () =>
       calculateSovereigntyScore({
+        villages,
         villageDevelopments: villages.map((village) => calculateVillageDevelopment(village.buildingLevels)),
-        councilHeroes: liveWorld.sovereignty.councilHeroes,
+        councilHeroes: Math.max(liveWorld.sovereignty.councilHeroes, assignedHeroCount),
         militaryRankingPoints: liveWorld.sovereignty.militaryRankingPoints,
         eraQuestsCompleted: liveWorld.sovereignty.eraQuestsCompleted,
         wondersControlled: liveWorld.sovereignty.wondersControlled,
         currentDay,
-        hasTribeDome: liveWorld.sovereignty.tribeDomeUnlocked,
+        hasTribeDome: liveWorld.sovereignty.tribeDomeUnlocked || imperialState.sandboxDomeActive,
         tribeLoyaltyStage: tribeInfluenceStage,
         kingAlive: liveWorld.sovereignty.kingAlive,
+        workforce: imperialState.workforceByFocus,
+        unlockedMilitaryTechs: unlockedTechs,
+        dragonChoice: imperialState.dragonChoice,
+        populationCurrent: populationSummary.current,
+        populationCapacity: populationSummary.cap,
+        employedPopulation: populationSummary.employed,
+        recruitedPopulation: populationSummary.recruited,
+        senateSatisfaction: imperialState.senate.satisfaction,
+        troopPower: calculateTroopPower(imperialState.troops),
+        defensePower: villages.reduce(
+          (sum, village) => sum + calculateDefensePower(imperialState.defenseRecruitsByVillage[village.id] ?? { guards: 0, archers: 0, ballistae: 0 }),
+          0,
+        ),
       }).total,
-    [currentDay, liveWorld.sovereignty, tribeInfluenceStage, villages],
+    [
+      assignedHeroCount,
+      currentDay,
+      imperialState.dragonChoice,
+      imperialState.sandboxDomeActive,
+      imperialState.senate.satisfaction,
+      imperialState.troops,
+      imperialState.workforceByFocus,
+      populationSummary,
+      liveWorld.sovereignty,
+      tribeInfluenceStage,
+      unlockedTechs,
+      villages,
+    ],
   ) || initialSovereigntyScore;
   const viewportRef = useRef<HTMLDivElement>(null);
+  const mapLayerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -1140,11 +520,21 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     startOffsetY: number;
     moved: boolean;
   } | null>(null);
+  const zoomCinemaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragFrameRef = useRef<number | null>(null);
+  const pendingDragOffsetRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressViewportTapRef = useRef(false);
+  const interactionGateRef = useRef<{ coordKey: string; at: number; zoomLevel: ZoomLevel } | null>(null);
+  const zoomNavigationLockUntilRef = useRef(0);
 
   const [zoom, setZoom] = useState(DEFAULT_WORLD_ZOOM);
+  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(4);
+  const [zoomCinematic, setZoomCinematic] = useState(false);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 });
   const [selectedCoordKey, setSelectedCoordKey] = useState<string | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [inspectedCoordKey, setInspectedCoordKey] = useState<string | null>(null);
   const [relationFilter, setRelationFilter] = useState<RelationFilter>("all");
   const [activeAction, setActiveAction] = useState<TileActionKind>("inspect");
   const [actionStep, setActionStep] = useState<ActionStep>("choose");
@@ -1152,9 +542,18 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   const [movementDraft, setMovementDraft] = useState<MovementDraft | null>(null);
   const [submittingMovement, setSubmittingMovement] = useState(false);
   const [movementMessage, setMovementMessage] = useState<string | null>(null);
-  const [storedMovements, setStoredMovements] = useState<StoredMapMovement[]>([]);
-  const [mobilizationActive, setMobilizationActive] = useState(false);
-  const [mobilizationStartedAtDay, setMobilizationStartedAtDay] = useState<number | null>(null);
+  const [submittingExploration, setSubmittingExploration] = useState(false);
+  const [explorationReveal, setExplorationReveal] = useState<ImperialExplorationDiscovery | null>(null);
+  const storedMovements = (imperialState.mapMovements ?? []) as StoredMapMovement[];
+  const latestBattleMovement = useMemo(
+    () =>
+      storedMovements.find(
+        (movement) => movement.commandAction === "attack" && movement.status === "arrived" && Boolean(movement.meta.combatResult),
+      ) ?? null,
+    [storedMovements],
+  );
+  const mobilizationActive = imperialState.mobilization?.active ?? false;
+  const mobilizationStartedAtDay = imperialState.mobilization?.startedAtDay ?? null;
   const [troopPreset, setTroopPreset] = useState<TroopPreset>("balanced");
   const [troopDispatch, setTroopDispatch] = useState<TroopSelection>({
     militia: 0,
@@ -1165,88 +564,34 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   const [selectedAnnexDiplomatToken, setSelectedAnnexDiplomatToken] = useState<string>("");
   const world = useMemo(() => buildHexWorld(), []);
 
+  useEffect(() => {
+    return () => {
+      if (zoomCinemaTimerRef.current) {
+        clearTimeout(zoomCinemaTimerRef.current);
+      }
+      if (dragFrameRef.current) {
+        cancelAnimationFrame(dragFrameRef.current);
+      }
+    };
+  }, []);
+
   const hotspots = useMemo(() => generateHotspots(worldId, world), [worldId, world]);
-  const isPhase4 = currentDay >= 91;
+  const isPhase4 = currentDay >= FINAL_EXODUS_DAY;
   const portalEligible = canEnterPortal(sovereigntyScore);
   const portalTooltip = portalEligible
     ? `Portal Central: acesso liberado (${sovereigntyScore}/${SOVEREIGNTY_PORTAL_CUT})`
     : `Portal Central: bloqueado (${sovereigntyScore}/${SOVEREIGNTY_PORTAL_CUT})`;
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const key = `phase4_mobilization:${worldId}`;
-    try {
-      const stored = window.localStorage.getItem(key);
-      if (!stored) {
-        return;
-      }
-
-      const parsed = JSON.parse(stored) as { active?: boolean; startedAtDay?: number | null };
-      if (parsed.active) {
-        setMobilizationActive(true);
-        setMobilizationStartedAtDay(typeof parsed.startedAtDay === "number" ? parsed.startedAtDay : null);
-      }
-    } catch {
-      // silencioso
-    }
-  }, [worldId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const key = `phase4_mobilization:${worldId}`;
-    if (!mobilizationActive) {
-      window.localStorage.removeItem(key);
-      return;
-    }
-
-    window.localStorage.setItem(
-      key,
-      JSON.stringify({
-        active: mobilizationActive,
-        startedAtDay: mobilizationStartedAtDay,
-      }),
-    );
-  }, [mobilizationActive, mobilizationStartedAtDay, worldId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const syncMovements = () => {
-      setStoredMovements(readStoredMovements(worldId));
-    };
-
-    syncMovements();
-    const timer = window.setInterval(syncMovements, 10_000);
-    return () => window.clearInterval(timer);
-  }, [worldId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const storageKey = `map_movements:${worldId}`;
-
     const settleMovements = () => {
       try {
-        const rawStored = window.localStorage.getItem(storageKey);
-        if (!rawStored) {
+        if (storedMovements.length <= 0) {
           return;
         }
-
-        const parsed = JSON.parse(rawStored) as StoredMapMovement[];
         const now = Date.now();
         let changed = false;
         let latestMessage: string | null = null;
 
-        const next: StoredMapMovement[] = parsed.map((movement): StoredMapMovement => {
+        const next: StoredMapMovement[] = storedMovements.map((movement): StoredMapMovement => {
           if (movement.status !== "traveling") {
             return movement;
           }
@@ -1307,7 +652,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     politicalState: originKind === "frontier_ruins" ? "Estabilizacao em curso" : "Fundada pela Coroa",
                     materials: 900,
                     supplies: 900,
-                    energy: 900,
                     influence: 90,
                     palaceLevel: 0,
                     kingHere: false,
@@ -1317,7 +661,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     buildingLevels: zeroLevels,
                     coord: formatLegacyCoord({ q, r }),
                     axial: { q, r },
-                    owner: "Afonso",
+                    owner: "Seu reino",
                     relation: "Proprio",
                     state: originKind === "frontier_ruins" ? "Ruina estabilizada" : "Colonia em consolidacao",
                   },
@@ -1372,7 +716,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     politicalState: "Cidade anexada e estabilizando",
                     materials: 1100,
                     supplies: 980,
-                    energy: 940,
                     influence: 120,
                     palaceLevel: 2,
                     kingHere: false,
@@ -1382,7 +725,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     buildingLevels: getDefaultBuildingLevels(2),
                     coord: formatLegacyCoord({ q, r }),
                     axial: { q, r },
-                    owner: "Afonso",
+                    owner: "Seu reino",
                     relation: "Proprio",
                     state: "Cidade anexada por diplomata",
                   },
@@ -1408,15 +751,61 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             const coord = movement.targetCoord.split(",");
             const q = Number.parseInt(coord[0] ?? "0", 10);
             const r = Number.parseInt(coord[1] ?? "0", 10);
+            const targetSite = findBoardSiteByCoord(sites, movement.targetCoord);
+            const ownedVillage = imperialState.extraVillages.find((entry) => axialKey(entry.axial) === movement.targetCoord) ?? null;
+            const targetDefense = buildTargetDefense(
+              targetSite,
+              movement,
+              currentDay,
+              ownedVillage
+                ? {
+                    village: ownedVillage,
+                    buildingLevels: (imperialState.buildingLevelsByVillage[ownedVillage.id] ?? ownedVillage.buildingLevels ?? {}) as Record<string, number>,
+                    localDefenders: imperialState.defenseRecruitsByVillage[ownedVillage.id] ?? { guards: 0, archers: 0, ballistae: 0 },
+                    deployedTroops: imperialState.deployedByVillage[ownedVillage.id] ?? 0,
+                    heroId: imperialState.heroByVillage[ownedVillage.id] ?? "none",
+                    heroBuild: imperialState.heroBuildByVillage[ownedVillage.id],
+                    defenseProtocol: imperialState.defenseProtocolByVillage[ownedVillage.id],
+                  }
+                : null,
+            );
+            const troopsSent = movement.meta.troopsSent ?? { militia: 0, shooters: 0, scouts: 0, machinery: 0 };
+            const troopsTotal = Math.max(1, movement.meta.troopsTotal ?? troopSelectionTotal(troopsSent));
+            const qualityPerTroop = (movement.meta.troopsQuality ?? troopsTotal) / troopsTotal;
+            const marshalCount = Object.values(imperialState.heroByVillage).filter((hero) => hero === "marshal").length;
+            const combatResult = processKingsWorldCombat({
+              atacante: troopsSent,
+              defensor: targetDefense.defenders,
+              recursosDefensor: targetDefense.resources,
+              contexto: {
+                wallLevel: targetDefense.wallLevel,
+                attackerHeroPower: Math.min(100, marshalCount * 18 + unlockedTechs * 4),
+                defenderHeroPower: targetDefense.defenderHeroPower,
+                attackerMilitaryBuildBonus: clampNumber((qualityPerTroop - 1) * 0.08 + unlockedTechs * 0.012 + kingModifiers.militaryBuildBonus, -0.03, 0.24),
+                defenderMilitaryBuildBonus: targetDefense.defenderBuildBonus,
+                defenderSatisfaction: 70,
+                militaryScoreAtual: liveWorld.sovereignty.militaryRankingPoints,
+                defenderMilitaryScoreAtual: 0,
+                militaryScoreCap: SOVEREIGNTY_MILITARY_SCORE_CAP,
+                maxRounds: 5,
+                defenderLocalForces: targetDefense.localDefenders,
+                defenderImperialResponseForces: targetDefense.imperialResponseDefenders,
+                defenderResponseReadiness: targetDefense.responseReadiness,
+                defenderResponseWindowLabel: targetDefense.responseWindowLabel,
+              },
+            });
+
             const alreadyExists = imperialState.extraVillages.some(
               (entry) => entry.axial.q === q && entry.axial.r === r,
             );
 
-            if (!alreadyExists) {
+            if (combatResult.decisivo && !alreadyExists) {
               const index = imperialState.extraVillages.length + 1;
               const villageId = `v-claim-${q}-${r}`;
               setImperialState((current) => ({
                 ...current,
+                troops: subtractArmyLosses(current.troops, combatResult.resumoPerdas.atacante.mortos),
+                resources: mergeLoot(current.resources, combatResult.recursosSaqueados),
                 extraVillages: [
                   ...current.extraVillages,
                   {
@@ -1431,7 +820,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     politicalState: "Cidade tomada pela Coroa",
                     materials: 1000,
                     supplies: 920,
-                    energy: 880,
                     influence: 110,
                     palaceLevel: 2,
                     kingHere: false,
@@ -1441,19 +829,45 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     buildingLevels: getDefaultBuildingLevels(2),
                     coord: formatLegacyCoord({ q, r }),
                     axial: { q, r },
-                    owner: "Afonso",
+                    owner: "Seu reino",
                     relation: "Proprio",
                     state: "Cidade sob administracao militar",
                   },
                 ],
-                logs: [`Ataque bem-sucedido em ${q}:${r}`, ...current.logs].slice(0, 12),
+                logs: [
+                  buildBattleLogLine(combatResult, q, r),
+                  ...current.logs,
+                ].slice(0, 12),
+              }));
+            } else {
+              setImperialState((current) => ({
+                ...current,
+                troops: subtractArmyLosses(current.troops, combatResult.resumoPerdas.atacante.mortos),
+                resources: combatResult.decisivo ? mergeLoot(current.resources, combatResult.recursosSaqueados) : current.resources,
+                logs: [
+                  combatResult.decisivo
+                    ? `${buildBattleLogLine(combatResult, q, r)} Alvo ja constava no imperio.`
+                    : `${buildBattleLogLine(combatResult, q, r)} Perdas atacantes ${troopSelectionTotal(combatResult.resumoPerdas.atacante.mortos as TroopSelection)}.`,
+                  ...current.logs,
+                ].slice(0, 12),
               }));
             }
 
-            latestMessage = `Ataque concluido em ${q}:${r}. A cidade agora esta sob sua administracao.`;
+            latestMessage = combatResult.decisivo
+              ? `Ataque venceu em ${q}:${r}. ${combatResult.battleReport.headline} +${combatResult.scoreMilitarAtacanteFinal} SM, saque ${combatResult.recursosSaqueados.materials ?? 0}M/${combatResult.recursosSaqueados.supplies ?? 0}S.`
+              : `Ataque em ${q}:${r} terminou em ${combatResult.vencedor === "defensor" ? "repulsa" : "retirada"}. ${combatResult.battleReport.summary} +${combatResult.scoreMilitarAtacanteFinal} SM por atrito.`;
             return {
               ...movement,
               status: "arrived",
+              meta: {
+                ...movement.meta,
+                combatResult,
+                combatResolvedAt: new Date().toISOString(),
+                militaryScoreGained: combatResult.scoreMilitarAtacanteFinal,
+                defenderMilitaryScoreGained: combatResult.scoreMilitarDefensorFinal,
+                satisfactionDamage: combatResult.impactoSatisfacao,
+                loot: combatResult.recursosSaqueados,
+              },
             };
           }
 
@@ -1468,8 +882,10 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
           return;
         }
 
-        window.localStorage.setItem(storageKey, JSON.stringify(next));
-        setStoredMovements(next);
+        setImperialState((current) => ({
+          ...current,
+          mapMovements: next,
+        }));
         if (latestMessage) {
           setMovementMessage(latestMessage);
         }
@@ -1481,7 +897,22 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     settleMovements();
     const timer = window.setInterval(settleMovements, 15_000);
     return () => window.clearInterval(timer);
-  }, [imperialState.extraVillages, setImperialState, sovereigntyScore, worldId]);
+  }, [
+    currentDay,
+    imperialState.buildingLevelsByVillage,
+    imperialState.defenseProtocolByVillage,
+    imperialState.defenseRecruitsByVillage,
+    imperialState.deployedByVillage,
+    imperialState.extraVillages,
+    imperialState.heroBuildByVillage,
+    imperialState.heroByVillage,
+    setImperialState,
+    sites,
+    sovereigntyScore,
+    storedMovements,
+    unlockedTechs,
+    liveWorld.sovereignty.militaryRankingPoints,
+  ]);
   const mappedSites = useMemo(() => {
     const base = sites.map<MapSite>((site, idx) => {
       const axial = normalizeAxial(site);
@@ -1667,10 +1098,15 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     return overlays;
   }, [mappedSites, world.tiles]);
 
-  const selectedTile = selectedCoordKey ? (tileByCoordKey.get(selectedCoordKey) ?? null) : null;
-  const selectedSite = selectedCoordKey ? (siteByCoordKey.get(selectedCoordKey) ?? null) : null;
+  const focusCoordKey = zoomLevel === 4 ? (selectedCoordKey ?? inspectedCoordKey) : (inspectedCoordKey ?? null);
+  const selectedVisualCoordKey = zoomLevel === 4 ? selectedCoordKey : null;
+  const selectedTile = focusCoordKey ? (tileByCoordKey.get(focusCoordKey) ?? null) : null;
+  const selectedSite = focusCoordKey ? (siteByCoordKey.get(focusCoordKey) ?? null) : null;
   const selectedFriendlySite = Boolean(selectedSite && (selectedSite.faction === "self" || selectedSite.faction === "tribe" || selectedSite.faction === "ally"));
-  const selectedHotspot = selectedCoordKey ? (hotspotByCoordKey.get(selectedCoordKey) ?? null) : null;
+  const selectedHotspot = focusCoordKey ? (hotspotByCoordKey.get(focusCoordKey) ?? null) : null;
+  const selectedDiscovery = focusCoordKey ? (imperialState.discoveriesByCoord?.[focusCoordKey] ?? null) : null;
+  const selectedDiscoveryAccent = selectedDiscovery ? discoveryAccent(selectedDiscovery.type) : null;
+  const selectedDetailImage = selectedDiscovery?.imageSrc ?? (selectedTile ? cityDetailImageSrc(selectedSite, selectedHotspot, portalEligible) : "/images/cidade.jpg");
 
   const focusSite = useMemo(() => {
     return mappedSites.find((site) => site.faction === "self")
@@ -1678,6 +1114,11 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       ?? mappedSites[0]
       ?? null;
   }, [mappedSites]);
+  const ownCapitalSite = useMemo(() => {
+    return mappedSites.find((site) => site.faction === "self" && site.type.toLowerCase().includes("capital"))
+      ?? mappedSites.find((site) => site.faction === "self")
+      ?? focusSite;
+  }, [focusSite, mappedSites]);
 
   const marchOrigin = focusSite ? ({ q: focusSite.q, r: focusSite.r } as AxialCoord) : null;
   const marchOriginKey = focusSite?.coordKey ?? null;
@@ -1739,7 +1180,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       const terrainMovementMultiplier = hotspotByCoordKey.get(axialKey(to))?.terrainBonus.terrainMovementMultiplier;
       const leg = calculateMarchTimeMinutes(from, to, {
         hasRoad,
-        terrainMovementMultiplier,
+        terrainMovementMultiplier: terrainMovementMultiplier ? terrainMovementMultiplier / kingModifiers.explorationSpeedMultiplier : 1 / kingModifiers.explorationSpeedMultiplier,
       });
       totalMinutes += leg.totalMinutes * phase4SlowdownMult;
       if (hasRoad) {
@@ -1757,7 +1198,320 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       phase4SlowdownMult,
       toCapital,
     };
-  }, [hotspotByCoordKey, isPhase4, mobilizationActive, roadNetwork.edges, routeToSelection]);
+  }, [hotspotByCoordKey, isPhase4, kingModifiers.explorationSpeedMultiplier, mobilizationActive, roadNetwork.edges, routeToSelection]);
+
+  const navigatorActive = useMemo(() => {
+    return Object.values(imperialState.heroByVillage).includes("navigator");
+  }, [imperialState.heroByVillage]);
+
+  const activeRouteCoordKeys = useMemo(() => {
+    const keys = new Set<string>();
+    for (const movement of storedMovements) {
+      if (movement.status !== "traveling") {
+        continue;
+      }
+      for (const coordKey of movement.route) {
+        keys.add(coordKey);
+      }
+    }
+    return keys;
+  }, [storedMovements]);
+
+  const visitedCoordKeys = useMemo(() => {
+    const keys = new Set<string>([axialKey(ZERO_AXIAL)]);
+
+    for (const site of mappedSites) {
+      if (site.faction !== "neutral") {
+        keys.add(site.coordKey);
+      }
+    }
+
+    for (const nodeKey of roadNetwork.nodes) {
+      keys.add(nodeKey);
+    }
+
+    for (const movement of storedMovements) {
+      keys.add(movement.sourceCoord);
+      keys.add(movement.targetCoord);
+      for (const coordKey of movement.route) {
+        keys.add(coordKey);
+      }
+    }
+
+    for (const coordKey of imperialState.exploredCoordKeys ?? []) {
+      keys.add(coordKey);
+    }
+
+    return keys;
+  }, [imperialState.exploredCoordKeys, mappedSites, roadNetwork.nodes, storedMovements]);
+
+  const currentVisionCoordKeys = useMemo(() => {
+    const keys = new Set<string>(visitedCoordKeys);
+    const revealRadius = navigatorActive ? 2 : 1;
+    const anchors: AxialCoord[] = [];
+
+    if (marchOrigin) {
+      anchors.push(marchOrigin);
+    }
+    if (focusCoordKey) {
+      const selected = tileByCoordKey.get(focusCoordKey);
+      if (selected) {
+        anchors.push({ q: selected.q, r: selected.r });
+      }
+    }
+
+    for (const movement of storedMovements) {
+      if (movement.status !== "traveling") {
+        continue;
+      }
+      const target = tileByCoordKey.get(movement.targetCoord);
+      if (target) {
+        anchors.push({ q: target.q, r: target.r });
+      }
+      for (const coordKey of movement.route) {
+        keys.add(coordKey);
+      }
+    }
+
+    for (const tile of world.tiles) {
+      if (anchors.some((anchor) => axialDistance({ q: tile.q, r: tile.r }, anchor) <= revealRadius)) {
+        keys.add(tile.coordKey);
+      }
+    }
+
+    return keys;
+  }, [focusCoordKey, marchOrigin, navigatorActive, storedMovements, tileByCoordKey, visitedCoordKeys, world.tiles]);
+
+  const strategicNodes = useMemo<StrategicNode[]>(() => {
+    const candidates = new Set<string>();
+    const selectedFocusTile = focusCoordKey ? tileByCoordKey.get(focusCoordKey) : null;
+    const focusCoord = selectedFocusTile ? { q: selectedFocusTile.q, r: selectedFocusTile.r } : marchOrigin;
+    const focusDistance = (coord: AxialCoord) => (focusCoord ? axialDistance(coord, focusCoord) : 0);
+    const revealRadius = navigatorActive ? 2 : 1;
+
+    if (focusCoordKey) {
+      candidates.add(focusCoordKey);
+    }
+    if (marchOriginKey) {
+      candidates.add(marchOriginKey);
+    }
+    candidates.add(axialKey(ZERO_AXIAL));
+
+    for (const site of mappedSites) {
+      candidates.add(site.coordKey);
+    }
+    for (const hotspot of hotspots) {
+      candidates.add(hotspot.coordKey);
+    }
+
+    const pathToCenter = marchOrigin ? hexLine(marchOrigin, ZERO_AXIAL) : [];
+    for (const coord of pathToCenter.slice(0, navigatorActive ? 8 : 6)) {
+      candidates.add(axialKey(coord));
+    }
+
+    for (const nodeKey of roadNetwork.nodes) {
+      candidates.add(nodeKey);
+      const tile = tileByCoordKey.get(nodeKey);
+      if (!tile) continue;
+      for (let direction = 0; direction < 6; direction += 1) {
+        const neighbor = axialNeighbor({ q: tile.q, r: tile.r }, direction);
+        const neighborKey = axialKey(neighbor);
+        if (!tileByCoordKey.has(neighborKey) || roadNetwork.nodes.has(neighborKey)) {
+          continue;
+        }
+        candidates.add(neighborKey);
+      }
+    }
+
+    const scored = Array.from(candidates)
+      .map((coordKey) => {
+        const tile = tileByCoordKey.get(coordKey);
+        if (!tile) return null;
+        const site = siteByCoordKey.get(coordKey) ?? null;
+        const hotspot = hotspotByCoordKey.get(coordKey) ?? null;
+        const connected = roadNetwork.nodes.has(coordKey);
+        const enemy = site?.faction === "enemy";
+        const owned = site?.faction === "self";
+        const allied = site?.faction === "tribe" || site?.faction === "ally";
+        const hasRouteActivity = activeRouteCoordKeys.has(coordKey);
+        const routeDistance = focusDistance({ q: tile.q, r: tile.r });
+        const discovered =
+          connected ||
+          Boolean(site) ||
+          Boolean(hotspot) ||
+          coordKey === selectedCoordKey ||
+          coordKey === marchOriginKey ||
+          routeDistance <= revealRadius ||
+          Array.from(roadNetwork.nodes).some((roadKey) => {
+            const roadTile = tileByCoordKey.get(roadKey);
+            return roadTile ? axialDistance({ q: tile.q, r: tile.r }, { q: roadTile.q, r: roadTile.r }) <= revealRadius : false;
+          });
+
+        const nearbyEnemy = Array.from(siteByCoordKey.values()).some(
+          (entry) =>
+            entry.faction === "enemy" &&
+            axialDistance({ q: tile.q, r: tile.r }, { q: entry.q, r: entry.r }) <= (navigatorActive ? 2 : 1),
+        );
+        const pressured = hasRouteActivity || (connected && nearbyEnemy) || Boolean(site?.state?.match(/risco|press|horda|combate|ataque/i));
+
+        let state: StrategicNodeState = "unknown";
+        if (enemy) {
+          state = pressured ? "pressured" : "enemy";
+        } else if (owned || allied) {
+          state = pressured ? "pressured" : "owned";
+        } else if (pressured) {
+          state = "pressured";
+        } else if (connected) {
+          state = "connected";
+        } else if (discovered) {
+          state = "discovered";
+        }
+
+        const label = site?.name ?? hotspot?.name ?? (tile.isCentralThrone ? "Portal Central" : discovered ? `Ponto ${tile.q}:${tile.r}` : "No desconhecido");
+        const caption = site
+          ? site.faction === "enemy"
+            ? "Cidade inimiga"
+            : site.faction === "abandoned"
+              ? "Cidade vazia"
+              : site.faction === "self"
+                ? "Sua cidade"
+                : "Ponto visivel"
+          : hotspot
+            ? HOTSPOT_META[hotspot.kind].label
+            : tile.isCentralThrone
+              ? "Direcao do centro"
+              : connected
+                ? "Rota aberta"
+                : discovered
+                  ? "Rota possivel"
+                  : "Exploracao";
+
+        const route = marchOrigin ? hexLine(marchOrigin, { q: tile.q, r: tile.r }) : [];
+        let etaMinutes = 0;
+        for (let idx = 1; idx < route.length; idx += 1) {
+          const from = route[idx - 1]!;
+          const to = route[idx]!;
+          etaMinutes += calculateMarchTimeMinutes(from, to, {
+            hasRoad: roadNetwork.edges.has(edgeKeyByCoord(from, to)),
+            terrainMovementMultiplier:
+              (hotspotByCoordKey.get(axialKey(to))?.terrainBonus.terrainMovementMultiplier ?? 1) / kingModifiers.explorationSpeedMultiplier,
+          }).totalMinutes;
+        }
+
+        const score =
+          (coordKey === selectedCoordKey ? 200 : 0) +
+          (coordKey === marchOriginKey ? 140 : 0) +
+          (tile.isCentralThrone ? 120 : 0) +
+          (site ? 95 : 0) +
+          (hotspot ? 66 : 0) +
+          (pressured ? 54 : 0) +
+          (hasRouteActivity ? 40 : 0) +
+          (connected ? 32 : 0) +
+          (discovered ? 16 : 0) -
+          routeDistance * 4;
+
+        return {
+          coordKey,
+          q: tile.q,
+          r: tile.r,
+          center: tile.center,
+          tile,
+          site,
+          hotspot,
+          label,
+          caption,
+          kind: tile.isCentralThrone ? "portal" : site ? "village" : hotspot ? "strategic" : "route",
+          state,
+          isSelected: coordKey === selectedVisualCoordKey,
+          isFocus: coordKey === marchOriginKey,
+          isCenter: tile.isCentralThrone,
+          isConnected: connected,
+          isOwned: owned,
+          isEnemy: enemy,
+          isPressured: pressured,
+          isDiscovered: discovered,
+          hasRouteActivity,
+          distance: Math.max(0, route.length - 1),
+          etaMinutes: route.length > 1 ? etaMinutes : null,
+          score,
+        };
+      })
+      .filter((entry): entry is StrategicNode => Boolean(entry))
+      .sort((left, right) => right.score - left.score);
+
+    const visibleLimit = zoom < MACRO_VISION_THRESHOLD ? 48 : zoom < 1.8 ? 24 : 18;
+    const scoped = zoom >= MICRO_VISION_THRESHOLD
+      ? scored.filter((entry) => entry.isSelected || entry.isFocus || entry.isCenter || entry.distance <= 2 || entry.isOwned || entry.hasRouteActivity)
+      : scored;
+    const chosen = scoped.slice(0, visibleLimit);
+    const visibleKeys = new Set(chosen.map((node) => node.coordKey));
+
+    for (const key of [focusCoordKey, marchOriginKey, axialKey(ZERO_AXIAL)]) {
+      if (!key || visibleKeys.has(key)) continue;
+      const found = scored.find((entry) => entry.coordKey === key);
+      if (found) {
+        chosen.push(found);
+        visibleKeys.add(key);
+      }
+    }
+
+    return chosen;
+  }, [
+    activeRouteCoordKeys,
+    hotspots,
+    mappedSites,
+    marchOrigin,
+    marchOriginKey,
+    navigatorActive,
+    kingModifiers.explorationSpeedMultiplier,
+    roadNetwork.edges,
+    roadNetwork.nodes,
+    focusCoordKey,
+    selectedVisualCoordKey,
+    siteByCoordKey,
+    hotspotByCoordKey,
+    storedMovements,
+    tileByCoordKey,
+    zoom,
+  ]);
+
+  const strategicNodeByKey = useMemo(() => new Map(strategicNodes.map((node) => [node.coordKey, node] as const)), [strategicNodes]);
+
+  const visibleRouteEdges = useMemo(() => {
+    const edges = new Map<string, { from: StrategicNode; to: StrategicNode; active: boolean }>();
+    for (const edgeKey of roadNetwork.edges) {
+      const [fromKey, toKey] = edgeKey.split("|");
+      const from = fromKey ? strategicNodeByKey.get(fromKey) : null;
+      const to = toKey ? strategicNodeByKey.get(toKey) : null;
+      if (!from || !to) continue;
+      edges.set(edgeKey, {
+        from,
+        to,
+        active: activeRouteCoordKeys.has(from.coordKey) || activeRouteCoordKeys.has(to.coordKey),
+      });
+    }
+    return Array.from(edges.values());
+  }, [activeRouteCoordKeys, roadNetwork.edges, strategicNodeByKey]);
+
+  const centerHeading = useMemo(() => {
+    if (!marchOrigin) return 0;
+    const originPoint = world.centerByKey.get(axialKey(marchOrigin));
+    if (!originPoint) return 0;
+    return Math.atan2(world.centerPoint.y - originPoint.y, world.centerPoint.x - originPoint.x) * (180 / Math.PI);
+  }, [marchOrigin, world.centerByKey, world.centerPoint.x, world.centerPoint.y]);
+
+  const selectedStrategicNode = selectedCoordKey ? (strategicNodeByKey.get(selectedCoordKey) ?? null) : null;
+  const inspectedTile = inspectedCoordKey ? (tileByCoordKey.get(inspectedCoordKey) ?? null) : null;
+  const inspectedSite = inspectedCoordKey ? (siteByCoordKey.get(inspectedCoordKey) ?? null) : null;
+  const inspectedHotspot = inspectedCoordKey ? (hotspotByCoordKey.get(inspectedCoordKey) ?? null) : null;
+  const inspectedStrategicNode = inspectedCoordKey ? (strategicNodeByKey.get(inspectedCoordKey) ?? null) : null;
+  const inspectedVisionState = inspectedCoordKey
+    ? currentVisionCoordKeys.has(inspectedCoordKey)
+      ? "online"
+      : visitedCoordKeys.has(inspectedCoordKey)
+        ? "memoria"
+        : "fog"
+    : "fog";
 
   const buildCost = useMemo(() => {
     const targetKind =
@@ -1788,6 +1542,16 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     });
   }, [routeSummary.hexCount, selectedHotspot?.coordKey, selectedHotspot?.terrainBonus.terrainCostMultiplier, selectedHotspot?.terrainBonus.terrainTimeMultiplier]);
 
+  const exploreCost = useMemo(() => {
+    const zoneTax = selectedTile?.zone === "core" ? 12 : selectedTile?.zone === "mid" ? 26 : 44;
+    const terrainTax =
+      selectedTile?.terrainKind === "frontier_pass" ? 18 :
+      selectedTile?.terrainKind === "ironridge" ? 24 :
+      selectedTile?.terrainKind === "ashen_fields" ? 12 :
+      0;
+    return EXPLORATION_ACTION_COST_BASE + routeSummary.hexCount * 12 + zoneTax + terrainTax;
+  }, [routeSummary.hexCount, selectedTile?.terrainKind, selectedTile?.zone]);
+
   const isRoadConnected = useMemo(() => {
     if (!selectedTile) {
       return false;
@@ -1809,6 +1573,18 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       return [];
     }
 
+    if (readOnly) {
+      return [
+        { kind: "inspect", label: "Inspecionar", enabled: true },
+        { kind: "explore", label: "Explorar", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
+        { kind: "build", label: "Construir", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
+        { kind: "go", label: "Ir", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
+        { kind: "attack", label: "Atacar", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
+        { kind: "annex", label: "Anexar", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
+        { kind: "spy", label: "Espiar", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
+      ];
+    }
+
     const tileHasOwner = Boolean(selectedSite);
     const isAbandonedTile = selectedSite?.occupationKind === "abandoned_city";
     const isFrontierRuins = selectedSite?.occupationKind === "frontier_ruins";
@@ -1818,6 +1594,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     const isFoundationTile = isEmptyTile || isUnownedHotspot || isFrontierRuins;
     const targetingPortal = selectedTile.isCentralThrone;
     const centralBlocked = targetingPortal && !isPhase4;
+    const alreadyExplored = visitedCoordKeys.has(selectedTile.coordKey) || Boolean(selectedDiscovery);
 
     let buildEnabled = isFoundationTile && !targetingPortal;
     let buildReason: string | undefined;
@@ -1892,13 +1669,24 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       } else {
         spyReason = "Necessita Heroi Espiao ativo.";
       }
-    } else if (imperialState.resources.influence < spyCost.influence) {
-      spyEnabled = false;
-      spyReason = `Influencia insuficiente (${spyCost.influence}).`;
+    }
+
+    let exploreEnabled = !targetingPortal && !tileHasOwner && !selectedHotspot && !alreadyExplored;
+    let exploreReason: string | undefined;
+    if (!exploreEnabled) {
+      exploreReason = targetingPortal
+        ? "O centro nao pode ser explorado."
+        : tileHasOwner || selectedHotspot
+          ? "Esse ponto ja revela uma entidade fixa do mapa."
+          : "A area ja esta conhecida.";
+    } else if (imperialState.resources.supplies < exploreCost) {
+      exploreEnabled = false;
+      exploreReason = "Suprimentos insuficientes para a expedição.";
     }
 
     return [
       { kind: "inspect", label: "Inspecionar", enabled: true },
+      { kind: "explore", label: "Explorar", enabled: exploreEnabled, reason: exploreReason },
       { kind: "build", label: "Construir", enabled: buildEnabled, reason: buildReason },
       ...(targetingPortal || selectedFriendlySite ? [{ kind: "go", label: goLabel, enabled: goEnabled, reason: goReason }] : []),
       ...(!targetingPortal && isEnemyTile
@@ -1909,14 +1697,11 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         : []),
       { kind: "spy", label: "Espiar", enabled: spyEnabled, reason: spyReason },
     ] as TileActionOption[];
-  }, [colonyDiplomacy.free, imperialState.resources.influence, isPhase4, isRoadConnected, marchOriginKey, mobilizationActive, portalEligible, selectedFriendlySite, selectedHotspot, selectedSite, selectedTile, spyCost.influence]);
+  }, [colonyDiplomacy.free, exploreCost, imperialState.resources.supplies, isPhase4, isRoadConnected, marchOriginKey, mobilizationActive, portalEligible, readOnly, selectedDiscovery, selectedFriendlySite, selectedHotspot, selectedSite, selectedTile, visitedCoordKeys]);
 
   const selectedActionLabel = actionOptions.find((entry) => entry.kind === activeAction)?.label ?? "Inspecionar";
 
-  const canAffordBuild =
-    imperialState.resources.materials >= buildCost.materials &&
-    imperialState.resources.energy >= buildCost.energy &&
-    imperialState.resources.influence >= buildCost.influence;
+  const canAffordBuild = imperialState.resources.materials >= buildCost.materials;
 
   const routePoints = useMemo(() => {
     if (!movementDraft) {
@@ -1929,11 +1714,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   }, [movementDraft, world.centerByKey]);
 
   const routePolyline = routePoints.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ");
-  const scenicDecorations = useMemo(() => {
-    return world.tiles
-      .map((tile) => buildScenicDecoration(tile))
-      .filter((entry): entry is ScenicDecoration => Boolean(entry));
-  }, [world]);
 
   const clampOffset = (candidateX: number, candidateY: number, atZoom: number) => {
     const scaledW = world.width * atZoom;
@@ -1976,6 +1756,18 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     return clampOffset(targetX, targetY, atZoom);
   };
 
+  const applyLayerTransform = (nextOffset: { x: number; y: number }, atZoom: number, animated: boolean) => {
+    if (!mapLayerRef.current) {
+      return;
+    }
+    mapLayerRef.current.style.transition = animated ? "transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1)" : "none";
+    mapLayerRef.current.style.transform = `translate3d(${nextOffset.x}px, ${nextOffset.y}px, 0) scale(${atZoom})`;
+  };
+
+  useEffect(() => {
+    applyLayerTransform(offset, zoom, !dragRef.current);
+  }, [offset, zoom]);
+
   useEffect(() => {
     if (!viewportRef.current) {
       return;
@@ -2000,17 +1792,31 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       return;
     }
 
-    setOffset(centerOnPoint(world.centerPoint, DEFAULT_WORLD_ZOOM));
-    setSelectedCoordKey(axialKey(ZERO_AXIAL));
+    if (ownCapitalSite) {
+      setZoomLevel(4);
+      setZoom(DEFAULT_WORLD_ZOOM);
+      setOffset(centerOn(ownCapitalSite, DEFAULT_WORLD_ZOOM));
+      setSelectedCoordKey(ownCapitalSite.coordKey);
+      setInspectedCoordKey(ownCapitalSite.coordKey);
+      setDetailOpen(false);
+      return;
+    }
+
+    setZoomLevel(1);
+    setZoom(WORLD_OVERVIEW_ZOOM);
+    setOffset(centerOnPoint(world.centerPoint, WORLD_OVERVIEW_ZOOM));
+    setSelectedCoordKey(null);
+    setInspectedCoordKey(axialKey(ZERO_AXIAL));
+    setDetailOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewportSize.w, viewportSize.h, world]);
+  }, [viewportSize.w, viewportSize.h, world, ownCapitalSite]);
 
   useEffect(() => {
     setActiveAction("inspect");
     setActionStep("choose");
     setMovementDraft(null);
     setMovementMessage(null);
-  }, [selectedCoordKey]);
+  }, [inspectedCoordKey, selectedCoordKey]);
 
   useEffect(() => {
     if (villageCapReached && buildMode === "outpost") {
@@ -2018,18 +1824,129 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     }
   }, [buildMode, villageCapReached]);
 
-  const applyZoom = (next: number) => {
-    const clamped = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, next));
+  const applyZoomLevel = (nextLevel: ZoomLevel, anchor?: PixelPoint) => {
+    const nextZoom = ZOOM_LEVEL_SCALE[nextLevel];
+    zoomNavigationLockUntilRef.current = Date.now() + 420;
+    if (Math.abs(nextZoom - zoom) > 0.01) {
+      setZoomCinematic(true);
+      if (zoomCinemaTimerRef.current) {
+        clearTimeout(zoomCinemaTimerRef.current);
+      }
+      zoomCinemaTimerRef.current = setTimeout(() => setZoomCinematic(false), 860);
+    }
+    setZoomLevel(nextLevel);
     setZoom((current) => {
       const centerX = viewportSize.w / 2;
       const centerY = viewportSize.h / 2;
-      const worldX = (centerX - offset.x) / current;
-      const worldY = (centerY - offset.y) / current;
-      const nextOffsetX = centerX - worldX * clamped;
-      const nextOffsetY = centerY - worldY * clamped;
-      setOffset(clampOffset(nextOffsetX, nextOffsetY, clamped));
-      return clamped;
+      const worldX = anchor ? anchor.x : (centerX - offset.x) / current;
+      const worldY = anchor ? anchor.y : (centerY - offset.y) / current;
+      const nextOffsetX = centerX - worldX * nextZoom;
+      const nextOffsetY = centerY - worldY * nextZoom;
+      setOffset(clampOffset(nextOffsetX, nextOffsetY, nextZoom));
+      return nextZoom;
     });
+  };
+
+  const stepZoomLevel = (direction: -1 | 1, anchor?: PixelPoint) => {
+    const nextLevel = clampZoomLevel(zoomLevel + direction);
+    if (nextLevel < 4) {
+      setSelectedCoordKey(null);
+      setDetailOpen(false);
+    }
+    applyZoomLevel(nextLevel, anchor);
+  };
+
+  const swallowHudPointer: React.PointerEventHandler<HTMLButtonElement> = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const swallowHudClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const focusWorldView = () => {
+    const nextZoom = ZOOM_LEVEL_SCALE[1];
+    setZoomLevel(1);
+    setZoom(nextZoom);
+    setOffset(centerOnPoint(world.centerPoint, nextZoom));
+    setSelectedCoordKey(null);
+    setInspectedCoordKey(axialKey(ZERO_AXIAL));
+    setDetailOpen(false);
+  };
+
+  const focusCapitalView = () => {
+    if (!ownCapitalSite) {
+      focusWorldView();
+      return;
+    }
+    const nextZoom = ZOOM_LEVEL_SCALE[4];
+    setZoomLevel(4);
+    setZoom(nextZoom);
+    setOffset(centerOn(ownCapitalSite, nextZoom));
+    setSelectedCoordKey(ownCapitalSite.coordKey);
+    setInspectedCoordKey(ownCapitalSite.coordKey);
+    setDetailOpen(false);
+  };
+
+  const focusCenterView = () => {
+    const nextZoom = ZOOM_LEVEL_SCALE[2];
+    setZoomLevel(2);
+    setZoom(nextZoom);
+    setOffset(centerOnPoint(world.centerPoint, nextZoom));
+    setSelectedCoordKey(null);
+    setInspectedCoordKey(axialKey(ZERO_AXIAL));
+    setDetailOpen(false);
+  };
+
+  const focusCoordLayer = (coordKey: string) => {
+    const tile = tileByCoordKey.get(coordKey);
+    if (!tile) {
+      return;
+    }
+    const nextLevel = clampZoomLevel(zoomLevel + 1);
+    if (nextLevel === zoomLevel) return;
+    applyZoomLevel(nextLevel, tile.center);
+  };
+
+  const zoomIntoCoord = (coordKey: string) => {
+    const tile = tileByCoordKey.get(coordKey);
+    if (!tile) {
+      return;
+    }
+    const nextLevel = clampZoomLevel(zoomLevel + 1);
+    applyZoomLevel(nextLevel, tile.center);
+  };
+
+  const handleCoordInteraction = (coordKey: string) => {
+    const tile = tileByCoordKey.get(coordKey);
+    if (!tile) return;
+    const now = Date.now();
+    if (zoomLevel < 4 && now < zoomNavigationLockUntilRef.current) {
+      return;
+    }
+    const gate = interactionGateRef.current;
+    if (gate && gate.coordKey === coordKey && gate.zoomLevel === zoomLevel && now - gate.at < 240) {
+      return;
+    }
+    interactionGateRef.current = { coordKey, at: now, zoomLevel };
+
+    if (zoomLevel < 4) {
+      setInspectedCoordKey(coordKey);
+      setSelectedCoordKey(null);
+      setDetailOpen(false);
+      setMovementDraft(null);
+      setMovementMessage(null);
+      zoomIntoCoord(coordKey);
+      return;
+    }
+
+    const sameTarget = selectedCoordKey === coordKey;
+    setSelectedCoordKey(coordKey);
+    setInspectedCoordKey(coordKey);
+    setDetailOpen(sameTarget);
+    setOffset(centerOnPoint(tile.center, zoom));
   };
 
   const handlePointerDown: React.PointerEventHandler<HTMLDivElement> = (event) => {
@@ -2037,6 +1954,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       return;
     }
     viewportRef.current.setPointerCapture(event.pointerId);
+    applyLayerTransform(offset, zoom, false);
     dragRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -2060,7 +1978,16 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
     const nextX = dragRef.current.startOffsetX + dx;
     const nextY = dragRef.current.startOffsetY + dy;
-    setOffset(clampOffset(nextX, nextY, zoom));
+    pendingDragOffsetRef.current = clampOffset(nextX, nextY, zoom);
+    if (dragFrameRef.current) {
+      return;
+    }
+    dragFrameRef.current = requestAnimationFrame(() => {
+      dragFrameRef.current = null;
+      if (pendingDragOffsetRef.current) {
+        applyLayerTransform(pendingDragOffsetRef.current, zoom, false);
+      }
+    });
   };
 
   const handlePointerUp: React.PointerEventHandler<HTMLDivElement> = (event) => {
@@ -2070,6 +1997,16 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
     const drag = dragRef.current;
     dragRef.current = null;
+    if (dragFrameRef.current) {
+      cancelAnimationFrame(dragFrameRef.current);
+      dragFrameRef.current = null;
+    }
+    const finalOffset = pendingDragOffsetRef.current;
+    if (pendingDragOffsetRef.current) {
+      applyLayerTransform(pendingDragOffsetRef.current, zoom, false);
+      setOffset(pendingDragOffsetRef.current);
+      pendingDragOffsetRef.current = null;
+    }
 
     if (viewportRef.current?.hasPointerCapture(event.pointerId)) {
       viewportRef.current.releasePointerCapture(event.pointerId);
@@ -2079,9 +2016,19 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       return;
     }
 
+    if (suppressViewportTapRef.current) {
+      suppressViewportTapRef.current = false;
+      return;
+    }
+
+    if (zoomLevel < 4 && Date.now() < zoomNavigationLockUntilRef.current) {
+      return;
+    }
+
     const rect = viewportRef.current.getBoundingClientRect();
-    const px = (event.clientX - rect.left - offset.x) / zoom;
-    const py = (event.clientY - rect.top - offset.y) / zoom;
+    const clickOffset = finalOffset ?? offset;
+    const px = (event.clientX - rect.left - clickOffset.x) / zoom;
+    const py = (event.clientY - rect.top - clickOffset.y) / zoom;
     const tapped = pixelToAxial({ x: px, y: py }, world.layout);
 
     if (axialDistance(tapped, ZERO_AXIAL) > WORLD_HEX_RADIUS) {
@@ -2094,7 +2041,24 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     }
 
     emitUiFeedback("tap", "light");
-    setSelectedCoordKey(coordKey);
+    handleCoordInteraction(coordKey);
+  };
+
+  const handlePointerCancel: React.PointerEventHandler<HTMLDivElement> = (event) => {
+    if (!dragRef.current || dragRef.current.pointerId !== event.pointerId) {
+      return;
+    }
+
+    dragRef.current = null;
+    if (dragFrameRef.current) {
+      cancelAnimationFrame(dragFrameRef.current);
+      dragFrameRef.current = null;
+    }
+    pendingDragOffsetRef.current = null;
+
+    if (viewportRef.current?.hasPointerCapture(event.pointerId)) {
+      viewportRef.current.releasePointerCapture(event.pointerId);
+    }
   };
 
   const setDispatchFromPreset = (preset: Exclude<TroopPreset, "custom">) => {
@@ -2132,10 +2096,28 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
   const handleActionClick = (option: TileActionOption) => {
     emitUiFeedback(option.enabled ? "open" : "tap", option.enabled ? "medium" : "light");
+    if (readOnly && option.kind !== "inspect") {
+      setActiveAction("inspect");
+      setActionStep("choose");
+      setMovementDraft(null);
+      return;
+    }
     setActiveAction(option.kind);
     setMovementMessage(null);
 
-    if (!option.enabled || option.kind === "inspect" || !marchOrigin || !selectedTile) {
+    if (!option.enabled || option.kind === "inspect" || !selectedTile) {
+      setActionStep("choose");
+      setMovementDraft(null);
+      return;
+    }
+
+    if (option.kind === "explore") {
+      setMovementDraft(null);
+      setActionStep("configure");
+      return;
+    }
+
+    if (!marchOrigin) {
       setActionStep("choose");
       setMovementDraft(null);
       return;
@@ -2172,7 +2154,60 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     setActionStep("configure");
   };
 
+  const handleConfirmExploration = () => {
+    if (readOnly) {
+      return;
+    }
+    if (!selectedTile || visitedCoordKeys.has(selectedTile.coordKey) || imperialState.resources.supplies < exploreCost) {
+      return;
+    }
+
+    setSubmittingExploration(true);
+    emitUiFeedback("open", "medium");
+    const discovery = buildExplorationDiscovery(worldId, selectedTile, routeSummary);
+
+    setImperialState((current) => ({
+      ...current,
+      resources: {
+        ...current.resources,
+        supplies: Math.max(0, current.resources.supplies - exploreCost),
+      },
+      exploredCoordKeys: Array.from(new Set([...(current.exploredCoordKeys ?? []), selectedTile.coordKey])).slice(0, 600),
+      discoveriesByCoord: {
+        ...(current.discoveriesByCoord ?? {}),
+        [selectedTile.coordKey]: discovery,
+      },
+      logs: [`Exploração concluída em ${selectedTile.q}:${selectedTile.r} - ${discovery.title}`, ...current.logs].slice(0, 12),
+    }));
+
+    setExplorationReveal(discovery);
+    setActionStep("choose");
+    setActiveAction("inspect");
+    setMovementDraft(null);
+    setMovementMessage(`Área revelada por ${exploreCost.toLocaleString("pt-BR")} suprimentos.`);
+    setSubmittingExploration(false);
+  };
+
+  const dismissExplorationReveal = () => {
+    if (explorationReveal) {
+      setImperialState((current) => ({
+        ...current,
+        discoveriesByCoord: {
+          ...(current.discoveriesByCoord ?? {}),
+          [explorationReveal.coordKey]: {
+            ...explorationReveal,
+            status: "seen",
+          },
+        },
+      }));
+    }
+    setExplorationReveal(null);
+  };
+
   const handleConfirmMovement = async () => {
+    if (readOnly) {
+      return;
+    }
     if (!movementDraft || !selectedTile) {
       return;
     }
@@ -2272,8 +2307,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
           resources: {
             ...current.resources,
             materials: Math.max(0, current.resources.materials - buildCost.materials),
-            energy: Math.max(0, current.resources.energy - buildCost.energy),
-            influence: Math.max(0, current.resources.influence - buildCost.influence),
           },
           logs: [
             `${buildMode === "outpost" ? "Fundacao" : "Estrada"} no mapa (${selectedTile.q},${selectedTile.r})`,
@@ -2285,10 +2318,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       if (movementDraft.action === "spy") {
         setImperialState((current) => ({
           ...current,
-          resources: {
-            ...current.resources,
-            influence: Math.max(0, current.resources.influence - spyCost.influence),
-          },
           logs: [`Espionagem disparada em (${selectedTile.q},${selectedTile.r})`, ...current.logs].slice(0, 12),
         }));
       }
@@ -2310,7 +2339,10 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
               ? `Anexacao ${stored.id.slice(0, 8)} registrada. ${selectedAnnexDiplomatToken} ficou em missao ate a consolidacao da cidade.`
               : `Movimento ${stored.id.slice(0, 8)} registrado em map_movements. ETA ${formatMinutesLabel(stored.etaMinutes)}.${isTroopAction ? ` Tropa: ${troopDispatchTotal.toLocaleString("pt-BR")} (${troopPreset}).` : ""}`,
       );
-      setStoredMovements((current) => [stored, ...current].slice(0, 1200));
+      setImperialState((current) => ({
+        ...current,
+        mapMovements: [stored, ...current.mapMovements].slice(0, 1200),
+      }));
     } catch {
       setMovementMessage("Falha ao registrar movimento. Tente novamente.");
     } finally {
@@ -2331,13 +2363,13 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
   const movementInfo = useMemo(() => {
     const oneHex = { q: 1, r: 0 };
-    const base = calculateMarchTimeMinutes(ZERO_AXIAL, oneHex, { hasRoad: false });
-    const road = calculateMarchTimeMinutes(ZERO_AXIAL, oneHex, { hasRoad: true });
+    const base = calculateMarchTimeMinutes(ZERO_AXIAL, oneHex, { hasRoad: false, terrainMovementMultiplier: 1 / kingModifiers.explorationSpeedMultiplier });
+    const road = calculateMarchTimeMinutes(ZERO_AXIAL, oneHex, { hasRoad: true, terrainMovementMultiplier: 1 / kingModifiers.explorationSpeedMultiplier });
     return {
       baseMinutesPerHex: Math.round(base.minutesPerHex),
       roadMinutesPerHex: Math.round(road.minutesPerHex),
     };
-  }, []);
+  }, [kingModifiers.explorationSpeedMultiplier]);
 
   const portalVisual = portalEligible
     ? {
@@ -2355,113 +2387,54 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         label: "Portal Central Bloqueado",
       };
   const detailModeActive = zoom >= DETAIL_ZOOM_THRESHOLD;
+  const macroVisionActive = zoom < MACRO_VISION_THRESHOLD;
+  const microVisionActive = zoom >= MICRO_VISION_THRESHOLD;
+  const renderTiles = useMemo(() => {
+    if (!microVisionActive) {
+      return world.tiles;
+    }
 
+    const centers = [
+      selectedTile ? { q: selectedTile.q, r: selectedTile.r } : ZERO_AXIAL,
+      marchOrigin ?? ZERO_AXIAL,
+      ZERO_AXIAL,
+    ];
+    const visibleKeys = new Set<string>();
+
+    return world.tiles.filter((tile) => {
+      const close = centers.some((center) => axialDistance(tile, center) <= 8);
+      if (close || currentVisionCoordKeys.has(tile.coordKey) || visitedCoordKeys.has(tile.coordKey)) {
+        visibleKeys.add(tile.coordKey);
+        return true;
+      }
+      return false;
+    });
+  }, [currentVisionCoordKeys, marchOrigin, microVisionActive, selectedTile, visitedCoordKeys, world.tiles]);
   return (
-    <section className="space-y-2">
-      <article className="rounded-2xl border border-white/25 bg-white/10 p-2 shadow-[0_18px_36px_rgba(2,6,23,0.45)] backdrop-blur-xl">
-        <div className="flex items-center justify-between gap-2 rounded-xl border border-white/20 bg-white/10 p-2">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <Compass className="h-4 w-4 text-cyan-300" />
-            <p className="truncate text-xs font-semibold text-slate-100">
-              Mundo Hex R{WORLD_HEX_RADIUS} - {WORLD_HEX_TILE_COUNT.toLocaleString("pt-BR")} tiles
-            </p>
-          </div>
-          <div className="flex items-center gap-1">
-            <span
-              className={`hidden rounded-full border px-2 py-0.5 text-[10px] font-bold sm:inline-flex ${
-                detailModeActive
-                  ? "border-emerald-300/70 bg-emerald-500/20 text-emerald-100"
-                  : "border-white/20 bg-white/8 text-slate-300"
-              }`}
-            >
-              {detailModeActive ? "Detalhes 300%+" : "Modo Leve"}
-            </span>
-            <button
-              type="button"
-              onClick={() => applyZoom(zoom - ZOOM_STEP)}
-              className="rounded-md border border-white/30 bg-white/10 p-1 text-slate-100 hover:bg-white/20"
-              aria-label="Diminuir zoom"
-            >
-              <Minus className="h-3.5 w-3.5" />
-            </button>
-            <span className="min-w-[42px] text-center text-[11px] font-bold text-slate-100">{Math.round(zoom * 100)}%</span>
-            <button
-              type="button"
-              onClick={() => applyZoom(zoom + ZOOM_STEP)}
-              className="rounded-md border border-white/30 bg-white/10 p-1 text-slate-100 hover:bg-white/20"
-              aria-label="Aumentar zoom"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOffset(centerOnPoint(world.centerPoint, zoom));
-                setSelectedCoordKey(axialKey(ZERO_AXIAL));
-              }}
-              className="rounded-md border border-white/30 bg-white/10 p-1 text-slate-100 hover:bg-white/20"
-              aria-label="Recentralizar"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-1 flex items-center justify-between gap-2 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-[10px] font-semibold text-slate-200">
-          <div className="min-w-0">
-            <p className="truncate">
-              Mobilizacao Livre: {mobilizationActive ? `ATIVA${mobilizationStartedAtDay ? ` (Dia ${mobilizationStartedAtDay})` : ""}` : "inativa"}
-            </p>
-            <p className="text-[9px] text-slate-300">
-              Fase IV aplica deslocamento x{PHASE4_REGROUP_SPEED_MULT} em marchas para o Centro (0,0).
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (!isPhase4 || mobilizationActive) {
-                return;
-              }
-              setMobilizationActive(true);
-              setMobilizationStartedAtDay(currentDay);
-              setMovementMessage(`Comando Reagrupar Imperio acionado no Dia ${currentDay}. Movimentos para o Centro entram em modo x${PHASE4_REGROUP_SPEED_MULT}.`);
-            }}
-            disabled={!isPhase4 || mobilizationActive}
-            className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-bold transition ${
-              !isPhase4 || mobilizationActive
-                ? "cursor-not-allowed border-white/20 bg-white/10 text-slate-400"
-                : "border-cyan-300/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"
-            }`}
-          >
-            {!isPhase4 ? "Dia 91" : mobilizationActive ? "Reagrupado" : "Reagrupar Imperio"}
-          </button>
-        </div>
-
-        <div className="mt-1 flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-[10px] font-semibold text-slate-200">
-          <span>Sem estrada: {movementInfo.baseMinutesPerHex}m/hex</span>
-          <span className="text-slate-400">|</span>
-          <span>Malha Viaria: {movementInfo.roadMinutesPerHex}m/hex</span>
-          <span className="text-slate-400">|</span>
-          <span>Distritos: 6</span>
-          <span className="text-slate-400">|</span>
-          <span>Hotspots: {hotspots.length}</span>
-        </div>
-
+    <section className="space-y-2 bg-black text-slate-100" data-smoke="strategic-map">
+      <article className="overflow-hidden rounded-none border border-white/10 bg-black p-2 shadow-[0_0_70px_rgba(34,211,238,0.08)] sm:rounded-2xl">
         <div
           ref={viewportRef}
-          className="relative mt-2 h-[56vh] touch-none overflow-hidden rounded-xl border border-white/20 bg-slate-900/45"
+          data-smoke="map-viewport"
+          className="kw-tactical-map relative min-h-[560px] touch-none overflow-hidden rounded-xl border border-cyan-300/12 bg-black"
+          style={{ height: "calc(100vh - 168px - env(safe-area-inset-bottom))" }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
         >
           <div
+            ref={mapLayerRef}
             className="absolute left-0 top-0"
             style={{
               width: world.width,
               height: world.height,
-              transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+              transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoom})`,
               transformOrigin: "0 0",
+              transition: dragRef.current ? undefined : "transform 680ms cubic-bezier(0.16, 1, 0.3, 1)",
+              willChange: "transform",
+              backfaceVisibility: "hidden",
+              contain: "layout paint style",
             }}
           >
             <svg
@@ -2471,77 +2444,128 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
               className="absolute inset-0 pointer-events-none"
               aria-label="Grid hexagonal do mundo"
             >
-              {world.tiles.map((tile) => {
+              <image
+                href={WORLD_MAP_IMAGE_SRC}
+                x={MAP_IMAGE_CALIBRATION.x}
+                y={MAP_IMAGE_CALIBRATION.y}
+                width={world.width * MAP_IMAGE_CALIBRATION.scale}
+                height={world.height * MAP_IMAGE_CALIBRATION.scale}
+                preserveAspectRatio="xMidYMid slice"
+                opacity={1}
+              />
+
+              {renderTiles.map((tile) => {
                 const style = TILE_STYLE_BY_ZONE[tile.zone];
+                const visited = visitedCoordKeys.has(tile.coordKey);
+                const inVision = currentVisionCoordKeys.has(tile.coordKey);
                 return (
                   <polygon
                     key={tile.coordKey}
                     points={tile.points}
-                    fill={style.fill}
-                    stroke={style.stroke}
-                    strokeWidth={0.9}
+                    fill={macroVisionActive ? "rgba(0,0,0,0.03)" : style.fill}
+                    stroke={FOG_VISUAL_DISABLED ? "rgba(148,163,184,0.08)" : inVision ? "rgba(34,211,238,0.24)" : visited ? "rgba(148,163,184,0.14)" : "rgba(51,65,85,0.16)"}
+                    strokeWidth={macroVisionActive ? 0.6 : 0.35}
+                    opacity={FOG_VISUAL_DISABLED ? 0.18 : inVision ? 0.72 : visited ? 0.28 : 0.18}
                   />
                 );
               })}
 
-              {world.tiles.map((tile) => (
+              {!macroVisionActive ? renderTiles.map((tile) => (
                 <polygon
                   key={`terrain-${tile.coordKey}`}
                   points={tile.points}
                   fill={TERRAIN_VISUAL_META[tile.terrainKind].tint}
                   stroke="none"
+                  opacity={FOG_VISUAL_DISABLED ? 0.08 : currentVisionCoordKeys.has(tile.coordKey) ? 0.35 : visitedCoordKeys.has(tile.coordKey) ? 0.12 : 0}
                 />
-              ))}
+              )) : null}
 
-              {world.tiles.map((tile) => (
+              {!microVisionActive ? renderTiles.map((tile) => (
                 <polygon
                   key={`district-${tile.coordKey}`}
                   points={tile.points}
                   fill={DISTRICT_META[tile.district].tint}
                   stroke="none"
+                  opacity={FOG_VISUAL_DISABLED ? 0.05 : currentVisionCoordKeys.has(tile.coordKey) ? 0.22 : visitedCoordKeys.has(tile.coordKey) ? 0.08 : 0}
                 />
-              ))}
+              )) : null}
+
+              {!FOG_VISUAL_DISABLED ? renderTiles.map((tile) => {
+                const inVision = currentVisionCoordKeys.has(tile.coordKey);
+                const visited = visitedCoordKeys.has(tile.coordKey);
+                if (inVision) return null;
+                return (
+                  <polygon
+                    key={`fog-${tile.coordKey}`}
+                    points={tile.points}
+                    fill={visited ? "rgba(0,0,0,0.52)" : "rgba(0,0,0,0.88)"}
+                    stroke={visited ? "rgba(148,163,184,0.05)" : "rgba(0,0,0,0.55)"}
+                    strokeWidth={0.35}
+                    opacity={visited ? 0.78 : 0.96}
+                  />
+                );
+              }) : null}
 
               {factionInfluenceOverlays.map((overlay) => (
                 <polygon
                   key={`influence-${overlay.coordKey}`}
                   points={overlay.points}
-                  fill={factionInfluenceColor(overlay.faction, Math.min(0.2, 0.05 + overlay.strength * 0.08))}
-                  stroke={factionInfluenceColor(overlay.faction, Math.min(0.45, 0.12 + overlay.strength * 0.12))}
-                  strokeWidth={0.8}
+                  fill={factionInfluenceColor(overlay.faction, Math.min(0.1, 0.03 + overlay.strength * 0.05))}
+                  stroke="none"
                   strokeLinejoin="round"
+                  opacity={FOG_VISUAL_DISABLED ? 0.14 : currentVisionCoordKeys.has(overlay.coordKey) ? 1 : visitedCoordKeys.has(overlay.coordKey) ? 0.18 : 0}
                 />
               ))}
 
-              {scenicDecorations.map((decoration) => (
-                <path
-                  key={decoration.key}
-                  d={decoration.d}
-                  fill={decoration.fill}
-                  opacity={decoration.opacity}
-                />
-              ))}
-
-              {world.frontierLines.map((line) => (
+              {!microVisionActive ? world.frontierLines.map((line) => (
                 <line
                   key={line.id}
                   x1={line.x1}
                   y1={line.y1}
                   x2={line.x2}
                   y2={line.y2}
-                  stroke="rgba(226,232,240,0.18)"
-                  strokeWidth={0.9}
+                  stroke="rgba(226,232,240,0.08)"
+                  strokeWidth={0.5}
                   strokeDasharray="3 4"
                 />
-              ))}
+              )) : null}
+
+              {visibleRouteEdges.map((edge) => {
+                const tone = strategicNodeTone(edge.active ? "pressured" : edge.from.state);
+                return (
+                  <line
+                    key={`route-node-${edge.from.coordKey}-${edge.to.coordKey}`}
+                    x1={edge.from.center.x}
+                    y1={edge.from.center.y}
+                    x2={edge.to.center.x}
+                    y2={edge.to.center.y}
+                    stroke={edge.active ? "rgba(250,204,21,0.55)" : tone.route}
+                    strokeWidth={edge.active ? 2.4 : 1.45}
+                    strokeLinecap="round"
+                    strokeDasharray={edge.active ? "3 4" : undefined}
+                  />
+                );
+              })}
 
               {selectedTile ? (
-                <polygon
-                  points={selectedTile.points}
-                  fill="rgba(96,165,250,0.22)"
-                  stroke="rgba(191,219,254,0.95)"
-                  strokeWidth={1.45}
-                />
+                <>
+                  <circle
+                    cx={selectedTile.center.x}
+                    cy={selectedTile.center.y}
+                    r={WORLD_HEX_TILE_SIZE_PX * 0.98}
+                    fill="rgba(96,165,250,0.18)"
+                    stroke="rgba(191,219,254,0.92)"
+                    strokeWidth={1.35}
+                  />
+                  <circle
+                    cx={selectedTile.center.x}
+                    cy={selectedTile.center.y}
+                    r={WORLD_HEX_TILE_SIZE_PX * 0.38}
+                    fill="rgba(191,219,254,0.16)"
+                    stroke="rgba(191,219,254,0.7)"
+                    strokeWidth={1}
+                  />
+                </>
               ) : null}
 
               {routePoints.length >= 2 ? (
@@ -2585,6 +2609,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
               />
             </svg>
 
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_48%,rgba(250,204,21,0.08)_0%,rgba(15,23,42,0)_24%,rgba(2,6,23,0.58)_100%)]" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(15,23,42,0)_0%,rgba(2,6,23,0.52)_100%)]" />
 
             {zoom >= 1.6 ? world.districtLabels.map((label) => (
@@ -2607,94 +2632,137 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
               </div>
             </div>
 
-            {hotspots.map((hotspot) => {
-              const center = world.centerByKey.get(hotspot.coordKey);
-              if (!center) {
-                return null;
-              }
-              const meta = HOTSPOT_META[hotspot.kind];
-              const selected = selectedCoordKey === hotspot.coordKey;
-              const hotspotMuted = relationFilter !== "all" && !selected;
+            <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-cyan-300/35 bg-slate-950/55 px-2 py-1 text-[10px] font-bold text-cyan-100 shadow-lg backdrop-blur">
+              Centro
+              <span className="ml-1 inline-block" style={{ transform: `rotate(${centerHeading}deg)` }}>↑</span>
+            </div>
+
+            {strategicNodes.map((node) => {
+              const tone = strategicNodeTone(node.state);
+              const matchesFilter =
+                relationFilter === "all" ||
+                (relationFilter === "self" && node.site?.faction === "self") ||
+                (relationFilter === "tribe" && node.site?.faction === "tribe") ||
+                (relationFilter === "ally" && node.site?.faction === "ally") ||
+                (relationFilter === "enemy" && node.site?.faction === "enemy") ||
+                (relationFilter === "abandoned" && node.site?.faction === "abandoned") ||
+                !node.site;
+              const muted = !matchesFilter && !node.isSelected;
+              const inVision = currentVisionCoordKeys.has(node.coordKey);
+              const visited = visitedCoordKeys.has(node.coordKey);
+              const memoryOnly = !FOG_VISUAL_DISABLED && visited && !inVision;
+              const fogged = !FOG_VISUAL_DISABLED && !visited && !inVision;
+              const showLabel = zoomLevel < 4 && !macroVisionActive && (node.isSelected || microVisionActive || (!muted && zoom >= 1.35 && node.state !== "unknown"));
+              const icon = node.isCenter
+                ? "◎"
+                : node.site
+                  ? siteMarkerText(node.site)
+                  : node.hotspot
+                    ? HOTSPOT_META[node.hotspot.kind].icon
+                    : node.state === "unknown"
+                      ? "?"
+                      : "•";
+
+              const cityIconSrc = node.site ? cityIconSrcForSite(node.site) : null;
 
               return (
                 <button
-                  key={hotspot.id}
+                  key={`node-${node.coordKey}`}
                   type="button"
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onPointerUp={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setSelectedCoordKey(hotspot.coordKey);
-                  }}
-                  className="absolute transition-all duration-200"
-                  title={`${hotspot.name} - Clique para preparar bonus de terreno`}
+                  onPointerDown={
+                    zoomLevel === 4
+                      ? (event) => {
+                          suppressViewportTapRef.current = true;
+                          event.stopPropagation();
+                        }
+                      : undefined
+                  }
+                  onPointerUp={
+                    zoomLevel === 4
+                      ? (event) => {
+                          suppressViewportTapRef.current = true;
+                          event.stopPropagation();
+                        }
+                      : undefined
+                  }
+                  onClick={
+                    zoomLevel === 4
+                      ? (event) => {
+                          event.stopPropagation();
+                          suppressViewportTapRef.current = true;
+                          emitUiFeedback("tap", "light");
+                          handleCoordInteraction(node.coordKey);
+                        }
+                      : undefined
+                  }
+                  className={`absolute transition-all duration-200 ${zoomLevel === 4 ? "" : "pointer-events-none"}`}
                   style={{
-                    left: center.x,
-                    top: center.y,
-                    transform: `translate(-50%, -50%) scale(${selected ? 1.08 : hotspotMuted ? 0.78 : 1})`,
-                    opacity: hotspotMuted ? 0.16 : 1,
+                    left: node.center.x,
+                    top: node.center.y,
+                    transform: `translate(-50%, -50%) scale(${node.isSelected ? 1.16 : node.isFocus ? 1.06 : macroVisionActive ? 0.72 : muted ? 0.82 : 1})`,
+                    opacity: fogged ? 0.1 : muted ? 0.2 : memoryOnly ? 0.42 : 1,
+                    filter: memoryOnly ? "grayscale(1) saturate(0.2)" : undefined,
+                    zIndex: node.isSelected ? 12 : node.isPressured ? 10 : node.isOwned || node.isEnemy ? 9 : 6,
                   }}
+                  title={`${node.label} · ${node.caption}`}
                 >
+                  {node.isPressured || node.hasRouteActivity ? (
+                    <span
+                      className="pointer-events-none absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full animate-ping"
+                      style={{
+                        background: `radial-gradient(circle, ${tone.pulse} 0%, rgba(15,23,42,0) 68%)`,
+                      }}
+                    />
+                  ) : null}
                   <div
-                    className={`${"grid h-5 w-5 place-items-center rounded-full border text-[10px] shadow-lg"} ${meta.chipClass} ${selected ? "ring-2 ring-white/80" : ""}`}
-                  >
-                    {meta.icon}
-                  </div>
-                </button>
-              );
-            })}
-
-            {mappedSites.map((site) => {
-              const selected = selectedCoordKey === site.coordKey;
-              const matchesFilter = relationFilter === "all" || site.faction === relationFilter;
-              const muted = !matchesFilter && !selected;
-              const showLabel = selected || (!muted && matchesFilter && zoom >= 1.15);
-              const center = world.centerByKey.get(site.coordKey);
-              if (!center) {
-                return null;
-              }
-              const terrainKind = site.terrainKind ?? tileByCoordKey.get(site.coordKey)?.terrainKind ?? "ashen_fields";
-              const terrainRecommended = site.recommendedCityClass ?? TERRAIN_META[terrainKind].recommendedCityClass;
-
-              return (
-                <button
-                  key={site.id}
-                  type="button"
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onPointerUp={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setSelectedCoordKey(site.coordKey);
-                  }}
-                  className="absolute transition-all duration-200"
-                  style={{
-                    left: center.x,
-                    top: center.y,
-                    transform: `translate(-50%, -50%) scale(${selected ? 1.14 : muted ? 0.82 : matchesFilter ? 1.02 : 0.9})`,
-                    opacity: muted ? 0.18 : 1,
-                    zIndex: selected ? 7 : matchesFilter ? 5 : 2,
-                  }}
-                >
-                  <div
-                    className={`grid h-5 w-5 place-items-center rounded-full border text-[9px] font-bold text-slate-950 shadow-lg ${markerBorderClass(site.faction)} ${markerFillClass(site.faction)} ${
-                      selected ? "ring-2 ring-white/85" : matchesFilter && relationFilter !== "all" ? "ring-2 ring-white/40" : ""
+                    className={`relative z-10 grid ${
+                      cityIconSrc
+                        ? macroVisionActive
+                          ? "h-7 w-7 text-[0px]"
+                          : zoomLevel >= 4
+                            ? "h-16 w-16 text-[0px]"
+                            : "h-10 w-10 text-[0px]"
+                        : macroVisionActive
+                          ? "h-4 w-4 text-[0px]"
+                          : microVisionActive
+                            ? "h-9 w-9 text-[11px]"
+                            : "h-6 w-6 text-[10px]"
+                    } place-items-center rounded-full border font-black shadow-lg transition-all duration-300 ${tone.chip} ${
+                      node.isSelected ? "ring-2 ring-white/85" : node.isFocus ? "ring-2 ring-cyan-200/45" : ""
                     }`}
-                    style={markerGlowStyle(site.faction, selected, muted)}
+                    style={{
+                      boxShadow: node.isSelected
+                        ? "0 0 0 10px rgba(34,211,238,0.12), 0 0 34px rgba(34,211,238,0.42)"
+                        : FOG_VISUAL_DISABLED || inVision
+                          ? tone.glow
+                          : "none",
+                    }}
                   >
-                    {siteMarkerText(site)}
+                    {cityIconSrc ? (
+                      <img
+                        src={cityIconSrc}
+                        alt=""
+                        className={`${macroVisionActive ? "h-6 w-6" : zoomLevel >= 4 ? "h-14 w-14" : "h-9 w-9"} object-contain drop-shadow-[0_8px_10px_rgba(0,0,0,0.55)]`}
+                      />
+                    ) : (
+                      macroVisionActive ? "" : icon
+                    )}
                   </div>
-                  {selected && zoom >= DETAIL_ZOOM_THRESHOLD ? (
-                    <span className="pointer-events-none absolute left-1/2 top-[-22%] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/30 bg-slate-950/80 px-1 py-0.5 text-[8px] font-bold text-slate-100">
-                      {cityClassLabel(terrainRecommended)}
+                  {macroVisionActive && (node.isPressured || node.hasRouteActivity || node.isEnemy || node.hotspot || node.isCenter) ? (
+                    <span className="pointer-events-none absolute -right-1 -top-1 grid h-3 w-3 place-items-center rounded-full border border-cyan-300/30 bg-black text-[8px] text-cyan-100">
+                      {node.isEnemy ? "!" : node.hotspot ? "*" : node.isCenter ? "O" : "^"}
                     </span>
                   ) : null}
-                  {showLabel ? (
-                    <span
-                      className={`pointer-events-none absolute left-1/2 top-[115%] -translate-x-1/2 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${labelClass(
-                        site.faction,
-                      )}`}
-                    >
-                      {site.name}
+                  {showLabel && microVisionActive && node.site && inVision ? (
+                    <span className="pointer-events-none absolute left-1/2 top-[132%] z-20 min-w-24 -translate-x-1/2 rounded-lg border border-cyan-300/20 bg-black/88 px-2 py-1 text-center text-slate-100 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur">
+                      <span className="block max-w-32 truncate text-[9px] font-black leading-none">{node.label}</span>
+                      <span className="mt-0.5 block text-[8px] font-semibold uppercase tracking-[0.12em] text-cyan-100/75">
+                        {cityClassLabel(node.site.recommendedCityClass ?? node.site.cityClass ?? TERRAIN_META[node.tile.terrainKind].recommendedCityClass)}
+                      </span>
+                    </span>
+                  ) : showLabel ? (
+                    <span className="pointer-events-none absolute left-1/2 top-[122%] z-20 -translate-x-1/2 whitespace-nowrap rounded-full border border-cyan-300/18 bg-black/82 px-1.5 py-0.5 text-[9px] font-semibold text-slate-100 backdrop-blur">
+                      {node.label}
                     </span>
                   ) : null}
                 </button>
@@ -2702,20 +2770,107 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             })}
           </div>
 
+          <div className="pointer-events-none absolute left-14 top-3 z-20 flex max-w-[68%] flex-wrap gap-1.5">
+            <span className="rounded-full border border-white/14 bg-black/58 px-2 py-1 text-[10px] font-bold text-slate-100 backdrop-blur">
+              Sinais {counts.all}
+            </span>
+            <span className="rounded-full border border-yellow-300/35 bg-yellow-400/14 px-2 py-1 text-[10px] font-bold text-yellow-50 backdrop-blur">
+              Suas {counts.self}
+            </span>
+            <span className="rounded-full border border-emerald-300/35 bg-emerald-500/14 px-2 py-1 text-[10px] font-bold text-emerald-100 backdrop-blur">
+              Hostis {counts.enemy}
+            </span>
+            <span className={`rounded-full border px-2 py-1 text-[10px] font-bold backdrop-blur ${portalVisual.chipClass}`}>
+              Portal {portalEligible ? "ok" : `${SOVEREIGNTY_PORTAL_CUT}`}
+            </span>
+          </div>
+
+          <div className="pointer-events-none absolute left-3 top-11 z-20 flex flex-wrap gap-1.5">
+            {[
+              { label: "Seu", tone: "border-yellow-300/60 bg-yellow-400/14 text-yellow-50" },
+              { label: "Tribo", tone: "border-rose-300/60 bg-rose-500/14 text-rose-100" },
+              { label: "Aliado", tone: "border-violet-300/60 bg-violet-500/14 text-violet-100" },
+              { label: "Hostil", tone: "border-emerald-300/60 bg-emerald-500/14 text-emerald-100" },
+              { label: "Vazia", tone: "border-amber-300/60 bg-amber-500/14 text-amber-100" },
+            ].map((entry) => (
+              <span key={entry.label} className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold backdrop-blur ${entry.tone}`}>
+                {entry.label}
+              </span>
+            ))}
+          </div>
+
+          <div className="absolute right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2">
+            <button
+              type="button"
+              data-smoke="map-zoom-in"
+              onPointerDown={swallowHudPointer}
+              onPointerUp={swallowHudPointer}
+              onClick={(event) => {
+                swallowHudClick(event);
+                stepZoomLevel(1, selectedTile?.center ?? world.centerPoint);
+              }}
+              aria-label="Aumentar zoom"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/62 text-slate-100 shadow-lg backdrop-blur hover:border-cyan-300/45 hover:bg-cyan-500/10"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+            <div className="pointer-events-none rounded-full border border-cyan-300/25 bg-black/58 px-2 py-1 text-center text-[10px] font-bold text-cyan-100 backdrop-blur">
+              Z{zoomLevel}
+            </div>
+            <button
+              type="button"
+              data-smoke="map-zoom-out"
+              onPointerDown={swallowHudPointer}
+              onPointerUp={swallowHudPointer}
+              onClick={(event) => {
+                swallowHudClick(event);
+                stepZoomLevel(-1, selectedTile?.center ?? world.centerPoint);
+              }}
+              aria-label="Diminuir zoom"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/62 text-slate-100 shadow-lg backdrop-blur hover:border-cyan-300/45 hover:bg-cyan-500/10"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              data-smoke="map-focus-capital"
+              onPointerDown={swallowHudPointer}
+              onPointerUp={swallowHudPointer}
+              onClick={(event) => {
+                swallowHudClick(event);
+                focusCapitalView();
+              }}
+              aria-label="Ir para capital"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-500/12 text-cyan-50 shadow-lg backdrop-blur hover:border-cyan-200/70 hover:bg-cyan-500/18"
+            >
+              <MapPin className="h-4 w-4" />
+            </button>
+          </div>
+
+          {zoomCinematic ? (
+            <div className="kw-zoom-cinema pointer-events-none absolute inset-0 z-[18]">
+              <div className="kw-zoom-cinema__scan" />
+              <div className="kw-zoom-cinema__iris" />
+            </div>
+          ) : null}
+
           <aside
-            className={`absolute inset-y-2 right-2 z-20 w-[86%] max-w-[290px] rounded-2xl border border-white/35 bg-white/18 p-2 shadow-[0_20px_44px_rgba(2,6,23,0.6)] backdrop-blur-xl transition-all duration-300 ${
-              selectedTile ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-[108%] opacity-0"
+            data-smoke="map-detail-sheet"
+            className={`absolute inset-x-3 z-30 max-h-[54vh] overflow-y-auto rounded-2xl border border-cyan-300/24 bg-black/82 p-3 text-slate-100 shadow-[0_0_42px_rgba(34,211,238,0.14)] backdrop-blur-xl transition-all duration-300 ${
+              selectedTile && detailOpen && zoomLevel === 4 ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[110%] opacity-0"
             }`}
+            style={{ bottom: "calc(env(safe-area-inset-bottom) + 58px)" }}
             onPointerDown={(event) => event.stopPropagation()}
             onPointerMove={(event) => event.stopPropagation()}
             onPointerUp={(event) => event.stopPropagation()}
           >
-            {selectedTile ? (
+            {selectedTile && detailOpen && zoomLevel === 4 ? (
               <>
-                <div className="flex items-center justify-between gap-2">
+                {selectedTile ? false && (
+                <div className="hidden">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">Comando do Mapa</p>
-                    <p className="text-sm font-bold text-slate-50">Q {selectedTile.q} Â· R {selectedTile.r}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">No Selecionado</p>
+                      <p className="text-sm font-bold text-slate-50">{selectedStrategicNode?.label ?? `Q ${selectedTile.q} · R ${selectedTile.r}`}</p>
                   </div>
                   <button
                     type="button"
@@ -2725,18 +2880,175 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     Fechar
                   </button>
                 </div>
+                ) : null}
 
-                <div className="mt-1 rounded-lg border border-white/20 bg-slate-950/35 p-2 text-[11px] text-slate-200">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                      {selectedTile.isCentralThrone ? "Portal" : selectedSite ? "Cidade" : selectedHotspot ? "Ponto especial" : "Território"}
+                    </p>
+                    <p className="text-base font-black text-slate-50">{selectedStrategicNode?.label ?? `Hex ${selectedTile.q}:${selectedTile.r}`}</p>
+                    <p className="text-[11px] font-semibold text-slate-400">
+                      {selectedSite?.faction === "self"
+                        ? "Sua área"
+                        : selectedSite?.faction === "enemy"
+                          ? "Hostil"
+                        : selectedSite?.occupationKind === "abandoned_city"
+                            ? "Cidade vazia"
+                            : selectedTile.isCentralThrone
+                              ? "Centro do mundo"
+                              : selectedHotspot
+                                ? "Oportunidade"
+                                : "Terreno livre"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="rounded-full border border-white/30 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100 hover:bg-white/20"
+                    onClick={() => {
+                      setSelectedCoordKey(null);
+                      setMovementDraft(null);
+                      setMovementMessage(null);
+                    }}
+                  >
+                    Fechar
+                  </button>
+                </div>
+
+                {readOnly ? (
+                  <div className="mt-2 rounded-2xl border border-amber-300/24 bg-amber-500/12 px-3 py-2 text-[11px] font-semibold text-amber-100">
+                    Temporada encerrada. O mapa segue apenas em leitura.
+                  </div>
+                ) : null}
+
+                <div
+                  className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40"
+                  style={{
+                    backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0.08), rgba(2,6,23,0.68)), url('${selectedDetailImage}')`,
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                  }}
+                >
+                  <div className="flex min-h-[118px] items-end justify-between p-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80">
+                        {selectedSite?.terrainLabel ?? TERRAIN_META[selectedTile.terrainKind].label}
+                      </p>
+                      <p className="mt-1 text-base font-black text-slate-50">
+                        {selectedTile.isCentralThrone
+                          ? portalEligible ? "Centro Liberado" : "Centro Bloqueado"
+                          : selectedDiscovery
+                            ? selectedDiscovery.title
+                            : selectedSite?.cityClass
+                              ? cityClassLabel(selectedSite.cityClass)
+                              : selectedSite?.recommendedCityClass
+                                ? cityClassLabel(selectedSite.recommendedCityClass)
+                                : "Cidade comum"}
+                      </p>
+                    </div>
+                    {selectedSite ? (
+                      <img
+                        src={cityIconSrcForSite(selectedSite)}
+                        alt=""
+                        className="h-16 w-16 object-contain drop-shadow-[0_10px_14px_rgba(0,0,0,0.55)]"
+                      />
+                    ) : null}
+                  </div>
+                </div>
+
+                {selectedDiscovery ? (
+                  <div
+                    className={`mt-2 rounded-2xl border p-2 text-[11px] text-slate-100 ${selectedDiscoveryAccent?.panel ?? "border-cyan-300/20 bg-cyan-500/10"}`}
+                    style={{
+                      boxShadow: selectedDiscoveryAccent ? `0 0 30px ${selectedDiscoveryAccent.glow}` : undefined,
+                    }}
+                  >
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className={`inline-flex rounded-full border bg-black/20 px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${selectedDiscoveryAccent?.chip ?? "border-cyan-300/35 text-cyan-100"}`}>
+                        {discoveryTypeLabel(selectedDiscovery.type)}
+                      </span>
+                      <span className="inline-flex rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] font-bold text-slate-100">
+                        {selectedDiscovery.riskLabel}
+                      </span>
+                      <span className="inline-flex rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] font-bold text-slate-100">
+                        {selectedDiscovery.rewardLabel}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-200">
+                      {selectedDiscovery.summary}
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="mt-3 grid grid-cols-4 gap-1.5 text-center text-[10px] font-bold">
+                  <div className="rounded-xl border border-white/10 bg-white/[0.045] p-2">
+                    <span className="block text-slate-500">ETA</span>
+                    <span className="mt-1 block text-slate-100">{formatMinutesLabel(routeSummary.totalMinutes)}</span>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.045] p-2">
+                    <span className="block text-slate-500">DIST</span>
+                    <span className="mt-1 block text-slate-100">{routeSummary.hexCount}</span>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.045] p-2">
+                    <span className="block text-slate-500">TIPO</span>
+                    <span className="mt-1 block truncate text-slate-100">
+                      {selectedDiscovery
+                        ? discoveryTypeLabel(selectedDiscovery.type)
+                        : selectedSite?.occupationKind === "abandoned_city"
+                          ? "Vazia"
+                          : selectedSite?.faction === "enemy"
+                            ? "Hostil"
+                            : selectedTile.isCentralThrone
+                              ? "Portal"
+                              : "Livre"}
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.045] p-2">
+                    <span className="block text-slate-500">ZOOM</span>
+                    <span className="mt-1 block text-slate-100">Z{zoomLevel}</span>
+                  </div>
+                </div>
+
+                <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.04] p-2 text-[11px] font-semibold text-slate-300">
+                  <p>
+                    {selectedSite?.faction === "enemy"
+                      ? "Cidade ocupada por rival. Ação principal: atacar."
+                      : selectedSite?.occupationKind === "abandoned_city"
+                        ? "Cidade vazia. Ação principal: anexar com diplomata."
+                        : selectedTile.isCentralThrone
+                          ? portalEligible
+                            ? "Portal liberado. Você pode marchar para o centro."
+                            : "Portal bloqueado: precisa de 1500 de Influência."
+                          : selectedHotspot
+                            ? "Ponto especial. Bom candidato para fundação."
+                            : "Terreno livre. Construa estrada ou funde uma cidade."}
+                  </p>
+                  {selectedDiscovery ? (
+                    <p className="mt-2 text-cyan-100">
+                      Descoberta registrada. Ação sugerida: {selectedDiscovery.actionLabel.toLowerCase()}.
+                    </p>
+                  ) : null}
+                </div>
+
+                {selectedStrategicNode && selectedTile && false ? (
+                <div className="hidden">
+                  <p>
+                    Estado: {selectedStrategicNode?.state?.toUpperCase() ?? "DISCOVERED"}
+                    {selectedStrategicNode?.caption ? ` · ${selectedStrategicNode.caption}` : ""}
+                  </p>
                   <p>Distrito {selectedTile.district} · Zona {selectedTile.zone}</p>
                   <p>{selectedSite ? `Dono: ${selectedSite.owner}` : "Tile vazio"}</p>
                   <p>Cidades proprias: {ownVillageCount}/{PLAYER_VILLAGE_CAP}</p>
                   <p>
-                    Terreno: {selectedSite?.terrainLabel ?? TERRAIN_META[selectedTile.terrainKind].label}
+                    Distância {routeSummary.hexCount} · ETA {formatMinutesLabel(routeSummary.totalMinutes)}
+                  </p>
+                  <p>
+                    Terreno: {selectedSite?.terrainLabel ?? TERRAIN_META[selectedTile?.terrainKind ?? "ashen_fields"].label}
                     {" · "}sugere {cityClassLabel(selectedSite?.recommendedCityClass ?? selectedSite?.cityClass ?? TERRAIN_META[selectedTile.terrainKind].recommendedCityClass)}
                   </p>
                   {selectedSite?.terrainLabel ? (
                     <p>
-                      Origem: {selectedSite.occupationKind === "abandoned_city" ? "Cidade abandonada" : selectedSite.occupationKind === "frontier_ruins" ? "Ruina instavel" : selectedSite.occupationKind === "claimed_city" ? "Cidade estabelecida" : "Fundacao livre"}
+                      Origem: {selectedSite.occupationKind === "abandoned_city" ? "Cidade abandonada" : selectedSite.occupationKind === "frontier_ruins" ? "Ruína instável" : selectedSite.occupationKind === "claimed_city" ? "Cidade estabelecida" : "Fundação livre"}
                     </p>
                   ) : null}
                   {selectedSite?.occupationKind === "abandoned_city" ? (
@@ -2751,7 +3063,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   {selectedHotspot && !selectedSite ? (
                     <p className="text-cyan-100">Campo de bonus livre: fundar aqui agrega terreno especial e pode travar uma classe de cidade.</p>
                   ) : null}
-                  {selectedTile.isCentralThrone ? (
+                  {selectedTile?.isCentralThrone ? (
                     <p className={portalEligible ? "text-amber-100" : "text-rose-200"}>
                       {portalEligible
                         ? `Portal liberado para sua linhagem (${sovereigntyScore}/${SOVEREIGNTY_PORTAL_CUT}).`
@@ -2760,11 +3072,13 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   ) : null}
                   {selectedHotspot ? (
                     <p className="text-slate-100">
-                      Bonus {HOTSPOT_META[selectedHotspot.kind].label}: mov {selectedHotspot.terrainBonus.terrainMovementMultiplier ?? 1}x Â· custo {selectedHotspot.terrainBonus.terrainCostMultiplier ?? 1}x
+                      Bônus {HOTSPOT_META[selectedHotspot.kind].label}: mov {selectedHotspot.terrainBonus.terrainMovementMultiplier ?? 1}x · custo {selectedHotspot.terrainBonus.terrainCostMultiplier ?? 1}x
                     </p>
                   ) : null}
                 </div>
+                ) : null}
 
+                {false ? (
                 <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[10px] text-slate-100">
                   <div className="rounded-lg border border-white/15 bg-white/8 p-1.5">
                     <p className="font-semibold uppercase tracking-[0.14em] text-slate-400">Leitura</p>
@@ -2807,11 +3121,12 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     </p>
                   </div>
                 </div>
+                ) : null}
 
                 <div className="mt-2 rounded-lg border border-white/20 bg-white/8 p-1.5 text-[10px] text-slate-200">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold uppercase tracking-[0.16em]">
-                      {actionStep === "choose" ? "Etapa 1/2 - Acao" : "Etapa 2/2 - Configurar"}
+                      {actionStep === "choose" ? "Toque numa ordem" : "Confirme a ordem"}
                     </p>
                     {actionStep === "configure" ? (
                       <button
@@ -2831,7 +3146,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 </div>
 
                 {actionStep === "choose" ? (
-                  <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                  <div className="mt-2 grid grid-cols-2 gap-2">
                     {actionOptions.map((option) => {
                       const selected = option.kind === activeAction;
                       return (
@@ -2840,7 +3155,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                             type="button"
                             disabled={!option.enabled}
                             onClick={() => handleActionClick(option)}
-                            className={`w-full rounded-lg border px-2 py-1.5 text-left text-xs font-semibold transition ${
+                            className={`w-full rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition ${
                               selected
                                 ? "border-cyan-300/85 bg-cyan-500/18 text-cyan-100"
                                 : "border-white/25 bg-white/8 text-slate-100"
@@ -2849,9 +3164,14 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                             <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${actionTone(option.kind)}`}>
                               {option.label}
                             </span>
-                            <span className="mt-1 block text-[10px] font-medium text-slate-300">
+                            <span className="mt-1 block text-[10px] font-medium leading-4 text-slate-300">
                               {describeTileAction(option.kind)}
                             </span>
+                            {!option.enabled ? (
+                              <span className="mt-1 inline-flex rounded-full border border-rose-300/30 bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-black text-rose-100">
+                                Bloqueado
+                              </span>
+                            ) : null}
                           </button>
                           {!option.enabled && option.reason ? (
                             <p className="mt-0.5 px-1 text-[10px] text-rose-200/90">{option.reason}</p>
@@ -2897,8 +3217,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                       </button>
                     </div>
                     <p>Materiais: {buildCost.materials.toLocaleString("pt-BR")}</p>
-                    <p>Energia: {buildCost.energy.toLocaleString("pt-BR")}</p>
-                    <p>Influencia: {buildCost.influence.toLocaleString("pt-BR")}</p>
                     <p>Tempo de obra: {formatMinutesLabel(buildCost.buildMinutes)}</p>
                     {buildMode === "outpost" ? (
                       <p className="mt-1 text-slate-300">
@@ -2916,9 +3234,51 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
                 {actionStep === "configure" && activeAction === "spy" ? (
                   <div className="mt-2 rounded-lg border border-white/20 bg-white/8 p-2 text-[11px] text-slate-100">
-                    <p>Custo de influencia: {spyCost.influence.toLocaleString("pt-BR")}</p>
                     <p>Preparacao: {formatMinutesLabel(spyCost.prepMinutes)}</p>
                     <p>Requisito: Heroi Espiao {HAS_SPY_HERO ? "ativo" : "inativo"}</p>
+                  </div>
+                ) : null}
+
+                {actionStep === "configure" && activeAction === "explore" ? (
+                  <div
+                    className="mt-2 overflow-hidden rounded-2xl border border-cyan-200/25 bg-slate-950/35 text-[11px] text-slate-100"
+                    style={{
+                      backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.16), rgba(2,6,23,0.82)), url('/images/military-explore.jpg')",
+                      backgroundPosition: "center",
+                      backgroundSize: "cover",
+                    }}
+                  >
+                    <div className="p-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-100/90">
+                        Exploração
+                      </p>
+                      <p className="mt-1 text-sm font-black text-white">
+                        Revelar esta área
+                      </p>
+                      <p className="mt-1 max-w-[28ch] text-[11px] leading-4 text-slate-200">
+                        Seus batedores abrem o terreno, registram risco e podem encontrar cidade vazia, ruína, ameaça ou oportunidade.
+                      </p>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-center text-[10px] font-bold">
+                        <div className="rounded-xl border border-white/15 bg-black/30 px-2 py-2">
+                          <span className="block text-slate-400">SUPRIMENTOS</span>
+                          <span className="mt-1 block text-white">{exploreCost.toLocaleString("pt-BR")}</span>
+                        </div>
+                        <div className="rounded-xl border border-white/15 bg-black/30 px-2 py-2">
+                          <span className="block text-slate-400">ETA</span>
+                          <span className="mt-1 block text-white">{formatMinutesLabel(Math.max(5, Math.round(routeSummary.totalMinutes * 0.45)))}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleConfirmExploration}
+                        disabled={submittingExploration || imperialState.resources.supplies < exploreCost || visitedCoordKeys.has(selectedTile.coordKey)}
+                        className="mt-3 w-full rounded-xl border border-cyan-300/60 bg-cyan-500/20 px-3 py-2 text-center text-xs font-black text-cyan-50 transition hover:bg-cyan-500/28 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {submittingExploration ? "Explorando..." : "Confirmar exploração"}
+                      </button>
+                    </div>
                   </div>
                 ) : null}
 
@@ -3089,143 +3449,113 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 ) : null}
 
                 {movementMessage ? <p className="mt-2 text-[10px] font-semibold text-cyan-100">{movementMessage}</p> : null}
+                {latestBattleMovement?.meta.combatResult ? (
+                  <div className="mt-2 rounded-lg border border-rose-300/25 bg-rose-500/10 p-2 text-[10px] text-rose-50">
+                    <p className="font-semibold uppercase tracking-[0.14em] text-rose-100">Report de Batalha</p>
+                    <p className="mt-1 font-semibold text-rose-50">{latestBattleMovement.meta.combatResult.battleReport.headline}</p>
+                    <p className="mt-1 text-rose-100/90">{latestBattleMovement.meta.combatResult.battleReport.summary}</p>
+                    <p className="mt-1 text-rose-100/80">
+                      Dano defensor {latestBattleMovement.meta.combatResult.leitura.danoDefensorPct}% ·
+                      Dano atacante {latestBattleMovement.meta.combatResult.leitura.danoAtacantePct}% ·
+                      SM +{latestBattleMovement.meta.combatResult.scoreMilitarAtacanteFinal}
+                    </p>
+                  </div>
+                ) : null}
               </>
             ) : null}
           </aside>
-        </div>
 
-        <div className="mt-2 rounded-2xl border border-white/15 bg-white/6 p-2">
-          <div className="mb-1 flex items-center justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">Filtro de relacao</p>
-            <p className="text-[10px] font-semibold text-slate-400">
-              Ativo: <span className="text-slate-100">{relationFilterLabel(relationFilter)}</span>
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-1 text-[10px] font-semibold">
-            {([
-              { id: "all", count: counts.all },
-              { id: "self", count: counts.self },
-              { id: "tribe", count: counts.tribe },
-              { id: "ally", count: counts.ally },
-              { id: "enemy", count: counts.enemy },
-              { id: "abandoned", count: counts.abandoned },
-            ] as const).map((entry) => (
-              <button
-                key={entry.id}
-                type="button"
-                onClick={() => {
-                  emitUiFeedback("tap", "light");
-                  setRelationFilter(entry.id);
-                }}
-                className={`rounded-lg border px-1.5 py-1 text-left transition ${relationFilterTone(entry.id, relationFilter === entry.id)}`}
-              >
-                <span className="block">{relationFilterLabel(entry.id)}</span>
-                <span className="block text-[9px] opacity-80">{entry.count}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-2 rounded-2xl border border-white/15 bg-white/6 p-2 text-[10px] text-slate-200">
-          <p className="mb-1 font-semibold uppercase tracking-[0.16em] text-slate-300">Legenda de faccoes</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {[
-              { label: "So eu", dot: "bg-yellow-300", chip: "border-yellow-300/70 bg-yellow-400/15 text-yellow-50", note: "marcador + halo + area" },
-              { label: "Tudo / neutro", dot: "bg-sky-400", chip: "border-sky-300/70 bg-sky-500/15 text-sky-100", note: "leitura geral do mapa" },
-              { label: "Tribo", dot: "bg-rose-400", chip: "border-rose-300/70 bg-rose-500/15 text-rose-100", note: "seu bloco principal" },
-              { label: "Aliados", dot: "bg-violet-400", chip: "border-violet-300/70 bg-violet-500/15 text-violet-100", note: "apoio e pacto" },
-              { label: "Inimigos", dot: "bg-emerald-400", chip: "border-emerald-300/70 bg-emerald-500/15 text-emerald-100", note: "pressao hostil" },
-              { label: "Abandonadas", dot: "bg-amber-400", chip: "border-amber-300/70 bg-amber-500/15 text-amber-100", note: "ruinas e vazios" },
-            ].map((entry) => (
-              <div key={entry.label} className={`rounded-xl border px-2 py-1.5 ${entry.chip}`}>
-                <div className="flex items-center gap-1.5">
-                  <span className={`h-2.5 w-2.5 rounded-full shadow-[0_0_10px_currentColor] ${entry.dot}`} />
-                  <span className="font-semibold">{entry.label}</span>
+          {false && inspectedTile && !selectedTile ? (
+            <div
+              className="absolute bottom-3 left-3 z-30 w-[calc(100%-1.5rem)] max-w-[360px] rounded-2xl border border-cyan-300/20 bg-black/72 p-3 text-slate-100 shadow-[0_0_42px_rgba(34,211,238,0.16)] backdrop-blur-xl"
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerMove={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-200">
+                    {inspectedVisionState === "online" ? "Online" : inspectedVisionState === "memoria" ? "Memoria" : "Fog"}
+                  </p>
+                  <p className="mt-1 truncate text-base font-black text-slate-50">
+                    {inspectedStrategicNode?.label ?? inspectedSite?.name ?? `Hex ${inspectedTile.q}:${inspectedTile.r}`}
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-slate-400">
+                    {inspectedStrategicNode?.caption ?? inspectedSite?.state ?? "Area nao catalogada"}
+                  </p>
                 </div>
-                <p className="mt-1 text-[9px] opacity-90">{entry.note}</p>
+                <button
+                  type="button"
+                  onClick={() => setInspectedCoordKey(null)}
+                  className="rounded-full border border-white/15 bg-white/[0.04] px-2 py-1 text-[10px] font-bold text-slate-200 hover:border-cyan-300/40 hover:bg-cyan-500/10"
+                >
+                  Fechar
+                </button>
               </div>
-            ))}
-          </div>
+
+              <div className="mt-3 grid grid-cols-4 gap-1.5 text-center text-[10px] font-bold">
+                <div className="rounded-xl border border-white/10 bg-white/[0.035] p-2">
+                  <span className="block text-slate-500">Z</span>
+                  <span className="mt-1 block text-slate-100">{inspectedTile.zone}</span>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/[0.035] p-2">
+                  <span className="block text-slate-500">D</span>
+                  <span className="mt-1 block text-slate-100">{inspectedTile.district}</span>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/[0.035] p-2">
+                  <span className="block text-slate-500">ETA</span>
+                  <span className="mt-1 block text-slate-100">{selectedCoordKey === inspectedCoordKey ? formatMinutesLabel(routeSummary.totalMinutes) : "--"}</span>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/[0.035] p-2">
+                  <span className="block text-slate-500">VIS</span>
+                  <span className="mt-1 block text-slate-100">{inspectedVisionState === "online" ? "ON" : inspectedVisionState === "memoria" ? "OLD" : "OFF"}</span>
+                </div>
+              </div>
+
+              <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.035] p-2 text-[11px] font-semibold text-slate-300">
+                <p>
+                  {inspectedVisionState === "online"
+                    ? "Dados taticos atualizados em tempo real."
+                    : inspectedVisionState === "memoria"
+                      ? "Area visitada: terreno e estrutura permanecem, movimentacoes vivas ficam ocultas."
+                      : "Area nao explorada sob fog denso."}
+                </p>
+                <p className="mt-1">
+                  Terreno: {inspectedSite?.terrainLabel ?? TERRAIN_META[inspectedTile.terrainKind].label} · Classe {cityClassLabel(inspectedSite?.recommendedCityClass ?? inspectedSite?.cityClass ?? TERRAIN_META[inspectedTile.terrainKind].recommendedCityClass)}
+                </p>
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                {inspectedSite?.faction === "self" ? (
+                  <Link
+                    href={`/world/${worldId}/base`}
+                    className="flex-1 rounded-xl border border-cyan-300/45 bg-cyan-500/15 px-3 py-2 text-center text-xs font-black text-cyan-50 hover:bg-cyan-500/25"
+                  >
+                    Acessar
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCoordKey(inspectedTile.coordKey);
+                    setInspectedCoordKey(null);
+                  }}
+                  className="flex-1 rounded-xl border border-white/15 bg-white/[0.04] px-3 py-2 text-xs font-black text-slate-100 hover:border-cyan-300/35 hover:bg-white/[0.08]"
+                >
+                  Comando
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {explorationReveal ? (
+            <ExplorationRevealModal discovery={explorationReveal} onDismiss={dismissExplorationReveal} />
+          ) : null}
         </div>
 
-        <div className="mt-2 rounded-2xl border border-white/15 bg-white/6 p-2 text-[10px] text-slate-200">
-          <p className="mb-1 font-semibold uppercase tracking-[0.16em] text-slate-300">Terrenos e classe sugerida</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {(Object.entries(TERRAIN_META) as [TerrainKind, (typeof TERRAIN_META)[TerrainKind]][]).map(([terrainKind, meta]) => (
-              <div key={terrainKind} className="rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${TERRAIN_VISUAL_META[terrainKind].badgeClass}`}>
-                    {cityClassLabel(meta.recommendedCityClass)}
-                  </span>
-                  <span className="font-semibold text-slate-100">{meta.label}</span>
-                </div>
-                <p className="mt-1 text-slate-300">{meta.summary}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </article>
     </section>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

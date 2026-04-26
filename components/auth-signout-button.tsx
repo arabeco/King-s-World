@@ -18,6 +18,7 @@ export function AuthSignOutButton() {
     setLoading(true);
     const supabase = getSupabaseBrowserClient();
     await supabase.auth.signOut();
+    await fetch("/api/dev-login", { method: "DELETE" }).catch(() => undefined);
     setLoading(false);
     router.replace("/login");
     router.refresh();

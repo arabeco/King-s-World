@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "errors": [],
+  "warnings": [
+    "O simulador de temporada nao persiste estoque inicial real; o saldo de recursos desta auditoria e normalizado a partir do Dia 1.",
+    "O motor atual nao registra tipos individuais de tropa; a auditoria expõe totais e perdas agregadas.",
+    "A abertura exata/estado aberto de cada quest nao e persistido; a auditoria registra gates, conclusoes e bloqueios observaveis.",
+    "A trilha tribal atual e booleana no simulador; a auditoria registra ativacao, efeito e marcos do fluxo final."
+  ],
+  "generatedAt": "2026-04-18T05:02:28.397Z",
+  "outputBasename": "season_v2_paired8"
+}

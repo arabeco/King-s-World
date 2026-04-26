@@ -6,3 +6,6 @@
 coverage
 *.log
 *.tsbuildinfo
+reports/
+.next-dev/
+.next-build/

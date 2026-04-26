@@ -23,6 +23,7 @@ import {
   getEvolutionModeProfile,
   listEvolutionModeProfiles,
   MAX_CITY_DIPLOMATS,
+  SOVEREIGNTY_MILITARY_SCORE_CAP,
   MAX_TOTAL_DIPLOMATS,
   MAX_TRIBE_ENVOYS,
   calculateTribeProgressStage,
@@ -30,7 +31,7 @@ import {
   type EvolutionMode,
 } from "@/core/GameBalance";
 import { DetailSheet, type DetailSheetContent } from "@/components/detail-sheet";
-import { countCouncilSlots, formatCouncilLoadout, resolveCouncilComposition, type HeroSpecialistId } from "@/lib/council";
+import { countCouncilSlots, formatCouncilLoadout, type HeroSpecialistId } from "@/lib/council";
 import { mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
 import { cityClassLabel } from "@/lib/cities";
 import { emitUiFeedback } from "@/lib/ui-feedback";
@@ -48,10 +49,10 @@ type HeroSpecialist = {
 
 const HERO_SPECIALISTS: HeroSpecialist[] = [
   { id: "engineer", name: "Engenheiro", role: "Obras", icon: Wrench, directValue: 50, summary: "Acelera obra e habilita Maravilhas.", buildHook: "Guia Metropole e Bastiao no fechamento da cidade 100/100." },
-  { id: "marshal", name: "Marechal", role: "Militar", icon: Swords, directValue: 50, summary: "Reduz atrito do exercito e empurra ranking militar.", buildHook: "Guia Posto Avancado e converte ataque em pontos reais." },
-  { id: "navigator", name: "Navegador", role: "Marcha", icon: Compass, directValue: 50, summary: "Derruba ETA da marcha final e limpa rotas longas.", buildHook: "Guia Celeiro e qualquer spawn longe do centro." },
-  { id: "intendente", name: "Intendente", role: "Fluxo", icon: Users, directValue: 50, summary: "Doacao interna, comboio e sustentacao de expansao.", buildHook: "Guia expansao com muitas cidades e cadeia de Maravilhas." },
-  { id: "erudite", name: "Erudito", role: "Pesquisa", icon: FlaskConical, directValue: 50, summary: "Puxa quests e reduz atraso de branch.", buildHook: "Guia rotas de build que vencem por timing e nao por massa." },
+  { id: "marshal", name: "General", role: "Combate", icon: Swords, directValue: 50, summary: "Reduz atrito do exercito e empurra ranking militar.", buildHook: "Guia Posto Avancado e converte ataque em pontos reais." },
+  { id: "navigator", name: "Explorador", role: "Mapa", icon: Compass, directValue: 50, summary: "Revela territorio, derruba ETA e limpa rotas longas.", buildHook: "Guia Celeiro e qualquer spawn longe do centro." },
+  { id: "intendente", name: "Administrador", role: "Fluxo", icon: Users, directValue: 50, summary: "Organiza suprimentos, comboios e sustentacao de expansao.", buildHook: "Guia expansao com muitas cidades e cadeia de Maravilhas." },
+  { id: "erudite", name: "Sabio", role: "Pesquisa", icon: FlaskConical, directValue: 50, summary: "Puxa quests, doutrina e reduz atraso de branch.", buildHook: "Guia rotas de build que vencem por timing e nao por massa." },
 ];
 
 const HERO_LABELS = Object.fromEntries(
@@ -67,6 +68,42 @@ const MODE_CHIP_LABEL: Record<EvolutionMode, string> = {
   bastion: "Fortificar",
   flow: "Corredor de Marcha",
 };
+
+const DETAIL_IMAGE_BY_ID: Record<string, string> = {
+  "research-summary": "/images/conselho.jpg",
+  "council-summary": "/images/card-council.jpg",
+  "diplomats-summary": "/images/card-expansion.jpg",
+  "tribe-summary": "/images/territory-controlled.jpg",
+  "military-summary": "/images/card-battle.jpg",
+  "quests-summary": "/images/card-opportunity.jpg",
+};
+
+const HERO_IMAGE_BY_ID: Record<HeroSpecialistId, string> = {
+  engineer: "/images/governo.jpg",
+  marshal: "/images/military-attack.jpg",
+  navigator: "/images/military-explore.jpg",
+  intendente: "/images/celeiro.jpg",
+  erudite: "/images/conselho.jpg",
+};
+
+function detailImageForId(id: string | null): string | undefined {
+  if (!id) return undefined;
+  if (DETAIL_IMAGE_BY_ID[id]) return DETAIL_IMAGE_BY_ID[id];
+  if (id.startsWith("research-")) return "/images/conselho.jpg";
+  if (id.startsWith("hero-")) {
+    const heroId = id.replace("hero-", "") as HeroSpecialistId;
+    return HERO_IMAGE_BY_ID[heroId] ?? "/images/card-council.jpg";
+  }
+  return undefined;
+}
+
+function immersiveCardStyle(imageSrc: string) {
+  return {
+    backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0.12), rgba(2,6,23,0.9)), url('${imageSrc}')`,
+    backgroundPosition: "center",
+    backgroundSize: "cover",
+  };
+}
 
 function tribeEnvoyStageLabel(count: number): string {
   if (count >= 2) return "Dois enviados travados";
@@ -126,9 +163,8 @@ export function OperationsClient({
   const modeProfile = getEvolutionModeProfile(evolutionMode);
   const modes = listEvolutionModeProfiles();
 
-  const councilSlots = resolveCouncilComposition(
-    world.sovereignty.councilHeroes,
-    world.sovereignty.councilComposition,
+  const councilSlots = Object.values(imperialState.heroByVillage).filter(
+    (heroId): heroId is HeroSpecialistId => HERO_SPECIALISTS.some((hero) => hero.id === heroId),
   );
   const activeHeroCount = councilSlots.length;
   const councilCounts = countCouncilSlots(councilSlots);
@@ -144,9 +180,10 @@ export function OperationsClient({
       ? Math.round(world.researches.reduce((acc, entry) => acc + entry.progress, 0) / world.researches.length)
       : 0;
 
-  const militaryPct = Math.round((world.sovereignty.militaryRankingPoints / 500) * 100);
+  const militaryPct = Math.min(100, Math.round((world.sovereignty.militaryRankingPoints / SOVEREIGNTY_MILITARY_SCORE_CAP) * 100));
   const questPct = Math.round((world.sovereignty.eraQuestsCompleted / 3) * 100);
-  const councilPct = Math.round((activeHeroCount / 5) * 100);
+  const heroLimit = 10;
+  const councilPct = Math.min(100, Math.round((activeHeroCount / heroLimit) * 100));
   const colonyRows = mergedVillages
     .filter((entry) => entry.type === "Colonia")
     .map((entry) => {
@@ -220,24 +257,24 @@ export function OperationsClient({
       },
       "council-summary": {
         eyebrow: "Conselho",
-        title: "Conselho de 5 vagas repetiveis",
-        description: "O Conselho agora e um bloco de 5 vagas. Especialistas podem repetir, e a composicao ideal muda conforme o estilo da Capital e a branch escolhida.",
-        formula: "5 vagas x 50 pontos = 250 no score. Repetir um especialista forte pode render mais do que espalhar 1 de cada.",
-        valueLabel: `${activeHeroCount}/5 ativos${councilLoadout ? ` · ${councilLoadout}` : ""}`,
+        title: "Herois do Governo",
+        description: "Heroi agora nasce no Governo da cidade: caro, 1 por cidade, e cada compra precisa disputar recurso com predio e populacao.",
+        formula: "10 cidades x 1 heroi x 50 pontos = 500 no score. O tipo e a build do heroi mudam o peso da cidade.",
+        valueLabel: `${activeHeroCount}/${heroLimit} ativos${councilLoadout ? ` · ${councilLoadout}` : ""}`,
         progressPct: councilPct,
         color: "blue",
         metrics: [
-          { label: "Score direto", value: `${activeHeroCount * 50}/250`, note: "Valor fixo ja convertido em influencia pelo Conselho." },
-          { label: "Faltam", value: `${Math.max(0, 5 - activeHeroCount)}`, note: "Cada vaga vazia custa 50 pontos e uma ferramenta de build." },
-          { label: "Carga atual", value: councilLoadout || "Sem combo", note: "Composicao atual das 5 vagas." },
-          { label: "Risco", value: activeHeroCount >= 4 ? "Baixo" : "Alto", note: "Conselho curto tende a deixar a build generica e menos responsiva." },
+          { label: "Score direto", value: `${activeHeroCount * 50}/500`, note: "Valor fixo ja convertido em influencia pelo Governo." },
+          { label: "Faltam", value: `${Math.max(0, heroLimit - activeHeroCount)}`, note: "Cada cidade sem heroi deixa 50 pontos fora da mesa." },
+          { label: "Carga atual", value: councilLoadout || "Sem combo", note: "Composicao atual dos herois contratados." },
+          { label: "Risco", value: activeHeroCount >= 7 ? "Baixo" : "Alto", note: "Poucos herois deixam a build generica e menos responsiva." },
         ],
         breakdown: HERO_SPECIALISTS.map((hero) => {
           const copies = councilCounts[hero.id];
           return {
             label: hero.name,
             current: copies,
-            max: 5,
+            max: heroLimit,
             note:
               copies > 0
                 ? `${copies} vaga(s) = ${copies * 50} pts. ${hero.summary} ${hero.buildHook}`
@@ -245,10 +282,10 @@ export function OperationsClient({
           };
         }),
         missing: [
-          "Metropole gira melhor com Engenheiro x2 + Erudito + Intendente + Navegador.",
-          "Posto gira melhor com Marechal x2 + Navegador + Engenheiro + Intendente.",
-          "Bastiao gira melhor com Marechal x2 + Engenheiro + Intendente + Erudito.",
-          "Celeiro gira melhor com Navegador x2 + Intendente + Engenheiro + Erudito.",
+  "Metropole gira melhor com Engenheiro x2 + Sabio + Administrador + Explorador.",
+  "Posto gira melhor com General x2 + Explorador + Engenheiro + Administrador.",
+  "Bastiao gira melhor com General x2 + Engenheiro + Administrador + Sabio.",
+  "Celeiro gira melhor com Explorador x2 + Administrador + Engenheiro + Sabio.",
         ],
       },
       "diplomats-summary": {
@@ -284,50 +321,50 @@ export function OperationsClient({
       "tribe-summary": {
         eyebrow: "Tribo",
         title: "Representacao no Domo da Tribo",
-        description: "A Tribo agora usa 2 enviados proprios. O primeiro abre os 40 iniciais para quem joga mais solo; o segundo fecha o ultimo selo de 40 no late game.",
-        formula: "5 etapas x 40 = 200. Etapa 1 abre com o 1o enviado tribal. Etapas 2, 3 e 4 sobem por permanencia no tempo. Etapa 5 fecha com o 2o enviado tribal no fim.",
+        description: "A Tribo agora usa 2 enviados proprios. O primeiro abre os 20 iniciais para quem joga mais solo; o segundo fecha o ultimo selo de 20 no late game.",
+        formula: "5 etapas x 20 = 100. Etapa 1 abre com o 1o enviado tribal. Etapas 2, 3 e 4 sobem por permanencia no tempo. Etapa 5 fecha com o 2o enviado tribal no fim.",
         valueLabel: `${tribeInfluenceStage}/5 etapas`,
         progressPct: tribePct,
         color: "green",
         metrics: [
-          { label: "Etapa", value: tribeInfluenceStageLabel(tribeInfluenceStage), note: "Estado atual da sua trilha de 200 da Tribo." },
+          { label: "Etapa", value: tribeInfluenceStageLabel(tribeInfluenceStage), note: "Estado atual da sua trilha de 100 da Tribo." },
           { label: "Enviados", value: `${tribeEnvoysCommitted}/${MAX_TRIBE_ENVOYS}`, note: "Dois enviados especiais da Tribo, separados dos 9 de Colonia." },
           { label: "Contratados", value: `${recruitedTribeEnvoys}/${MAX_TRIBE_ENVOYS}`, note: "Quantos enviados tribais ja foram recrutados na aba de Herois." },
-          { label: "Proximo +40", value: nextTribeStep, note: "Proximo passo para subir a proxima faixa da Tribo." },
+          { label: "Proximo +20", value: nextTribeStep, note: "Proximo passo para subir a proxima faixa da Tribo." },
         ],
         breakdown: [
-          { label: "1. Representacao", current: tribeInfluenceStage >= 1 ? 40 : 0, max: 40, note: "Envie o 1o enviado tribal e abra o piso de +40." },
-          { label: "2. Pacto", current: tribeInfluenceStage >= 2 ? 40 : 0, max: 40, note: "Permaneça na Tribo ate o primeiro marco de meio de jogo." },
-          { label: "3. Camara", current: tribeInfluenceStage >= 3 ? 40 : 0, max: 40, note: "Segure a relacao viva ate o segundo marco de permanencia." },
-          { label: "4. Abrigo", current: tribeInfluenceStage >= 4 ? 40 : 0, max: 40, note: "Entre vivo na fase final com a ligacao tribal mantida." },
-          { label: "5. Juramento Final", current: tribeInfluenceStage >= 5 ? 40 : 0, max: 40, note: "Envie o 2o enviado tribal no late game para fechar os 200." },
+          { label: "1. Representacao", current: tribeInfluenceStage >= 1 ? 20 : 0, max: 20, note: "Envie o 1o enviado tribal e abra o piso de +20." },
+          { label: "2. Pacto", current: tribeInfluenceStage >= 2 ? 20 : 0, max: 20, note: "Permaneça na Tribo ate o primeiro marco de meio de jogo." },
+          { label: "3. Camara", current: tribeInfluenceStage >= 3 ? 20 : 0, max: 20, note: "Segure a relacao viva ate o segundo marco de permanencia." },
+          { label: "4. Abrigo", current: tribeInfluenceStage >= 4 ? 20 : 0, max: 20, note: "Entre vivo na fase final com a ligacao tribal mantida." },
+          { label: "5. Juramento Final", current: tribeInfluenceStage >= 5 ? 20 : 0, max: 20, note: "Envie o 2o enviado tribal no late game para fechar os 100." },
         ],
         missing: [
-          "O 1o enviado tribal eh a porta de entrada de 40 pontos para quem joga mais solo.",
+          "O 1o enviado tribal eh a porta de entrada de 20 pontos para quem joga mais solo.",
           "O 2o enviado tribal existe para fechar o ultimo selo no endgame, sem disputar com os 9 de Colonia.",
         ],
       },
       "military-summary": {
         eyebrow: "Militar",
         title: "Ranking Militar",
-        description: "Militar vale 500 no score. O ponto aqui nao e quantidade cega; e a capacidade de transformar recrutamento, pesquisa e heroi certo em ranking forte.",
+        description: "Militar vale 300 no score. O ponto aqui nao e quantidade cega; e a capacidade de transformar recrutamento, atrito, pesquisa e heroi certo em ranking forte.",
         formula: "Poder militar = qualidade de composicao + herois certos + build tatico/logistico.",
-        valueLabel: `${world.sovereignty.militaryRankingPoints}/500`,
+        valueLabel: `${world.sovereignty.militaryRankingPoints}/${SOVEREIGNTY_MILITARY_SCORE_CAP}`,
         progressPct: militaryPct,
         color: "red",
         metrics: [
-          { label: "Pontos atuais", value: `${world.sovereignty.militaryRankingPoints}/500`, note: "Quanto do teto militar ja virou score." },
-          { label: "Faltam", value: `${Math.max(0, 500 - world.sovereignty.militaryRankingPoints)}`, note: "Gap de ranking ainda aberto." },
-          { label: "Catalisador", value: activeHeroCount > 0 ? "Herois ativos" : "Sem suporte", note: "Marechal e branch tatico precisam aparecer cedo para este pilar explodir." },
+          { label: "Pontos atuais", value: `${world.sovereignty.militaryRankingPoints}/${SOVEREIGNTY_MILITARY_SCORE_CAP}`, note: "Quanto do teto militar ja virou score." },
+          { label: "Faltam", value: `${Math.max(0, SOVEREIGNTY_MILITARY_SCORE_CAP - world.sovereignty.militaryRankingPoints)}`, note: "Gap de ranking ainda aberto." },
+                  { label: "Catalisador", value: activeHeroCount > 0 ? "Herois ativos" : "Sem suporte", note: "General e branch tatico precisam aparecer cedo para este pilar explodir." },
           { label: "Leitura", value: militaryPct >= 70 ? "Ja pesa" : "Ainda leve", note: "Se ficar baixo ate D90, a build depende demais de predio/tribo." },
         ],
         breakdown: [
           { label: "Quartel + Arsenal", current: Math.min(100, Math.round((development / 100) * 78)), max: 100, note: "Infra que sustenta tropa de qualidade." },
-          { label: "Herois militares", current: Math.min(100, activeHeroCount >= 2 ? 72 : 38), max: 100, note: "Marechal e Navegador mudam a leitura do militar na run." },
+                  { label: "Herois militares", current: Math.min(100, activeHeroCount >= 2 ? 72 : 38), max: 100, note: "General e Explorador mudam a leitura do militar na run." },
           { label: "Pesquisa aplicada", current: Math.min(100, avgResearchProgress), max: 100, note: "Sem branch certa, o ranking cresce devagar." },
         ],
         missing: [
-          "Se o objetivo e ganhar por militar, o quartel sozinho nao basta: Tatica e Marechal precisam puxar a composicao.",
+                "Se o objetivo e ganhar por militar, o quartel sozinho nao basta: Tatica e General precisam puxar a composicao.",
           "Celeiro e Metropole normalmente convertem militar mais tarde; Posto faz isso mais cedo.",
         ],
       },
@@ -342,7 +379,7 @@ export function OperationsClient({
         metrics: [
           { label: "Score direto", value: `${world.sovereignty.eraQuestsCompleted * 100}/300`, note: "Valor bruto ja travado por quest fechada." },
           { label: "Faltam", value: `${Math.max(0, 3 - world.sovereignty.eraQuestsCompleted)}`, note: "Quests que ainda nao viraram influencia." },
-          { label: "Puxa qual build", value: "Erudito", note: "Erudito e pesquisa certa encurtam o atraso das quests." },
+                  { label: "Puxa qual build", value: "Sabio", note: "Sabio e pesquisa certa encurtam o atraso das quests." },
           { label: "Momento", value: world.day >= 84 ? "Late" : "Mid", note: "Quest atrasada demais vira problema de portal." },
         ],
         breakdown: [
@@ -390,24 +427,24 @@ export function OperationsClient({
               eyebrow: "Heroi",
               title: hero.name,
               description: `${hero.summary} ${hero.buildHook}`,
-              formula: "Cada vaga do Conselho vale 50 pontos. O ganho real vem de repetir o especialista certo na build certa.",
+              formula: "Cada heroi contratado no Governo vale 50 pontos. O ganho real vem do tipo certo na cidade certa.",
               valueLabel: copies > 0 ? `${copies} vaga(s) ativas` : "Ainda nao alocado",
-              progressPct: (copies / 5) * 100,
+              progressPct: Math.min(100, (copies / heroLimit) * 100),
               color: "blue",
               metrics: [
                 { label: "Role", value: hero.role, note: "Papel central deste especialista." },
-                { label: "Score", value: `+${hero.directValue}`, note: "Valor direto de Conselho." },
-                { label: "Copias", value: `${copies}`, note: "Quantidade atual desse especialista dentro das 5 vagas." },
+                { label: "Score", value: `+${hero.directValue}`, note: "Valor direto de Governo." },
+                { label: "Copias", value: `${copies}`, note: "Quantidade atual desse tipo entre os herois contratados." },
                 { label: "Estado", value: copies > 0 ? "ON" : "OFF", note: copies > 0 ? "Ja esta convertendo valor de build." : "Essa funcao ainda esta fora da composicao." },
-                { label: "Build alvo", value: hero.name === "Engenheiro" ? "Metropole/Bastiao" : hero.name === "Marechal" ? "Posto" : hero.name === "Navegador" ? "Celeiro/Spawns longos" : hero.name === "Intendente" ? "Expansao" : "Quests", note: "Onde esse heroi mais muda a run." },
+                          { label: "Build alvo", value: hero.name === "Engenheiro" ? "Metropole/Bastiao" : hero.name === "General" ? "Posto" : hero.name === "Explorador" ? "Celeiro/Spawns longos" : hero.name === "Administrador" ? "Expansao" : "Quests", note: "Onde esse heroi mais muda a run." },
               ],
               breakdown: [
-                { label: "Vagas ocupadas", current: copies, max: 5, note: copies > 0 ? `Hoje ocupa ${copies} das 5 vagas do Conselho.` : "Ainda sem vaga no Conselho." },
+                { label: "Herois ativos", current: copies, max: heroLimit, note: copies > 0 ? `Hoje aparece ${copies} vez(es) entre os herois.` : "Ainda sem heroi desse tipo." },
                 { label: "Valor tatico", current: copies > 0 ? Math.min(100, 44 + copies * 18) : 36, max: 100, note: hero.buildHook },
               ],
               missing: [
                 copies > 0
-                  ? "Esse especialista ja esta no Conselho; agora a decisao e repetir mais uma vez ou abrir espaco para outro papel."
+                  ? "Esse especialista ja existe no Governo; agora a decisao e repetir mais uma cidade ou abrir outro papel."
                   : `Sem ${hero.name}, esta run perde um eixo de decisao importante.`,
               ],
             } satisfies DetailSheetContent,
@@ -448,6 +485,9 @@ export function OperationsClient({
   ]);
 
   const openedDetail = details && openedDetailId ? details[openedDetailId] ?? null : null;
+  const openedDetailWithImage = openedDetail
+    ? { ...openedDetail, imageSrc: openedDetail.imageSrc ?? detailImageForId(openedDetailId) }
+    : null;
 
   const openDetail = (id: string) => {
     emitUiFeedback("open", "light");
@@ -537,9 +577,11 @@ export function OperationsClient({
               );
             })}
           </div>
-          <p className="mt-2 text-[11px] text-slate-300">
-            Afeta custo e tempo de progresso. Herois e pesquisa precisam puxar a identidade da build, nao so colorir o relatorio.
-          </p>
+          <div className="mt-2 grid grid-cols-3 gap-1.5 text-center text-[10px] text-slate-200">
+            <span className="rounded-xl border border-white/15 bg-white/6 px-2 py-1.5">Modo {modeProfile.label}</span>
+            <span className="rounded-xl border border-white/15 bg-white/6 px-2 py-1.5">Dev {development}/100</span>
+            <span className="rounded-xl border border-white/15 bg-white/6 px-2 py-1.5">Pesquisa {avgResearchProgress}%</span>
+          </div>
         </article>
 
         <article className="kw-glass rounded-3xl p-3">
@@ -549,7 +591,7 @@ export function OperationsClient({
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-slate-100">
-            <button type="button" onClick={() => openDetail("research-summary")} className="kw-glass-soft kw-status-card text-left transition hover:border-sky-300/35">
+            <button type="button" onClick={() => openDetail("research-summary")} className="kw-glass-soft kw-status-card overflow-hidden text-left transition hover:border-sky-300/35" style={immersiveCardStyle("/images/conselho.jpg")}>
               <span className="kw-badge">{avgResearchProgress}%</span>
               <div className="kw-icon-core"><FlaskConical className="h-5 w-5 text-sky-300" /></div>
               <p className="kw-card-title mt-2">Pesquisa</p>
@@ -557,15 +599,15 @@ export function OperationsClient({
               <div className="kw-progress"><div className="kw-progress__bar kw-progress__bar--blue" style={{ width: `${avgResearchProgress}%` }} /></div>
             </button>
 
-            <button type="button" onClick={() => openDetail("council-summary")} className="kw-glass-soft kw-status-card text-left transition hover:border-sky-300/35">
-              <span className="kw-badge">{activeHeroCount}/5</span>
+            <button type="button" onClick={() => openDetail("council-summary")} className="kw-glass-soft kw-status-card overflow-hidden text-left transition hover:border-sky-300/35" style={immersiveCardStyle("/images/card-council.jpg")}>
+              <span className="kw-badge">{activeHeroCount}/{heroLimit}</span>
               <div className="kw-icon-core"><Crown className="h-5 w-5 text-amber-300" /></div>
-              <p className="kw-card-title mt-2">Conselho</p>
-              <p className="kw-card-meta">{councilLoadout || "5 vagas repetiveis"}</p>
+              <p className="kw-card-title mt-2">Herois</p>
+              <p className="kw-card-meta">{councilLoadout || "Governo das cidades"}</p>
               <div className="kw-progress"><div className="kw-progress__bar kw-progress__bar--blue" style={{ width: `${councilPct}%` }} /></div>
             </button>
 
-            <button type="button" onClick={() => openDetail("diplomats-summary")} className="kw-glass-soft kw-status-card text-left transition hover:border-cyan-300/35">
+            <button type="button" onClick={() => openDetail("diplomats-summary")} className="kw-glass-soft kw-status-card overflow-hidden text-left transition hover:border-cyan-300/35" style={immersiveCardStyle("/images/card-expansion.jpg")}>
               <span className="kw-badge">{totalDiplomats}/{MAX_TOTAL_DIPLOMATS}</span>
               <div className="kw-icon-core"><Users className="h-5 w-5 text-cyan-300" /></div>
               <p className="kw-card-title mt-2">Diplomatas</p>
@@ -573,7 +615,7 @@ export function OperationsClient({
               <div className="kw-progress"><div className="kw-progress__bar kw-progress__bar--blue" style={{ width: `${diplomatPct}%` }} /></div>
             </button>
 
-            <button type="button" onClick={() => openDetail("tribe-summary")} className="kw-glass-soft kw-status-card text-left transition hover:border-emerald-300/35">
+            <button type="button" onClick={() => openDetail("tribe-summary")} className="kw-glass-soft kw-status-card overflow-hidden text-left transition hover:border-emerald-300/35" style={immersiveCardStyle("/images/territory-controlled.jpg")}>
               <span className="kw-badge">{tribeInfluenceStage}/5</span>
               <div className="kw-icon-core"><Shield className="h-5 w-5 text-emerald-300" /></div>
               <p className="kw-card-title mt-2">Tribo</p>
@@ -581,15 +623,15 @@ export function OperationsClient({
               <div className="kw-progress"><div className="kw-progress__bar kw-progress__bar--green" style={{ width: `${tribePct}%` }} /></div>
             </button>
 
-            <button type="button" onClick={() => openDetail("military-summary")} className="kw-glass-soft kw-status-card text-left transition hover:border-rose-300/35">
-              <span className="kw-badge">{world.sovereignty.militaryRankingPoints}/500</span>
+            <button type="button" onClick={() => openDetail("military-summary")} className="kw-glass-soft kw-status-card overflow-hidden text-left transition hover:border-rose-300/35" style={immersiveCardStyle("/images/card-battle.jpg")}>
+              <span className="kw-badge">{world.sovereignty.militaryRankingPoints}/{SOVEREIGNTY_MILITARY_SCORE_CAP}</span>
               <div className="kw-icon-core"><Swords className="h-5 w-5 text-rose-300" /></div>
               <p className="kw-card-title mt-2">Militar</p>
               <p className="kw-card-meta">Peso no score</p>
               <div className="kw-progress"><div className="kw-progress__bar kw-progress__bar--red" style={{ width: `${militaryPct}%` }} /></div>
             </button>
 
-            <button type="button" onClick={() => openDetail("quests-summary")} className="kw-glass-soft kw-status-card text-left transition hover:border-emerald-300/35">
+            <button type="button" onClick={() => openDetail("quests-summary")} className="kw-glass-soft kw-status-card overflow-hidden text-left transition hover:border-emerald-300/35" style={immersiveCardStyle("/images/card-opportunity.jpg")}>
               <span className="kw-badge">{world.sovereignty.eraQuestsCompleted}/3</span>
               <div className="kw-icon-core"><ShieldCheck className="h-5 w-5 text-emerald-300" /></div>
               <p className="kw-card-title mt-2">Quests</p>
@@ -648,9 +690,10 @@ export function OperationsClient({
                   Contratar
                 </button>
               </div>
-              <p className="mt-1 text-[11px] text-slate-300">
-                {recruitedDiplomats}/{MAX_CITY_DIPLOMATS} recrutados · {unlockedDiplomatSlots} slots destravados por Colonias em {CITY_DIPLOMAT_UNLOCK_DEVELOPMENT}/100.
-              </p>
+              <div className="mt-2 grid grid-cols-2 gap-1 text-center text-[10px] text-slate-200">
+                <span className="rounded-lg border border-white/10 bg-white/6 px-2 py-1">{recruitedDiplomats}/{MAX_CITY_DIPLOMATS}</span>
+                <span className="rounded-lg border border-white/10 bg-white/6 px-2 py-1">{unlockedDiplomatSlots} slots</span>
+              </div>
             </div>
 
             <div className="rounded-2xl kw-glass-soft p-2">
@@ -672,9 +715,10 @@ export function OperationsClient({
                   Contratar
                 </button>
               </div>
-              <p className="mt-1 text-[11px] text-slate-300">
-                {recruitedTribeEnvoys}/{MAX_TRIBE_ENVOYS} recrutados. O 1o abre os 40 iniciais; o 2o fecha o ultimo selo da Tribo.
-              </p>
+              <div className="mt-2 grid grid-cols-2 gap-1 text-center text-[10px] text-slate-200">
+                <span className="rounded-lg border border-white/10 bg-white/6 px-2 py-1">{recruitedTribeEnvoys}/{MAX_TRIBE_ENVOYS}</span>
+                <span className="rounded-lg border border-white/10 bg-white/6 px-2 py-1">{tribeInfluenceStage}/5</span>
+              </div>
             </div>
           </div>
 
@@ -702,12 +746,7 @@ export function OperationsClient({
             <div className="kw-progress mt-2">
               <div className="kw-progress__bar kw-progress__bar--green" style={{ width: `${tribePct}%` }} />
             </div>
-            <p className="mt-1 text-[11px] text-slate-300">
-              Os enviados tribais agora sao um trilho proprio: 2 vagas especiais, separadas dos 9 diplomatas de Colonia.
-            </p>
-            <p className="mt-1 text-[11px] text-amber-100">
-              {nextTribeStep}
-            </p>
+            <p className="mt-1 text-[11px] font-semibold text-amber-100">{nextTribeStep}</p>
           </div>
 
           <div className="mt-2 space-y-2">
@@ -740,12 +779,8 @@ export function OperationsClient({
                   <div className="kw-progress mt-2">
                     <div className="kw-progress__bar kw-progress__bar--blue" style={{ width: `${Math.min(100, row.development)}%` }} />
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-300">
-                    {row.assigned
-                      ? "Diplomata ativo nesta cidade."
-                      : row.unlocked
-                        ? "Ja liberou 1 slot diplomatico. Se houver agente contratado livre, pode designar para esta cidade."
-                        : `Ainda bloqueada. Precisa chegar em ${CITY_DIPLOMAT_UNLOCK_DEVELOPMENT}/100 para liberar 1 slot diplomatico.`}
+                  <p className="mt-1 text-[11px] font-semibold text-slate-300">
+                    {row.assigned ? "Ativo" : row.unlocked ? "Slot livre" : `${CITY_DIPLOMAT_UNLOCK_DEVELOPMENT}/100`}
                   </p>
                 </div>
               );
@@ -768,7 +803,8 @@ export function OperationsClient({
                   key={research.name}
                   type="button"
                   onClick={() => openDetail(`research-${research.name}`)}
-                  className="kw-glass-soft kw-status-card text-left text-slate-100 transition hover:border-sky-300/35"
+                  className="kw-glass-soft kw-status-card overflow-hidden text-left text-slate-100 transition hover:border-sky-300/35"
+                  style={immersiveCardStyle("/images/conselho.jpg")}
                 >
                   <span className="kw-badge">+{directValue}</span>
                   <div className="kw-icon-core">
@@ -808,7 +844,8 @@ export function OperationsClient({
                   key={hero.id}
                   type="button"
                   onClick={() => openDetail(`hero-${hero.id}`)}
-                  className="kw-glass-soft kw-status-card text-left text-slate-100 transition hover:border-cyan-300/35"
+                  className="kw-glass-soft kw-status-card overflow-hidden text-left text-slate-100 transition hover:border-cyan-300/35"
+                  style={immersiveCardStyle(HERO_IMAGE_BY_ID[hero.id])}
                 >
                   <span className="kw-badge">{copies > 0 ? `x${copies}` : "OFF"}</span>
                   <div className="kw-icon-core"><Icon className={`h-5 w-5 ${copies > 0 ? "text-cyan-200" : "text-slate-400"}`} /></div>
@@ -826,7 +863,7 @@ export function OperationsClient({
         </article>
       </section>
 
-      <DetailSheet open={Boolean(openedDetail)} content={openedDetail} onClose={() => setOpenedDetailId(null)} />
+      <DetailSheet open={Boolean(openedDetailWithImage)} content={openedDetailWithImage} onClose={() => setOpenedDetailId(null)} />
     </>
   );
 }

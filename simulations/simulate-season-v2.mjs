@@ -1,5 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import { buildNormalizedPlaybooks, validateSimulationArtifacts } from "./lib/artifact-guards.mjs";
+import { buildSeasonAuditArtifacts } from "./lib/season-audit.mjs";
 
 const WORLD = {
   days: 120,
@@ -22,17 +24,28 @@ const PHASE_WINDOWS = [
 const OUTPUT_DIR = path.join(process.cwd(), "simulations", "output");
 const SEED_MODE = process.env.SEED_MODE ?? "default";
 const OUTPUT_BASENAME = SEED_MODE === "paired8" ? "season_v2_paired8" : "season_v2_120d";
+const VALIDATION_PATH = path.join(OUTPUT_DIR, `${OUTPUT_BASENAME}_validation.json`);
+const PLAYBOOKS_PATH = path.join(OUTPUT_DIR, `${OUTPUT_BASENAME}_playbooks.json`);
+const AUDIT_VALIDATION_PATH = path.join(OUTPUT_DIR, "audit_validation.json");
+const AUDIT_TIMELINE_JSON_PATH = path.join(OUTPUT_DIR, "timeline_full.json");
+const AUDIT_TIMELINE_MD_PATH = path.join(OUTPUT_DIR, "timeline_human.md");
+const AUDIT_ENDGAME_PATH = path.join(OUTPUT_DIR, "endgame_report.json");
 
 const INFLUENCE_CAP = 2500;
 const PORTAL_CUT = 1500;
 
 const SCORE_WEIGHTS = Object.freeze({
   buildings: 1000,
-  military: 500,
-  quests: 300,
-  council: 250,
-  wonders: 250,
-  tribe: 200,
+  council: 500,
+  military: 400,
+  society: 300,
+  legacy: 300,
+});
+
+const LEGACY_WEIGHTS = Object.freeze({
+  quests: 100,
+  wonders: 100,
+  tribe: 100,
 });
 
 const TARGETS = Object.freeze({
@@ -108,7 +121,7 @@ const PROFILE_DEFS = Object.freeze({
 const PROFILE_KEYS = Object.keys(PROFILE_DEFS);
 const BRANCH_KEYS = ["urban", "tactical", "defensive", "flow"];
 const HERO_KEYS = ["engineer", "marshal", "navigator", "intendente", "erudite"];
-const COUNCIL_SLOT_CAP = 5;
+const COUNCIL_SLOT_CAP = 10;
 
 const HERO_DEFS = Object.freeze({
   engineer: { label: "Engenheiro", minDay: 16 },
@@ -133,10 +146,10 @@ const GLORY_PRIORITIES = Object.freeze({
 });
 
 const HERO_GLORY_PLAN = Object.freeze({
-  metropole: ["engineer", "engineer", "erudite", "intendente", "navigator"],
-  posto: ["marshal", "marshal", "navigator", "engineer", "intendente"],
-  bastiao: ["marshal", "marshal", "engineer", "intendente", "erudite"],
-  celeiro: ["navigator", "navigator", "intendente", "engineer", "erudite"],
+  metropole: ["engineer", "engineer", "erudite", "intendente", "navigator", "erudite", "engineer", "intendente", "navigator", "marshal"],
+  posto: ["marshal", "marshal", "navigator", "engineer", "intendente", "marshal", "navigator", "engineer", "intendente", "erudite"],
+  bastiao: ["marshal", "marshal", "engineer", "intendente", "erudite", "marshal", "engineer", "intendente", "navigator", "erudite"],
+  celeiro: ["navigator", "navigator", "intendente", "engineer", "erudite", "navigator", "intendente", "engineer", "marshal", "erudite"],
 });
 
 const COUNCIL_STYLE_WEIGHTS = Object.freeze({
@@ -1488,15 +1501,36 @@ function councilPointsAtDay(player, day) {
 function questPointsAtDay(player, day) {
   let points = 0;
   for (let i = 0; i < 3; i += 1) {
-    if (player.quests[i] && day >= QUEST_DAYS[i]) points += 100;
+    if (player.quests[i] && day >= QUEST_DAYS[i]) points += i === 2 ? 30 : 35;
   }
-  return clamp(points, 0, SCORE_WEIGHTS.quests);
+  return clamp(points, 0, LEGACY_WEIGHTS.quests);
 }
 
 function wonderPointsAtDay(player, day) {
   if (day < 40 || !heroPresent(player.heroes, "engineer")) return 0;
   const count = day <= 90 ? player.wondersD90 : player.wondersD120;
-  return clamp(count, 0, 5) * 50;
+  return clamp(count, 0, 2) * 50;
+}
+
+function societyPointsAtDay(player, day) {
+  const villages = estimateVillageCount(day, player);
+  const citySupport = citySupportAtDay(player, day);
+  const losses = (player.villageLosses ?? 0) + (player.villagesLostToPvp ?? 0);
+  const maturity = clamp(day / 110, 0.08, 1);
+  const cityWeb = clamp(villages / 8, 0.12, 1);
+  const stability = clamp(
+    0.54 +
+      Math.max(0, citySupport.logistics - 1) * 0.22 +
+      Math.max(0, citySupport.urban - 1) * 0.16 +
+      Math.max(0, citySupport.research - 1) * 0.1 +
+      Math.max(0, citySupport.defensive - 1) * 0.12 +
+      Math.min(0.12, (player.councilCount ?? 0) * 0.015) -
+      losses * 0.035,
+    0.25,
+    1,
+  );
+
+  return clamp(Math.round(SCORE_WEIGHTS.society * maturity * (0.45 + cityWeb * 0.38 + stability * 0.25)), 0, SCORE_WEIGHTS.society);
 }
 
 function villageCountAtDay(player, day) {
@@ -1523,17 +1557,19 @@ function influenceAtDay(player, day) {
   const building = estimateBuildingInfluence(day, player);
   const military = militaryPointsAtDay(player, day);
   const council = councilPointsAtDay(player, day);
+  const society = societyPointsAtDay(player, day);
   const quests = questPointsAtDay(player, day);
   const wonders = wonderPointsAtDay(player, day);
-  const tribe = day >= 91 && player.tribeDome ? SCORE_WEIGHTS.tribe : 0;
+  const tribe = day >= 91 && player.tribeDome ? LEGACY_WEIGHTS.tribe : 0;
   return {
     building,
     military,
     council,
+    society,
     quests,
     wonders,
     tribe,
-    total: clamp(building + military + council + quests + wonders + tribe, 0, INFLUENCE_CAP),
+    total: clamp(building + military + council + society + quests + wonders + tribe, 0, INFLUENCE_CAP),
   };
 }
 
@@ -1760,6 +1796,7 @@ function simulateRun(scenario, balance) {
         buildings: inf.building,
         military: inf.military,
         council: inf.council,
+        society: inf.society,
         quests: inf.quests,
         wonders: inf.wonders,
         tribe: inf.tribe,
@@ -1781,6 +1818,9 @@ function simulateRun(scenario, balance) {
     id: player.id,
     profile: player.profileKey,
     branch: player.branchKey,
+    skillFactor: player.skillFactor,
+    aggression: player.aggression,
+    defense: player.defense,
     secondVillageDay: player.secondVillageDay,
     firstVillage100Day: player.firstVillage100Day,
     skillPreset: player.skillPreset,
@@ -1853,6 +1893,7 @@ function simulateRun(scenario, balance) {
       avgBuildingInfluence: round(avg(points, (point) => point.buildings), 2),
       avgMilitaryInfluence: round(avg(points, (point) => point.military), 2),
       avgCouncilInfluence: round(avg(points, (point) => point.council), 2),
+      avgSocietyInfluence: round(avg(points, (point) => point.society), 2),
       avgQuestInfluence: round(avg(points, (point) => point.quests), 2),
       avgWonderInfluence: round(avg(points, (point) => point.wonders), 2),
       avgTribeInfluence: round(avg(points, (point) => point.tribe), 2),
@@ -2075,6 +2116,7 @@ function summarizeCheckpoints(runs) {
       avgBuildingInfluence: round(avg(points, (point) => point.avgBuildingInfluence), 2),
       avgMilitaryInfluence: round(avg(points, (point) => point.avgMilitaryInfluence), 2),
       avgCouncilInfluence: round(avg(points, (point) => point.avgCouncilInfluence), 2),
+      avgSocietyInfluence: round(avg(points, (point) => point.avgSocietyInfluence), 2),
       avgQuestInfluence: round(avg(points, (point) => point.avgQuestInfluence), 2),
       avgWonderInfluence: round(avg(points, (point) => point.avgWonderInfluence), 2),
       avgTribeInfluence: round(avg(points, (point) => point.avgTribeInfluence), 2),
@@ -2489,11 +2531,11 @@ function selectProfileRepresentativeFromRecords(records, profileKey) {
 }
 
 function pushCheckpointBreakdownTable(lines, record) {
-  lines.push("| Dia | Total | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |");
-  lines.push("| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+  lines.push("| Dia | Total | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |");
+  lines.push("| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
   for (const day of CHECKPOINT_DAYS) {
     const point = record.checkpoints[day];
-    lines.push(`| ${day} | ${point.influenceTotal} | ${point.buildings} | ${point.military} | ${point.council} | ${point.quests} | ${point.wonders} | ${point.tribe} | ${point.villages} | ${point.troops.toLocaleString("pt-BR")} |`);
+    lines.push(`| ${day} | ${point.influenceTotal} | ${point.buildings} | ${point.military} | ${point.council} | ${point.society} | ${point.quests} | ${point.wonders} | ${point.tribe} | ${point.villages} | ${point.troops.toLocaleString("pt-BR")} |`);
   }
   lines.push("");
 }
@@ -2512,16 +2554,16 @@ function buildInfluenceBreakdownReport(runs) {
 
   lines.push("# KingsWorld - Quebra de Influencia por Area");
   lines.push("");
-  lines.push("- Cada tabela separa a Influencia em `Predios`, `Militar`, `Conselho`, `Quests`, `Maravilhas` e `Tribo`.");
+  lines.push("- Cada tabela separa a Influencia em `Predios`, `Militar`, `Governo`, `Sociedade` e `Legado`.");
   lines.push("- O total continua travado em 2500 e o corte do Portal continua em 1500.");
   lines.push("");
   lines.push(`## Media geral do modo atual (${SEED_MODE})`);
   lines.push("");
-  lines.push("| Dia | Total medio | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |");
-  lines.push("| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+  lines.push("| Dia | Total medio | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |");
+  lines.push("| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
   for (const day of CHECKPOINT_DAYS) {
     const points = records.map((record) => record.checkpoints[day]);
-    lines.push(`| ${day} | ${round(avg(points, (point) => point.influenceTotal), 2)} | ${round(avg(points, (point) => point.buildings), 2)} | ${round(avg(points, (point) => point.military), 2)} | ${round(avg(points, (point) => point.council), 2)} | ${round(avg(points, (point) => point.quests), 2)} | ${round(avg(points, (point) => point.wonders), 2)} | ${round(avg(points, (point) => point.tribe), 2)} | ${round(avg(points, (point) => point.villages), 2)} | ${round(avg(points, (point) => point.troops), 2)} |`);
+    lines.push(`| ${day} | ${round(avg(points, (point) => point.influenceTotal), 2)} | ${round(avg(points, (point) => point.buildings), 2)} | ${round(avg(points, (point) => point.military), 2)} | ${round(avg(points, (point) => point.council), 2)} | ${round(avg(points, (point) => point.society), 2)} | ${round(avg(points, (point) => point.quests), 2)} | ${round(avg(points, (point) => point.wonders), 2)} | ${round(avg(points, (point) => point.tribe), 2)} | ${round(avg(points, (point) => point.villages), 2)} | ${round(avg(points, (point) => point.troops), 2)} |`);
   }
   lines.push("");
   lines.push("## Representantes normais por perfil");
@@ -2793,7 +2835,6 @@ function buildProfileRotation(profile, stage) {
 }
 
 function createPlannerState(record) {
-  const opening = openingPlanForProfile(record.profile);
   const state = {
     levels: {
       Minas: 1,
@@ -2811,10 +2852,6 @@ function createPlannerState(record) {
     wonderCount: 0,
     rotationIndex: 0,
   };
-
-  for (const step of opening) {
-    state.levels[step.building] = Math.max(state.levels[step.building] ?? 1, step.target);
-  }
 
   return state;
 }
@@ -3004,6 +3041,7 @@ function hydrateRecordForProgression(record) {
   return {
     ...record,
     profile: PROFILE_DEFS[record.profile],
+    troopsD120: record.troopsD120 ?? record.troopsAlive ?? 0,
     heroes:
       record.heroStates ??
       Object.fromEntries(
@@ -3157,7 +3195,7 @@ function buildReport(data) {
   lines.push("");
   lines.push("## Regras aplicadas");
   lines.push("");
-  lines.push("- Influencia fixa 2500 (Regicida removido): Predios 1000 + Militar 500 + Quests 300 + Conselho 250 + Maravilhas 250 + Tribo 200.");
+  lines.push("- Influencia fixa 2500: Infraestrutura 1000 + Governo 500 + Militar 400 + Sociedade 300 + Legado 300.");
   lines.push("- Teto de tropas por imperio limitado entre 1.5k e 2.5k no pico da temporada.");
   lines.push("- Custo de treino e upkeep modelados em escala 10x e economia com escassez.");
   lines.push("- Horda 91+ com mortalidade elevada e perda real de aldeias perifericas.");
@@ -3182,10 +3220,10 @@ function buildReport(data) {
   lines.push("");
   lines.push("## Progressao media (dias 15, 30, 60, 90, 120)");
   lines.push("");
-  lines.push("| Dia | Players vivos | Elegiveis >=1500 | Influencia media | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Tropas medias | Aldeias medias |");
-  lines.push("| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+  lines.push("| Dia | Players vivos | Elegiveis >=1500 | Influencia media | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Tropas medias | Aldeias medias |");
+  lines.push("| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
   for (const point of checkpointsSummary) {
-    lines.push(`| ${point.day} | ${point.avgPlayersAlive} | ${point.avgEligiblePortal} | ${point.avgInfluence} | ${point.avgBuildingInfluence} | ${point.avgMilitaryInfluence} | ${point.avgCouncilInfluence} | ${point.avgQuestInfluence} | ${point.avgWonderInfluence} | ${point.avgTribeInfluence} | ${point.avgTroops} | ${point.avgVillages} |`);
+    lines.push(`| ${point.day} | ${point.avgPlayersAlive} | ${point.avgEligiblePortal} | ${point.avgInfluence} | ${point.avgBuildingInfluence} | ${point.avgMilitaryInfluence} | ${point.avgCouncilInfluence} | ${point.avgSocietyInfluence} | ${point.avgQuestInfluence} | ${point.avgWonderInfluence} | ${point.avgTribeInfluence} | ${point.avgTroops} | ${point.avgVillages} |`);
   }
   lines.push("");
   lines.push("## Eficacia das Branches de Pesquisa");
@@ -3359,6 +3397,7 @@ function main() {
   const influenceBreakdownReport = buildInfluenceBreakdownReport(runs);
   const dailyPlaybookReport = buildDailyPlaybookReport(runs);
   const dailyExecutorReport = buildDailyExecutorReport(runs);
+  const normalizedPlaybooks = buildNormalizedPlaybooks(dailyExecutorReport, dailyPlaybookReport);
 
   const runCsv = toCsv(runTable, [
     "seed",
@@ -3430,6 +3469,7 @@ function main() {
     "avgBuildingInfluence",
     "avgMilitaryInfluence",
     "avgCouncilInfluence",
+    "avgSocietyInfluence",
     "avgQuestInfluence",
     "avgWonderInfluence",
     "avgTribeInfluence",
@@ -3447,6 +3487,15 @@ function main() {
     "avgVillages",
   ]);
 
+  const validationReport = validateSimulationArtifacts({
+    outputBasename: OUTPUT_BASENAME,
+    results,
+    reportMarkdown: report,
+    dailyPlaybookMarkdown: dailyPlaybookReport,
+    dailyExecutorMarkdown: dailyExecutorReport,
+    normalizedPlaybooks,
+  });
+
   fs.writeFileSync(path.join(OUTPUT_DIR, `${OUTPUT_BASENAME}_report.md`), report);
   fs.writeFileSync(path.join(OUTPUT_DIR, `${OUTPUT_BASENAME}_focus_report.md`), focusReport);
   fs.writeFileSync(path.join(OUTPUT_DIR, `${OUTPUT_BASENAME}_action_timelines.md`), actionTimelineReport);
@@ -3459,9 +3508,68 @@ function main() {
   fs.writeFileSync(path.join(OUTPUT_DIR, `${OUTPUT_BASENAME}_audit.csv`), auditCsv);
   fs.writeFileSync(path.join(OUTPUT_DIR, `${OUTPUT_BASENAME}_daily.csv`), checkpointsCsv);
   fs.writeFileSync(path.join(OUTPUT_DIR, `${OUTPUT_BASENAME}_phase_windows.csv`), phaseCsv);
+  fs.writeFileSync(VALIDATION_PATH, JSON.stringify(validationReport, null, 2));
+
+  if (validationReport.status === "PASS") {
+    fs.writeFileSync(
+      PLAYBOOKS_PATH,
+      JSON.stringify(
+        {
+          generatedAt: new Date().toISOString(),
+          outputBasename: OUTPUT_BASENAME,
+          status: validationReport.status,
+          playbooks: normalizedPlaybooks.playbooks,
+        },
+        null,
+        2,
+      ),
+    );
+  } else if (fs.existsSync(PLAYBOOKS_PATH)) {
+    fs.rmSync(PLAYBOOKS_PATH);
+  }
+
+  let auditValidationReport = null;
+  if (process.env.GENERATE_AUDIT === "1") {
+    const audit = buildSeasonAuditArtifacts({
+      runs,
+      helpers: {
+        selectRepresentativeRecord,
+        hydrateRecordForProgression,
+        groupTimelineByDay,
+        createPlannerState,
+        buildConcreteDayActions,
+        influenceAtDay,
+        villageCountAtDay,
+        troopsAtDay,
+      },
+      options: {
+        outputBasename: OUTPUT_BASENAME,
+        portalCut: PORTAL_CUT,
+        worldDays: WORLD.days,
+      },
+    });
+
+    auditValidationReport = audit.validation;
+    fs.writeFileSync(AUDIT_TIMELINE_JSON_PATH, JSON.stringify(audit.timelineFull, null, 2));
+    fs.writeFileSync(AUDIT_TIMELINE_MD_PATH, audit.timelineHuman);
+    fs.writeFileSync(AUDIT_ENDGAME_PATH, JSON.stringify(audit.endgameReport, null, 2));
+    fs.writeFileSync(AUDIT_VALIDATION_PATH, JSON.stringify(audit.validation, null, 2));
+
+    if (audit.validation.status !== "PASS") {
+      validationReport.status = "FAIL";
+      validationReport.errors.push(...audit.validation.errors.map((error) => `audit: ${error}`));
+      validationReport.warnings.push(...audit.validation.warnings.map((warning) => `audit: ${warning}`));
+      fs.writeFileSync(VALIDATION_PATH, JSON.stringify(validationReport, null, 2));
+      if (process.env.AUDIT_FAIL_ON_ERROR === "1") {
+        throw new Error(`Auditoria da temporada falhou: ${audit.validation.errors.join(" | ")}`);
+      }
+    }
+  }
 
   const summary = [
     "Simulacao concluida.",
+    `Status dos artefatos: ${validationReport.status}`,
+    `Status da auditoria: ${auditValidationReport?.status ?? "SKIPPED"}`,
     `Iteracao de calibragem: ${calibrated.iteration}`,
     `Media 2a aldeia: ${round(calibrated.lock.avgSecondVillageDay, 2)}`,
     `Media 1a aldeia 100: ${round(calibrated.lock.avgFirstVillage100Day, 2)}`,
@@ -3470,6 +3578,9 @@ function main() {
     `ETA Navegador+Flow (media): ${round(calibrationFocus.etaNavigatorFlowAvg, 2)}h`,
     `Pico 2500 por seed: ${round(calibrationFocus.reached2500PerSeed, 2)}`,
   ];
+  if (validationReport.errors.length > 0) {
+    summary.push(`Erros de artefato: ${validationReport.errors.join(" | ")}`);
+  }
   console.log(summary.join("\n"));
 }
 

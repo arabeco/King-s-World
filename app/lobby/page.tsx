@@ -1,46 +1,42 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
-import { SectionCard, StatusBadge } from "@/components/ui";
+import { LobbyWorldSelector } from "@/components/lobby-world-selector";
+import { SectionCard } from "@/components/ui";
+import { requireAuthenticatedAppUser } from "@/lib/app-user";
 import { listWorldSummaries } from "@/lib/world-data";
 
 export default async function LobbyPage() {
-  const worlds = await listWorldSummaries();
+  const [worlds, appUser] = await Promise.all([
+    listWorldSummaries(),
+    requireAuthenticatedAppUser(),
+  ]);
 
   return (
-    <main className="marketing-shell" style={{ padding: "2rem 0 3rem" }}>
-      <section className="marketing-hero">
+    <main className="marketing-shell marketing-shell--lobby" style={{ padding: "2rem 0 3rem" }}>
+      <div className="marketing-brand-mark" aria-hidden="true" />
+      <section className="kw-lobby-hero">
         <p className="eyebrow">Lobby de mundos</p>
-        <h1>Escolha sua temporada</h1>
+        <h1>
+          Escolha seu <span className="kw-gold-text">mundo</span>
+        </h1>
         <p>
-          O ecossistema do jogo ja esta documentado e a casca do app comeca aqui: cadastro, lobby, shell do mundo e mock do centro de comando.
+          Sua conta vive fora da campanha. O rei, a capital e o destino comecam depois que voce entra no mundo.
         </p>
       </section>
 
-      <SectionCard title="Mundos disponiveis" eyebrow="Porta de entrada">
-        <div className="list-stack">
-          {worlds.map((world) => {
-            const href = world.status === "Em Andamento" ? `/world/${world.id}/base` : world.status === "Finalizado" ? "/profile" : `/world/${world.id}/empire`;
-            const tone = world.status === "Em Andamento" ? "success" : world.status === "Finalizado" ? "neutral" : "warning";
+      {worlds.length > 0 ? (
+        <LobbyWorldSelector username={appUser.username} worlds={worlds} />
+      ) : (
+        <SectionCard title="Nenhum mundo disponivel" eyebrow="Lobby">
+          <p>Crie ou ative um mundo no Supabase para liberar a entrada.</p>
+        </SectionCard>
+      )}
 
-            return (
-              <div key={world.id} className="world-card">
-                <div className="card-row">
-                  <div>
-                    <strong>{world.name}</strong>
-                    <p className="list-meta">Dia {world.day} · {world.phase} · {world.players} jogadores</p>
-                  </div>
-                  <StatusBadge label={world.status} tone={tone} />
-                </div>
-                <div className="inline-actions">
-                  <Link className="primary-button" href={href}>
-                    {world.actionLabel}
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      <SectionCard title="Gerenciar conta" eyebrow="Global" accent="cyan">
         <div className="inline-actions" style={{ marginTop: "1rem" }}>
+          <Link className="primary-button" href="/premium">
+            Premium Android
+          </Link>
           <Link className="ghost-link" href="/profile">
             Ver perfil global
           </Link>

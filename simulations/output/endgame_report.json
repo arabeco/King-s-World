@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-04-18T05:02:28.359Z",
+  "outputBasename": "season_v2_paired8",
+  "summary": {
+    "totalRuns": 8,
+    "enteredPortal": 4,
+    "failed": 4,
+    "lateEta": 0,
+    "intercepted": 0,
+    "insufficientInfluence": 4,
+    "pvpEliminated": 0
+  },
+  "runs": [
+    {
+      "scenarioId": "metropole-perfect",
+      "seed": 90712026,
+      "playerId": "H01",
+      "marchStartDay": 113,
+      "etaHours": 98.1,
+      "eligibleOn90": true,
+      "eligibleOn120": true,
+      "arrivalDay": 117,
+      "enteredPortal": true,
+      "failureReason": null,
+      "outcomeReason": "Entrou no Portal com 2300 de influencia."
+    },
+    {
+      "scenarioId": "metropole-lazy",
+      "seed": 90719945,
+      "playerId": "H01",
+      "marchStartDay": 110,
+      "etaHours": 200.13,
+      "eligibleOn90": false,
+      "eligibleOn120": false,
+      "arrivalDay": 118,
+      "enteredPortal": false,
+      "failureReason": "influencia_insuficiente",
+      "outcomeReason": "Falhou por influencia insuficiente no gate do Portal."
+    },
+    {
+      "scenarioId": "posto-perfect",
+      "seed": 90727864,
+      "playerId": "H01",
+      "marchStartDay": 114,
+      "etaHours": 82.23,
+      "eligibleOn90": true,
+      "eligibleOn120": true,
+      "arrivalDay": 117,
+      "enteredPortal": true,
+      "failureReason": null,
+      "outcomeReason": "Entrou no Portal com 2400 de influencia."
+    },
+    {
+      "scenarioId": "posto-lazy",
+      "seed": 90735783,
+      "playerId": "H01",
+      "marchStartDay": 113,
+      "etaHours": 109.69,
+      "eligibleOn90": false,
+      "eligibleOn120": false,
+      "arrivalDay": 118,
+      "enteredPortal": false,
+      "failureReason": "influencia_insuficiente",
+      "outcomeReason": "Falhou por influencia insuficiente no gate do Portal."
+    },
+    {
+      "scenarioId": "bastiao-perfect",
+      "seed": 90743702,
+      "playerId": "H01",
+      "marchStartDay": 113,
+      "etaHours": 103.82,
+      "eligibleOn90": true,
+      "eligibleOn120": true,
+      "arrivalDay": 117,
+      "enteredPortal": true,
+      "failureReason": null,
+      "outcomeReason": "Entrou no Portal com 2500 de influencia."
+    },
+    {
+      "scenarioId": "bastiao-lazy",
+      "seed": 90751621,
+      "playerId": "H01",
+      "marchStartDay": 112,
+      "etaHours": 152.45,
+      "eligibleOn90": false,
+      "eligibleOn120": false,
+      "arrivalDay": 118,
+      "enteredPortal": false,
+      "failureReason": "influencia_insuficiente",
+      "outcomeReason": "Falhou por influencia insuficiente no gate do Portal."
+    },
+    {
+      "scenarioId": "celeiro-perfect",
+      "seed": 90759540,
+      "playerId": "H01",
+      "marchStartDay": 115,
+      "etaHours": 52.55,
+      "eligibleOn90": true,
+      "eligibleOn120": true,
+      "arrivalDay": 117,
+      "enteredPortal": true,
+      "failureReason": null,
+      "outcomeReason": "Entrou no Portal com 2500 de influencia."
+    },
+    {
+      "scenarioId": "celeiro-lazy",
+      "seed": 90767459,
+      "playerId": "H01",
+      "marchStartDay": 112,
+      "etaHours": 124.47,
+      "eligibleOn90": false,
+      "eligibleOn120": false,
+      "arrivalDay": 117,
+      "enteredPortal": false,
+      "failureReason": "influencia_insuficiente",
+      "outcomeReason": "Falhou por influencia insuficiente no gate do Portal."
+    }
+  ]
+}

@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
     setMessage(null);
 
     if (!hasPublicSupabaseEnv()) {
-      setError("Supabase nao configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.");
+      setError("Supabase não configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.");
       return;
     }
 
@@ -32,13 +32,13 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setMessage("Link de recuperacao enviado. Verifique sua caixa de entrada.");
+    setMessage("Link de recuperação enviado. Verifique sua caixa de entrada.");
   }
 
   return (
     <MarketingShell
       title="Recupere o acesso"
-      subtitle="Fluxo simples de redefinicao para manter a conta global viva entre temporadas."
+      subtitle="Fluxo simples de redefinição para manter a conta global viva entre temporadas."
     >
       <form className="form-stack" onSubmit={handleSubmit}>
         <input

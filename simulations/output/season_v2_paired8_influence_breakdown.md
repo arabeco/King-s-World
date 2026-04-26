@@ -1,143 +1,143 @@
 # KingsWorld - Quebra de Influencia por Area
 
-- Cada tabela separa a Influencia em `Predios`, `Militar`, `Conselho`, `Quests`, `Maravilhas` e `Tribo`.
+- Cada tabela separa a Influencia em `Predios`, `Militar`, `Governo`, `Sociedade` e `Legado`.
 - O total continua travado em 2500 e o corte do Portal continua em 1500.
 
 ## Media geral do modo atual (paired8)
 
-| Dia | Total medio | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 141.79 | 87.98 | 53.81 | 0 | 0 | 0 | 0 | 1.67 | 401.92 |
-| 30 | 385.47 | 209.51 | 107.58 | 13.88 | 54.5 | 0 | 0 | 3.22 | 642.68 |
-| 60 | 1001.66 | 495.21 | 215.07 | 131.63 | 110.5 | 49.25 | 0 | 5.56 | 1124.44 |
-| 90 | 1483.54 | 783.89 | 322.65 | 160.75 | 167 | 49.25 | 0 | 7.89 | 1606.18 |
-| 120 | 1415.57 | 565.5 | 324.2 | 161.75 | 167 | 64.63 | 132.5 | 5.66 | 796.15 |
+| Dia | Total medio | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 142.45 | 70.64 | 44.96 | 0 | 26.86 | 0 | 0 | 0 | 1.59 | 398.42 |
+| 30 | 361.53 | 174.1 | 89.59 | 18.63 | 60.06 | 19.16 | 0 | 0 | 3.2 | 637.89 |
+| 60 | 986.71 | 432.9 | 179.36 | 157.13 | 138.52 | 39.55 | 39.25 | 0 | 5.58 | 1117.03 |
+| 90 | 1534.82 | 750.71 | 268.8 | 191.25 | 229.58 | 55.23 | 39.25 | 0 | 7.92 | 1596.13 |
+| 120 | 1412.17 | 536 | 269.65 | 192.88 | 248.29 | 55.23 | 41.38 | 68.75 | 5.36 | 844.5 |
 
 ## Representantes normais por perfil
 
 ### Metropole
 
-- Seed: 90719945
-- Cenario: metropole-lazy
-- Branch: urban
-- Resultado: Falhou (1403)
-- 2a aldeia: D18 | 1a aldeia 100: D40 | ETA: 220h
+- Seed: 90712026
+- Cenario: metropole-perfect
+- Branch: tactical
+- Resultado: Falhou (1437)
+- 2a aldeia: D8 | 1a aldeia 100: D41 | ETA: 220h
 
-| Dia | Total | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 93 | 57 | 36 | 0 | 0 | 0 | 0 | 1 | 321 |
-| 30 | 298 | 225 | 73 | 0 | 0 | 0 | 0 | 3 | 511 |
-| 60 | 845 | 600 | 145 | 100 | 0 | 0 | 0 | 6 | 889 |
-| 90 | 1268 | 900 | 218 | 150 | 0 | 0 | 0 | 9 | 1.268 |
-| 120 | 1403 | 1000 | 253 | 150 | 0 | 0 | 0 | 10 | 614 |
+| Dia | Total | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 234 | 162 | 43 | 0 | 29 | 0 | 0 | 0 | 3 | 367 |
+| 30 | 443 | 260 | 86 | 0 | 62 | 35 | 0 | 0 | 4 | 587 |
+| 60 | 1213 | 659 | 172 | 100 | 147 | 35 | 100 | 0 | 7 | 1.028 |
+| 90 | 1713 | 959 | 258 | 100 | 231 | 65 | 100 | 0 | 10 | 1.469 |
+| 120 | 1437 | 600 | 216 | 100 | 256 | 65 | 100 | 100 | 6 | 738 |
 
 ### Posto Avancado
 
-- Seed: 90719945
-- Cenario: metropole-lazy
+- Seed: 90727864
+- Cenario: posto-perfect
 - Branch: tactical
-- Resultado: Falhou (1400)
-- 2a aldeia: D8 | 1a aldeia 100: D58 | ETA: 220h
+- Resultado: Falhou (1372)
+- 2a aldeia: D9 | 1a aldeia 100: D38 | ETA: 109.71h
 
-| Dia | Total | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 186 | 103 | 83 | 0 | 0 | 0 | 0 | 3 | 456 |
-| 30 | 347 | 180 | 167 | 0 | 0 | 0 | 0 | 4 | 749 |
-| 60 | 981 | 448 | 333 | 100 | 100 | 0 | 0 | 6 | 1.336 |
-| 90 | 1600 | 800 | 500 | 100 | 200 | 0 | 0 | 8 | 1.923 |
-| 120 | 1400 | 400 | 500 | 100 | 200 | 0 | 200 | 4 | 1.132 |
+| Dia | Total | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 221 | 128 | 65 | 0 | 28 | 0 | 0 | 0 | 3 | 426 |
+| 30 | 419 | 229 | 129 | 0 | 61 | 0 | 0 | 0 | 4 | 700 |
+| 60 | 1086 | 532 | 259 | 150 | 145 | 0 | 0 | 0 | 7 | 1.249 |
+| 90 | 1806 | 959 | 388 | 200 | 229 | 30 | 0 | 0 | 10 | 1.798 |
+| 120 | 1372 | 500 | 304 | 200 | 238 | 30 | 0 | 100 | 5 | 642 |
 
 ### Bastiao
 
 - Seed: 90743702
 - Cenario: bastiao-perfect
-- Branch: urban
-- Resultado: Falhou (1411)
-- 2a aldeia: D16 | 1a aldeia 100: D44 | ETA: 109.04h
+- Branch: defensive
+- Resultado: Falhou (1529)
+- 2a aldeia: D18 | 1a aldeia 100: D45 | ETA: 208.79h
 
-| Dia | Total | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 97 | 41 | 56 | 0 | 0 | 0 | 0 | 1 | 451 |
-| 30 | 265 | 154 | 111 | 0 | 0 | 0 | 0 | 3 | 712 |
-| 60 | 808 | 486 | 222 | 100 | 0 | 0 | 0 | 6 | 1.235 |
-| 90 | 1433 | 900 | 333 | 100 | 100 | 0 | 0 | 9 | 1.758 |
-| 120 | 1411 | 800 | 211 | 100 | 100 | 0 | 200 | 8 | 960 |
+| Dia | Total | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 71 | 28 | 17 | 0 | 26 | 0 | 0 | 0 | 1 | 293 |
+| 30 | 238 | 109 | 34 | 0 | 60 | 35 | 0 | 0 | 3 | 463 |
+| 60 | 673 | 299 | 68 | 100 | 136 | 70 | 0 | 0 | 5 | 805 |
+| 90 | 1105 | 575 | 102 | 100 | 228 | 100 | 0 | 0 | 7 | 1.146 |
+| 120 | 1529 | 800 | 137 | 100 | 292 | 100 | 0 | 100 | 8 | 720 |
 
 ### Celeiro
 
-- Seed: 90759540
-- Cenario: celeiro-perfect
+- Seed: 90743702
+- Cenario: bastiao-perfect
 - Branch: flow
-- Resultado: Falhou (1449)
-- 2a aldeia: D11 | 1a aldeia 100: D28 | ETA: 48.3h
+- Resultado: Falhou (1348)
+- 2a aldeia: D21 | 1a aldeia 100: D41 | ETA: 51.44h
 
-| Dia | Total | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 183 | 137 | 46 | 0 | 0 | 0 | 0 | 2 | 365 |
-| 30 | 385 | 244 | 91 | 50 | 0 | 0 | 0 | 3 | 582 |
-| 60 | 1082 | 600 | 182 | 200 | 100 | 0 | 0 | 6 | 1.017 |
-| 90 | 1423 | 800 | 273 | 250 | 100 | 0 | 0 | 8 | 1.451 |
-| 120 | 1449 | 600 | 299 | 250 | 100 | 0 | 200 | 6 | 702 |
+| Dia | Total | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 130 | 47 | 58 | 0 | 25 | 0 | 0 | 0 | 1 | 408 |
+| 30 | 448 | 188 | 117 | 50 | 58 | 35 | 0 | 0 | 3 | 659 |
+| 60 | 1119 | 511 | 233 | 100 | 140 | 35 | 100 | 0 | 6 | 1.159 |
+| 90 | 1799 | 900 | 350 | 150 | 234 | 65 | 100 | 0 | 9 | 1.660 |
+| 120 | 1348 | 500 | 189 | 150 | 244 | 65 | 100 | 100 | 5 | 761 |
 
 ## Builds que bateram 2500
 
-### Bastiao - bastiao-perfect
+### Celeiro - celeiro-perfect
 
-- Seed: 90743702
+- Seed: 90759540
 - Branch: defensive
-- Resultado final: 2500 influencia | 10 aldeias | 1.279 tropas
-- Conselho: Engenheiro x1, Marechal x2, Intendente x1, Erudito x1
+- Resultado final: 2500 influencia | 10 aldeias | 1.213 tropas
+- Conselho: Engenheiro x2, Marechal x1, Navegador x3, Intendente x2, Erudito x2
 
-| Dia | Total | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 115 | 39 | 76 | 0 | 0 | 0 | 0 | 1 | 417 |
-| 30 | 450 | 149 | 151 | 50 | 100 | 0 | 0 | 3 | 679 |
-| 60 | 1377 | 475 | 302 | 250 | 200 | 150 | 0 | 6 | 1.205 |
-| 90 | 2053 | 900 | 453 | 250 | 300 | 150 | 0 | 9 | 1.730 |
-| 120 | 2500 | 1000 | 500 | 250 | 300 | 250 | 200 | 10 | 1.279 |
+| Dia | Total | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 253 | 157 | 65 | 0 | 31 | 0 | 0 | 0 | 3 | 456 |
+| 30 | 592 | 261 | 129 | 100 | 67 | 35 | 0 | 0 | 4 | 738 |
+| 60 | 1681 | 645 | 259 | 450 | 157 | 70 | 100 | 0 | 7 | 1.303 |
+| 90 | 2332 | 997 | 388 | 500 | 247 | 100 | 100 | 0 | 10 | 1.868 |
+| 120 | 2500 | 1000 | 400 | 500 | 300 | 100 | 100 | 100 | 10 | 1.213 |
 
-### Bastiao - bastiao-perfect
+### Metropole - celeiro-perfect
 
-- Seed: 90743702
-- Branch: defensive
-- Resultado final: 2500 influencia | 10 aldeias | 1.219 tropas
-- Conselho: Engenheiro x1, Marechal x2, Intendente x1, Erudito x1
-
-| Dia | Total | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 134 | 54 | 80 | 0 | 0 | 0 | 0 | 1 | 451 |
-| 30 | 577 | 217 | 160 | 100 | 100 | 0 | 0 | 3 | 728 |
-| 60 | 1499 | 579 | 320 | 250 | 200 | 150 | 0 | 6 | 1.281 |
-| 90 | 2080 | 900 | 480 | 250 | 300 | 150 | 0 | 9 | 1.835 |
-| 120 | 2500 | 1000 | 500 | 250 | 300 | 250 | 200 | 10 | 1.219 |
-
-### Metropole - metropole-perfect
-
-- Seed: 90712026
+- Seed: 90759540
 - Branch: urban
-- Resultado final: 2500 influencia | 10 aldeias | 921 tropas
-- Conselho: Engenheiro x2, Navegador x1, Intendente x1, Erudito x1
+- Resultado final: 2500 influencia | 10 aldeias | 1.045 tropas
+- Conselho: Engenheiro x3, Marechal x1, Navegador x2, Intendente x2, Erudito x2
 
-| Dia | Total | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 231 | 158 | 73 | 0 | 0 | 0 | 0 | 2 | 388 |
-| 30 | 605 | 359 | 146 | 0 | 100 | 0 | 0 | 4 | 627 |
-| 60 | 1441 | 600 | 291 | 200 | 200 | 150 | 0 | 6 | 1.104 |
-| 90 | 2037 | 900 | 437 | 250 | 300 | 150 | 0 | 9 | 1.582 |
-| 120 | 2500 | 1000 | 500 | 250 | 300 | 250 | 200 | 10 | 921 |
+| Dia | Total | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 157 | 72 | 58 | 0 | 27 | 0 | 0 | 0 | 1 | 476 |
+| 30 | 510 | 247 | 115 | 50 | 63 | 35 | 0 | 0 | 3 | 769 |
+| 60 | 1649 | 600 | 230 | 500 | 149 | 70 | 100 | 0 | 6 | 1.356 |
+| 90 | 2191 | 900 | 345 | 500 | 246 | 100 | 100 | 0 | 9 | 1.942 |
+| 120 | 2500 | 1000 | 400 | 500 | 300 | 100 | 100 | 100 | 10 | 1.045 |
+
+### Bastiao - bastiao-perfect
+
+- Seed: 90743702
+- Branch: defensive
+- Resultado final: 2500 influencia | 10 aldeias | 1.042 tropas
+- Conselho: Engenheiro x2, Marechal x3, Navegador x1, Intendente x2, Erudito x2
+
+| Dia | Total | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 171 | 76 | 65 | 0 | 30 | 0 | 0 | 0 | 2 | 402 |
+| 30 | 526 | 194 | 130 | 100 | 67 | 35 | 0 | 0 | 4 | 648 |
+| 60 | 1507 | 427 | 261 | 500 | 149 | 70 | 100 | 0 | 6 | 1.142 |
+| 90 | 2216 | 878 | 391 | 500 | 247 | 100 | 100 | 0 | 9 | 1.635 |
+| 120 | 2500 | 1000 | 400 | 500 | 300 | 100 | 100 | 100 | 10 | 1.042 |
 
 ### Posto Avancado - posto-perfect
 
 - Seed: 90727864
 - Branch: tactical
-- Resultado final: 2500 influencia | 10 aldeias | 914 tropas
-- Conselho: Engenheiro x1, Marechal x2, Navegador x1, Intendente x1
+- Resultado final: 2500 influencia | 10 aldeias | 869 tropas
+- Conselho: Engenheiro x2, Marechal x3, Navegador x2, Intendente x2, Erudito x1
 
-| Dia | Total | Predios | Militar | Conselho | Quests | Maravilhas | Tribo | Aldeias | Tropas |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 136 | 53 | 83 | 0 | 0 | 0 | 0 | 1 | 536 |
-| 30 | 529 | 212 | 167 | 50 | 100 | 0 | 0 | 3 | 878 |
-| 60 | 1496 | 563 | 333 | 250 | 200 | 150 | 0 | 6 | 1.560 |
-| 90 | 2100 | 900 | 500 | 250 | 300 | 150 | 0 | 9 | 2.243 |
-| 120 | 2500 | 1000 | 500 | 250 | 300 | 250 | 200 | 10 | 914 |
+| Dia | Total | Predios | Militar | Governo | Sociedade | Quests | Maravilhas | Tribo | Aldeias | Tropas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 183 | 84 | 70 | 0 | 29 | 0 | 0 | 0 | 2 | 383 |
+| 30 | 466 | 224 | 140 | 0 | 67 | 35 | 0 | 0 | 4 | 629 |
+| 60 | 1534 | 527 | 280 | 400 | 157 | 70 | 100 | 0 | 7 | 1.122 |
+| 90 | 2320 | 973 | 400 | 500 | 247 | 100 | 100 | 0 | 10 | 1.615 |
+| 120 | 2500 | 1000 | 400 | 500 | 300 | 100 | 100 | 100 | 10 | 869 |
 

@@ -25,7 +25,6 @@ function createFallbackPayload(worldId: string): WorldPayload {
     politicalState: "Sincronizando",
     materials: 0,
     supplies: 0,
-    energy: 0,
     influence: 0,
     palaceLevel: 0,
     kingHere: false,
@@ -40,6 +39,9 @@ function createFallbackPayload(worldId: string): WorldPayload {
     name: "Carregando mundo",
     day: 0,
     phase: "Sincronizando",
+    seasonMode: "classic",
+    speedMultiplier: 1,
+    durationDays: WORLD_DURATION_DAYS,
     averageInfluenceScore: 0,
     activeAlerts: ["Lendo mundo persistente do Supabase..."],
     activeVillageId: placeholderVillage.id,
@@ -78,11 +80,22 @@ function createFallbackPayload(worldId: string): WorldPayload {
 
   return {
     world,
+    worldMeta: {
+      status: "running",
+      finalReason: null,
+      readOnly: false,
+      result: null,
+      finalRank: null,
+      finalScore: null,
+    },
     runtimeState: {
       started: false,
       realTimeEnabled: false,
       anchorDay: 0,
       anchorStartedAtMs: null,
+      seasonMode: "classic",
+      speedMultiplier: 1,
+      durationDays: WORLD_DURATION_DAYS,
     },
     isSandboxWorld: false,
     routeWorldId: worldId,
@@ -129,6 +142,7 @@ export function useLiveWorld(worldId: string, initialPayload?: WorldPayload) {
 
   return {
     world: payload.world,
+    worldMeta: payload.worldMeta,
     runtimeState: payload.runtimeState,
     isSandboxWorld: payload.isSandboxWorld,
     campaignDate,

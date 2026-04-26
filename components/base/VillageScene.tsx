@@ -1,1159 +1,1628 @@
-"use client";
+﻿﻿"use client";
 
-import { Crown, FlaskConical, Shield, TreePine, Wheat, X, Zap } from "lucide-react";
-import Image from "next/image";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { FlaskConical, Minus, Plus, Swords, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
-  calculateBuildingBenefit,
-  calculateBuildingUpgradeLoad,
+  POPULATION_ALLOCATION_STEP,
+  calculateBarracksUnlocks,
+  calculateBarracksRosterPreview,
   calculateBuildingUpgradeCost,
+  calculateCityDailyProduction,
+  calculateCitySocietyState,
+  calculateDefensePower,
+  calculateVillagePopulationCap,
+  calculateVillageDefenseCapacity,
+  calculateVillageRecruitCapacity,
+  calculateWallDefenseUnlocks,
   calculateVillageConstructionCapacity,
   calculateVillageConstructionLoad,
   calculateVillageConstructionRemaining,
-  getEvolutionModeProfile,
-  type EvolutionMode,
-  type SovereignUpgradeCost, // Added
   calculateVillageDevelopment,
+  type EvolutionMode,
 } from "@/core/GameBalance";
+import { BUILDINGS_BY_ID, formatCompact, type BuildingId } from "@/lib/buildings";
+import { CITY_CLASS_META, cityClassToArchetype, type CityClass } from "@/lib/cities";
+import { HERO_META } from "@/lib/empire-systems";
 import {
-  BUILDING_LAYOUT,
-  BUILDINGS_BY_ID,
-  type BuildingId,
-  formatBenefit,
-  formatCompact, getDefaultBuildingLevels,
-} from "@/lib/buildings";
-import { CITY_CLASS_META, TERRAIN_META, cityClassToArchetype, type CityClass } from "@/lib/cities";
-import { useImperialState } from "@/lib/imperial-state";
+  projectStructureLevelsToBuildingLevels,
+  useImperialState,
+  type BuildingSkillSlotId,
+  type CityProductionAllocations,
+  type CityDefenseRecruitId,
+  type CityJobId,
+  type CityProductionFocus,
+  type CitySocietyFocus,
+  type CityStructureId,
+  type HeroBuildId,
+  type TroopRecruitId,
+  type VillageBuildingSkills,
+} from "@/lib/imperial-state";
+import type { HeroSpecialistId } from "@/lib/council";
+import { resolveKingGameplayModifiers } from "@/lib/king-profiles";
 import type { ResearchEntry, TimelineEntry, VillageSummary } from "@/lib/mock-data";
 import { emitUiFeedback } from "@/lib/ui-feedback";
-
-type LocalCommand = "guard" | "drill" | "sortie" | "fortify" | "rations";
+import {
+  BUILDING_SKILL_META,
+  BUILDING_SKILL_SLOT_IDS,
+  CITY_CLASS_IDS,
+  CITY_CLASS_IMAGE_BY_ID,
+  CITY_JOB_IDS,
+  CITY_SECTORS,
+  DEFENSE_RECRUIT_IDS,
+  HERO_BUILD_IDS,
+  HERO_BUILD_META,
+  HERO_HIRE_COST,
+  HERO_PROMOTION_IDS,
+  HERO_PROMOTION_LIMIT,
+  HERO_PROMOTION_META,
+  LOCAL_COMMAND_META,
+  PRODUCTION_FOCUS_META,
+  PRODUCTION_WORKER_IDS,
+  SECTOR_IMAGE_BY_ID,
+  SOCIETY_FOCUS_META,
+  TROOP_RECRUIT_IDS,
+  CostChip,
+  canAfford,
+  canAffordSkillUpgrade,
+  cityCardTone,
+  cityClassTone,
+  clamp,
+  defaultSkillDots,
+  defenseDelta,
+  describeLevelGain,
+  emptyCityDefenseRecruits,
+  emptyCityJobs,
+  emptyCityRecruits,
+  emptyProductionWorkers,
+  getSectorById,
+  jobDelta,
+  productionWorkerDelta,
+  recruitDelta,
+  resolveSectorFromBuilding,
+  resolveSectorSkillDots,
+  SECTOR_ICON_BY_ID,
+  sectorCircleTone,
+  sectorLuxuryTone,
+  sectorPanelImage,
+  skillNodePalette,
+  skillNodeTone,
+  sumValues,
+  totalSkillDots,
+  traitNodeTone,
+  type BuildingSkillMeta,
+  type CitySector,
+  type PendingSkillUpgrade,
+  type PopulationAction,
+  type ResourceView,
+  type SectorId,
+  type TraitOption,
+} from "./village-scene-config";
+import type { LocalCommand } from "./village-scene-types";
 
 type VillageSceneProps = {
   worldId: string;
-  villages: Pick<VillageSummary, "id" | "materials" | "supplies" | "energy" | "influence" | "buildingLevels">[];
-  village: Pick<VillageSummary, "id" | "name" | "type" | "cityClass" | "cityClassLocked" | "originKind" | "terrainKind" | "terrainLabel" | "materials" | "supplies" | "energy" | "influence" | "palaceLevel" | "buildingLevels">;
+  villages: Pick<VillageSummary, "id" | "materials" | "supplies" | "influence" | "buildingLevels">[];
+  village: Pick<
+    VillageSummary,
+    | "id"
+    | "name"
+    | "type"
+    | "cityClass"
+    | "cityClassLocked"
+    | "terrainKind"
+    | "terrainLabel"
+    | "materials"
+    | "supplies"
+    | "influence"
+    | "underAttack"
+    | "deficits"
+    | "palaceLevel"
+    | "buildingLevels"
+  >;
+  readOnly?: boolean;
   researchEntries: ResearchEntry[];
   timelineEntries: TimelineEntry[];
   evolutionMode: EvolutionMode;
   localCommand: LocalCommand;
+  worldSpeedMultiplier?: number;
+  initialSelectedSectorId?: SectorId | null;
   initialSelectedBuildingId?: BuildingId | null;
 };
 
-type ResourceView = { materials: number; supplies: number; energy: number; influence: number };
-type SceneBuildingId = Exclude<BuildingId, "roads">;
-type CalibrationEntry = {
-  xPct: number;
-  yPct: number;
-  sizePx: number;
-  scale: number;
-  dx: number;
-  dy: number;
-  badgeXPct: number;
-  badgeYPct: number;
-  clickRadius: number;
-};
-
-type DragState = {
-  mode: "moveBadge";
-  id: SceneBuildingId;
-  pointerId: number;
-  startX: number;
-  startY: number;
-  start: CalibrationEntry;
-  width: number;
-  height: number;
-  zoom: number;
-};
-
-const ART_TUNING: Partial<Record<BuildingId, { scale: number; dx: number; dy: number }>> = {
-  palace: { scale: 1.48, dx: 0, dy: 6 },
-  senate: { scale: 1.3, dx: 1, dy: 2 },
-  mines: { scale: 1.34, dx: 0, dy: -3 },
-  farms: { scale: 1.34, dx: 1, dy: 0 },
-  housing: { scale: 1.34, dx: 0, dy: 7 },
-  research: { scale: 1.3, dx: -2, dy: -5 },
-  barracks: { scale: 1.36, dx: -2, dy: 3 },
-  arsenal: { scale: 1.34, dx: -1, dy: 4 },
-  wonder: { scale: 1.32, dx: 0, dy: -6 },
-};
-
-const DEFAULT_ART_TUNING = { scale: 1.36, dx: 0, dy: 0 };
-const SCENE_BUILDING_IDS = BUILDING_LAYOUT.map((slot) => slot.id) as SceneBuildingId[];
-const DEFAULT_BACKGROUND_ZOOM = 1.09;
-const DEFAULT_BACKGROUND_STRETCH_X = 1.07;
-
-function buildCalibrationDefaults(): Record<SceneBuildingId, CalibrationEntry> {
-  const defaults = {} as Record<SceneBuildingId, CalibrationEntry>;
-
-  for (const slot of BUILDING_LAYOUT) {
-    const tuning = ART_TUNING[slot.id] ?? DEFAULT_ART_TUNING;
-    defaults[slot.id] = {
-      xPct: slot.xPct,
-      yPct: slot.yPct,
-      sizePx: slot.sizePx,
-      scale: tuning.scale,
-      dx: tuning.dx,
-      dy: tuning.dy,
-      badgeXPct: slot.badgeXPct,
-      badgeYPct: slot.badgeYPct,
-      clickRadius: slot.clickRadius,
-    };
-  }
-
-  return defaults;
+function levelIconSrc(level: number) {
+  const normalized = clamp(Math.floor(level), 0, 10).toString().padStart(2, "0");
+  return `/icons/${normalized}.png`;
 }
 
-const CALIBRATION_DEFAULTS = buildCalibrationDefaults();
-
-const LOCAL_COMMAND_META: Record<LocalCommand, { label: string; summary: string }> = {
-  guard: { label: "Guarnicao", summary: "Defesa local e prontidao de muralha" },
-  drill: { label: "Treino", summary: "Preparo de tropa para resposta rapida" },
-  sortie: { label: "Sortida", summary: "Pressao ofensiva e patrulha ativa" },
-  fortify: { label: "Blindar", summary: "Foco em resistencia estrutural" },
-  rations: { label: "Racao", summary: "Ajuste de suprimentos da guarnicao" },
-};
-
-
-function cloneCalibration(): Record<SceneBuildingId, CalibrationEntry> {
-  const clone = {} as Record<SceneBuildingId, CalibrationEntry>;
-  for (const id of SCENE_BUILDING_IDS) {
-    clone[id] = { ...CALIBRATION_DEFAULTS[id] };
-  }
-  return clone;
-}
-
-function canAfford(cost: SovereignUpgradeCost, resources: ResourceView, currentInfluenceScore: number) {
+function LevelMedallion({
+  level,
+  className = "",
+  iconClassName = "h-full w-full",
+}: {
+  level: number;
+  className?: string;
+  iconClassName?: string;
+}) {
   return (
-    resources.materials >= cost.materials &&
-    resources.supplies >= cost.supplies &&
-    resources.energy >= cost.energy &&
-    // Influence is no longer a resource check but a threshold check
-    currentInfluenceScore >= cost.requiredInfluence
+    <img
+      src={levelIconSrc(level)}
+      alt={`Nível ${level}`}
+      className={`${iconClassName} max-w-none object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.72)]`}
+    />
   );
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
+function TraitTree({
+  rootLabel,
+  rootNote,
+  options,
+}: {
+  rootLabel: string;
+  rootNote?: string;
+  options: TraitOption[];
+}) {
+  return (
+    <article className="rounded-2xl border border-white/10 bg-white/5 p-3">
+      <div className="mx-auto flex w-fit flex-col items-center text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-500/12" />
+        <p className="mt-2 text-sm font-black text-slate-100">{rootLabel}</p>
+        {rootNote ? <p className="mt-1 text-[11px] text-slate-300">{rootNote}</p> : null}
+      </div>
+      <div className="relative mt-3">
+        <div className="absolute left-1/2 top-0 h-4 w-px -translate-x-1/2 bg-white/12" />
+        <div className="absolute left-[25%] right-[25%] top-4 h-px bg-white/12" />
+        <div className="grid grid-cols-2 gap-2 pt-5">
+          {options.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={option.onClick}
+              disabled={option.disabled}
+              className={`rounded-2xl border p-3 text-left transition disabled:opacity-50 ${traitNodeTone(option.active)}`}
+            >
+              <div className="flex items-start gap-2">
+                <div className={`mt-0.5 h-8 w-8 rounded-full border ${option.active ? "border-cyan-300/40 bg-cyan-500/18" : "border-white/12 bg-white/6"}`} />
+                <div>
+                  <p className="text-[11px] font-black">{option.label}</p>
+                  {option.note ? <p className="mt-1 text-[10px] leading-4 opacity-90">{option.note}</p> : null}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </article>
+  );
 }
-function formatEta(minutes: number | null): string {
-  if (minutes === null) return "--";
-  const safe = Math.max(0, Math.round(minutes));
-  if (safe <= 0) return "agora";
-  const hh = Math.floor(safe / 60);
-  const mm = safe % 60;
-  if (hh <= 0) return `${mm}m`;
-  return `${hh}h ${String(mm).padStart(2, "0")}m`;
+
+function AllocationCard({
+  label,
+  value,
+  note,
+  delta,
+  tone,
+  disabled = false,
+  canDecrease,
+  canIncrease,
+  onDecrease,
+  onIncrease,
+}: {
+  label: string;
+  value: number;
+  note?: string;
+  delta?: string;
+  tone: "amber" | "emerald" | "rose" | "cyan";
+  disabled?: boolean;
+  canDecrease: boolean;
+  canIncrease: boolean;
+  onDecrease: () => void;
+  onIncrease: () => void;
+}) {
+  const plusTone =
+    tone === "amber"
+      ? "border-amber-300/30 bg-amber-500/12 text-amber-100"
+      : tone === "emerald"
+        ? "border-emerald-300/30 bg-emerald-500/12 text-emerald-100"
+        : tone === "rose"
+          ? "border-rose-300/30 bg-rose-500/12 text-rose-100"
+          : "border-cyan-300/30 bg-cyan-500/12 text-cyan-100";
+
+  return (
+    <div className={`rounded-2xl border p-2.5 ${disabled ? "border-white/8 bg-white/[0.03] opacity-60" : "border-white/10 bg-white/5"}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-[12px] font-black text-slate-100">{label}</p>
+          {note ? <p className="mt-0.5 text-[10px] font-semibold text-slate-400">{note}</p> : null}
+        </div>
+        <div className="shrink-0 text-right">
+          <span className="rounded-xl border border-white/12 bg-white/8 px-2.5 py-1 text-sm font-black text-slate-100">{value}</span>
+          {delta ? <p className="mt-1 text-[10px] font-black text-cyan-100">{delta}</p> : null}
+        </div>
+      </div>
+      <div className="mt-2 grid grid-cols-[44px_1fr_44px] items-center gap-2">
+        <button
+          type="button"
+          onClick={onDecrease}
+          disabled={disabled || !canDecrease}
+          className="flex h-11 items-center justify-center rounded-xl border border-white/12 bg-white/7 text-slate-100 transition disabled:opacity-35"
+          aria-label={`Reduzir ${label}`}
+        >
+          <Minus className="h-5 w-5" />
+        </button>
+        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+          <div className="h-full rounded-full bg-cyan-300/80" style={{ width: `${Math.min(100, value)}%` }} />
+        </div>
+        <button
+          type="button"
+          onClick={onIncrease}
+          disabled={disabled || !canIncrease}
+          className={`flex h-11 items-center justify-center rounded-xl border transition disabled:opacity-35 ${plusTone}`}
+          aria-label={`Aumentar ${label}`}
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function VillageScene({
   worldId,
   villages,
   village,
+  readOnly = false,
   researchEntries,
   timelineEntries,
   evolutionMode,
   localCommand,
+  worldSpeedMultiplier = 1,
+  initialSelectedSectorId = null,
   initialSelectedBuildingId = null,
 }: VillageSceneProps) {
-  const sceneRef = useRef<HTMLElement | null>(null);
-  const dragRef = useRef<DragState | null>(null);
-  const badgeRefs = useRef<Partial<Record<SceneBuildingId, HTMLButtonElement | null>>>({});
-  const [selectedBuildingId, setSelectedBuildingId] = useState<BuildingId | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [opsLog, setOpsLog] = useState<string[]>([]);
-  const [calibrationMode, setCalibrationMode] = useState(false);
-  const [calibrationZoom, setCalibrationZoom] = useState(DEFAULT_BACKGROUND_ZOOM);
-  const [backgroundStretchX, setBackgroundStretchX] = useState(DEFAULT_BACKGROUND_STRETCH_X);
-  const [activeCalibrationId, setActiveCalibrationId] = useState<SceneBuildingId>("palace");
-  const [calibration, setCalibration] = useState<Record<SceneBuildingId, CalibrationEntry>>(() =>
-    cloneCalibration(),
-  );
-  const [jsonFeedback, setJsonFeedback] = useState("");
-  const [pulseBadgeId, setPulseBadgeId] = useState<SceneBuildingId | null>(null);
-  const [calibrationPanelCollapsed, setCalibrationPanelCollapsed] = useState(false);
-  const [calibrationPanelDock, setCalibrationPanelDock] = useState<"top" | "bottom">("bottom");
+  const [showHeroPromotionOptions, setShowHeroPromotionOptions] = useState(false);
+  const [selectedHeroBuild, setSelectedHeroBuild] = useState<HeroBuildId>("leadership");
+  const [pendingSkillUpgrade, setPendingSkillUpgrade] = useState<PendingSkillUpgrade | null>(null);
   const { imperialState, setImperialState } = useImperialState(worldId, villages);
   const resources = imperialState.resources;
   const villageLevelOverrides = imperialState.buildingLevelsByVillage[village.id] ?? {};
+  const projectedVillageLevelOverrides = useMemo(
+    () => projectStructureLevelsToBuildingLevels(villageLevelOverrides),
+    [villageLevelOverrides],
+  );
+  const villageBuildingSkills = imperialState.buildingSkillsByVillage[village.id] ?? {};
   const assignedHero = imperialState.heroByVillage[village.id] ?? "none";
+  const heroBuild = imperialState.heroBuildByVillage[village.id] ?? selectedHeroBuild;
+  const hiredHeroCount = Object.values(imperialState.heroByVillage).filter((entry) => entry && entry !== "none").length;
   const hasEngineer = assignedHero === "engineer";
-  const cityClass = imperialState.cityClassByVillage[village.id] ?? village.cityClass ?? (village.type === "Capital" ? "metropole" : "neutral");
-  const cityClassLocked = imperialState.cityClassLockedByVillage[village.id] ?? village.cityClassLocked ?? (village.type !== "Capital" && cityClass !== "neutral");
-  const terrainMeta = village.terrainKind ? TERRAIN_META[village.terrainKind] : null;
-  const cityClassMeta = CITY_CLASS_META[cityClass];
-  const canChooseCityClass = village.type === "Capital" || !cityClassLocked;
-  const localVillageResources = useMemo<ResourceView>(
+  const isCapitalVillage = village.type === "Capital";
+  const rawCityClass = imperialState.cityClassByVillage[village.id] ?? village.cityClass ?? "neutral";
+  const cityClass = isCapitalVillage ? "neutral" : rawCityClass;
+  const cityClassLocked = isCapitalVillage ? true : (imperialState.cityClassLockedByVillage[village.id] ?? village.cityClassLocked ?? cityClass !== "neutral");
+  const canChooseCityClass = !isCapitalVillage && !cityClassLocked;
+  const productionFocus = imperialState.productionFocusByVillage[village.id] ?? "materials";
+  const societyFocus = imperialState.societyFocusByVillage[village.id] ?? "order";
+
+  const levels = useMemo(() => {
+    const next = { ...village.buildingLevels } as Record<BuildingId, number>;
+    for (const id of Object.keys(BUILDINGS_BY_ID) as BuildingId[]) {
+      const hardCap = BUILDINGS_BY_ID[id].maxLevel;
+      next[id] = clamp(Math.floor(village.buildingLevels[id] ?? 0), 0, hardCap);
+    }
+    for (const [id, level] of Object.entries(projectedVillageLevelOverrides)) {
+      const key = id as BuildingId;
+      const definition = BUILDINGS_BY_ID[key];
+      if (!definition || typeof level !== "number") continue;
+      next[key] = clamp(Math.floor(level), 0, definition.maxLevel);
+    }
+    for (const sector of CITY_SECTORS) {
+      const dots = villageBuildingSkills[sector.id];
+      if (!dots) continue;
+      const skillLevel = totalSkillDots(dots);
+      if (skillLevel <= 0) continue;
+      for (const formulaBuildingId of sector.formulaBuildingIds) {
+        next[formulaBuildingId] = clamp(skillLevel, 0, BUILDINGS_BY_ID[formulaBuildingId].maxLevel);
+      }
+    }
+    return next;
+  }, [projectedVillageLevelOverrides, village.buildingLevels, villageBuildingSkills]);
+
+  const currentVillageDevelopment = useMemo(() => calculateVillageDevelopment(levels), [levels]);
+  const populationCap = useMemo(() => calculateVillagePopulationCap(levels), [levels]);
+  const recruitCapacity = useMemo(() => calculateVillageRecruitCapacity(levels), [levels]);
+  const defenseCapacity = useMemo(() => calculateVillageDefenseCapacity(levels), [levels]);
+  const barracksUnlocks = useMemo(() => calculateBarracksUnlocks(levels), [levels]);
+  const wallDefenseUnlocks = useMemo(() => calculateWallDefenseUnlocks(levels), [levels]);
+  const baseVillageDevelopment = useMemo(
+    () => calculateVillageDevelopment(levels),
+    [levels],
+  );
+  const constructionCapacity = useMemo(() => calculateVillageConstructionCapacity(levels, hasEngineer), [hasEngineer, levels]);
+  const constructionLoad = useMemo(() => calculateVillageConstructionLoad(levels), [levels]);
+  const constructionRemaining = useMemo(() => calculateVillageConstructionRemaining(levels, hasEngineer), [hasEngineer, levels]);
+  const localResources = useMemo<ResourceView>(
     () => ({
       materials: village.materials,
       supplies: village.supplies,
-      energy: village.energy,
       influence: village.influence,
     }),
-    [village.energy, village.influence, village.materials, village.supplies],
+    [village.influence, village.materials, village.supplies],
+  );
+  const rosterPreview = useMemo(() => calculateBarracksRosterPreview(levels.barracks ?? 0), [levels.barracks]);
+  const productionWorkers = imperialState.productionWorkersByVillage[village.id] ?? emptyProductionWorkers();
+  const jobs = imperialState.jobsByVillage[village.id] ?? emptyCityJobs();
+  const recruits = imperialState.recruitsByVillage[village.id] ?? emptyCityRecruits();
+  const defenseRecruits = imperialState.defenseRecruitsByVillage[village.id] ?? emptyCityDefenseRecruits();
+  const usedProductionWorkers = sumValues(productionWorkers);
+  const usedJobs = sumValues(jobs);
+  const usedRecruits = sumValues(recruits);
+  const usedDefenders = sumValues(defenseRecruits);
+  const usedPopulation = usedProductionWorkers + usedJobs + usedRecruits + usedDefenders;
+  const populationCurrent = clamp(
+    imperialState.populationByVillage[village.id] ?? Math.min(populationCap, Math.max(0, populationCap)),
+    usedPopulation,
+    populationCap,
+  );
+  const freePopulation = Math.max(0, populationCurrent - usedPopulation);
+  const empirePopulationCapacity = useMemo(
+    () =>
+      villages.reduce((sum, entry) => {
+        const mergedLevels = {
+          ...entry.buildingLevels,
+          ...projectStructureLevelsToBuildingLevels(imperialState.buildingLevelsByVillage[entry.id] ?? {}),
+        };
+        return sum + calculateVillagePopulationCap(mergedLevels);
+      }, 0),
+    [imperialState.buildingLevelsByVillage, villages],
+  );
+  const empirePopulationCurrent = useMemo(
+    () =>
+      villages.reduce((sum, entry) => {
+        const mergedLevels = {
+          ...entry.buildingLevels,
+          ...projectStructureLevelsToBuildingLevels(imperialState.buildingLevelsByVillage[entry.id] ?? {}),
+        };
+        const villageCap = calculateVillagePopulationCap(mergedLevels);
+        const entryProductionWorkers = imperialState.productionWorkersByVillage[entry.id] ?? emptyProductionWorkers();
+        const entryJobs = imperialState.jobsByVillage[entry.id] ?? emptyCityJobs();
+        const entryRecruits = imperialState.recruitsByVillage[entry.id] ?? emptyCityRecruits();
+        const entryDefenders = imperialState.defenseRecruitsByVillage[entry.id] ?? emptyCityDefenseRecruits();
+        const minimumUsed = sumValues(entryProductionWorkers) + sumValues(entryJobs) + sumValues(entryRecruits) + sumValues(entryDefenders);
+        const current = clamp(imperialState.populationByVillage[entry.id] ?? villageCap, minimumUsed, villageCap);
+        return sum + current;
+      }, 0),
+    [
+      imperialState.buildingLevelsByVillage,
+      imperialState.defenseRecruitsByVillage,
+      imperialState.jobsByVillage,
+      imperialState.populationByVillage,
+      imperialState.productionWorkersByVillage,
+      imperialState.recruitsByVillage,
+      villages,
+    ],
+  );
+  const empirePopulationUsed = useMemo(
+    () =>
+      villages.reduce((sum, entry) => {
+        const entryJobs = imperialState.jobsByVillage[entry.id] ?? emptyCityJobs();
+        const entryProductionWorkers = imperialState.productionWorkersByVillage[entry.id] ?? emptyProductionWorkers();
+        const entryRecruits = imperialState.recruitsByVillage[entry.id] ?? emptyCityRecruits();
+        const entryDefenders = imperialState.defenseRecruitsByVillage[entry.id] ?? emptyCityDefenseRecruits();
+        return sum + sumValues(entryProductionWorkers) + sumValues(entryJobs) + sumValues(entryRecruits) + sumValues(entryDefenders);
+      }, 0),
+    [imperialState.defenseRecruitsByVillage, imperialState.jobsByVillage, imperialState.productionWorkersByVillage, imperialState.recruitsByVillage, villages],
+  );
+  const selectedSectorId = initialSelectedSectorId ?? resolveSectorFromBuilding(initialSelectedBuildingId);
+
+  const sectorCards = useMemo(
+    () =>
+      CITY_SECTORS.map((sector) => {
+        const skillDots = resolveSectorSkillDots(sector, levels, villageBuildingSkills);
+        const level = totalSkillDots(skillDots);
+        return {
+          ...sector,
+          level,
+          contribution: level * 2,
+          skillDots,
+        };
+      }),
+    [levels, villageBuildingSkills],
   );
 
-  const levels = useMemo(() => {
-    const next = getDefaultBuildingLevels(Math.min(10, village.palaceLevel));
+  const selectedSector = sectorCards.find((sector) => sector.id === selectedSectorId) ?? null;
+  const cityBackdropImage = isCapitalVillage ? "/images/capital.jpg" : CITY_CLASS_IMAGE_BY_ID[cityClass] ?? CITY_CLASS_IMAGE_BY_ID.neutral;
+  const governmentLevel = sectorCards.find((sector) => sector.id === "crown")?.level ?? 0;
+  const productionLevel = sectorCards.find((sector) => sector.id === "economy")?.level ?? 0;
+  const societyLevel = sectorCards.find((sector) => sector.id === "society")?.level ?? 0;
+  const recruitmentLevel = sectorCards.find((sector) => sector.id === "recruitment")?.level ?? 0;
+  const defenseLevel = sectorCards.find((sector) => sector.id === "defense")?.level ?? 0;
+  const productionSkillDots = resolveSectorSkillDots(CITY_SECTORS[1], levels, villageBuildingSkills);
+  const societySkillDots = resolveSectorSkillDots(CITY_SECTORS[2], levels, villageBuildingSkills);
+  const recruitmentSkillDots = resolveSectorSkillDots(CITY_SECTORS[3], levels, villageBuildingSkills);
+  const defenseSkillDots = resolveSectorSkillDots(CITY_SECTORS[4], levels, villageBuildingSkills);
+  const kingModifiers = useMemo(() => resolveKingGameplayModifiers(imperialState.kingProfileId), [imperialState.kingProfileId]);
+  const productionCapacity = Math.max(0, productionLevel * 10);
+  const societyState = useMemo(
+    () =>
+      calculateCitySocietyState({
+        cityClass,
+        terrainKind: village.terrainKind,
+        heroBuild: assignedHero === "none" ? "none" : heroBuild,
+        levels,
+        societySkillDots,
+        productionWorkers,
+        jobs,
+        recruitedPopulation: usedRecruits,
+        defendedPopulation: usedDefenders,
+        populationCurrent,
+        underAttack: village.underAttack,
+        deficitsCount: village.deficits.length,
+        kingSatisfactionDelta: kingModifiers.satisfactionDelta,
+        kingCrisisRiskDelta: kingModifiers.crisisRiskDelta,
+      }),
+    [
+      assignedHero,
+      cityClass,
+      heroBuild,
+      jobs,
+      kingModifiers,
+      levels,
+      populationCurrent,
+      productionWorkers,
+      societySkillDots,
+      usedDefenders,
+      usedRecruits,
+      village.deficits.length,
+      village.terrainKind,
+      village.underAttack,
+    ],
+  );
 
-    for (const [id, level] of Object.entries(village.buildingLevels ?? {})) {
-      if (typeof level !== "number") {
-        continue;
-      }
-      const key = id as BuildingId;
-      const definition = BUILDINGS_BY_ID[key];
-      const hardCap = Math.min(10, definition?.maxLevel ?? 10);
-      next[key] = clamp(Math.floor(level), 0, hardCap);
+  useEffect(() => {
+    setOpsLog([]);
+    setShowHeroPromotionOptions(false);
+    setSelectedHeroBuild("leadership");
+    setPendingSkillUpgrade(null);
+  }, [village.id]);
+
+  useEffect(() => {
+    if (!selectedSectorId) {
+      return;
     }
 
-    for (const [id, level] of Object.entries(villageLevelOverrides)) {
-      if (typeof level !== "number") {
-        continue;
-      }
-      const key = id as BuildingId;
-      const definition = BUILDINGS_BY_ID[key];
-      const hardCap = Math.min(10, definition?.maxLevel ?? 10);
-      next[key] = clamp(Math.floor(level), 0, hardCap);
-    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
-    return next;
-  }, [village.buildingLevels, village.palaceLevel, villageLevelOverrides]);
-
-  const currentVillageDevelopment = useMemo(() => calculateVillageDevelopment(levels), [levels]);
-  const baseVillageDevelopment = useMemo(() => {
-    return calculateVillageDevelopment({
-      ...levels,
-      wonder: 0,
-    });
-  }, [levels]);
-  const constructionCapacity = useMemo(
-    () => calculateVillageConstructionCapacity(levels, hasEngineer),
-    [hasEngineer, levels],
-  );
-  const constructionLoad = useMemo(() => calculateVillageConstructionLoad(levels), [levels]);
-  const constructionRemaining = useMemo(
-    () => calculateVillageConstructionRemaining(levels, hasEngineer),
-    [hasEngineer, levels],
-  );
-
-  const modal = useMemo(() => {
-    if (!selectedBuildingId) return null;
-    const def = BUILDINGS_BY_ID[selectedBuildingId];
-    const current = levels[selectedBuildingId] ?? 0;
-    const nextLevel = Math.min(def.maxLevel, current + 1);
-    const atMax = current >= def.maxLevel;
-    const cost: SovereignUpgradeCost = calculateBuildingUpgradeCost(def, nextLevel, {
-      evolutionMode,
-      archetype: cityClassToArchetype(cityClass),
-    });
-    const wonderLocked = selectedBuildingId === "wonder" && current <= 0 && baseVillageDevelopment < 90;
-    const nextLevels =
-      selectedBuildingId === "roads" || atMax
-        ? levels
-        : {
-            ...levels,
-            [selectedBuildingId]: nextLevel,
-          };
-    const currentCap = currentVillageDevelopment;
-    const nextCap = selectedBuildingId === "roads" || atMax ? currentCap : calculateVillageDevelopment(nextLevels);
-    const nextConstructionLoad =
-      selectedBuildingId === "roads" || atMax ? 0 : calculateBuildingUpgradeLoad(selectedBuildingId, nextLevel);
-    const nextConstructionRemaining =
-      selectedBuildingId === "roads" || atMax ? constructionRemaining : Math.max(0, constructionRemaining - nextConstructionLoad);
-
-    return {
-      id: selectedBuildingId,
-      def,
-      current,
-      nextLevel,
-      atMax,
-      wonderLocked,
-      cost,
-      currentBenefit: calculateBuildingBenefit(def, current),
-      nextBenefit: calculateBuildingBenefit(def, nextLevel),
-      currentCap,
-      nextCap,
-      nextConstructionLoad,
-      nextConstructionRemaining,
+    return () => {
+      document.body.style.overflow = previousOverflow;
     };
-  }, [baseVillageDevelopment, cityClass, constructionRemaining, currentVillageDevelopment, evolutionMode, levels, selectedBuildingId]);
-  const resourceForecast = useMemo(() => {
-    const lvMines = levels.mines ?? 0;
-    const lvFarms = levels.farms ?? 0;
-    const lvHousing = levels.housing ?? 0;
-    const lvResearch = levels.research ?? 0;
-    const lvPalace = levels.palace ?? 0;
-    const lvSenate = levels.senate ?? 0;
-    const lvWonder = levels.wonder ?? 0;
-
-    const caps = {
-      materials: Math.round(6000 + lvMines * 900 + lvHousing * 250 + lvPalace * 300),
-      supplies: Math.round(5000 + lvFarms * 800 + lvHousing * 260 + lvSenate * 200),
-      energy: Math.round(4000 + lvResearch * 700 + lvPalace * 250 + lvSenate * 180),
-      influence: Math.round(1200 + lvPalace * 120 + lvSenate * 180 + lvWonder * 70),
-    };
-
-    const ratesPerMin = {
-      materials: Math.max(0.2, 10 + lvMines * 2.5 + lvPalace * 0.8 + lvResearch * 0.3),
-      supplies: Math.max(0.2, 9 + lvFarms * 2.4 + lvHousing * 0.6),
-      energy: Math.max(0.2, 7 + lvResearch * 2.2 + lvPalace * 0.5),
-      influence: Math.max(0.1, 2 + lvSenate * 0.7 + lvPalace * 0.4 + lvWonder * 0.3),
-    };
-
-    const eta = (stock: number, cap: number, rate: number): number | null => {
-      if (stock >= cap) {
-        return 0;
-      }
-      if (rate <= 0) {
-        return null;
-      }
-      return Math.ceil((cap - stock) / rate);
-    };
-
-    return {
-      caps,
-      ratesPerMin,
-      etaMinutes: {
-        materials: eta(localVillageResources.materials, caps.materials, ratesPerMin.materials),
-        supplies: eta(localVillageResources.supplies, caps.supplies, ratesPerMin.supplies),
-        energy: eta(localVillageResources.energy, caps.energy, ratesPerMin.energy),
-        influence: eta(localVillageResources.influence, caps.influence, ratesPerMin.influence),
-      },
-    };
-  }, [levels, localVillageResources.energy, localVillageResources.influence, localVillageResources.materials, localVillageResources.supplies]);
+  }, [selectedSectorId]);
 
   const pushLog = (line: string) => {
     setOpsLog((current) => [line, ...current].slice(0, 6));
   };
 
-  const handleCityClassSelection = (nextClass: CityClass) => {
-    if (!canChooseCityClass) {
+  const blockReadOnly = () => {
+    if (!readOnly) {
+      return false;
+    }
+    emitUiFeedback("tap", "light");
+    return true;
+  };
+
+  const syncSectorQuery = (nextSectorId: SectorId | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const nextSector = getSectorById(nextSectorId);
+    if (nextSector) {
+      params.set("s", nextSector.id);
+      params.delete("b");
+    } else {
+      setPendingSkillUpgrade(null);
+      params.delete("s");
+      params.delete("b");
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const setProductionFocus = (focus: CityProductionFocus) => {
+    if (blockReadOnly()) return;
+    setImperialState((current) => ({
+      ...current,
+      productionFocusByVillage: {
+        ...current.productionFocusByVillage,
+        [village.id]: focus,
+      },
+      logs: [`${village.name}: Produção focada em ${PRODUCTION_FOCUS_META[focus].label}`, ...current.logs].slice(0, 12),
+    }));
+    pushLog(`Produção -> ${PRODUCTION_FOCUS_META[focus].label}`);
+    emitUiFeedback("tap", "light");
+  };
+
+  const adjustProductionWorkers = (focus: CityProductionFocus, delta: number) => {
+    if (blockReadOnly()) return;
+    const currentValue = productionWorkers[focus] ?? 0;
+    const nextValue = Math.max(0, currentValue + delta);
+    const nextWorkers = {
+      ...productionWorkers,
+      [focus]: nextValue,
+    };
+    const nextProductionUsed = sumValues(nextWorkers);
+    if (nextProductionUsed > productionCapacity || nextProductionUsed + usedJobs + usedRecruits + usedDefenders > populationCurrent) {
       return;
     }
 
-    const shouldLock = village.type === "Colonia";
+    setImperialState((current) => ({
+      ...current,
+      productionWorkersByVillage: {
+        ...current.productionWorkersByVillage,
+        [village.id]: nextWorkers,
+      },
+      productionFocusByVillage: {
+        ...current.productionFocusByVillage,
+        [village.id]: focus,
+      },
+      logs: [`${village.name}: ${PRODUCTION_FOCUS_META[focus].label} ${nextValue}`, ...current.logs].slice(0, 12),
+    }));
+    emitUiFeedback("tap", "light");
+  };
+
+  const setSocietyFocus = (focus: CitySocietyFocus) => {
+    if (blockReadOnly()) return;
+    setImperialState((current) => ({
+      ...current,
+      societyFocusByVillage: {
+        ...current.societyFocusByVillage,
+        [village.id]: focus,
+      },
+      logs: [`${village.name}: Sociedade focada em ${SOCIETY_FOCUS_META[focus].label}`, ...current.logs].slice(0, 12),
+    }));
+    pushLog(`Sociedade -> ${SOCIETY_FOCUS_META[focus].label}`);
+    emitUiFeedback("tap", "light");
+  };
+
+  const chooseCityClass = (nextClass: CityClass) => {
+    if (blockReadOnly()) return;
+    if (isCapitalVillage) {
+      return;
+    }
+    if (cityClassLocked && nextClass !== cityClass) {
+      return;
+    }
+
     setImperialState((current) => ({
       ...current,
       cityClassByVillage: {
         ...current.cityClassByVillage,
         [village.id]: nextClass,
       },
-      cityClassLockedByVillage: shouldLock
-        ? {
-            ...current.cityClassLockedByVillage,
-            [village.id]: true,
-          }
-        : current.cityClassLockedByVillage,
-      logs: [
-        `${village.name}: cidade definida como ${CITY_CLASS_META[nextClass].label}${shouldLock ? " (travada)" : ""}`,
-        ...current.logs,
-      ].slice(0, 12),
-    }));
-    pushLog(`${village.name}: ${CITY_CLASS_META[nextClass].label}`);
-  };
-
-
-  const modeProfile = useMemo(() => getEvolutionModeProfile(evolutionMode), [evolutionMode]);
-
-  useEffect(() => {
-    setSelectedBuildingId(null);
-    setOpsLog([]);
-  }, [village.id]);
-
-  useEffect(() => {
-    setSelectedBuildingId(initialSelectedBuildingId);
-  }, [initialSelectedBuildingId]);
-
-  const activeCalibration = calibration[activeCalibrationId] ?? CALIBRATION_DEFAULTS[activeCalibrationId];
-
-  const resetCurrentCalibration = () => {
-    setCalibration((current) => ({
-      ...current,
-      [activeCalibrationId]: { ...CALIBRATION_DEFAULTS[activeCalibrationId] },
-    }));
-  };
-
-  const resetAllCalibrations = () => {
-    setCalibration(cloneCalibration());
-    setCalibrationZoom(DEFAULT_BACKGROUND_ZOOM);
-    setBackgroundStretchX(DEFAULT_BACKGROUND_STRETCH_X);
-  };
-
-  const copyCalibrationJson = async () => {
-    const payload = JSON.stringify(
-      {
-        backgroundZoom: Number(calibrationZoom.toFixed(3)),
-        backgroundStretchX: Number(backgroundStretchX.toFixed(3)),
-        buildings: calibration,
+      cityClassLockedByVillage: {
+        ...current.cityClassLockedByVillage,
+        [village.id]: nextClass !== "neutral",
       },
-      null,
-      2,
-    );
+      logs: [`${village.name}: vocação definida como ${CITY_CLASS_META[nextClass].label}`, ...current.logs].slice(0, 12),
+    }));
+    pushLog(`Vocação -> ${CITY_CLASS_META[nextClass].label}`);
+    emitUiFeedback("open", "medium");
+  };
 
-    let copied = false;
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(payload);
-        copied = true;
-      }
-    } catch {
-      copied = false;
-    }
+  const adjustPopulation = (action: PopulationAction) => {
+    if (blockReadOnly()) return;
+    const nextValue =
+      action === "grow"
+        ? Math.min(populationCap, populationCurrent + POPULATION_ALLOCATION_STEP)
+        : Math.max(usedPopulation, populationCurrent - POPULATION_ALLOCATION_STEP);
 
-    if (!copied) {
-      try {
-        const textarea = document.createElement("textarea");
-        textarea.value = payload;
-        textarea.setAttribute("readonly", "true");
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        textarea.style.pointerEvents = "none";
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-        copied = document.execCommand("copy");
-        textarea.remove();
-      } catch {
-        copied = false;
-      }
-    }
-
-    if (copied) {
-      setJsonFeedback("JSON copiado.");
+    if (nextValue === populationCurrent) {
       return;
     }
 
-    try {
-      const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = "kingsworld-calibration.json";
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
-      setJsonFeedback("Clipboard bloqueado. Arquivo baixado.");
-    } catch {
-      setJsonFeedback("Nao foi possivel copiar nem baixar o JSON.");
-    }
+    setImperialState((current) => ({
+      ...current,
+      populationByVillage: {
+        ...current.populationByVillage,
+        [village.id]: nextValue,
+      },
+      logs: [`${village.name}: populacao ${nextValue}/${populationCap}`, ...current.logs].slice(0, 12),
+    }));
+    pushLog(`Populacao ${nextValue}/${populationCap}`);
+    emitUiFeedback("tap", "light");
   };
 
-  useEffect(() => {
-    if (!jsonFeedback) return;
-    const timer = window.setTimeout(() => setJsonFeedback(""), 2800);
-    return () => window.clearTimeout(timer);
-  }, [jsonFeedback]);
-
-  useEffect(() => {
-    if (!pulseBadgeId) return;
-    const timer = window.setTimeout(() => setPulseBadgeId(null), 360);
-    return () => window.clearTimeout(timer);
-  }, [pulseBadgeId]);
-
-  useEffect(() => {
-    if (!calibrationMode) {
-      setCalibrationPanelCollapsed(false);
-    }
-  }, [calibrationMode]);
-
-  const findBadgeHit = (clientX: number, clientY: number): SceneBuildingId | null => {
-    let winner: { id: SceneBuildingId; distance: number } | null = null;
-
-    for (const id of SCENE_BUILDING_IDS) {
-      const badge = badgeRefs.current[id];
-      if (!badge) {
-        continue;
-      }
-
-      const rect = badge.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const distance = Math.hypot(clientX - centerX, clientY - centerY);
-      const radius = Math.max(14, calibration[id]?.clickRadius ?? CALIBRATION_DEFAULTS[id].clickRadius);
-
-      if (distance > radius) {
-        continue;
-      }
-
-      if (!winner || distance < winner.distance) {
-        winner = { id, distance };
-      }
-    }
-
-    return winner?.id ?? null;
-  };
-
-  const openBuildingByBadgeHit = (clientX: number, clientY: number) => {
-    const hitId = findBadgeHit(clientX, clientY);
-    if (!hitId) {
+  const adjustCityJob = (jobId: CityJobId, delta: number) => {
+    if (blockReadOnly()) return;
+    const currentValue = jobs[jobId] ?? 0;
+    const nextValue = Math.max(0, currentValue + delta);
+    const nextJobs = {
+      ...jobs,
+      [jobId]: nextValue,
+    };
+    const nextJobsUsed = sumValues(nextJobs);
+    if (usedProductionWorkers + nextJobsUsed + usedRecruits + usedDefenders > populationCurrent) {
       return;
     }
+
+    setImperialState((current) => ({
+      ...current,
+      jobsByVillage: {
+        ...current.jobsByVillage,
+        [village.id]: nextJobs,
+      },
+      logs: [`${village.name}: ${SOCIETY_FOCUS_META[jobId].label} ${nextValue}`, ...current.logs].slice(0, 12),
+    }));
+    emitUiFeedback("tap", "light");
+  };
+
+  const adjustRecruitment = (unitId: TroopRecruitId, delta: number) => {
+    if (blockReadOnly()) return;
+    const unlocked =
+      (unitId === "militia" && barracksUnlocks.militia) ||
+      (unitId === "shooters" && barracksUnlocks.shooters) ||
+      (unitId === "scouts" && barracksUnlocks.scouts) ||
+      (unitId === "machinery" && barracksUnlocks.machinery);
+    if (!unlocked) {
+      return;
+    }
+
+    const currentValue = recruits[unitId] ?? 0;
+    const nextValue = Math.max(0, currentValue + delta);
+    const nextRecruits = {
+      ...recruits,
+      [unitId]: nextValue,
+    };
+    const nextRecruitUsed = sumValues(nextRecruits);
+    if (nextRecruitUsed > recruitCapacity || usedProductionWorkers + usedJobs + nextRecruitUsed + usedDefenders > populationCurrent) {
+      return;
+    }
+
+    const troopKey = unitId;
+    const troopDelta = nextValue - currentValue;
+    setImperialState((current) => ({
+      ...current,
+      recruitsByVillage: {
+        ...current.recruitsByVillage,
+        [village.id]: nextRecruits,
+      },
+      troops: {
+        ...current.troops,
+        [troopKey]: Math.max(0, (current.troops[troopKey] ?? 0) + troopDelta),
+      },
+      logs: [`${village.name}: ${unitId} ${nextValue} enviados para a Capital`, ...current.logs].slice(0, 12),
+    }));
     emitUiFeedback("open", "light");
-    setPulseBadgeId(hitId);
-    setSelectedBuildingId(hitId);
   };
 
-  const beginDrag = (event: React.PointerEvent, id: SceneBuildingId, mode: DragState["mode"]) => {
-    if (!calibrationMode || !sceneRef.current) return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    setActiveCalibrationId(id);
-    setSelectedBuildingId(null);
-    const rect = sceneRef.current.getBoundingClientRect();
-    dragRef.current = {
-      mode,
-      id,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      start: { ...calibration[id] },
-      width: rect.width,
-      height: rect.height,
-      zoom: calibrationZoom,
+  const adjustDefenseRecruitment = (unitId: CityDefenseRecruitId, delta: number) => {
+    if (blockReadOnly()) return;
+    const unlocked =
+      (unitId === "guards" && wallDefenseUnlocks.guards) ||
+      (unitId === "archers" && wallDefenseUnlocks.archers) ||
+      (unitId === "ballistae" && wallDefenseUnlocks.ballistae);
+    if (!unlocked) {
+      return;
+    }
+
+    const currentValue = defenseRecruits[unitId] ?? 0;
+    const nextValue = Math.max(0, currentValue + delta);
+    const nextDefense = {
+      ...defenseRecruits,
+      [unitId]: nextValue,
     };
+    const nextDefenseUsed = sumValues(nextDefense);
+    if (nextDefenseUsed > defenseCapacity || usedProductionWorkers + usedJobs + usedRecruits + nextDefenseUsed > populationCurrent) {
+      return;
+    }
+
+    setImperialState((current) => ({
+      ...current,
+      defenseRecruitsByVillage: {
+        ...current.defenseRecruitsByVillage,
+        [village.id]: nextDefense,
+      },
+      logs: [`${village.name}: defesa ${unitId} ${nextValue}`, ...current.logs].slice(0, 12),
+    }));
+    emitUiFeedback("open", "light");
   };
 
-  useEffect(() => {
-    const onMove = (event: PointerEvent) => {
-      const drag = dragRef.current;
-      if (!drag) return;
-      if (event.pointerId !== drag.pointerId) return;
-      const dx = event.clientX - drag.startX;
-      const dy = event.clientY - drag.startY;
-      const zoom = Math.max(0.01, drag.zoom);
+  const hireHero = (heroId: HeroSpecialistId) => {
+    if (blockReadOnly()) return;
+    const governmentLevel = levels.palace ?? 0;
+    const canHireMore = assignedHero === "none" && hiredHeroCount < HERO_PROMOTION_LIMIT;
+    const canAffordHire =
+      resources.materials >= HERO_HIRE_COST.materials &&
+      resources.supplies >= HERO_HIRE_COST.supplies;
 
-      setCalibration((current) => ({
-        ...current,
-        [drag.id]: {
-          ...current[drag.id],
-          badgeXPct: clamp(drag.start.badgeXPct + (dx / (drag.width * zoom)) * 100, 0, 100),
-          badgeYPct: clamp(drag.start.badgeYPct + (dy / (drag.height * zoom)) * 100, 0, 100),
-        },
-      }));
-    };
+    if (governmentLevel < 4 || !canHireMore || !canAffordHire) {
+      return;
+    }
 
-    const onEnd = () => {
-      dragRef.current = null;
-    };
-
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onEnd);
-    window.addEventListener("pointercancel", onEnd);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onEnd);
-      window.removeEventListener("pointercancel", onEnd);
-    };
-  }, [calibrationMode]);
-
-  const onUpgrade = () => {
-    const currentInfluenceScore = currentVillageDevelopment;
-    const hasConstructionRoom = modal ? modal.nextConstructionLoad <= constructionRemaining : false;
-
-    if (!modal || modal.atMax || modal.wonderLocked || !hasConstructionRoom || !canAfford(modal.cost, resources, currentInfluenceScore)) return;
     setImperialState((current) => ({
       ...current,
       resources: {
         ...current.resources,
-        materials: current.resources.materials - modal.cost.materials,
-        supplies: current.resources.supplies - modal.cost.supplies,
-        energy: current.resources.energy - modal.cost.energy,
+        materials: current.resources.materials - HERO_HIRE_COST.materials,
+        supplies: current.resources.supplies - HERO_HIRE_COST.supplies,
       },
-      buildingLevelsByVillage: {
-        ...current.buildingLevelsByVillage,
+      heroByVillage: {
+        ...current.heroByVillage,
+        [village.id]: heroId,
+      },
+      heroBuildByVillage: {
+        ...current.heroBuildByVillage,
+        [village.id]: selectedHeroBuild,
+      },
+      logs: [`${village.name}: ${HERO_PROMOTION_META[heroId].label} contratado no Governo`, ...current.logs].slice(0, 12),
+    }));
+    pushLog(`Herói -> ${HERO_PROMOTION_META[heroId].label} / ${HERO_BUILD_META[selectedHeroBuild].label}`);
+    emitUiFeedback("open", "medium");
+  };
+
+  const changeHeroBuild = (buildId: HeroBuildId) => {
+    if (blockReadOnly()) return;
+    if (assignedHero === "none") {
+      setSelectedHeroBuild(buildId);
+      emitUiFeedback("tap", "light");
+      return;
+    }
+
+    setImperialState((current) => ({
+      ...current,
+      heroBuildByVillage: {
+        ...current.heroBuildByVillage,
+        [village.id]: buildId,
+      },
+      logs: [`${village.name}: build do herói -> ${HERO_BUILD_META[buildId].label}`, ...current.logs].slice(0, 12),
+    }));
+    pushLog(`Build do herói -> ${HERO_BUILD_META[buildId].label}`);
+    emitUiFeedback("tap", "light");
+  };
+
+  const getBuildingSkillDots = (sectorId: CityStructureId, currentLevel: number) => {
+    return villageBuildingSkills[sectorId] ?? defaultSkillDots(currentLevel);
+  };
+
+  const openSkillUpgrade = (buildingId: BuildingId, sectorId: SectorId, option: BuildingSkillMeta) => {
+    if (blockReadOnly()) return;
+    const sector = getSectorById(sectorId);
+    const definition = BUILDINGS_BY_ID[buildingId];
+    const current = sector ? totalSkillDots(resolveSectorSkillDots(sector, levels, villageBuildingSkills)) : (levels[buildingId] ?? 0);
+    const nextLevel = Math.min(definition.maxLevel, current + 1);
+    const atMax = current >= definition.maxLevel;
+    const currentDots = getBuildingSkillDots(sectorId, current);
+    const currentDotValue = currentDots[option.id] ?? 0;
+    const branchMaxed = currentDotValue >= 3;
+    const cost = calculateBuildingUpgradeCost(definition, nextLevel, {
+      evolutionMode,
+      archetype: cityClassToArchetype(cityClass),
+      scalarMultiplier: kingModifiers.buildingCostMultiplier,
+    });
+    if (
+      atMax ||
+      branchMaxed ||
+      !canAffordSkillUpgrade(cost, resources)
+    ) {
+      return;
+    }
+
+    setPendingSkillUpgrade({
+      buildingId,
+      sectorId,
+      sectorLabel: sector?.label ?? definition.name,
+      option,
+      currentLevel: current,
+      currentPoints: currentDotValue,
+      nextLevel,
+      cost: { materials: cost.materials, supplies: cost.supplies, influence: cost.requiredInfluence },
+    });
+    emitUiFeedback("tap", "light");
+  };
+
+  const confirmSkillUpgrade = () => {
+    if (blockReadOnly()) return;
+    if (!pendingSkillUpgrade) return;
+    const { buildingId, option, currentLevel, currentPoints, sectorId, sectorLabel } = pendingSkillUpgrade;
+    const definition = BUILDINGS_BY_ID[buildingId];
+    const currentDots = getBuildingSkillDots(sectorId, currentLevel);
+    const cost = calculateBuildingUpgradeCost(definition, Math.min(definition.maxLevel, currentLevel + 1), {
+      evolutionMode,
+      archetype: cityClassToArchetype(cityClass),
+      scalarMultiplier: kingModifiers.buildingCostMultiplier,
+    });
+
+    if (
+      currentLevel >= definition.maxLevel ||
+      currentPoints >= 3 ||
+      !canAffordSkillUpgrade(cost, resources)
+    ) {
+      setPendingSkillUpgrade(null);
+      return;
+    }
+
+    const nextDots = {
+      ...currentDots,
+      [option.id]: clamp(currentPoints + 1, 0, 3),
+    };
+    const skillLevel = totalSkillDots(nextDots);
+    const sector = getSectorById(sectorId);
+
+    setImperialState((currentState) => ({
+      ...currentState,
+      buildingSkillsByVillage: {
+        ...currentState.buildingSkillsByVillage,
         [village.id]: {
-          ...(current.buildingLevelsByVillage[village.id] ?? {}),
-          [modal.id]: modal.nextLevel,
+          ...(currentState.buildingSkillsByVillage[village.id] ?? {}),
+          [sectorId]: nextDots,
         },
       },
-      logs: [`Upgrade ${modal.def.name} -> Nv ${modal.nextLevel}`, ...current.logs].slice(0, 12),
+      buildingLevelsByVillage: {
+        ...currentState.buildingLevelsByVillage,
+        [village.id]: {
+          ...(currentState.buildingLevelsByVillage[village.id] ?? {}),
+          [sectorId]: skillLevel,
+        },
+      },
+      resources: {
+        ...currentState.resources,
+        materials: currentState.resources.materials - cost.materials,
+        supplies: currentState.resources.supplies - cost.supplies,
+      },
+      logs: [`${village.name}: ${sectorLabel} -> ${option.label} Nv ${skillLevel}`, ...currentState.logs].slice(0, 12),
     }));
-    pushLog(`Upgrade ${modal.def.name} na cidade para Nv ${modal.nextLevel}`);
+    pushLog(`${sectorLabel}: ${option.label} -> Nv ${skillLevel}`);
+    setPendingSkillUpgrade(null);
+    emitUiFeedback("open", "medium");
   };
+  const canAffordHeroHire =
+    resources.materials >= HERO_HIRE_COST.materials &&
+    resources.supplies >= HERO_HIRE_COST.supplies;
+  const canHireHero = assignedHero === "none" && governmentLevel >= 4 && hiredHeroCount < HERO_PROMOTION_LIMIT && canAffordHeroHire;
+  const capitalTroopTotal =
+    imperialState.troops.militia + imperialState.troops.shooters + imperialState.troops.scouts + imperialState.troops.machinery;
+  const capitalTroopAveragePower =
+    capitalTroopTotal > 0
+      ? (
+          (imperialState.troops.militia * 1 +
+            imperialState.troops.shooters * 2 +
+            imperialState.troops.scouts * 2 +
+            imperialState.troops.machinery * 4) /
+          capitalTroopTotal
+        ).toFixed(1)
+      : "0.0";
+  const localDefensePower = calculateDefensePower(defenseRecruits);
+  const currentCityYield = useMemo(
+    () =>
+      calculateCityDailyProduction({
+        cityClass,
+        terrainKind: village.terrainKind,
+        heroBuild: assignedHero === "none" ? "none" : heroBuild,
+        productionFocus,
+        societyFocus,
+        levels,
+        productionWorkers,
+        jobs,
+        crownSkillDots: sectorCards.find((sector) => sector.id === "crown")?.skillDots,
+        economySkillDots: productionSkillDots,
+        societySkillDots: societySkillDots,
+        populationCurrent,
+        underAttack: village.underAttack,
+        kingResourceProductionMultiplier: kingModifiers.resourceProductionMultiplier,
+        kingSatisfactionDelta: kingModifiers.satisfactionDelta,
+        kingCrisisRiskDelta: kingModifiers.crisisRiskDelta,
+        worldSpeedMultiplier,
+      }),
+    [
+      assignedHero,
+      cityClass,
+      heroBuild,
+      jobs,
+      kingModifiers,
+      levels,
+      populationCurrent,
+      productionFocus,
+      productionSkillDots,
+      productionWorkers,
+      sectorCards,
+      societyFocus,
+      societySkillDots,
+      village.terrainKind,
+      village.underAttack,
+      worldSpeedMultiplier,
+    ],
+  );
+
+  const formatYieldDelta = (next: ReturnType<typeof calculateCityDailyProduction>) => {
+    const materialsDelta = next.materials - currentCityYield.materials;
+    const suppliesDelta = next.supplies - currentCityYield.supplies;
+    const logisticsDelta = next.logistics - currentCityYield.logistics;
+    const stabilityDelta = next.stability - currentCityYield.stability;
+
+    if (materialsDelta > 0) return `+${materialsDelta} M/d`;
+    if (suppliesDelta > 0) return `+${suppliesDelta} S/d`;
+    if (logisticsDelta > 0) return `+${logisticsDelta} log`;
+    if (stabilityDelta > 0) return `+${stabilityDelta} est`;
+    if (materialsDelta < 0) return `${materialsDelta} M/d`;
+    if (suppliesDelta < 0) return `${suppliesDelta} S/d`;
+    if (logisticsDelta < 0) return `${logisticsDelta} log`;
+    if (stabilityDelta < 0) return `${stabilityDelta} est`;
+    return "sem delta";
+  };
+
+  const getProductionWorkerDelta = (focusId: CityProductionFocus) => {
+    const nextWorkers = {
+      ...productionWorkers,
+      [focusId]: productionWorkers[focusId] + POPULATION_ALLOCATION_STEP,
+    };
+    return formatYieldDelta(
+      calculateCityDailyProduction({
+        cityClass,
+        terrainKind: village.terrainKind,
+        heroBuild: assignedHero === "none" ? "none" : heroBuild,
+        productionFocus,
+        societyFocus,
+        levels,
+        productionWorkers: nextWorkers,
+        jobs,
+        crownSkillDots: sectorCards.find((sector) => sector.id === "crown")?.skillDots,
+        economySkillDots: productionSkillDots,
+        societySkillDots,
+        populationCurrent,
+        underAttack: village.underAttack,
+        kingResourceProductionMultiplier: kingModifiers.resourceProductionMultiplier,
+        kingSatisfactionDelta: kingModifiers.satisfactionDelta,
+        kingCrisisRiskDelta: kingModifiers.crisisRiskDelta,
+        worldSpeedMultiplier,
+      }),
+    );
+  };
+
+  const getJobDelta = (jobId: CityJobId) => {
+    const nextJobs = {
+      ...jobs,
+      [jobId]: jobs[jobId] + POPULATION_ALLOCATION_STEP,
+    };
+    return formatYieldDelta(
+      calculateCityDailyProduction({
+        cityClass,
+        terrainKind: village.terrainKind,
+        heroBuild: assignedHero === "none" ? "none" : heroBuild,
+        productionFocus,
+        societyFocus,
+        levels,
+        productionWorkers,
+        jobs: nextJobs,
+        crownSkillDots: sectorCards.find((sector) => sector.id === "crown")?.skillDots,
+        economySkillDots: productionSkillDots,
+        societySkillDots,
+        populationCurrent,
+        underAttack: village.underAttack,
+        kingResourceProductionMultiplier: kingModifiers.resourceProductionMultiplier,
+        kingSatisfactionDelta: kingModifiers.satisfactionDelta,
+        kingCrisisRiskDelta: kingModifiers.crisisRiskDelta,
+        worldSpeedMultiplier,
+      }),
+    );
+  };
+
+  const settlementLabel = village.type === "Capital" ? "Capital" : "Cidade";
 
   return (
     <>
-      <section
-        ref={sceneRef}
-        className={`relative -mx-2 -mb-0.5 -mt-3 flex min-h-0 flex-1 overflow-hidden rounded-[22px] ${calibrationMode ? "select-none touch-none" : ""
-          }`}
-        onWheel={(event) => {
-          if (!calibrationMode) return;
-          event.preventDefault();
-          const next = clamp(calibrationZoom + (event.deltaY < 0 ? 0.05 : -0.05), 0.8, 2.2);
-          setCalibrationZoom(next);
-        }}
-        onPointerUp={(event) => {
-          if (calibrationMode) return;
-          const target = event.target as HTMLElement;
-          if (target.closest("[data-scene-control='true']")) {
-            return;
-          }
-          openBuildingByBadgeHit(event.clientX, event.clientY);
-        }}
-      >
-        <button
-          type="button"
-          data-scene-control="true"
-          onClick={() => {
-            setCalibrationMode((current) => !current);
-            setSelectedBuildingId(null);
-          }}
-          className={`absolute left-2 top-2 z-30 rounded-full border px-2.5 py-1 text-[10px] font-bold backdrop-blur-md ${calibrationMode
-            ? "border-sky-200/70 bg-sky-400/20 text-sky-100"
-            : "border-white/50 bg-slate-900/45 text-slate-100"
-            }`}
-        >
-          {calibrationMode ? "Fechar" : "Gerenciar"}
-        </button>
-
-        <button
-          type="button"
-          data-scene-control="true"
-          onClick={() => setSelectedBuildingId("roads")}
-          className="absolute right-2 top-2 z-30 rounded-full border border-white/50 bg-slate-900/45 px-2.5 py-1 text-[10px] font-bold text-slate-100 backdrop-blur-md"
-        >
-          M. Viaria Nv {levels.roads}
-        </button>
-
-        {!calibrationMode ? (
-          <div className="absolute left-2 right-2 top-12 z-20 rounded-2xl border border-white/20 bg-slate-950/36 p-2 backdrop-blur-xl">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-300">
-                  {village.type === "Capital" ? "Capital" : "Colonia"} · Cidade
-                </p>
-                <p className="text-sm font-black text-slate-100">{village.name}</p>
-                <p className="text-[10px] text-slate-300">
-                  Classe {cityClassMeta.label}
-                  {terrainMeta ? ` · Terreno ${village.terrainLabel ?? terrainMeta.label}` : ""}
-                </p>
-              </div>
-              <div className="rounded-full border border-cyan-300/35 bg-cyan-400/10 px-2 py-1 text-[10px] font-semibold text-cyan-100">
-                {currentVillageDevelopment}/100
-              </div>
-            </div>
-
-            <div className="mt-2 grid grid-cols-3 gap-1">
-              {(["metropole", "posto_avancado", "bastiao", "celeiro"] as CityClass[]).map((option) => {
-                const isActive = cityClass === option;
-                const isDisabled = !canChooseCityClass;
-                const meta = CITY_CLASS_META[option];
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    data-scene-control="true"
-                    disabled={isDisabled}
-                    onClick={() => handleCityClassSelection(option)}
-                    className={`rounded-xl border px-2 py-1.5 text-left transition ${
-                      isActive
-                        ? "border-cyan-200/70 bg-cyan-400/18 text-cyan-50"
-                        : "border-white/12 bg-white/6 text-slate-200"
-                    } ${isDisabled ? "cursor-not-allowed opacity-55" : "hover:bg-white/12"}`}
-                  >
-                    <p className="text-[10px] font-bold">{meta.shortLabel}</p>
-                    <p className="line-clamp-2 text-[9px] text-slate-300">{meta.summary}</p>
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className="mt-1 text-[10px] text-slate-300">
-              {canChooseCityClass
-                ? village.type === "Capital"
-                  ? "A Capital ainda pode redefinir sua classe. Colonias travam a escolha quando voce define."
-                  : "Esta colonia ainda esta neutra. Escolha uma classe uma vez para travar a identidade dela."
-                : `Classe travada: ${cityClassMeta.label}.`}
-            </p>
-          </div>
-        ) : null}
-
-        <div
-          className="absolute inset-0 z-0"
+      <section className="space-y-3" data-smoke="village-scene">
+        <article
+          className="relative overflow-hidden rounded-[28px] border border-white/14 px-3 py-2.5 text-slate-100 shadow-[0_20px_60px_rgba(2,6,23,0.3)]"
           style={{
-            transform: `scale(${calibrationZoom})`,
-            transformOrigin: "50% 50%",
+            backgroundImage: `linear-gradient(110deg, rgba(2,6,23,0.72), rgba(15,23,42,0.4) 56%, rgba(2,6,23,0.74)), url('${cityBackdropImage}')`,
+            backgroundPosition: "center",
+            backgroundSize: "cover",
           }}
         >
-          <Image
-            src="/background.jpg?v=3"
-            alt={`Cidade ${village.name}`}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-            style={{ transform: `scaleX(${backgroundStretchX})`, transformOrigin: "50% 50%" }}
-          />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_34%,transparent_20%,rgba(2,6,23,0.24)_100%)]" />
-
-          {BUILDING_LAYOUT.map((slot) => {
-            const def = BUILDINGS_BY_ID[slot.id];
-            const badgeSelected = calibrationMode ? activeCalibrationId === slot.id : selectedBuildingId === slot.id;
-            const calibrated = calibration[slot.id] ?? CALIBRATION_DEFAULTS[slot.id];
-            const hitRadius = clamp(Math.round(calibrated.clickRadius), 14, 120);
-
-            return (
-              <Fragment key={slot.id}>
-                {calibrationMode ? (
-                  <div
-                    className={`pointer-events-none absolute rounded-full border ${activeCalibrationId === slot.id
-                      ? "border-cyan-200/85 bg-cyan-400/20"
-                      : "border-cyan-100/45 bg-cyan-400/10"
-                      }`}
-                    style={{
-                      left: `${calibrated.badgeXPct}%`,
-                      top: `${calibrated.badgeYPct}%`,
-                      width: hitRadius * 2,
-                      height: hitRadius * 2,
-                      transform: "translate(-50%, -50%)",
-                    }}
-                  />
-                ) : null}
-
-                <button
-                  ref={(node) => {
-                    badgeRefs.current[slot.id] = node;
-                  }}
-                  type="button"
-                  onPointerDown={(event) => {
-                    if (!calibrationMode) {
-                      return;
-                    }
-                    beginDrag(event, slot.id, "moveBadge");
-                  }}
-                  onClick={() => {
-                    if (calibrationMode) {
-                      setActiveCalibrationId(slot.id);
-                    }
-                  }}
-                  className={`absolute z-10 grid h-7 w-7 place-items-center rounded-full border text-[11px] font-black transition-all duration-150 ${badgeSelected
-                    ? "border-sky-100/90 bg-white/30 text-white shadow-[0_0_0_2px_rgba(125,211,252,0.35)]"
-                    : "border-white/50 bg-white/15 text-slate-100"
-                    } ${calibrationMode ? "cursor-grab backdrop-blur-md" : "pointer-events-none backdrop-blur-lg"} ${pulseBadgeId === slot.id ? "scale-[1.14] border-cyan-200/95 bg-cyan-300/30" : ""
-                    }`}
-                  style={{
-                    left: `${calibrated.badgeXPct}%`,
-                    top: `${calibrated.badgeYPct}%`,
-                    transform: "translate(-50%, -50%)",
-                  }}
-                  aria-label={`Abrir ${def.name}`}
-                  title={def.name}
-                >
-                  {levels[slot.id]}
-                </button>
-              </Fragment>
-            );
-          })}
-        </div>
-
-        {calibrationMode ? (
-          <div
-            data-scene-control="true"
-            className={`absolute right-2 z-20 w-[min(360px,calc(100%-16px))] rounded-2xl border border-white/35 bg-slate-950/62 p-2 shadow-xl backdrop-blur-xl ${calibrationPanelDock === "top" ? "top-12" : "bottom-2"
-              }`}
-          >
-            <div className="flex items-center justify-between gap-1.5">
-              <p className="truncate text-[11px] font-semibold text-slate-100">
-                Ajustando: {BUILDINGS_BY_ID[activeCalibrationId].name}
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setCalibrationPanelDock((dock) => (dock === "bottom" ? "top" : "bottom"))}
-                  className="rounded-lg border border-white/25 bg-white/10 px-2 py-1 text-[10px] font-semibold text-slate-100"
-                >
-                  {calibrationPanelDock === "bottom" ? "Topo" : "Baixo"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCalibrationPanelCollapsed((current) => !current)}
-                  className="rounded-lg border border-white/25 bg-white/10 px-2 py-1 text-[10px] font-semibold text-slate-100"
-                >
-                  {calibrationPanelCollapsed ? "Abrir" : "Min"}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetCurrentCalibration}
-                  className="rounded-lg border border-white/25 bg-white/10 px-2 py-1 text-[10px] font-semibold text-slate-100"
-                >
-                  Reset
-                </button>
-                <button
-                  type="button"
-                  onClick={resetAllCalibrations}
-                  className="rounded-lg border border-white/25 bg-white/10 px-2 py-1 text-[10px] font-semibold text-slate-100"
-                >
-                  Tudo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void copyCalibrationJson()}
-                  className="rounded-lg border border-white/25 bg-white/10 px-2 py-1 text-[10px] font-semibold text-slate-100"
-                >
-                  JSON
-                </button>
-              </div>
-            </div>
-
-            {calibrationPanelCollapsed ? (
-              <p className="mt-1 text-[10px] text-slate-300">Painel recolhido. Arraste os badges inferiores sem bloqueio.</p>
-            ) : (
-              <>
-                <p className="mt-1 text-[10px] text-slate-300">
-                  Arraste o badge de nivel para posicionar o gatilho de toque. O circulo translucido mostra o raio real de clique (hitbox).
-                </p>
-                <div className="mt-1 flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setCalibrationZoom((current) => clamp(current - 0.1, 0.8, 2.2))}
-                    className="rounded border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="range"
-                    min={0.8}
-                    max={2.2}
-                    step={0.01}
-                    value={calibrationZoom}
-                    onChange={(event) => setCalibrationZoom(Number(event.target.value))}
-                    className="flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setCalibrationZoom((current) => clamp(current + 0.1, 0.8, 2.2))}
-                    className="rounded border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100"
-                  >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCalibrationZoom(DEFAULT_BACKGROUND_ZOOM)}
-                    className="rounded border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100"
-                  >
-                    {(DEFAULT_BACKGROUND_ZOOM * 100).toFixed(0)}%
-                  </button>
-                </div>
-                <div className="mt-1 flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setBackgroundStretchX((current) => clamp(current - 0.02, 0.8, 1.6))}
-                    className="rounded border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="range"
-                    min={0.8}
-                    max={1.6}
-                    step={0.01}
-                    value={backgroundStretchX}
-                    onChange={(event) => setBackgroundStretchX(Number(event.target.value))}
-                    className="flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setBackgroundStretchX((current) => clamp(current + 0.02, 0.8, 1.6))}
-                    className="rounded border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100"
-                  >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBackgroundStretchX(DEFAULT_BACKGROUND_STRETCH_X)}
-                    className="rounded border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100"
-                  >
-                    BG {(DEFAULT_BACKGROUND_STRETCH_X * 100).toFixed(0)}%
-                  </button>
-                </div>
-                <div className="mt-1 flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCalibration((current) => ({
-                        ...current,
-                        [activeCalibrationId]: {
-                          ...current[activeCalibrationId],
-                          clickRadius: clamp((current[activeCalibrationId]?.clickRadius ?? 30) - 2, 14, 120),
-                        },
-                      }))
-                    }
-                    className="rounded border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="range"
-                    min={14}
-                    max={120}
-                    step={1}
-                    value={activeCalibration.clickRadius}
-                    onChange={(event) => {
-                      const next = Number(event.target.value);
-                      setCalibration((current) => ({
-                        ...current,
-                        [activeCalibrationId]: {
-                          ...current[activeCalibrationId],
-                          clickRadius: clamp(next, 14, 120),
-                        },
-                      }));
-                    }}
-                    className="flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCalibration((current) => ({
-                        ...current,
-                        [activeCalibrationId]: {
-                          ...current[activeCalibrationId],
-                          clickRadius: clamp((current[activeCalibrationId]?.clickRadius ?? 30) + 2, 14, 120),
-                        },
-                      }))
-                    }
-                    className="rounded border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100"
-                  >
-                    +
-                  </button>
-                  <span className="rounded border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100">
-                    Hitbox {Math.round(activeCalibration.clickRadius)}px
-                  </span>
-                </div>
-                <p className="mt-1 text-[10px] text-slate-300">
-                  Zoom {(calibrationZoom * 100).toFixed(0)}% | BG X {backgroundStretchX.toFixed(2)}x | Badge X {activeCalibration.badgeXPct.toFixed(1)}% | Badge Y {activeCalibration.badgeYPct.toFixed(1)}%
-                </p>
-                {jsonFeedback ? (
-                  <p className="mt-1 text-[10px] font-semibold text-sky-100">{jsonFeedback}</p>
-                ) : null}
-              </>
-            )}
-          </div>
-        ) : null}
-      </section>
-
-      {!calibrationMode && modal ? (
-        <div className="fixed inset-0 z-[70]">
-          <button
-            type="button"
-            className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
-            onClick={() => {
-              emitUiFeedback("close", "light");
-              setSelectedBuildingId(null);
-            }}
-          />
-          <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+44px)] mx-auto max-h-[72vh] w-[calc(100%-14px)] max-w-md overflow-y-auto rounded-[24px] kw-glass p-3">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.15em] text-slate-300">Edificio</p>
-                <h3 className="text-xl font-black text-slate-100">{modal.def.name}</h3>
-                <p className="mt-1 inline-flex rounded-full border border-white/20 bg-white/8 px-2 py-0.5 text-[10px] font-semibold text-cyan-100">Modo: {modeProfile.label}</p>
-                <p className="text-sm text-slate-300">{modal.def.summary}</p>
-                <p className="text-[11px] text-cyan-100/90">{LOCAL_COMMAND_META[localCommand].summary}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  emitUiFeedback("close", "light");
-                  setSelectedBuildingId(null);
-                }}
-                className="kw-glass-soft rounded-full p-1"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mb-4 rounded-xl border border-white/15 bg-white/6 p-2">
-              <p className="text-[11px] text-slate-300">Classe da cidade</p>
-              <p className="text-sm font-semibold text-slate-100">{cityClassMeta.label}</p>
-              <p className="text-[10px] text-slate-300">
-                {terrainMeta ? `Terreno: ${village.terrainLabel ?? terrainMeta.label}. ` : ""}
-                Esta classe define o peso economico e estrutural desta cidade.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="kw-glass-soft rounded-xl p-2"><p className="text-[11px] text-slate-300">Nivel atual</p><p className="text-lg font-bold">Nv {modal.current}</p></div>
-              <div className="kw-glass-soft rounded-xl p-2"><p className="text-[11px] text-slate-300">Proximo</p><p className="text-lg font-bold">Nv {modal.nextLevel}</p></div>
-            </div>
-
-            {modal.id === "wonder" ? (
-              <div className={`mt-2 rounded-xl border p-2 ${modal.wonderLocked ? "border-amber-300/45 bg-amber-400/10 text-amber-100" : "border-emerald-300/30 bg-emerald-400/10 text-emerald-100"}`}>
-                <p className="text-[11px] font-semibold">Maravilha local da cidade</p>
-                <p className="text-[11px]">
-                  Palacio, Senado, Minas, Fazendas, Habitacoes, C. Pesquisa, Quartel, Arsenal e Muralha somam 90. A Maravilha local nao sobe de 0 a 10: ela entra uma vez so, fecha +10 de uma vez e completa os 100 da cidade.
-                </p>
-                <p className="mt-1 text-[11px] text-slate-200/90">
-                  Isso e separado do pilar global de Maravilhas, que continua vindo dos 5 slots mundiais e vale ate 250 de influencia.
-                </p>
-              </div>
-            ) : null}
-
-            <div className="mt-2 kw-glass-soft rounded-xl p-2">
-              <p className="text-[11px] text-slate-300">{modal.def.benefit.label}</p>
-              <p className="text-sm font-semibold">{formatBenefit(modal.def, modal.currentBenefit)} {"->"} {formatBenefit(modal.def, modal.nextBenefit)}</p>
-            </div>
-
-            <div className="kw-status-grid kw-status-grid--2 mt-2">
-              <div className={`rounded-lg p-1.5 text-center ${resources.materials >= modal.cost.materials ? "kw-glass-soft" : "border border-rose-300/50 bg-rose-400/15"}`}><TreePine className="mx-auto h-3.5 w-3.5 text-amber-200" /><p className="text-[10px] font-bold">{formatCompact(modal.cost.materials)}</p></div>
-              <div className={`rounded-lg p-1.5 text-center ${resources.supplies >= modal.cost.supplies ? "kw-glass-soft" : "border border-rose-300/50 bg-rose-400/15"}`}><Wheat className="mx-auto h-3.5 w-3.5 text-amber-200" /><p className="text-[10px] font-bold">{formatCompact(modal.cost.supplies)}</p></div>
-              <div className={`rounded-lg p-1.5 text-center ${resources.energy >= modal.cost.energy ? "kw-glass-soft" : "border border-rose-300/50 bg-rose-400/15"}`}><Zap className="mx-auto h-3.5 w-3.5 text-yellow-200" /><p className="text-[10px] font-bold">{formatCompact(modal.cost.energy)}</p></div>
-              <div className={`rounded-lg p-1.5 text-center ${currentVillageDevelopment >= modal.cost.requiredInfluence ? "kw-glass-soft" : "border border-rose-300/50 bg-rose-400/15"}`}><Crown className="mx-auto h-3.5 w-3.5 text-cyan-200" /><p className="text-[10px] font-bold">{formatCompact(modal.cost.requiredInfluence)}</p><p className="text-[9px] text-slate-300">Req.</p></div>
-            </div>
-
-            <div className="mt-2 kw-glass-soft rounded-xl p-2">
-              <p className="text-[11px] text-slate-300">Tempo de upgrade</p>
-              <p className="text-sm font-semibold">Instantaneo</p>
-              <p className="text-[10px] text-slate-300">
-                Desenvolvimento da cidade: {formatCompact(modal.currentCap)} {"->"} {formatCompact(modal.nextCap)}
-              </p>
-            </div>
-
-            <div className="mt-2 kw-glass-soft rounded-xl p-2">
-              <p className="text-[11px] text-slate-300">Cap de obras da cidade</p>
-              <p className="text-sm font-semibold">
-                {constructionLoad}/{constructionCapacity} usadas Â· saldo {constructionRemaining}
-              </p>
-              <p className="text-[10px] text-slate-300">
-                Proximo upgrade consome {modal.nextConstructionLoad}. Depois sobra {modal.nextConstructionRemaining}.
-                {hasEngineer ? " Engenheiro local ativo." : ""}
-              </p>
-            </div>
-
-            <div className="mt-2 kw-glass-soft rounded-xl p-2">
-              <p className="text-[11px] text-slate-300">Buffer local da cidade e tempo de lotacao</p>
-              <div className="mt-1 grid grid-cols-2 gap-1.5 text-[10px]">
-                <div className="rounded-lg border border-white/15 bg-white/5 px-2 py-1">
-                  <p className="font-semibold text-slate-100">Materiais</p>
-                  <p className="text-slate-300">{formatCompact(localVillageResources.materials)} / {formatCompact(resourceForecast.caps.materials)}</p>
-                  <p className="text-cyan-100">Enche em {formatEta(resourceForecast.etaMinutes.materials)}</p>
-                </div>
-                <div className="rounded-lg border border-white/15 bg-white/5 px-2 py-1">
-                  <p className="font-semibold text-slate-100">Suprimentos</p>
-                  <p className="text-slate-300">{formatCompact(localVillageResources.supplies)} / {formatCompact(resourceForecast.caps.supplies)}</p>
-                  <p className="text-cyan-100">Enche em {formatEta(resourceForecast.etaMinutes.supplies)}</p>
-                </div>
-                <div className="rounded-lg border border-white/15 bg-white/5 px-2 py-1">
-                  <p className="font-semibold text-slate-100">Energia</p>
-                  <p className="text-slate-300">{formatCompact(localVillageResources.energy)} / {formatCompact(resourceForecast.caps.energy)}</p>
-                  <p className="text-cyan-100">Enche em {formatEta(resourceForecast.etaMinutes.energy)}</p>
-                </div>
-                <div className="rounded-lg border border-white/15 bg-white/5 px-2 py-1">
-                  <p className="font-semibold text-slate-100">Influencia</p>
-                  <p className="text-slate-300">{formatCompact(localVillageResources.influence)} / {formatCompact(resourceForecast.caps.influence)}</p>
-                  <p className="text-cyan-100">Enche em {formatEta(resourceForecast.etaMinutes.influence)}</p>
-                </div>
-              </div>
-              <p className="mt-1 text-[10px] text-slate-300">
-                O pagamento sai do Tesouro Imperial. O buffer acima mostra so a musculatura local desta cidade.
-              </p>
-            </div>
-
-            <div className="mt-2 kw-glass-soft rounded-xl p-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-100">
-                {modal.id === "research" ? <FlaskConical className="h-3.5 w-3.5 text-sky-300" /> : <Shield className="h-3.5 w-3.5 text-sky-300" />}
-                Painel tatico do edificio
-              </div>
-              {modal.id === "research" ? (
-                <div className="mt-1.5 space-y-1">
-                  {researchEntries.slice(0, 3).map((r) => (
-                    <p key={r.name} className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-[11px]">
-                      {r.name} - Nv {r.level} - {r.progress}%
-                    </p>
-                  ))}
-                </div>
-              ) : modal.id === "roads" ? (
-                <div className="mt-1.5 space-y-1">
-                  {timelineEntries.slice(0, 3).map((t) => (
-                    <p key={t.title} className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-[11px]">
-                      {t.title} - ETA {t.eta}
-                    </p>
-                  ))}
-                </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/78 via-slate-950/38 to-slate-950/24" />
+          <div className="relative">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200">{settlementLabel}</p>
+            <p className="mt-1 text-[clamp(1.1rem,3.9vw,1.5rem)] font-black leading-tight text-slate-50">{village.name}</p>
+            <p className="mt-1 text-[11px] font-semibold text-slate-300">
+              {isCapitalVillage ? "A Capital é uma categoria própria do reino." : canChooseCityClass ? "Escolha a vocação da cidade uma vez." : "Vocação fixa desta cidade."}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {isCapitalVillage ? (
+                <span className="rounded-full border border-cyan-300/35 bg-cyan-500/14 px-3 py-1.5 text-[10px] font-black text-cyan-100">
+                  Capital
+                </span>
               ) : (
-                <p className="mt-1.5 text-[11px] text-slate-300">
-                  Acoes operacionais da cidade ficam nos chips taticos da Base. Este modal mostra status, bonus e upgrade.
-                </p>
+                CITY_CLASS_IDS.map((classId) => {
+                  const active = classId === cityClass;
+                  const disabled = !canChooseCityClass && !active;
+                  return (
+                    <button
+                      key={classId}
+                      type="button"
+                      onClick={() => chooseCityClass(classId)}
+                      disabled={disabled}
+                      className={`rounded-full border px-3 py-1.5 text-[10px] font-black transition disabled:opacity-45 ${
+                        active
+                          ? `${cityClassTone(classId)} shadow-[0_0_18px_rgba(255,255,255,0.08)]`
+                          : "border-white/14 bg-white/8 text-slate-200 hover:bg-white/12"
+                      }`}
+                    >
+                      {CITY_CLASS_META[classId].label}
+                    </button>
+                  );
+                })
               )}
             </div>
-
-            <button
-              type="button"
-              disabled={modal.atMax || modal.wonderLocked || modal.nextConstructionLoad > constructionRemaining || !canAfford(modal.cost, resources, currentVillageDevelopment)}
-              onClick={onUpgrade}
-              className="mt-3 w-full rounded-xl border border-white/20 bg-sky-500/80 px-3 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-500/60"
-            >
-              {modal.atMax
-                ? "Nivel maximo alcancado"
-                : modal.wonderLocked
-                  ? `Maravilha bloqueada ate 90/90 (${baseVillageDevelopment}/90)`
-                  : modal.nextConstructionLoad > constructionRemaining
-                    ? `Cap de obras insuficiente (${constructionRemaining} livre / precisa ${modal.nextConstructionLoad})`
-                  : canAfford(modal.cost, resources, currentVillageDevelopment)
-                    ? `Iniciar upgrade para Nv ${modal.nextLevel}`
-                    : "Recursos insuficientes"}
-            </button>
-
-            {opsLog.length > 0 ? <div className="mt-2 kw-glass-soft rounded-xl p-2">{opsLog.map((line) => <p key={line} className="text-[11px]">{line}</p>)}</div> : null}
+            <p className="mt-1.5 max-w-[85%] text-[10px] font-semibold text-slate-400">
+              {isCapitalVillage ? "Centro político do reino. Governo, heróis e pressão imperial nascem daqui." : CITY_CLASS_META[cityClass].summary}
+            </p>
           </div>
+        </article>
+
+        {readOnly ? (
+          <article className="rounded-[24px] border border-amber-300/30 bg-amber-500/12 px-3 py-2 text-[11px] font-semibold text-amber-100 shadow-[0_12px_32px_rgba(120,53,15,0.18)]">
+            Temporada encerrada. Esta cidade segue em modo leitura.
+          </article>
+        ) : null}
+
+        <article className="kw-glass rounded-[28px] p-3">
+          <div className="space-y-2">
+            {sectorCards.map((sector) => (
+              <button
+                key={sector.id}
+                type="button"
+                data-smoke={`city-sector-${sector.id}`}
+                onClick={() => {
+                  emitUiFeedback("open", "light");
+                  syncSectorQuery(sector.id);
+                }}
+                className={`relative w-full overflow-hidden rounded-[24px] border p-3 text-left transition ${cityCardTone(sector.tone)} ${
+                  selectedSector?.id === sector.id ? "shadow-[0_0_28px_rgba(103,232,249,0.14)]" : "hover:bg-white/8"
+                }`}
+                style={{
+                  backgroundImage: `linear-gradient(100deg, rgba(2,6,23,0.74), rgba(15,23,42,0.46) 54%, rgba(2,6,23,0.76)), url('${sectorPanelImage(sector.id, cityClass, isCapitalVillage)}')`,
+                  backgroundPosition: "center",
+                  backgroundSize: "cover",
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/78 via-slate-950/36 to-slate-950/22" />
+                <div
+                  className="absolute inset-y-0 right-0 w-[42%] opacity-60"
+                  style={{
+                    backgroundImage: `linear-gradient(90deg, rgba(2,6,23,0) 0%, rgba(2,6,23,0.06) 24%, rgba(2,6,23,0.42) 100%), url('${sectorPanelImage(sector.id, cityClass, isCapitalVillage)}')`,
+                    backgroundPosition: "center right",
+                    backgroundSize: "cover",
+                  }}
+                />
+                <div className="relative flex items-center gap-3">
+                  <div className={`kw-hud-medallion flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${sectorCircleTone(sector.id)}`}>
+                    <img src={SECTOR_ICON_BY_ID[sector.id]} alt="" className="h-14 w-14 max-w-none object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.7)]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-black text-slate-100">{sector.label}</p>
+                    <p className="mt-1 text-[10px] font-semibold text-slate-300">{totalSkillDots(sector.skillDots)}/10 pontos na build</p>
+                  </div>
+                  <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-full border border-white/18 bg-slate-950/36 text-center backdrop-blur-md">
+                    <LevelMedallion level={sector.level} className="text-2xl font-black leading-none text-slate-50" iconClassName="h-12 w-12" />
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      {selectedSector ? (
+        <div className="fixed inset-0 z-[74]" data-smoke="city-sector-modal">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/72 backdrop-blur-sm"
+            onClick={() => {
+              emitUiFeedback("close", "light");
+              syncSectorQuery(null);
+            }}
+          />
+          <div className="kw-scroll-hidden absolute inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+8px)] top-[calc(env(safe-area-inset-top)+72px)] mx-auto flex w-auto max-w-md overflow-y-auto">
+            <div
+              className="relative w-full overflow-hidden rounded-[30px] border border-white/14 bg-transparent px-1.5 py-1.5 text-slate-100 shadow-[0_24px_80px_rgba(2,6,23,0.45)]"
+              style={{
+                backgroundImage: `url('${sectorPanelImage(selectedSector.id, cityClass, isCapitalVillage)}')`,
+                backgroundPosition: "center",
+                backgroundSize: "cover",
+                backgroundRepeat: "no-repeat",
+                backgroundColor: "#020617",
+              }}
+            >
+              <div className="relative space-y-2">
+                {[selectedSector.buildingId].map((buildingId) => {
+                  const definition = BUILDINGS_BY_ID[buildingId];
+                  const current = selectedSector.level;
+                  const nextLevel = Math.min(definition.maxLevel, current + 1);
+                  const cost = calculateBuildingUpgradeCost(definition, nextLevel, {
+                    evolutionMode,
+                    archetype: cityClassToArchetype(cityClass),
+                    scalarMultiplier: kingModifiers.buildingCostMultiplier,
+                  });
+                  const affordable = canAfford(cost, resources, currentVillageDevelopment);
+                  const atMax = current >= definition.maxLevel;
+                  const skillDots = selectedSector.skillDots;
+                  const skillOptions = BUILDING_SKILL_META[selectedSector.id];
+                  return (
+                    <section key={buildingId} className="relative px-1 py-1">
+                      <div className="relative pb-0.5 text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            emitUiFeedback("close", "light");
+                            syncSectorQuery(null);
+                          }}
+                          className="absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/14 bg-white/8 text-slate-200 backdrop-blur-md"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        <p className="mx-auto max-w-[70%] text-[30px] font-black leading-none tracking-tight text-slate-50 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">{selectedSector.label}</p>
+                        <div
+                          className="mx-auto mt-1.5 w-[84px] rounded-[16px] border border-white/18 px-2.5 py-1.5 text-center text-slate-50 shadow-[0_14px_28px_rgba(2,6,23,0.22)]"
+                          style={{
+                            backgroundImage: `linear-gradient(160deg, rgba(8,12,22,0.78), rgba(12,18,30,0.7) 48%, rgba(6,10,18,0.82)), url('${sectorPanelImage(selectedSector.id, cityClass, isCapitalVillage)}')`,
+                            backgroundPosition: "center",
+                            backgroundSize: "cover",
+                          }}
+                        >
+                          <LevelMedallion level={current} className="block text-[30px] font-black leading-none" iconClassName="mx-auto h-12 w-12" />
+                        </div>
+                      </div>
+
+                      <div className="relative mt-2 grid grid-cols-2 gap-1.5">
+                        {skillOptions.map((option) => {
+                          const points = skillDots[option.id] ?? 0;
+                          const disabled = atMax || points >= 3 || !canAffordSkillUpgrade(cost, resources);
+                          const palette = skillNodePalette(selectedSector.id);
+                          return (
+                            <article
+                              key={option.id}
+                              className={`group relative overflow-hidden rounded-[22px] border px-2 py-2 text-center transition ${skillNodeTone(points > 0, disabled)} ${palette.border} ${points > 0 && !disabled ? palette.glow : ""}`}
+                              style={{
+                                backgroundImage: `linear-gradient(160deg, rgba(6,10,18,0.82), rgba(12,18,30,0.72) 46%, rgba(6,10,18,0.86)), url('${sectorPanelImage(selectedSector.id, cityClass, isCapitalVillage)}')`,
+                                backgroundPosition: "center",
+                                backgroundSize: "cover",
+                              }}
+                            >
+                              <div className={`absolute inset-0 bg-gradient-to-br ${palette.shell} opacity-34`} />
+                              <div className="absolute inset-0 opacity-[0.22]" style={{ backgroundImage: `url('${sectorPanelImage(selectedSector.id, cityClass, isCapitalVillage)}')`, backgroundPosition: "center", backgroundSize: "cover" }} />
+                              <svg
+                                aria-hidden="true"
+                                className="absolute inset-0 h-full w-full opacity-50"
+                                viewBox="0 0 200 160"
+                                preserveAspectRatio="none"
+                              >
+                                <circle cx="26" cy="28" r="36" fill="rgba(255,255,255,0.06)" />
+                                <circle cx="174" cy="134" r="52" fill="rgba(255,255,255,0.04)" />
+                                <path d="M0 132 C48 98, 92 104, 200 42" stroke="rgba(255,255,255,0.08)" strokeWidth="2" fill="none" />
+                                <path d="M0 148 C64 132, 116 126, 200 116" stroke="rgba(255,255,255,0.05)" strokeWidth="2" fill="none" />
+                              </svg>
+                              <div className="relative">
+                                <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full border text-base font-black backdrop-blur-md ${palette.core}`}>
+                                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/14 bg-slate-950/26">
+                                    <LevelMedallion level={points} className="text-base font-black text-slate-50" iconClassName="h-10 w-10" />
+                                  </div>
+                                </div>
+                                <p className="mt-1 truncate text-[13px] font-black tracking-tight text-slate-50">{option.label}</p>
+                                <p className="mt-0.5 text-[10px] font-semibold text-slate-200/85">{option.impact}</p>
+                                <p className="mt-0.5 text-[10px] font-black text-white/90">{option.bonus}</p>
+                              </div>
+                              <div className="relative mt-1.5 grid grid-cols-2 gap-1 text-[9px] font-black">
+                                <CostChip kind="materials" value={formatCompact(cost.materials)} affordable={resources.materials >= cost.materials} />
+                                <CostChip kind="supplies" value={formatCompact(cost.supplies)} affordable={resources.supplies >= cost.supplies} />
+                              </div>
+                              <div className="relative mt-1.5 flex gap-1">
+                                {[0, 1, 2].map((index) => (
+                                  <span
+                                    key={index}
+                                    className={`h-2 flex-1 rounded-full ${index < points ? palette.accent : "bg-white/12"}`}
+                                  />
+                                ))}
+                              </div>
+                              <div className="relative mt-1.5 grid grid-cols-2 gap-1">
+                                <button
+                                  type="button"
+                                  disabled
+                                  data-smoke={`skill-down-${selectedSector.id}-${option.id}`}
+                                  className="rounded-xl border border-white/10 bg-slate-950/16 px-2 py-1 text-[10px] font-black text-slate-500"
+                                >
+                                  -Nv
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openSkillUpgrade(buildingId, selectedSector.id, option)}
+                                  disabled={disabled}
+                                  data-smoke={`skill-up-${selectedSector.id}-${option.id}`}
+                                  className={`rounded-xl border px-2 py-1 text-[10px] font-black transition ${
+                                    disabled
+                                      ? "border-white/10 bg-slate-950/16 text-slate-500"
+                                      : "border-cyan-300/30 bg-cyan-500/10 text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.1)]"
+                                  }`}
+                                >
+                                  +Nv
+                                </button>
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  );
+                })}
+
+                {selectedSector.id === "crown" ? (
+                  <>
+                    <article className="rounded-2xl border border-white/10 bg-white/5 p-3 text-[11px] text-slate-200">
+                      <p className="font-semibold text-slate-100">
+                        {assignedHero !== "none" ? HERO_PROMOTION_META[assignedHero as HeroSpecialistId].label : "Sem herói contratado"}
+                      </p>
+                      <p className="mt-1">Custo {formatCompact(HERO_HIRE_COST.materials)} M · {formatCompact(HERO_HIRE_COST.supplies)} S</p>
+                      <p className="mt-1">Nv 4+ · {hiredHeroCount}/{HERO_PROMOTION_LIMIT} · +50 influência</p>
+                      <button
+                        type="button"
+                        onClick={() => setShowHeroPromotionOptions((current) => !current)}
+                        className="mt-3 rounded-xl border border-white/15 bg-white/8 px-3 py-2 text-[11px] font-bold text-slate-100"
+                      >
+                        {showHeroPromotionOptions ? "Fechar" : assignedHero === "none" ? "Contratar herói" : "Ver build"}
+                      </button>
+                    </article>
+                    {showHeroPromotionOptions ? (
+                      <>
+                        <TraitTree
+                          rootLabel={assignedHero === "none" ? "Build inicial" : HERO_BUILD_META[heroBuild].label}
+                          rootNote={assignedHero === "none" ? "Escolha antes de contratar." : HERO_BUILD_META[heroBuild].note}
+                          options={HERO_BUILD_IDS.map((buildId) => ({
+                            id: buildId,
+                            label: HERO_BUILD_META[buildId].label,
+                            note: HERO_BUILD_META[buildId].note,
+                            active: (assignedHero === "none" ? selectedHeroBuild : heroBuild) === buildId,
+                            onClick: () => changeHeroBuild(buildId),
+                          }))}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          {HERO_PROMOTION_IDS.map((heroId) => (
+                            <button
+                              key={heroId}
+                              type="button"
+                              onClick={() => {
+                                hireHero(heroId);
+                                setShowHeroPromotionOptions(false);
+                              }}
+                              disabled={
+                                assignedHero !== "none" ||
+                                !canHireHero
+                              }
+                              className={`rounded-2xl border px-3 py-3 text-left text-[11px] font-semibold transition disabled:opacity-50 ${
+                                assignedHero === heroId ? "border-cyan-300/35 bg-cyan-500/14 text-cyan-50" : "border-white/12 bg-white/6 text-slate-200"
+                              }`}
+                            >
+                              {HERO_PROMOTION_META[heroId].label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    ) : null}
+                  </>
+                ) : null}
+
+                {selectedSector.id === "economy" ? (
+                  <>
+                    <TraitTree
+                          rootLabel="Foco de produção"
+                      options={(Object.entries(PRODUCTION_FOCUS_META) as Array<[CityProductionFocus, (typeof PRODUCTION_FOCUS_META)[CityProductionFocus]]>).map(
+                        ([focusId, meta]) => ({
+                          id: focusId,
+                          label: meta.label,
+                          active: productionFocus === focusId,
+                          onClick: () => setProductionFocus(focusId),
+                        }),
+                      )}
+                    />
+                    <article className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <div className="flex items-center gap-2">
+                        <FlaskConical className="h-4 w-4 text-amber-300" />
+                        <p className="text-sm font-black text-slate-100">Habitantes na produção</p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          livres {freePopulation}
+                        </span>
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          produção {usedProductionWorkers}/{productionCapacity}
+                        </span>
+                        <span className="rounded-full border border-amber-300/20 bg-amber-500/10 px-2 py-1 text-amber-100">
+                          {currentCityYield.materials} M/d
+                        </span>
+                        <span className="rounded-full border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-emerald-100">
+                          {currentCityYield.supplies} S/d
+                        </span>
+                        <span className="rounded-full border border-cyan-300/20 bg-cyan-500/10 px-2 py-1 text-cyan-100">
+                          {currentCityYield.logistics} log
+                        </span>
+                      </div>
+                      <p className="mt-2 text-[11px] text-slate-300">
+                        Fórmula oficial: {currentCityYield.breakdown.cityClass} + {currentCityYield.breakdown.terrain} + build de Produção + herói + empregos.
+                      </p>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {PRODUCTION_WORKER_IDS.map((focusId) => (
+                          <AllocationCard
+                            key={focusId}
+                            label={PRODUCTION_FOCUS_META[focusId].label}
+                            value={productionWorkers[focusId]}
+                            delta={getProductionWorkerDelta(focusId)}
+                            tone="amber"
+                            canDecrease={productionWorkers[focusId] > 0}
+                            canIncrease={freePopulation >= POPULATION_ALLOCATION_STEP && usedProductionWorkers < productionCapacity}
+                            onDecrease={() => adjustProductionWorkers(focusId, -POPULATION_ALLOCATION_STEP)}
+                            onIncrease={() => adjustProductionWorkers(focusId, POPULATION_ALLOCATION_STEP)}
+                          />
+                        ))}
+                      </div>
+                    </article>
+                  </>
+                ) : null}
+
+                {selectedSector.id === "recruitment" ? (
+                  <>
+                    <article className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <div className="flex items-center gap-2">
+                        <Swords className="h-4 w-4 text-rose-300" />
+                        <p className="text-sm font-black text-slate-100">Recrutamento local</p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          livres {freePopulation}
+                        </span>
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          quartel {usedRecruits}/{recruitCapacity}
+                        </span>
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          capital {capitalTroopTotal} · poder {capitalTroopAveragePower}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {TROOP_RECRUIT_IDS.map((unitId) => {
+                          const unlocked =
+                            (unitId === "militia" && barracksUnlocks.militia) ||
+                            (unitId === "shooters" && barracksUnlocks.shooters) ||
+                            (unitId === "scouts" && barracksUnlocks.scouts) ||
+                            (unitId === "machinery" && barracksUnlocks.machinery);
+                          const label =
+                            unitId === "militia"
+                              ? "Milicia"
+                              : unitId === "shooters"
+                                ? "Atiradores"
+                                : unitId === "scouts"
+                                  ? "Batedores"
+                                  : "Maquinaria";
+                          const unlockLabel =
+                            unitId === "militia" ? "Nv 1" : unitId === "shooters" ? "Nv 3" : unitId === "scouts" ? "Nv 5" : "Nv 7";
+                          return (
+                            <AllocationCard
+                              key={unitId}
+                            label={label}
+                            value={recruits[unitId]}
+                            note={unlockLabel}
+                            delta={recruitDelta(unitId, recruits[unitId], recruitmentSkillDots)}
+                              tone="rose"
+                            disabled={!unlocked}
+                            canDecrease={recruits[unitId] > 0}
+                            canIncrease={freePopulation >= POPULATION_ALLOCATION_STEP && usedRecruits < recruitCapacity}
+                              onDecrease={() => adjustRecruitment(unitId, -POPULATION_ALLOCATION_STEP)}
+                              onIncrease={() => adjustRecruitment(unitId, POPULATION_ALLOCATION_STEP)}
+                            />
+                          );
+                        })}
+                      </div>
+                    </article>
+                  </>
+                ) : null}
+
+                {selectedSector.id === "society" ? (
+                  <>
+                    <TraitTree
+                      rootLabel="Contribuicao para a estabilidade"
+                      options={(Object.entries(SOCIETY_FOCUS_META) as Array<[CitySocietyFocus, (typeof SOCIETY_FOCUS_META)[CitySocietyFocus]]>).map(
+                        ([focusId, meta]) => ({
+                          id: focusId,
+                          label: meta.label,
+                          active: societyFocus === focusId,
+                          onClick: () => setSocietyFocus(focusId),
+                        }),
+                      )}
+                    />
+                    <article className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <div className="flex items-center gap-2">
+                        <FlaskConical className="h-4 w-4 text-cyan-300" />
+                        <p className="text-sm font-black text-slate-100">Populacao e empregos</p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          cidade {usedPopulation}/{populationCurrent}
+                        </span>
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          imperio {empirePopulationUsed}/{empirePopulationCurrent}
+                        </span>
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          max {populationCap}/{empirePopulationCapacity}
+                        </span>
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          satisfacao {societyState.band}
+                        </span>
+                        <span className="rounded-full border border-cyan-300/20 bg-cyan-500/10 px-2 py-1 text-cyan-100">
+                          {societyState.satisfaction} satisfacao
+                        </span>
+                        <span className="rounded-full border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-emerald-100">
+                          x{societyState.productionMultiplier.toFixed(2)} prod
+                        </span>
+                        <span className="rounded-full border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-rose-100">
+                          crise {societyState.crisisRisk}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-[11px] text-slate-300">
+                        Sociedade oficial: satisfação sobe com Sociedade, Ordem, Médicos e build; cai com lotação, guerra, déficits e ataque.
+                      </p>
+                      <div className="mt-3 grid grid-cols-[1fr_92px_1fr] items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => adjustPopulation("shrink")}
+                          disabled={populationCurrent <= usedPopulation}
+                          className="flex h-12 items-center justify-center rounded-xl border border-white/12 bg-white/7 text-slate-100 disabled:opacity-35"
+                          aria-label="Reduzir moradores"
+                        >
+                          <Minus className="h-5 w-5" />
+                        </button>
+                        <div className="rounded-xl border border-white/12 bg-white/8 py-2 text-center">
+                          <p className="text-lg font-black text-slate-100">{populationCurrent}</p>
+                          <p className="text-[9px] font-bold text-slate-400">/{populationCap}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => adjustPopulation("grow")}
+                          disabled={populationCurrent >= populationCap}
+                          className="flex h-12 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-500/12 text-cyan-100 disabled:opacity-35"
+                          aria-label="Aumentar moradores"
+                        >
+                          <Plus className="h-5 w-5" />
+                        </button>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {CITY_JOB_IDS.map((jobId) => (
+                          <AllocationCard
+                            key={jobId}
+                            label={SOCIETY_FOCUS_META[jobId].label}
+                            value={jobs[jobId]}
+                            delta={getJobDelta(jobId)}
+                            tone="emerald"
+                            canDecrease={jobs[jobId] > 0}
+                            canIncrease={freePopulation >= POPULATION_ALLOCATION_STEP}
+                            onDecrease={() => adjustCityJob(jobId, -POPULATION_ALLOCATION_STEP)}
+                            onIncrease={() => adjustCityJob(jobId, POPULATION_ALLOCATION_STEP)}
+                          />
+                        ))}
+                      </div>
+                    </article>
+                  </>
+                ) : null}
+
+                {selectedSector.id === "defense" ? (
+                  <>
+                    <article className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <div className="flex items-center gap-2">
+                        <Swords className="h-4 w-4 text-cyan-300" />
+                        <p className="text-sm font-black text-slate-100">Guarnicao defensiva</p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          livres {freePopulation}
+                        </span>
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          muralha {usedDefenders}/{defenseCapacity}
+                        </span>
+                        <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-slate-200">
+                          poder {localDefensePower}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {DEFENSE_RECRUIT_IDS.map((unitId) => {
+                          const unlocked =
+                            (unitId === "guards" && wallDefenseUnlocks.guards) ||
+                            (unitId === "archers" && wallDefenseUnlocks.archers) ||
+                            (unitId === "ballistae" && wallDefenseUnlocks.ballistae);
+                          const label = unitId === "guards" ? "Guardas" : unitId === "archers" ? "Arqueiros" : "Balistas";
+                          const unlockLabel = unitId === "guards" ? "Nv 1" : unitId === "archers" ? "Nv 4" : "Nv 7";
+                          return (
+                            <AllocationCard
+                              key={unitId}
+                            label={label}
+                            value={defenseRecruits[unitId]}
+                              note={unlockLabel}
+                              delta={defenseDelta(unitId, defenseRecruits[unitId], defenseSkillDots)}
+                              tone="cyan"
+                              disabled={!unlocked}
+                              canDecrease={defenseRecruits[unitId] > 0}
+                              canIncrease={freePopulation >= POPULATION_ALLOCATION_STEP && usedDefenders < defenseCapacity}
+                              onDecrease={() => adjustDefenseRecruitment(unitId, -POPULATION_ALLOCATION_STEP)}
+                              onIncrease={() => adjustDefenseRecruitment(unitId, POPULATION_ALLOCATION_STEP)}
+                            />
+                          );
+                        })}
+                      </div>
+                    </article>
+                  </>
+                ) : null}
+
+                {opsLog.length > 0 ? (
+                  <article className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                    <div className="space-y-1.5">
+                      {opsLog.map((line) => (
+                        <p key={line} className="rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-[11px] text-slate-200">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  </article>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {pendingSkillUpgrade ? (
+        <div className="fixed inset-0 z-[84] flex items-center justify-center bg-slate-950/58 p-4 backdrop-blur-sm" data-smoke="skill-upgrade-popup">
+          <article
+            className="relative w-full max-w-[316px] overflow-hidden rounded-[26px] border border-white/12 bg-slate-950/95 px-4 py-3 shadow-[0_18px_60px_rgba(2,6,23,0.55)]"
+            style={{
+              backgroundImage:
+                `linear-gradient(145deg, rgba(2,6,23,0.18), rgba(2,6,23,0.84)), url('${sectorPanelImage(pendingSkillUpgrade.sectorId, cityClass, isCapitalVillage)}')`,
+              backgroundPosition: "center",
+              backgroundSize: "cover",
+            }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">{selectedSector?.label}</p>
+                <p className="mt-1 text-lg font-black tracking-tight text-slate-100">{pendingSkillUpgrade.option.label}</p>
+                <p className="mt-1 text-[11px] font-semibold text-cyan-100">{pendingSkillUpgrade.option.bonus}</p>
+                <p className="mt-1 text-[10px] font-semibold text-slate-300">{describeLevelGain(pendingSkillUpgrade.sectorId, pendingSkillUpgrade.nextLevel)}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-500/12 text-lg font-black text-cyan-50">
+                  <LevelMedallion level={pendingSkillUpgrade.currentPoints + 1} className="text-lg font-black text-cyan-50" iconClassName="h-[52px] w-[52px]" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPendingSkillUpgrade(null)}
+                  data-smoke="close-skill-upgrade-popup"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/6 text-slate-300"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-center text-[11px] font-black">
+              <CostChip kind="materials" value={formatCompact(pendingSkillUpgrade.cost.materials)} affordable={resources.materials >= pendingSkillUpgrade.cost.materials} />
+              <CostChip kind="supplies" value={formatCompact(pendingSkillUpgrade.cost.supplies)} affordable={resources.supplies >= pendingSkillUpgrade.cost.supplies} />
+            </div>
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={confirmSkillUpgrade}
+                data-smoke="confirm-skill-upgrade"
+                className="w-full rounded-xl border border-cyan-300/30 bg-cyan-500/12 px-3 py-3 text-[11px] font-black text-cyan-100"
+              >
+                Confirmar upgrade
+              </button>
+            </div>
+          </article>
         </div>
       ) : null}
     </>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -1,18 +1,16 @@
 "use client";
 
-import { BookOpen, Castle, FlaskConical, Globe2, Home, Radar } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useMemo, useState } from "react";
 
 import { emitUiFeedback } from "@/lib/ui-feedback";
 
 const tabs = [
-  { key: "empire", label: "Imperio", icon: Castle, center: false },
-  { key: "operations", label: "Operacoes", icon: FlaskConical, center: false },
-  { key: "base", label: "A Base", icon: Home, center: true },
-  { key: "board", label: "Mundo", icon: Globe2, center: false },
-  { key: "intelligence", label: "Inteligencia", icon: Radar, center: false },
-  { key: "guide", label: "Guia", icon: BookOpen, center: false },
+  { key: "empire", label: "Império", iconSrc: "/icons/nav-empire.png", center: false },
+  { key: "base", label: "Cidades", iconSrc: "/icons/nav-cities.png", center: false },
+  { key: "intelligence", label: "Intel", iconSrc: "/icons/nav-intel.png", center: true },
+  { key: "board", label: "Mundo", iconSrc: "/icons/nav-world.png", center: false },
+  { key: "guide", label: "Perfil", iconSrc: "/icons/nav-profile.png", center: false },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
@@ -80,10 +78,9 @@ export function BottomNavigation({
       className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(4px+env(safe-area-inset-bottom))]"
     >
       <div className="mx-auto w-full max-w-md">
-        <div className="rounded-[22px] border border-white/30 bg-white/12 px-1.5 py-1 shadow-[0_22px_46px_rgba(2,6,23,0.5)] backdrop-blur-xl">
-          <div className="grid grid-cols-6 items-center gap-0.5">
+        <div className="kw-hud-panel relative rounded-[22px] px-1.5 py-1">
+          <div className="grid grid-cols-5 items-center gap-0.5">
             {tabs.map((tab) => {
-              const Icon = tab.icon;
               const isActive = tab.key === optimisticTab;
 
               if (tab.center) {
@@ -93,12 +90,12 @@ export function BottomNavigation({
                     type="button"
                     onClick={() => navigate(tab.key)}
                     aria-current={isActive ? "page" : undefined}
-                    className={`mx-auto flex h-[50px] w-[50px] flex-col items-center justify-center rounded-full border-[2px] border-slate-100/90 shadow-2xl transition active:scale-95 ${
-                      isActive ? "bg-blue-600 text-white" : "bg-blue-500 text-white/90"
+                    className={`kw-hud-medallion mx-auto flex h-[54px] w-[54px] flex-col items-center justify-center rounded-full text-white transition active:scale-95 ${
+                      isActive ? "text-amber-50" : "text-cyan-100/90"
                     }`}
                   >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span className="mt-0.5 text-[8px] font-bold tracking-[0.02em]">A BASE</span>
+                    <img src={tab.iconSrc} alt="" className="h-9 w-9 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]" />
+                    <span className="mt-0.5 text-[8px] font-bold tracking-[0.02em]">INTEL</span>
                   </button>
                 );
               }
@@ -109,13 +106,13 @@ export function BottomNavigation({
                   type="button"
                   onClick={() => navigate(tab.key)}
                   aria-current={isActive ? "page" : undefined}
-                  className={`flex min-w-[50px] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[8px] font-semibold transition active:scale-95 ${
+                  className={`world-nav__link flex min-w-[50px] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[8px] font-semibold transition active:scale-95 ${
                     isActive
-                      ? "bg-white/15 text-sky-300 shadow-lg"
-                      : "text-slate-300 hover:bg-white/10 hover:text-white"
+                      ? "world-nav__link--active"
+                      : "hover:text-white"
                   }`}
                 >
-                  <Icon className="h-3 w-3" />
+                  <img src={tab.iconSrc} alt="" className="h-6 w-6 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]" />
                   <span className="leading-none">{tab.label}</span>
                 </button>
               );

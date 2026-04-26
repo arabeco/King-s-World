@@ -22,7 +22,7 @@ export default function RegisterPage() {
     setMessage(null);
 
     if (!hasPublicSupabaseEnv()) {
-      setError("Supabase nao configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.");
+      setError("Supabase não configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.");
       return;
     }
 
@@ -53,6 +53,7 @@ export default function RegisterPage() {
     <MarketingShell
       title="Crie sua Coroa"
       subtitle="Conta global, legado permanente e acesso a novos mundos."
+      scene="register"
     >
       <form className="form-stack" onSubmit={handleSubmit}>
         <input
@@ -85,7 +86,7 @@ export default function RegisterPage() {
         {message ? <p>{message}</p> : null}
         {error ? <p role="alert">{error}</p> : null}
         <Link className="ghost-link" href="/login">
-          Ja tenho conta
+          Já tenho conta
         </Link>
       </form>
     </MarketingShell>

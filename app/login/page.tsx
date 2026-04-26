@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [devLoading, setDevLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,10 +46,32 @@ export default function LoginPage() {
     router.refresh();
   }
 
+  async function handleDevLogin() {
+    setError(null);
+    setDevLoading(true);
+    try {
+      const response = await fetch("/api/dev-login", { method: "POST" });
+      if (!response.ok) {
+        throw new Error("Entrada dev indisponivel neste ambiente.");
+      }
+      const nextPath =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("next")
+          : null;
+      const safeNext = nextPath?.startsWith("/") ? nextPath : "/lobby";
+      router.replace(safeNext);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nao foi possivel entrar como dev.");
+    } finally {
+      setDevLoading(false);
+    }
+  }
+
   return (
     <MarketingShell
       title="Entre no tabuleiro"
-      subtitle="KingsWorld ja esta estruturado para guerra, logistica e fim de mundo. Agora o app comeca a nascer de verdade."
+      subtitle="KingsWorld ja esta estruturado para guerra, logistica e fim de mundo. Agora a campanha comeca de verdade."
     >
       <form className="form-stack" onSubmit={handleSubmit}>
         <input
@@ -70,6 +93,11 @@ export default function LoginPage() {
         <button className="primary-button" type="submit" disabled={loading}>
           {loading ? "Entrando..." : "Entrar"}
         </button>
+        {process.env.NODE_ENV !== "production" ? (
+          <button className="secondary-button" type="button" onClick={handleDevLogin} disabled={devLoading} data-smoke="login-dev-button">
+            {devLoading ? "Abrindo dev..." : "Entrar como dev"}
+          </button>
+        ) : null}
         {error ? <p role="alert">{error}</p> : null}
         <div className="inline-actions">
           <Link className="secondary-button" href="/register">

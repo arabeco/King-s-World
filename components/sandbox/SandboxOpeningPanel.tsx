@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import { BookOpen, ChevronRight, Crown, Route, Shield, Swords, WandSparkles } from "lucide-react";
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { calculateVillageDevelopment } from "@/core/GameBalance";
+import { calculateVillageDevelopment, canStartWonder } from "@/core/GameBalance";
 import { BUILDING_NAME_TO_ID, type BuildingId } from "@/lib/buildings";
 import { useImperialState } from "@/lib/imperial-state";
 import type { VillageSummary } from "@/lib/mock-data";
@@ -30,9 +30,13 @@ const STRATEGY_ORDER: SandboxStrategyId[] = ["metropole", "posto_avancado", "bas
 const HERO_NAME_TO_ID: Record<string, string> = {
   Engenheiro: "engineer",
   Marechal: "marshal",
+  General: "marshal",
   Navegador: "navigator",
+  Explorador: "navigator",
   Intendente: "intendente",
+  Administrador: "intendente",
   Erudito: "erudite",
+  Sabio: "erudite",
 };
 
 function dedupeLogs(logs: string[], line: string): string[] {
@@ -107,7 +111,6 @@ function createExtraVillage(index: number, strategyId: SandboxStrategyId): Villa
     politicalState: "Nova base imperial",
     materials: 280,
     supplies: 220,
-    energy: 120,
     influence: 10,
     palaceLevel: 1,
     kingHere: false,
@@ -128,7 +131,7 @@ function createExtraVillage(index: number, strategyId: SandboxStrategyId): Villa
     },
     coord: `0${index}:1${index}`,
     axial: { q: index, r: index + 1 },
-    owner: "Afonso",
+    owner: "Seu reino",
     relation: "Proprio",
     state: "Fundada pela abertura do sandbox",
   };
@@ -291,6 +294,17 @@ export function SandboxOpeningPanel({ worldId, villages, selectedVillageId, play
       }
 
       if (wonderMatch) {
+        const hasCompleteCity = [...villages, ...current.extraVillages].some((entry) =>
+          canStartWonder({
+            ...entry.buildingLevels,
+            ...(current.buildingLevelsByVillage[entry.id] ?? {}),
+          } as Partial<Record<BuildingId, number>>),
+        );
+        if (!hasCompleteCity) {
+          next.logs = dedupeLogs(next.logs, "Maravilha bloqueada: primeiro feche uma cidade 100/100.");
+          effect = { label: "Maravilha exige cidade 100/100." };
+          return next;
+        }
         next.sandboxWondersBuilt = Math.max(current.sandboxWondersBuilt, Number(wonderMatch[1]));
         next.logs = dedupeLogs(next.logs, `${action} registrada no sandbox.`);
         effect = { label: `${action} registrada.` };
@@ -466,8 +480,8 @@ export function SandboxOpeningPanel({ worldId, villages, selectedVillageId, play
       <article className="kw-glass rounded-3xl p-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Tutorial mastigado</p>
-            <h3 className="text-base font-bold text-slate-50">O que fazer no Dia {visibleDay}</h3>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Plano</p>
+            <h3 className="text-base font-bold text-slate-50">D{visibleDay}</h3>
             <p className="mt-1 text-[11px] leading-5 text-slate-300">{selectedPlaybook.meta.openingGoal}</p>
           </div>
           <span className="rounded-full border border-white/15 bg-white/8 px-2 py-1 text-[10px] font-semibold text-slate-100">
@@ -477,33 +491,33 @@ export function SandboxOpeningPanel({ worldId, villages, selectedVillageId, play
 
         <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
           <div className="rounded-2xl border border-white/15 bg-white/5 p-2 text-slate-200">
-            <p className="font-semibold text-slate-100">Se voce seguir</p>
+            <p className="font-semibold text-slate-100">Ganho</p>
             <p className="mt-1 leading-5">{selectedPlaybook.day90Summary}</p>
           </div>
           <div className="rounded-2xl border border-white/15 bg-white/5 p-2 text-slate-200">
-            <p className="font-semibold text-slate-100">Se voce atrasar</p>
+            <p className="font-semibold text-slate-100">Risco</p>
             <p className="mt-1 leading-5">
-              O maior risco desta rota e: {selectedPlaybook.meta.risk}
+              {selectedPlaybook.meta.risk}
             </p>
           </div>
         </div>
 
         <div className="mt-3 space-y-2">
           <div className="rounded-2xl border border-emerald-300/20 bg-emerald-500/8 px-3 py-2 text-[11px] text-emerald-50">
-            <p className="font-semibold text-emerald-100">Ao ir para o próximo dia</p>
+            <p className="font-semibold text-emerald-100">Ao ir para o prÃ³ximo dia</p>
             {nextDayPreview.actionCount > 0 ? (
               <>
                 <p className="mt-1 leading-5">
-                  Materiais +{nextDayPreview.resources.materials}, Suprimentos +{nextDayPreview.resources.supplies}, Energia +{nextDayPreview.resources.energy}, Influência +{nextDayPreview.resources.influence}.
+                  Materiais +{nextDayPreview.resources.materials}, Suprimentos +{nextDayPreview.resources.supplies}, InfluÃªncia +{nextDayPreview.resources.influence}.
                 </p>
                 <p className="mt-1 leading-5">
-                  Tropas: +{nextDayPreview.troops.militia} milícia, +{nextDayPreview.troops.shooters} atiradores, +{nextDayPreview.troops.scouts} batedores, +{nextDayPreview.troops.machinery} máquinas.
+                  Tropas: +{nextDayPreview.troops.militia} milÃ­cia, +{nextDayPreview.troops.shooters} atiradores, +{nextDayPreview.troops.scouts} batedores, +{nextDayPreview.troops.machinery} mÃ¡quinas.
                 </p>
                 <p className="mt-1 leading-5">{nextDayPreview.notes.slice(0, 2).join(" ")}</p>
               </>
             ) : (
               <p className="mt-1 leading-5">
-                Nenhuma ordem do Dia {currentPlan.day} foi registrada ainda. Se avançar agora, quase nada vai mudar.
+                Nenhuma ordem do Dia {currentPlan.day} foi registrada ainda. Se avanÃ§ar agora, quase nada vai mudar.
               </p>
             )}
           </div>
@@ -671,3 +685,4 @@ export function SandboxOpeningPanel({ worldId, villages, selectedVillageId, play
     </section>
   );
 }
+

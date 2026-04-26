@@ -11,6 +11,9 @@ export type WorldSummary = {
   phase: string;
   players: number;
   actionLabel: string;
+  seasonMode?: "classic" | "express";
+  speedMultiplier?: number;
+  durationDays?: number;
 };
 
 export type VillageBuildingLevels = Partial<Record<BuildingId, number>>;
@@ -27,7 +30,6 @@ export type VillageSummary = {
   politicalState: string;
   materials: number;
   supplies: number;
-  energy: number;
   influence: number;
   palaceLevel: number;
   kingHere: boolean;
@@ -96,6 +98,9 @@ export type WorldState = {
   name: string;
   day: number;
   phase: string;
+  seasonMode?: "classic" | "express";
+  speedMultiplier?: number;
+  durationDays?: number;
   averageInfluenceScore: number;
   activeAlerts: string[];
   activeVillageId: string;
@@ -216,7 +221,6 @@ const worldState: WorldState = {
       politicalState: "Comando ativo",
       materials: 18240,
       supplies: 9550,
-      energy: 6120,
       influence: 1340,
       palaceLevel: 10,
       kingHere: true,
@@ -237,7 +241,6 @@ const worldState: WorldState = {
       politicalState: "Resistencia local",
       materials: 9410,
       supplies: 4820,
-      energy: 2250,
       influence: 240,
       palaceLevel: 8,
       kingHere: false,
@@ -258,13 +261,12 @@ const worldState: WorldState = {
       politicalState: "Sucessao apta",
       materials: 12110,
       supplies: 7010,
-      energy: 3180,
       influence: 380,
       palaceLevel: 8,
       kingHere: false,
       princeHere: false,
       underAttack: false,
-      deficits: ["Energia no limite"],
+      deficits: ["Materiais no limite"],
       buildingLevels: levels({ palace: 8, senate: 7, mines: 8, farms: 7, housing: 7, research: 7, barracks: 7, arsenal: 6, wall: 6, wonder: 0 }),
     },
     {
@@ -279,7 +281,6 @@ const worldState: WorldState = {
       politicalState: "Linha de frente",
       materials: 8740,
       supplies: 5320,
-      energy: 2840,
       influence: 290,
       palaceLevel: 7,
       kingHere: false,
@@ -300,7 +301,6 @@ const worldState: WorldState = {
       politicalState: "Defesa elevada",
       materials: 9900,
       supplies: 6110,
-      energy: 3360,
       influence: 350,
       palaceLevel: 7,
       kingHere: false,
@@ -316,7 +316,6 @@ const worldState: WorldState = {
       politicalState: "Logistica principal",
       materials: 11220,
       supplies: 6420,
-      energy: 3950,
       influence: 420,
       palaceLevel: 7,
       kingHere: false,
@@ -332,7 +331,6 @@ const worldState: WorldState = {
       politicalState: "Economia estavel",
       materials: 10380,
       supplies: 7540,
-      energy: 3010,
       influence: 300,
       palaceLevel: 6,
       kingHere: false,
@@ -348,7 +346,6 @@ const worldState: WorldState = {
       politicalState: "Guarnicao media",
       materials: 8340,
       supplies: 5280,
-      energy: 2610,
       influence: 250,
       palaceLevel: 6,
       kingHere: false,
@@ -364,7 +361,6 @@ const worldState: WorldState = {
       politicalState: "Ameaca constante",
       materials: 7220,
       supplies: 4180,
-      energy: 2300,
       influence: 190,
       palaceLevel: 5,
       kingHere: false,
@@ -380,7 +376,6 @@ const worldState: WorldState = {
       politicalState: "Retaguarda",
       materials: 6890,
       supplies: 5010,
-      energy: 2180,
       influence: 220,
       palaceLevel: 5,
       kingHere: false,
@@ -432,63 +427,63 @@ const worldState: WorldState = {
     {
       name: "Senado",
       level: 9,
-      nextCost: "3.980 Materiais / 740 Energia / 220 Influencia",
+      nextCost: "3.980 Materiais / 220 Influencia",
       nextTime: "02h26",
       effect: "+ cap de influencia",
     },
     {
       name: "Minas",
       level: 9,
-      nextCost: "2.460 Materiais / 420 Energia / 120 Influencia",
+      nextCost: "2.460 Materiais / 120 Influencia",
       nextTime: "01h42",
       effect: "+ producao de materiais",
     },
     {
       name: "Fazendas",
       level: 9,
-      nextCost: "2.380 Materiais / 380 Energia / 112 Influencia",
+      nextCost: "2.380 Materiais / 112 Influencia",
       nextTime: "01h36",
       effect: "+ producao de suprimentos",
     },
     {
       name: "Habitacoes",
       level: 8,
-      nextCost: "2.120 Materiais / 360 Energia / 102 Influencia",
+      nextCost: "2.120 Materiais / 102 Influencia",
       nextTime: "01h28",
       effect: "+ capacidade civil",
     },
     {
       name: "C. Pesquisa",
       level: 8,
-      nextCost: "2.320 Materiais / 420 Energia / 126 Influencia",
+      nextCost: "2.320 Materiais / 126 Influencia",
       nextTime: "01h34",
       effect: "+ velocidade de pesquisa",
     },
     {
       name: "M. Viaria",
       level: 6,
-      nextCost: "3.450 Materiais / 590 Energia / 170 Influencia",
+      nextCost: "3.450 Materiais / 170 Influencia",
       nextTime: "02h58",
       effect: "+ logistica entre territorios proprios",
     },
     {
       name: "Quartel",
       level: 8,
-      nextCost: "2.200 Materiais / 400 Energia / 118 Influencia",
+      nextCost: "2.200 Materiais / 118 Influencia",
       nextTime: "01h40",
       effect: "+ capacidade de treinamento",
     },
     {
       name: "Arsenal",
       level: 8,
-      nextCost: "2.360 Materiais / 430 Energia / 124 Influencia",
+      nextCost: "2.360 Materiais / 124 Influencia",
       nextTime: "01h44",
       effect: "+ oficiais e elite militar",
     },
     {
       name: "Muralha",
       level: 9,
-      nextCost: "2.900 Materiais / 460 Energia / 132 Influencia",
+      nextCost: "2.900 Materiais / 132 Influencia",
       nextTime: "02h06",
       effect: "+ defesa estrutural da Coroa",
     },
@@ -634,7 +629,7 @@ const worldState: WorldState = {
       details: [
         "Materiais: +5.440",
         "Suprimentos: +2.180 (upkeep: -1.760)",
-        "Energia: +1.320",
+        "Rotas estabilizadas",
       ],
       time: "ha 32 min",
       unread: false,
@@ -673,7 +668,7 @@ const worldState: WorldState = {
     kingAlive: true,
     councilHeroes: 2,
     councilComposition: ["engineer", "erudite"],
-    militaryRankingPoints: 320,
+    militaryRankingPoints: 300,
     eraQuestsCompleted: 2,
     wondersControlled: 2,
     tribeDomeUnlocked: true,
@@ -705,7 +700,6 @@ const sandboxWorldState: WorldState = {
       politicalState: "Preparando a fundacao do reino",
       materials: 920,
       supplies: 640,
-      energy: 260,
       influence: 42,
       palaceLevel: 1,
       kingHere: true,
@@ -765,8 +759,5 @@ export function getWorldState(worldId: string): WorldState {
 export function getWorldSummary(worldId: string): WorldSummary | undefined {
   return worlds.find((world) => world.id === worldId);
 }
-
-
-
 
 

@@ -47,7 +47,6 @@ function buildDayDelta(state: ImperialState, previousDay: number, currentDay: nu
     changes: [
       { label: "Materiais", delta: to.materials - from.materials },
       { label: "Suprimentos", delta: to.supplies - from.supplies },
-      { label: "Energia", delta: to.energy - from.energy },
       { label: "Influência", delta: to.influence - from.influence },
     ].filter((entry) => entry.delta !== 0),
   };
@@ -82,12 +81,19 @@ export function SandboxDayDeltaModal({ currentDay, imperialState }: SandboxDayDe
       <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" />
       <div className="absolute inset-x-3 top-1/2 mx-auto max-w-md -translate-y-1/2">
         <div
-          className={`rounded-[28px] border p-4 shadow-[0_28px_60px_rgba(15,23,42,0.55)] backdrop-blur-xl ${
+          className={`overflow-hidden rounded-[28px] border p-4 shadow-[0_28px_60px_rgba(15,23,42,0.55)] backdrop-blur-xl ${
             popup.direction === "advance"
               ? "border-emerald-300/25 bg-[linear-gradient(145deg,rgba(6,78,59,0.9),rgba(15,23,42,0.92))]"
               : "border-amber-300/25 bg-[linear-gradient(145deg,rgba(120,53,15,0.88),rgba(15,23,42,0.92))]"
           }`}
+          style={{
+            backgroundImage:
+              "linear-gradient(145deg, rgba(2,6,23,0.34), rgba(2,6,23,0.94)), url('/images/day-report.jpg')",
+            backgroundPosition: "center",
+            backgroundSize: "cover",
+          }}
         >
+          <div className="rounded-[22px] border border-white/12 bg-slate-950/50 p-3 backdrop-blur-md">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">
             {popup.direction === "advance" ? "O destino avançou" : "O destino recuou"}
           </p>
@@ -111,6 +117,7 @@ export function SandboxDayDeltaModal({ currentDay, imperialState }: SandboxDayDe
             ) : (
               <p className="text-[11px] text-slate-200">Sem variação material registrada entre esses dias.</p>
             )}
+          </div>
           </div>
         </div>
       </div>

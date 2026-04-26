@@ -1,4 +1,4 @@
-﻿export type BuildingId =
+export type BuildingId =
   | "palace"
   | "senate"
   | "mines"
@@ -14,7 +14,6 @@
 export type ResourceCost = {
   materials: number;
   supplies: number;
-  energy: number;
   influence: number;
 };
 
@@ -52,7 +51,7 @@ export const BUILDINGS: BuildingDefinition[] = [
     name: "Palacio",
     summary: "Centro da aldeia. Define comando e cap politico.",
     maxLevel: 10,
-    baseCost: { materials: 450, supplies: 180, energy: 130, influence: 60 },
+    baseCost: { materials: 450, supplies: 180, influence: 60 },
     growth: 1.19,
     baseMinutes: 24,
     benefit: { label: "Cap politico", base: 100, perLevel: 45, unit: "pts" },
@@ -62,7 +61,7 @@ export const BUILDINGS: BuildingDefinition[] = [
     name: "Senado",
     summary: "Expande o teto de influencia da Coroa.",
     maxLevel: 10,
-    baseCost: { materials: 620, supplies: 210, energy: 250, influence: 110 },
+    baseCost: { materials: 620, supplies: 210, influence: 110 },
     growth: 1.2,
     baseMinutes: 26,
     benefit: { label: "Cap de influencia", base: 500, perLevel: 250, unit: "pts" },
@@ -70,9 +69,9 @@ export const BUILDINGS: BuildingDefinition[] = [
   {
     id: "mines",
     name: "Minas",
-    summary: "Producao e extraÃ§Ã£o de materiais.",
+    summary: "Producao e extração de materiais.",
     maxLevel: 10,
-    baseCost: { materials: 320, supplies: 120, energy: 110, influence: 36 },
+    baseCost: { materials: 320, supplies: 120, influence: 36 },
     growth: 1.16,
     baseMinutes: 16,
     benefit: { label: "Materiais", base: 260, perLevel: 58, unit: "/h" },
@@ -82,7 +81,7 @@ export const BUILDINGS: BuildingDefinition[] = [
     name: "Fazendas",
     summary: "Mantem suprimentos e reduz risco de fome.",
     maxLevel: 10,
-    baseCost: { materials: 300, supplies: 135, energy: 80, influence: 34 },
+    baseCost: { materials: 300, supplies: 135, influence: 34 },
     growth: 1.16,
     baseMinutes: 16,
     benefit: { label: "Suprimentos", base: 240, perLevel: 55, unit: "/h" },
@@ -92,7 +91,7 @@ export const BUILDINGS: BuildingDefinition[] = [
     name: "Habitacoes",
     summary: "Aumenta lotacao e slots civis.",
     maxLevel: 10,
-    baseCost: { materials: 360, supplies: 180, energy: 95, influence: 40 },
+    baseCost: { materials: 360, supplies: 180, influence: 40 },
     growth: 1.17,
     baseMinutes: 18,
     benefit: { label: "Slots populacionais", base: 8, perLevel: 1, unit: "slots" },
@@ -102,7 +101,7 @@ export const BUILDINGS: BuildingDefinition[] = [
     name: "C. Pesquisa",
     summary: "Acelera desenvolvimento tecnologico.",
     maxLevel: 10,
-    baseCost: { materials: 520, supplies: 220, energy: 190, influence: 78 },
+    baseCost: { materials: 520, supplies: 220, influence: 78 },
     growth: 1.18,
     baseMinutes: 23,
     benefit: { label: "Velocidade de pesquisa", base: 4, perLevel: 1.4, unit: "%" },
@@ -114,7 +113,7 @@ export const BUILDINGS: BuildingDefinition[] = [
     maxLevel: 10,
     villageDevelopmentPerLevel: 0,
     villageDevelopmentCap: 0,
-    baseCost: { materials: 520, supplies: 320, energy: 220, influence: 85 },
+    baseCost: { materials: 520, supplies: 320, influence: 85 },
     growth: 1.17,
     baseMinutes: 20,
     benefit: { label: "Velocidade de deslocamento", base: 1.02, perLevel: 0.02, unit: "x" },
@@ -124,7 +123,7 @@ export const BUILDINGS: BuildingDefinition[] = [
     name: "Quartel",
     summary: "Treinamento de tropas base.",
     maxLevel: 10,
-    baseCost: { materials: 420, supplies: 260, energy: 140, influence: 55 },
+    baseCost: { materials: 420, supplies: 260, influence: 55 },
     growth: 1.18,
     baseMinutes: 20,
     benefit: { label: "Capacidade de treinamento", base: 12, perLevel: 2, unit: "%" },
@@ -134,7 +133,7 @@ export const BUILDINGS: BuildingDefinition[] = [
     name: "Arsenal",
     summary: "Desbloqueia poder militar avancado.",
     maxLevel: 10,
-    baseCost: { materials: 560, supplies: 260, energy: 170, influence: 65 },
+    baseCost: { materials: 560, supplies: 260, influence: 65 },
     growth: 1.18,
     baseMinutes: 22,
     benefit: { label: "Ataque do exercito", base: 10, perLevel: 2.5, unit: "%" },
@@ -144,7 +143,7 @@ export const BUILDINGS: BuildingDefinition[] = [
     name: "Muralha",
     summary: "Linha defensiva contra cerco e horda.",
     maxLevel: 10,
-    baseCost: { materials: 680, supplies: 120, energy: 190, influence: 70 },
+    baseCost: { materials: 680, supplies: 120, influence: 70 },
     growth: 1.2,
     baseMinutes: 28,
     benefit: { label: "Defesa estrutural", base: 120, perLevel: 18, unit: "%" },
@@ -152,11 +151,11 @@ export const BUILDINGS: BuildingDefinition[] = [
   {
     id: "wonder",
     name: "Maravilha",
-    summary: "Capstone tardio da aldeia. Ao concluir, fecha +10 no desenvolvimento local e completa os 100 pontos da aldeia.",
+    summary: "Capstone tardio: so pode com cidade 100/100 e transforma maturidade local em legado.",
     maxLevel: 1,
     villageDevelopmentPerLevel: 10,
     villageDevelopmentCap: 10,
-    baseCost: { materials: 1300, supplies: 800, energy: 620, influence: 260 },
+    baseCost: { materials: 1300, supplies: 800, influence: 260 },
     growth: 1.22,
     baseMinutes: 34,
     benefit: { label: "Poder imperial", base: 2, perLevel: 1.8, unit: "%" },
@@ -237,7 +236,6 @@ export function getUpgradeCost(definition: BuildingDefinition, nextLevel: number
   return {
     materials: Math.round(definition.baseCost.materials * scalar),
     supplies: Math.round(definition.baseCost.supplies * scalar),
-    energy: Math.round(definition.baseCost.energy * scalar),
     influence: Math.round(definition.baseCost.influence * scalar),
   };
 }

@@ -11,7 +11,7 @@ export type SandboxDayResolution = {
 };
 
 function emptyResources(): ImperialResources {
-  return { materials: 0, supplies: 0, energy: 0, influence: 0 };
+  return { materials: 0, supplies: 0, influence: 0 };
 }
 
 function emptyTroops(): ImperialTroops {
@@ -81,9 +81,8 @@ export function resolveSandboxDay(day: number, actions: string[]): SandboxDayRes
           addNote(notes, `Fazendas Nv ${level} reforçaram o abastecimento do próximo dia.`);
           break;
         case "research":
-          resources.energy += Math.round((58 + level * 20) * rewardScale);
           resources.influence += Math.max(1, Math.round((6 + level * 2) * rewardScale));
-          addNote(notes, `Pesquisa Nv ${level} elevou energia e leitura política.`);
+          addNote(notes, `Pesquisa Nv ${level} elevou leitura política.`);
           break;
         case "palace":
           resources.influence += Math.max(2, Math.round((12 + level * 4) * rewardScale));
@@ -137,7 +136,6 @@ export function resolveSandboxDay(day: number, actions: string[]): SandboxDayRes
     if (/Buscas|coletas|Vasculhar|saque/i.test(action)) {
       resources.materials += Math.round(260 * rewardScale);
       resources.supplies += Math.round(180 * rewardScale);
-      resources.energy += Math.round(80 * rewardScale);
       resources.influence += Math.max(1, Math.round(10 * rewardScale));
       addNote(notes, `A expedição trouxe recursos reais para o estoque.`);
       continue;
@@ -146,7 +144,6 @@ export function resolveSandboxDay(day: number, actions: string[]): SandboxDayRes
     if (/Transferir recursos|Doar recursos/i.test(action)) {
       resources.materials += Math.round((/x5/i.test(action) ? 420 : 160) * rewardScale);
       resources.supplies += Math.round((/x5/i.test(action) ? 320 : 120) * rewardScale);
-      resources.energy += Math.round((/x5/i.test(action) ? 180 : 70) * rewardScale);
       resources.influence += Math.max(1, Math.round((/x5/i.test(action) ? 16 : 6) * rewardScale));
       addNote(notes, `As rotas internas entregaram recursos no início do novo dia.`);
       continue;
@@ -154,25 +151,23 @@ export function resolveSandboxDay(day: number, actions: string[]): SandboxDayRes
 
     if (/Contratou Engenheiro/i.test(action)) {
       resources.materials += Math.round(90 * rewardScale);
-      resources.energy += Math.round(40 * rewardScale);
       addNote(notes, `O Engenheiro deixou a economia inicial mais eficiente.`);
       continue;
     }
 
-    if (/Contratou Intendente/i.test(action)) {
+    if (/Contratou Administrador|Contratou Intendente/i.test(action)) {
       resources.supplies += Math.round(90 * rewardScale);
-      addNote(notes, `O Intendente organizou melhor o abastecimento.`);
+      addNote(notes, `O Administrador organizou melhor o abastecimento.`);
       continue;
     }
 
-    if (/Contratou Erudito/i.test(action)) {
-      resources.energy += Math.round(70 * rewardScale);
+    if (/Contratou Sabio|Contratou Erudito/i.test(action)) {
       resources.influence += Math.max(1, Math.round(8 * rewardScale));
-      addNote(notes, `O Erudito converteu estudo em influência e energia.`);
+      addNote(notes, `O Sabio converteu estudo em influencia.`);
       continue;
     }
 
-    if (/Contratou Marechal|Contratou Navegador/i.test(action)) {
+    if (/Contratou General|Contratou Marechal|Contratou Explorador|Contratou Navegador/i.test(action)) {
       resources.influence += Math.max(1, Math.round(8 * rewardScale));
       addNote(notes, `A liderança escolhida aumentou coordenação e presença política.`);
       continue;

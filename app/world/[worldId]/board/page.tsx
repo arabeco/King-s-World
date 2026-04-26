@@ -6,10 +6,12 @@ import { StrategicMap } from "@/components/board/StrategicMap";
 import { getWorldPayload } from "@/lib/world-data";
 
 export default async function BoardPage({ params }: { params: { worldId: string } }) {
-  const { world } = await getWorldPayload(params.worldId);
+  const payload = await getWorldPayload(params.worldId);
+  const { world } = payload;
   const villageDevelopments = world.villages.map((village) => calculateVillageDevelopment(village.buildingLevels));
 
   const sovereignty = calculateSovereigntyScore({
+    villages: world.villages,
     villageDevelopments,
     councilHeroes: world.sovereignty.councilHeroes,
     militaryRankingPoints: world.sovereignty.militaryRankingPoints,
@@ -29,6 +31,7 @@ export default async function BoardPage({ params }: { params: { worldId: string 
       villages={world.villages}
       currentDay={world.day}
       sovereigntyScore={sovereignty.total}
+      readOnly={payload.worldMeta.readOnly}
     />
   );
 }

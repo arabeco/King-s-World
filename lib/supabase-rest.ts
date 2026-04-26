@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createClient } from "@supabase/supabase-js";
+
 import { SUPABASE_SERVER_KEY, SUPABASE_URL } from "@/lib/supabase-env";
 
 export function isSupabaseConfigured(): boolean {
@@ -19,67 +21,93 @@ function requireSupabaseEnv() {
   };
 }
 
-export async function supabaseSelect<T>(table: string, params: URLSearchParams, init?: RequestInit): Promise<T[]> {
+function createServerClient() {
   const { url, key } = requireSupabaseEnv();
-  const response = await fetch(`${url}/rest/v1/${table}?${params.toString()}`, {
-    ...init,
-    cache: "no-store",
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      Accept: "application/json",
-      ...(init?.headers ?? {}),
+  return createClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
     },
   });
-
-  if (!response.ok) {
-    throw new Error(`Supabase select failed for ${table}: ${response.status} ${await response.text()}`);
-  }
-
-  return response.json() as Promise<T[]>;
 }
 
-export async function supabaseUpsert<T>(table: string, payload: T | T[]): Promise<void> {
-  const { url, key } = requireSupabaseEnv();
-  const response = await fetch(`${url}/rest/v1/${table}`, {
-    method: "POST",
-    cache: "no-store",
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates,return=minimal",
-    },
-    body: JSON.stringify(payload),
-  });
+function parseInFilter(value: string): string[] {
+  const raw = value.replace(/^in\.\(/, "").replace(/\)$/, "");
+  if (!raw.trim()) return [];
+  return raw.split(",").map((entry) => entry.trim().replace(/^"|"$/g, ""));
+}
 
-  if (!response.ok) {
-    throw new Error(`Supabase upsert failed for ${table}: ${response.status} ${await response.text()}`);
+function applyParams(query: any, params: URLSearchParams) {
+  let next = query;
+  for (const [key, value] of params.entries()) {
+    if (key === "select") continue;
+    if (key === "limit") {
+      next = next.limit(Number(value));
+      continue;
+    }
+    if (value.startsWith("eq.")) {
+      next = next.eq(key, value.slice(3));
+      continue;
+    }
+    if (value.startsWith("in.(")) {
+      next = next.in(key, parseInFilter(value));
+    }
+  }
+  return next;
+}
+
+export async function supabaseSelect<T>(table: string, params: URLSearchParams, init?: RequestInit): Promise<T[]> {
+  const signal = init?.signal;
+  let query = createServerClient().from(table).select(params.get("select") ?? "*");
+  query = applyParams(query, params);
+  if (signal) {
+    query = query.abortSignal(signal);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`Supabase select failed for ${table}: ${error.message}`);
+  }
+  return (data ?? []) as T[];
+}
+
+export async function supabaseUpsert<T>(table: string, payload: T | T[], onConflict?: string): Promise<void> {
+  const { error } = await createServerClient()
+    .from(table)
+    .upsert(payload as any, onConflict ? { onConflict } : undefined);
+  if (error) {
+    throw new Error(`Supabase upsert failed for ${table}: ${error.message}`);
   }
 }
 
 export async function supabaseInsertReturning<TIn, TOut>(table: string, payload: TIn | TIn[], onConflict?: string): Promise<TOut[]> {
-  const { url, key } = requireSupabaseEnv();
-  const query = onConflict ? `?on_conflict=${encodeURIComponent(onConflict)}` : "";
-  const response = await fetch(`${url}/rest/v1/${table}${query}`, {
-    method: "POST",
-    cache: "no-store",
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates,return=representation",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Supabase insert failed for ${table}: ${response.status} ${await response.text()}`);
+  const { data, error } = await createServerClient()
+    .from(table)
+    .upsert(payload as any, onConflict ? { onConflict } : undefined)
+    .select();
+  if (error) {
+    throw new Error(`Supabase insert failed for ${table}: ${error.message}`);
   }
+  return (data ?? []) as TOut[];
+}
 
-  return response.json() as Promise<TOut[]>;
+export async function supabasePatchReturning<TIn, TOut>(table: string, params: URLSearchParams, payload: TIn): Promise<TOut[]> {
+  let query = createServerClient().from(table).update(payload as any).select();
+  query = applyParams(query, params);
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`Supabase patch failed for ${table}: ${error.message}`);
+  }
+  return (data ?? []) as TOut[];
+}
+
+export async function supabaseDelete(table: string, params: URLSearchParams): Promise<void> {
+  let query = createServerClient().from(table).delete();
+  query = applyParams(query, params);
+  const { error } = await query;
+  if (error) {
+    throw new Error(`Supabase delete failed for ${table}: ${error.message}`);
+  }
 }
 
 export function inFilter(values: string[]): string {

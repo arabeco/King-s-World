@@ -4,9 +4,11 @@ import { BookOpen, CalendarDays, ChevronLeft, ChevronRight, Compass, Map, Target
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
+import { mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
+import { inferSandboxStrategyId } from "@/lib/sandbox-playbook-selection";
 import { emitUiFeedback } from "@/lib/ui-feedback";
 import { useLiveWorld } from "@/lib/world-runtime";
-import type { SandboxStrategyPlaybook } from "@/lib/sandbox-playbooks";
+import type { SandboxPlaybookLoadResult, SandboxStrategyId, SandboxStrategyPlaybook } from "@/lib/sandbox-playbooks";
 
 type RouteTab = "base" | "board" | "operations" | "empire";
 
@@ -79,28 +81,28 @@ function buildGuideAction(day: number, milestone: string): GuideAction {
     };
   }
 
-  if (/Contratou Erudito/i.test(milestone)) {
+  if (/Contratou Sabio|Contratou Erudito/i.test(milestone)) {
     return {
       screen: "Base > Comando",
-      action: "Abra `Slot de Heroi (max 1)` e selecione `Erudito` para a cidade foco.",
+      action: "Abra `Slot de Heroi (max 1)` e selecione `Sabio` para a cidade foco.",
       routeTab: "base",
       query: { sb: "command" },
     };
   }
 
-  if (/Contratou Intendente/i.test(milestone)) {
+  if (/Contratou Administrador|Contratou Intendente/i.test(milestone)) {
     return {
       screen: "Base > Comando",
-      action: "Abra `Slot de Heroi (max 1)` e selecione `Intendente` para a cidade de fluxo.",
+      action: "Abra `Slot de Heroi (max 1)` e selecione `Administrador` para a cidade de fluxo.",
       routeTab: "base",
       query: { sb: "command" },
     };
   }
 
-  if (/Contratou Navegador/i.test(milestone)) {
+  if (/Contratou Explorador|Contratou Navegador/i.test(milestone)) {
     return {
       screen: "Base > Comando",
-      action: "Abra `Slot de Heroi (max 1)` e selecione `Navegador` para preparar a reta final.",
+      action: "Abra `Slot de Heroi (max 1)` e selecione `Explorador` para preparar a reta final.",
       routeTab: "base",
       query: { sb: "command" },
     };
@@ -191,23 +193,88 @@ function buildGuideAction(day: number, milestone: string): GuideAction {
 
 export function CampaignGuidePage({
   worldId,
-  playbook,
+  playbookBundle,
   defaultVillageId,
 }: {
   worldId: string;
-  playbook: SandboxStrategyPlaybook;
+  playbookBundle: SandboxPlaybookLoadResult;
   defaultVillageId: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { world, setManualDay, advanceDay, rewindDay } = useLiveWorld(worldId);
+  const { imperialState } = useImperialState(worldId, world.villages);
+  const villages = useMemo(() => mergeImperialVillages(world.villages, imperialState), [imperialState, world.villages]);
+
+  const selectedStrategyId = useMemo(
+    () =>
+      inferSandboxStrategyId({
+        currentDay: Math.max(1, world.day || 1),
+        villages,
+        activeVillageId: searchParams.get("v") ?? defaultVillageId,
+        imperialState,
+        questsCompleted: Math.max(imperialState.sandboxQuestsCompleted, world.sovereignty.eraQuestsCompleted),
+        wondersControlled: Math.max(imperialState.sandboxWondersBuilt, world.sovereignty.wondersControlled),
+      }),
+    [defaultVillageId, imperialState, searchParams, villages, world.day, world.sovereignty.eraQuestsCompleted, world.sovereignty.wondersControlled],
+  );
+
+  const playbook = useMemo<SandboxStrategyPlaybook | null>(() => {
+    if (playbookBundle.status !== "ready") {
+      return null;
+    }
+
+    return playbookBundle.playbooks[selectedStrategyId];
+  }, [playbookBundle, selectedStrategyId]);
+
+  if (!playbook) {
+    const errors = playbookBundle.status === "unavailable" ? playbookBundle.errors : [];
+    const warnings = playbookBundle.status === "unavailable" ? playbookBundle.warnings : [];
+
+    return (
+      <section className="space-y-3">
+        <article className="kw-glass rounded-3xl p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Guia da campanha</p>
+          <h1 className="mt-1 text-lg font-bold text-slate-50">Guia bloqueado por validacao</h1>
+          <p className="mt-2 text-[11px] leading-5 text-slate-300">
+            Os artefatos da temporada nao passaram na validacao automatica. A UI nao vai consumir playbooks
+            quebrados enquanto o status estiver em `FAIL`.
+          </p>
+        </article>
+
+        <article className="kw-glass rounded-3xl p-3 text-[11px] text-slate-200">
+          <p className="font-semibold text-slate-100">Erros</p>
+          <div className="mt-2 space-y-2">
+            {(errors.length > 0 ? errors : ["Nenhum detalhe adicional encontrado."]).map((entry) => (
+              <p key={entry} className="rounded-2xl border border-rose-300/20 bg-rose-500/8 p-2 text-rose-50">
+                {entry}
+              </p>
+            ))}
+          </div>
+
+          {warnings.length > 0 ? (
+            <>
+              <p className="mt-3 font-semibold text-slate-100">Avisos</p>
+              <div className="mt-2 space-y-2">
+                {warnings.map((entry) => (
+                  <p key={entry} className="rounded-2xl border border-amber-300/20 bg-amber-500/8 p-2 text-amber-50">
+                    {entry}
+                  </p>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </article>
+      </section>
+    );
+  }
 
   const currentPlan =
     playbook.days.find((entry) => entry.day === Math.max(1, world.day || 1)) ??
     playbook.days[0];
 
   const quickDays = useMemo(
-    () => [1, playbook.secondVillageDay, playbook.firstHundredDay, 45, 90, 116],
+    () => Array.from(new Set([1, playbook.secondVillageDay, playbook.firstHundredDay, 45, 90, 116])).sort((left, right) => left - right),
     [playbook.firstHundredDay, playbook.secondVillageDay],
   );
 
@@ -227,9 +294,10 @@ export function CampaignGuidePage({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Guia da campanha</p>
-            <h1 className="text-lg font-bold text-slate-50">Rota vitoriosa: {playbook.meta.label}</h1>
+            <h1 className="text-lg font-bold text-slate-50">Rota ativa: {playbook.meta.label}</h1>
             <p className="mt-1 text-[11px] leading-5 text-slate-300">
-              2a aldeia perto do D{playbook.secondVillageDay}, primeira cidade 100/100 no D{playbook.firstHundredDay} e reta final preparada para o Portal.
+              Guia selecionado dinamicamente para a sua campanha. Meta: 2a aldeia perto do D{playbook.secondVillageDay},
+              primeira cidade 100/100 no D{playbook.firstHundredDay} e reta final preparada para o Portal.
             </p>
           </div>
           <div className="rounded-2xl border border-sky-300/35 bg-sky-500/14 px-2 py-1 text-right text-[10px] font-semibold text-sky-100">

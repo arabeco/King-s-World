@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Castle, Crown, ScrollText, Swords, TreePine, Wheat, Zap } from "lucide-react";
+import { AlertTriangle, Castle, Crown, ScrollText, Swords, TreePine, Wheat } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ImperialResources, ImperialState, ImperialTroops } from "@/lib/imperial-state";
@@ -49,11 +49,10 @@ function resourceCaps(villages: VillageSummary[]): ImperialResources {
       const levels = village.buildingLevels;
       acc.materials += 5000 + (levels.mines ?? 0) * 900 + (levels.palace ?? 0) * 140;
       acc.supplies += 4400 + (levels.farms ?? 0) * 860 + (levels.housing ?? 0) * 120;
-      acc.energy += 3600 + (levels.research ?? 0) * 820 + (levels.senate ?? 0) * 120;
       acc.influence += 900 + (levels.palace ?? 0) * 110 + (levels.senate ?? 0) * 160 + (levels.wonder ?? 0) * 260;
       return acc;
     },
-    { materials: 0, supplies: 0, energy: 0, influence: 0 },
+    { materials: 0, supplies: 0, influence: 0 },
   );
 }
 
@@ -79,7 +78,6 @@ function buildDayDelta(state: ImperialState, previousDay: number, currentDay: nu
     changes: [
       { label: "Materiais", delta: to.materials - from.materials },
       { label: "Suprimentos", delta: to.supplies - from.supplies },
-      { label: "Energia", delta: to.energy - from.energy },
       { label: "Influência", delta: to.influence - from.influence },
     ].filter((entry) => entry.delta !== 0),
     notes: resolution.notes,
@@ -130,7 +128,6 @@ export function TimeOfDestinyPanel({
       setAnimated({
         materials: start.materials + (target.materials - start.materials) * ease,
         supplies: start.supplies + (target.supplies - start.supplies) * ease,
-        energy: start.energy + (target.energy - start.energy) * ease,
         influence: start.influence + (target.influence - start.influence) * ease,
       });
       if (progress < 1) {
@@ -165,17 +162,15 @@ export function TimeOfDestinyPanel({
     return {
       materials: wave(animated.materials, 0.9),
       supplies: wave(animated.supplies, 1.1),
-      energy: wave(animated.energy, 1.35),
       influence: wave(animated.influence, 1.55),
     };
-  }, [animated.energy, animated.influence, animated.materials, animated.supplies, pulseTick]);
+  }, [animated.influence, animated.materials, animated.supplies, pulseTick]);
 
   const troopCount = totalTroops(imperialState.troops);
   const marchRead = imperialState.sandboxMarchStarted ? "Marcha final em curso." : "Marcha final ainda não iniciada.";
   const bars = [
     { label: "Materiais", value: pulseResources.materials, max: Math.max(1, caps.materials), color: "kw-progress__bar--green", icon: <TreePine className="h-3.5 w-3.5 text-emerald-200" /> },
     { label: "Suprimentos", value: pulseResources.supplies, max: Math.max(1, caps.supplies), color: "kw-progress__bar--green", icon: <Wheat className="h-3.5 w-3.5 text-amber-200" /> },
-    { label: "Energia", value: pulseResources.energy, max: Math.max(1, caps.energy), color: "kw-progress__bar--blue", icon: <Zap className="h-3.5 w-3.5 text-sky-200" /> },
     { label: "Influência", value: pulseResources.influence, max: Math.max(1, caps.influence), color: "kw-progress__bar--red", icon: <Crown className="h-3.5 w-3.5 text-cyan-200" /> },
   ];
   const destinyEvents = [

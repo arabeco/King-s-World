@@ -21,6 +21,7 @@ export type DetailSheetContent = {
   eyebrow?: string;
   title: string;
   description: string;
+  imageSrc?: string;
   formula?: string;
   valueLabel?: string;
   progressPct?: number;
@@ -70,8 +71,20 @@ export function DetailSheet({
         onClick={handleClose}
       />
 
-      <div className="absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+20px)] top-[calc(env(safe-area-inset-top)+72px)] mx-auto flex w-full max-w-md">
-        <div className="kw-glass flex h-full w-full flex-col rounded-[28px] p-3 text-slate-100">
+      <div className="absolute inset-x-5 bottom-[calc(env(safe-area-inset-bottom)+92px)] top-[calc(env(safe-area-inset-top)+92px)] z-10 mx-auto flex w-full max-w-sm items-center">
+        <div
+          className="kw-glass flex max-h-[76vh] w-full flex-col overflow-hidden rounded-[32px] border border-white/20 p-3 text-slate-100 shadow-[0_34px_90px_rgba(2,6,23,0.78)]"
+          style={
+            content.imageSrc
+              ? {
+                  backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0.18), rgba(2,6,23,0.5) 42%, rgba(2,6,23,0.96)), url('${content.imageSrc}')`,
+                  backgroundPosition: "center",
+                  backgroundSize: "cover",
+                }
+              : undefined
+          }
+        >
+          <div className="rounded-[22px] border border-white/10 bg-slate-950/45 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -87,6 +100,7 @@ export function DetailSheet({
             >
               <X className="h-4 w-4" />
             </button>
+          </div>
           </div>
 
           <div className="mt-3 flex-1 space-y-3 overflow-y-auto pr-1">

@@ -1,6 +1,6 @@
-import { CampaignGuidePage } from "@/components/campaign-guide-page";
+import { WorldProfileClient } from "@/components/world-profile-client";
+import { requireAuthenticatedAppUser } from "@/lib/app-user";
 import { getWorldPayload } from "@/lib/world-data";
-import { getSandboxPlaybooks } from "@/lib/sandbox-playbooks";
 
 export default async function GuidePage({
   params,
@@ -8,7 +8,7 @@ export default async function GuidePage({
   params: { worldId: string };
 }) {
   const { world } = await getWorldPayload(params.worldId);
-  const playbook = getSandboxPlaybooks().metropole;
+  const appUser = await requireAuthenticatedAppUser();
 
-  return <CampaignGuidePage worldId={params.worldId} playbook={playbook} defaultVillageId={world.activeVillageId} />;
+  return <WorldProfileClient worldId={params.worldId} world={world} villages={world.villages} username={appUser.username} />;
 }

@@ -10,8 +10,8 @@
 - Perfil: Metropole
 - Branch: urban
 - Resultado: Entrou
-- Influencia D15/D30/D60/D90/D120: 231/605/1441/2037/2500
-- 2a aldeia: D10 | 1a aldeia 100: D36 | ETA: 117.99h
+- Influencia D15/D30/D60/D90/D120: 237/654/1706/2346/2500
+- 2a aldeia: D12 | 1a aldeia 100: D39 | ETA: 72h
 
 | Dia | Fase | Tipo | Acao | Detalhe |
 | ---: | --- | --- | --- | --- |
@@ -23,30 +23,35 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Palacio -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Senado -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 6 | I | explore | Buscas e coletas (5) | Raid score 148 e bonus de exploracao 1. |
-| 8 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 388 tropas ate D15. |
-| 10 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 59 hex. |
+| 8 | I | explore | Buscas e coletas (7) | Raid score 382 e bonus de exploracao 2. |
+| 10 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 390 tropas ate D15. |
+| 12 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 54 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
-| 30 | II | expand | Chegou a 4 aldeias | Influencia 605 e 627 tropas no D30. |
-| 34 | II | hero | Contratou Erudito | Especialista alinhado com a branch urban. |
-| 36 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
-| 36 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch urban. |
-| 37 | II | hero | Contratou Engenheiro (2a vaga) | Especialista alinhado com a branch urban. |
-| 42 | II | wonder | Ergueu/garantiu Maravilha 1 | Maravilha depende de Engenheiro e base economica madura. |
-| 49 | II | hero | Contratou Intendente | Especialista alinhado com a branch urban. |
+| 25 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch urban. |
+| 27 | II | hero | Contratou Erudito | Especialista alinhado com a branch urban. |
+| 30 | II | expand | Chegou a 4 aldeias | Influencia 654 e 611 tropas no D30. |
+| 39 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
+| 39 | II | hero | Contratou Engenheiro (2a vaga) | Especialista alinhado com a branch urban. |
+| 43 | II | wonder | Ergueu/garantiu Maravilha 1 | Maravilha depende de Engenheiro e base economica madura. |
+| 46 | II | hero | Contratou Erudito (2a vaga) | Especialista alinhado com a branch urban. |
+| 50 | II | hero | Contratou Intendente | Especialista alinhado com a branch urban. |
 | 52 | II | quest | Concluiu Quest 2/3 | Quest fechada na fase II. |
-| 57 | II | wonder | Ergueu/garantiu Maravilha 2 | Maravilha depende de Engenheiro e base economica madura. |
-| 60 | II | expand | Mid game com 6 aldeias | Influencia 1441, tropas 1.104. |
-| 72 | III | hero | Contratou Navegador | Especialista alinhado com a branch urban. |
+| 54 | II | hero | Contratou Engenheiro (3a vaga) | Especialista alinhado com a branch urban. |
+| 58 | II | hero | Contratou Intendente (2a vaga) | Especialista alinhado com a branch urban. |
+| 58 | II | wonder | Ergueu/garantiu Maravilha 2 | Maravilha depende de Engenheiro e base economica madura. |
+| 60 | II | hero | Contratou Marechal | Especialista alinhado com a branch urban. |
+| 60 | II | expand | Mid game com 7 aldeias | Influencia 1706, tropas 1.052. |
+| 72 | III | hero | Contratou Navegador (2a vaga) | Especialista alinhado com a branch urban. |
+| 72 | III | hero | Contratou Navegador (2a vaga) | Especialista alinhado com a branch urban. |
 | 73 | III | wonder | Ergueu/garantiu Maravilha 3 | Maravilha depende de Engenheiro e base economica madura. |
 | 84 | III | quest | Concluiu Quest 3/3 | Quest fechada na fase III. |
-| 90 | III | expand | Chegou ao D90 com 9 aldeias | Influencia 2037 e 1.582 tropas. |
+| 90 | III | expand | Chegou ao D90 com 10 aldeias | Influencia 2346 e 1.494 tropas. |
 | 90 | III | group | Agrupamento liberado na Capital | A partir daqui o jogador pode converter império em marcha final. |
 | 91 | IV | tribe | Ativou Domo da Tribo | Bônus tribal convertido em score de sobrevivencia no late game. |
 | 96 | IV | wonder | Ergueu/garantiu Maravilha 4 | Maravilha depende de Engenheiro e base economica madura. |
 | 106 | IV | wonder | Ergueu/garantiu Maravilha 5 | Maravilha depende de Engenheiro e base economica madura. |
 | 110 | IV | horde | Horda contida sem perda de aldeia | Muralha, execucao e timing seguraram a pressao do apocalipse. |
-| 113 | IV | march | Iniciou marcha ao Portal | ETA 117.99h; influencia projetada no fim 2500. |
+| 115 | IV | march | Iniciou marcha ao Portal | ETA 72h; influencia projetada no fim 2500. |
 | 118 | IV | outcome | Entrou no Portal | Entrou no Portal com 2500 de influencia. |
 
 ## Seed 90719945 - metropole-lazy
@@ -54,31 +59,32 @@
 - Representante: H01
 - Perfil: Metropole
 - Branch: tactical
-- Resultado: Falhou (intercepted)
-- Influencia D15/D30/D60/D90/D120: 158/309/681/1161/817
-- 2a aldeia: D14 | 1a aldeia 100: D53 | ETA: 114.33h
+- Resultado: Falhou (pvp_eliminated)
+- Influencia D15/D30/D60/D90/D120: 186/371/767/1274/850
+- 2a aldeia: D14 | 1a aldeia 100: D43 | ETA: 0h
 
 | Dia | Fase | Tipo | Acao | Detalhe |
 | ---: | --- | --- | --- | --- |
 | 1 | I | upgrade | Fazendas -> Nv 2 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 1 | I | upgrade | Minas -> Nv 2 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
+| 1 | I | march | Iniciou marcha ao Portal | ETA 0h; influencia projetada no fim 850. |
+| 1 | I | outcome | Falhou no endgame | Foi eliminado por ataques de outros jogadores antes de fechar a marcha final. |
 | 2 | I | upgrade | Palacio -> Nv 2 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 2 | I | upgrade | Senado -> Nv 2 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 3 | I | upgrade | Fazendas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Palacio -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Senado -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 10 | I | explore | Buscas e coletas (7) | Raid score 411 e bonus de exploracao 2. |
-| 12 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 355 tropas ate D15. |
-| 14 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 40 hex. |
-| 30 | II | expand | Chegou a 3 aldeias | Influencia 309 e 580 tropas no D30. |
-| 41 | II | hero | Contratou Marechal | Especialista alinhado com a branch tactical. |
-| 53 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
+| 10 | I | explore | Buscas e coletas (5) | Raid score 222 e bonus de exploracao 1. |
+| 12 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 455 tropas ate D15. |
+| 14 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 62 hex. |
+| 30 | II | expand | Chegou a 3 aldeias | Influencia 371 e 712 tropas no D30. |
+| 39 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch tactical. |
+| 43 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
 | 64 | III | hero | Contratou Intendente | Especialista alinhado com a branch tactical. |
 | 90 | III | group | Agrupamento liberado na Capital | A partir daqui o jogador pode converter império em marcha final. |
-| 110 | IV | horde | Horda rompeu 3 aldeias | A run caiu de 6 para 3 aldeias no fim. |
-| 113 | IV | march | Iniciou marcha ao Portal | ETA 114.33h; influencia projetada no fim 817. |
-| 118 | IV | outcome | Falhou no endgame | Falhou por interceptacao na trilha final. Faltou sinergia de branch/herois para segurar a marcha. |
+| 98 | IV | expand | Perdeu 1 cidade(s) para PvP | Ataques de outros soberanos romperam parte do imperio no late game. |
+| 110 | IV | horde | Horda rompeu 5 aldeias | A run caiu de 6 para 2 aldeias no fim. |
 
 ## Seed 90727864 - posto-perfect
 
@@ -86,8 +92,8 @@
 - Perfil: Posto Avancado
 - Branch: tactical
 - Resultado: Entrou
-- Influencia D15/D30/D60/D90/D120: 173/444/1381/2022/2500
-- 2a aldeia: D14 | 1a aldeia 100: D40 | ETA: 82.04h
+- Influencia D15/D30/D60/D90/D120: 183/466/1534/2320/2500
+- 2a aldeia: D14 | 1a aldeia 100: D46 | ETA: 72h
 
 | Dia | Fase | Tipo | Acao | Detalhe |
 | ---: | --- | --- | --- | --- |
@@ -99,31 +105,36 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Arsenal -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Quartel -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 10 | I | explore | Buscas e coletas (6) | Raid score 465 e bonus de exploracao 3. |
-| 12 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 359 tropas ate D15. |
-| 14 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 47 hex. |
+| 10 | I | explore | Buscas e coletas (7) | Raid score 413 e bonus de exploracao 2. |
+| 12 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 383 tropas ate D15. |
+| 14 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 54 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
-| 30 | II | expand | Chegou a 3 aldeias | Influencia 444 e 590 tropas no D30. |
-| 40 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
-| 44 | II | hero | Contratou Marechal | Especialista alinhado com a branch tactical. |
-| 44 | II | wonder | Ergueu/garantiu Maravilha 1 | Maravilha depende de Engenheiro e base economica madura. |
+| 30 | II | expand | Chegou a 4 aldeias | Influencia 466 e 629 tropas no D30. |
+| 43 | II | hero | Contratou Marechal | Especialista alinhado com a branch tactical. |
+| 46 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
+| 46 | II | hero | Contratou Erudito | Especialista alinhado com a branch tactical. |
+| 49 | II | hero | Contratou Marechal (2a vaga) | Especialista alinhado com a branch tactical. |
 | 50 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch tactical. |
+| 50 | II | wonder | Ergueu/garantiu Maravilha 1 | Maravilha depende de Engenheiro e base economica madura. |
 | 52 | II | quest | Concluiu Quest 2/3 | Quest fechada na fase II. |
-| 54 | II | hero | Contratou Marechal (2a vaga) | Especialista alinhado com a branch tactical. |
-| 58 | II | hero | Contratou Intendente | Especialista alinhado com a branch tactical. |
-| 59 | II | wonder | Ergueu/garantiu Maravilha 2 | Maravilha depende de Engenheiro e base economica madura. |
-| 60 | II | expand | Mid game com 6 aldeias | Influencia 1381, tropas 1.053. |
-| 72 | III | hero | Contratou Navegador | Especialista alinhado com a branch tactical. |
-| 73 | III | wonder | Ergueu/garantiu Maravilha 3 | Maravilha depende de Engenheiro e base economica madura. |
+| 54 | II | hero | Contratou Engenheiro (2a vaga) | Especialista alinhado com a branch tactical. |
+| 58 | II | hero | Contratou Intendente (2a vaga) | Especialista alinhado com a branch tactical. |
+| 58 | II | hero | Contratou Intendente (2a vaga) | Especialista alinhado com a branch tactical. |
+| 60 | II | hero | Contratou Marechal (3a vaga) | Especialista alinhado com a branch tactical. |
+| 60 | II | expand | Mid game com 7 aldeias | Influencia 1534, tropas 1.122. |
+| 63 | III | wonder | Ergueu/garantiu Maravilha 2 | Maravilha depende de Engenheiro e base economica madura. |
+| 65 | III | hero | Contratou Navegador | Especialista alinhado com a branch tactical. |
+| 72 | III | hero | Contratou Navegador (2a vaga) | Especialista alinhado com a branch tactical. |
+| 75 | III | wonder | Ergueu/garantiu Maravilha 3 | Maravilha depende de Engenheiro e base economica madura. |
 | 84 | III | quest | Concluiu Quest 3/3 | Quest fechada na fase III. |
-| 90 | III | expand | Chegou ao D90 com 9 aldeias | Influencia 2022 e 1.515 tropas. |
+| 90 | III | expand | Chegou ao D90 com 10 aldeias | Influencia 2320 e 1.615 tropas. |
 | 90 | III | group | Agrupamento liberado na Capital | A partir daqui o jogador pode converter império em marcha final. |
 | 91 | IV | tribe | Ativou Domo da Tribo | Bônus tribal convertido em score de sobrevivencia no late game. |
 | 96 | IV | wonder | Ergueu/garantiu Maravilha 4 | Maravilha depende de Engenheiro e base economica madura. |
 | 106 | IV | wonder | Ergueu/garantiu Maravilha 5 | Maravilha depende de Engenheiro e base economica madura. |
 | 110 | IV | horde | Horda contida sem perda de aldeia | Muralha, execucao e timing seguraram a pressao do apocalipse. |
-| 114 | IV | march | Iniciou marcha ao Portal | ETA 82.04h; influencia projetada no fim 2500. |
-| 117 | IV | outcome | Entrou no Portal | Entrou no Portal com 2500 de influencia. |
+| 115 | IV | march | Iniciou marcha ao Portal | ETA 72h; influencia projetada no fim 2500. |
+| 118 | IV | outcome | Entrou no Portal | Entrou no Portal com 2500 de influencia. |
 
 ## Seed 90735783 - posto-lazy
 
@@ -131,8 +142,8 @@
 - Perfil: Posto Avancado
 - Branch: defensive
 - Resultado: Falhou (influencia_insuficiente)
-- Influencia D15/D30/D60/D90/D120: 72/309/597/1010/939
-- 2a aldeia: D18 | 1a aldeia 100: D56 | ETA: 79.84h
+- Influencia D15/D30/D60/D90/D120: 111/332/685/1222/811
+- 2a aldeia: D19 | 1a aldeia 100: D46 | ETA: 112.82h
 
 | Dia | Fase | Tipo | Acao | Detalhe |
 | ---: | --- | --- | --- | --- |
@@ -144,18 +155,19 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Arsenal -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Quartel -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 14 | I | explore | Buscas e coletas (5) | Raid score 266 e bonus de exploracao 2. |
-| 16 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 421 tropas ate D15. |
-| 18 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 38 hex. |
+| 15 | I | explore | Buscas e coletas (2) | Raid score 118 e bonus de exploracao 1. |
+| 17 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 450 tropas ate D15. |
+| 19 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 38 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
-| 30 | II | expand | Chegou a 3 aldeias | Influencia 309 e 658 tropas no D30. |
-| 47 | II | hero | Contratou Erudito | Especialista alinhado com a branch defensive. |
-| 56 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
-| 89 | III | hero | Contratou Navegador | Especialista alinhado com a branch defensive. |
+| 30 | II | expand | Chegou a 3 aldeias | Influencia 332 e 721 tropas no D30. |
+| 43 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch defensive. |
+| 46 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
+| 61 | III | hero | Contratou Marechal | Especialista alinhado com a branch defensive. |
 | 90 | III | group | Agrupamento liberado na Capital | A partir daqui o jogador pode converter império em marcha final. |
-| 110 | IV | horde | Horda rompeu 6 aldeias | A run caiu de 6 para 3 aldeias no fim. |
-| 115 | IV | march | Iniciou marcha ao Portal | ETA 79.84h; influencia projetada no fim 939. |
-| 118 | IV | outcome | Falhou no endgame | Barrado por influencia insuficiente (939). |
+| 98 | IV | expand | Perdeu 1 cidade(s) para PvP | Ataques de outros soberanos romperam parte do imperio no late game. |
+| 110 | IV | horde | Horda rompeu 4 aldeias | A run caiu de 6 para 2 aldeias no fim. |
+| 113 | IV | march | Iniciou marcha ao Portal | ETA 112.82h; influencia projetada no fim 811. |
+| 118 | IV | outcome | Falhou no endgame | Barrado por influencia insuficiente (811). |
 
 ## Seed 90743702 - bastiao-perfect
 
@@ -163,8 +175,8 @@
 - Perfil: Bastiao
 - Branch: flow
 - Resultado: Entrou
-- Influencia D15/D30/D60/D90/D120: 110/394/1365/2020/2500
-- 2a aldeia: D16 | 1a aldeia 100: D48 | ETA: 126.14h
+- Influencia D15/D30/D60/D90/D120: 229/465/1508/2246/2500
+- 2a aldeia: D9 | 1a aldeia 100: D44 | ETA: 51.63h
 
 | Dia | Fase | Tipo | Acao | Detalhe |
 | ---: | --- | --- | --- | --- |
@@ -176,30 +188,35 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Habitacoes -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Muralha -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 12 | I | explore | Buscas e coletas (6) | Raid score 352 e bonus de exploracao 2. |
-| 14 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 324 tropas ate D15. |
-| 16 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 58 hex. |
+| 5 | I | explore | Buscas e coletas (8) | Raid score 452 e bonus de exploracao 3. |
+| 7 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 397 tropas ate D15. |
+| 9 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 54 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
-| 30 | II | expand | Chegou a 3 aldeias | Influencia 394 e 522 tropas no D30. |
-| 38 | II | hero | Contratou Erudito | Especialista alinhado com a branch flow. |
+| 30 | II | expand | Chegou a 4 aldeias | Influencia 465 e 634 tropas no D30. |
 | 40 | II | hero | Contratou Marechal | Especialista alinhado com a branch flow. |
-| 43 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch flow. |
-| 48 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
-| 50 | II | hero | Contratou Intendente | Especialista alinhado com a branch flow. |
+| 44 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
+| 46 | II | hero | Contratou Erudito (2a vaga) | Especialista alinhado com a branch flow. |
+| 46 | II | hero | Contratou Erudito (2a vaga) | Especialista alinhado com a branch flow. |
+| 46 | II | hero | Contratou Marechal (2a vaga) | Especialista alinhado com a branch flow. |
+| 47 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch flow. |
+| 48 | II | wonder | Ergueu/garantiu Maravilha 1 | Maravilha depende de Engenheiro e base economica madura. |
 | 52 | II | quest | Concluiu Quest 2/3 | Quest fechada na fase II. |
-| 52 | II | wonder | Ergueu/garantiu Maravilha 1 | Maravilha depende de Engenheiro e base economica madura. |
-| 57 | II | hero | Contratou Marechal (2a vaga) | Especialista alinhado com a branch flow. |
-| 60 | II | expand | Mid game com 6 aldeias | Influencia 1365, tropas 916. |
-| 64 | III | wonder | Ergueu/garantiu Maravilha 2 | Maravilha depende de Engenheiro e base economica madura. |
-| 76 | III | wonder | Ergueu/garantiu Maravilha 3 | Maravilha depende de Engenheiro e base economica madura. |
+| 54 | II | hero | Contratou Engenheiro (2a vaga) | Especialista alinhado com a branch flow. |
+| 55 | II | hero | Contratou Intendente | Especialista alinhado com a branch flow. |
+| 58 | II | hero | Contratou Intendente (2a vaga) | Especialista alinhado com a branch flow. |
+| 60 | II | hero | Contratou Marechal (3a vaga) | Especialista alinhado com a branch flow. |
+| 60 | II | expand | Mid game com 6 aldeias | Influencia 1508, tropas 1.109. |
+| 61 | III | wonder | Ergueu/garantiu Maravilha 2 | Maravilha depende de Engenheiro e base economica madura. |
+| 72 | III | hero | Contratou Navegador | Especialista alinhado com a branch flow. |
+| 75 | III | wonder | Ergueu/garantiu Maravilha 3 | Maravilha depende de Engenheiro e base economica madura. |
 | 84 | III | quest | Concluiu Quest 3/3 | Quest fechada na fase III. |
-| 90 | III | expand | Chegou ao D90 com 9 aldeias | Influencia 2020 e 1.311 tropas. |
+| 90 | III | expand | Chegou ao D90 com 9 aldeias | Influencia 2246 e 1.584 tropas. |
 | 90 | III | group | Agrupamento liberado na Capital | A partir daqui o jogador pode converter império em marcha final. |
 | 91 | IV | tribe | Ativou Domo da Tribo | Bônus tribal convertido em score de sobrevivencia no late game. |
 | 96 | IV | wonder | Ergueu/garantiu Maravilha 4 | Maravilha depende de Engenheiro e base economica madura. |
 | 106 | IV | wonder | Ergueu/garantiu Maravilha 5 | Maravilha depende de Engenheiro e base economica madura. |
 | 110 | IV | horde | Horda contida sem perda de aldeia | Muralha, execucao e timing seguraram a pressao do apocalipse. |
-| 112 | IV | march | Iniciou marcha ao Portal | ETA 126.14h; influencia projetada no fim 2500. |
+| 115 | IV | march | Iniciou marcha ao Portal | ETA 51.63h; influencia projetada no fim 2500. |
 | 117 | IV | outcome | Entrou no Portal | Entrou no Portal com 2500 de influencia. |
 
 ## Seed 90751621 - bastiao-lazy
@@ -208,8 +225,8 @@
 - Perfil: Bastiao
 - Branch: urban
 - Resultado: Falhou (influencia_insuficiente)
-- Influencia D15/D30/D60/D90/D120: 95/239/555/985/665
-- 2a aldeia: D19 | 1a aldeia 100: D66 | ETA: 129.92h
+- Influencia D15/D30/D60/D90/D120: 123/244/662/1112/815
+- 2a aldeia: D13 | 1a aldeia 100: D52 | ETA: 156.16h
 
 | Dia | Fase | Tipo | Acao | Detalhe |
 | ---: | --- | --- | --- | --- |
@@ -221,17 +238,18 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Habitacoes -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Muralha -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 15 | I | explore | Buscas e coletas (2) | Raid score 66 e bonus de exploracao 0. |
-| 17 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 468 tropas ate D15. |
-| 19 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 60 hex. |
-| 30 | II | expand | Chegou a 3 aldeias | Influencia 239 e 751 tropas no D30. |
-| 58 | II | hero | Contratou Marechal | Especialista alinhado com a branch urban. |
-| 66 | III | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
+| 9 | I | explore | Buscas e coletas (2) | Raid score 111 e bonus de exploracao 1. |
+| 11 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 322 tropas ate D15. |
+| 13 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 44 hex. |
+| 30 | II | expand | Chegou a 3 aldeias | Influencia 244 e 515 tropas no D30. |
+| 44 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch urban. |
+| 49 | II | hero | Contratou Marechal | Especialista alinhado com a branch urban. |
+| 52 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
+| 56 | II | wonder | Ergueu/garantiu Maravilha 1 | Maravilha depende de Engenheiro e base economica madura. |
 | 90 | III | group | Agrupamento liberado na Capital | A partir daqui o jogador pode converter império em marcha final. |
-| 110 | IV | horde | Horda rompeu 6 aldeias | A run caiu de 6 para 1 aldeias no fim. |
-| 112 | IV | hero | Contratou Navegador | Especialista alinhado com a branch urban. |
-| 113 | IV | march | Iniciou marcha ao Portal | ETA 129.92h; influencia projetada no fim 665. |
-| 118 | IV | outcome | Falhou no endgame | Barrado por influencia insuficiente (665). |
+| 110 | IV | horde | Horda rompeu 3 aldeias | A run caiu de 6 para 3 aldeias no fim. |
+| 112 | IV | march | Iniciou marcha ao Portal | ETA 156.16h; influencia projetada no fim 815. |
+| 119 | IV | outcome | Falhou no endgame | Barrado por influencia insuficiente (815). |
 
 ## Seed 90759540 - celeiro-perfect
 
@@ -239,8 +257,8 @@
 - Perfil: Celeiro
 - Branch: flow
 - Resultado: Entrou
-- Influencia D15/D30/D60/D90/D120: 256/538/1340/1960/2500
-- 2a aldeia: D8 | 1a aldeia 100: D36 | ETA: 48h
+- Influencia D15/D30/D60/D90/D120: 193/416/1560/2208/2500
+- 2a aldeia: D14 | 1a aldeia 100: D47 | ETA: 48h
 
 | Dia | Fase | Tipo | Acao | Detalhe |
 | ---: | --- | --- | --- | --- |
@@ -252,24 +270,29 @@
 | 3 | I | upgrade | Habitacoes -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Palacio -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 4 | I | explore | Buscas e coletas (9) | Raid score 402 e bonus de exploracao 2. |
-| 6 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 287 tropas ate D15. |
-| 8 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 70 hex. |
+| 10 | I | explore | Buscas e coletas (6) | Raid score 413 e bonus de exploracao 2. |
+| 12 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 440 tropas ate D15. |
+| 14 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 66 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
-| 30 | II | expand | Chegou a 4 aldeias | Influencia 538 e 445 tropas no D30. |
-| 36 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
-| 40 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch flow. |
-| 42 | II | wonder | Ergueu/garantiu Maravilha 1 | Maravilha depende de Engenheiro e base economica madura. |
-| 46 | II | hero | Contratou Erudito | Especialista alinhado com a branch flow. |
+| 30 | II | expand | Chegou a 3 aldeias | Influencia 416 e 711 tropas no D30. |
+| 43 | II | hero | Contratou Engenheiro | Especialista alinhado com a branch flow. |
+| 45 | II | hero | Contratou Intendente | Especialista alinhado com a branch flow. |
+| 46 | II | hero | Contratou Erudito (2a vaga) | Especialista alinhado com a branch flow. |
+| 46 | II | hero | Contratou Erudito (2a vaga) | Especialista alinhado com a branch flow. |
+| 47 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
+| 51 | II | wonder | Ergueu/garantiu Maravilha 1 | Maravilha depende de Engenheiro e base economica madura. |
 | 52 | II | quest | Concluiu Quest 2/3 | Quest fechada na fase II. |
-| 56 | II | hero | Contratou Intendente | Especialista alinhado com a branch flow. |
-| 57 | II | wonder | Ergueu/garantiu Maravilha 2 | Maravilha depende de Engenheiro e base economica madura. |
-| 60 | II | expand | Mid game com 6 aldeias | Influencia 1340, tropas 763. |
-| 61 | III | hero | Contratou Navegador | Especialista alinhado com a branch flow. |
-| 71 | III | hero | Contratou Navegador (2a vaga) | Especialista alinhado com a branch flow. |
-| 73 | III | wonder | Ergueu/garantiu Maravilha 3 | Maravilha depende de Engenheiro e base economica madura. |
+| 54 | II | hero | Contratou Engenheiro (2a vaga) | Especialista alinhado com a branch flow. |
+| 56 | II | hero | Contratou Navegador (2a vaga) | Especialista alinhado com a branch flow. |
+| 56 | II | hero | Contratou Navegador (2a vaga) | Especialista alinhado com a branch flow. |
+| 57 | II | hero | Contratou Intendente (2a vaga) | Especialista alinhado com a branch flow. |
+| 60 | II | hero | Contratou Marechal | Especialista alinhado com a branch flow. |
+| 60 | II | expand | Mid game com 6 aldeias | Influencia 1560, tropas 1.251. |
+| 63 | III | wonder | Ergueu/garantiu Maravilha 2 | Maravilha depende de Engenheiro e base economica madura. |
+| 72 | III | hero | Contratou Navegador (3a vaga) | Especialista alinhado com a branch flow. |
+| 76 | III | wonder | Ergueu/garantiu Maravilha 3 | Maravilha depende de Engenheiro e base economica madura. |
 | 84 | III | quest | Concluiu Quest 3/3 | Quest fechada na fase III. |
-| 90 | III | expand | Chegou ao D90 com 9 aldeias | Influencia 1960 e 1.080 tropas. |
+| 90 | III | expand | Chegou ao D90 com 9 aldeias | Influencia 2208 e 1.792 tropas. |
 | 90 | III | group | Agrupamento liberado na Capital | A partir daqui o jogador pode converter império em marcha final. |
 | 91 | IV | tribe | Ativou Domo da Tribo | Bônus tribal convertido em score de sobrevivencia no late game. |
 | 96 | IV | wonder | Ergueu/garantiu Maravilha 4 | Maravilha depende de Engenheiro e base economica madura. |
@@ -284,8 +307,8 @@
 - Perfil: Celeiro
 - Branch: urban
 - Resultado: Falhou (influencia_insuficiente)
-- Influencia D15/D30/D60/D90/D120: 131/350/785/1200/767
-- 2a aldeia: D16 | 1a aldeia 100: D46 | ETA: 152.13h
+- Influencia D15/D30/D60/D90/D120: 169/342/699/1132/874
+- 2a aldeia: D15 | 1a aldeia 100: D42 | ETA: 122.05h
 
 | Dia | Fase | Tipo | Acao | Detalhe |
 | ---: | --- | --- | --- | --- |
@@ -297,15 +320,17 @@
 | 3 | I | upgrade | Habitacoes -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Palacio -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 12 | I | explore | Buscas e coletas (7) | Raid score 172 e bonus de exploracao 1. |
-| 14 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 493 tropas ate D15. |
-| 16 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 51 hex. |
-| 30 | II | expand | Chegou a 3 aldeias | Influencia 350 e 799 tropas no D30. |
-| 46 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
-| 57 | II | hero | Contratou Marechal | Especialista alinhado com a branch urban. |
-| 58 | II | hero | Contratou Marechal (2a vaga) | Especialista alinhado com a branch urban. |
+| 11 | I | explore | Buscas e coletas (4) | Raid score 187 e bonus de exploracao 1. |
+| 13 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 409 tropas ate D15. |
+| 15 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 64 hex. |
+| 30 | II | expand | Chegou a 3 aldeias | Influencia 342 e 630 tropas no D30. |
+| 42 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
+| 55 | II | hero | Contratou Erudito | Especialista alinhado com a branch urban. |
 | 90 | III | group | Agrupamento liberado na Capital | A partir daqui o jogador pode converter império em marcha final. |
-| 110 | IV | horde | Horda rompeu 4 aldeias | A run caiu de 6 para 3 aldeias no fim. |
-| 112 | IV | march | Iniciou marcha ao Portal | ETA 152.13h; influencia projetada no fim 767. |
-| 118 | IV | outcome | Falhou no endgame | Barrado por influencia insuficiente (767). |
+| 91 | IV | tribe | Ativou Domo da Tribo | Bônus tribal convertido em score de sobrevivencia no late game. |
+| 94 | IV | hero | Contratou Navegador | Especialista alinhado com a branch urban. |
+| 98 | IV | expand | Perdeu 2 cidade(s) para PvP | Ataques de outros soberanos romperam parte do imperio no late game. |
+| 110 | IV | horde | Horda rompeu 4 aldeias | A run caiu de 6 para 1 aldeias no fim. |
+| 112 | IV | march | Iniciou marcha ao Portal | ETA 122.05h; influencia projetada no fim 874. |
+| 117 | IV | outcome | Falhou no endgame | Barrado por influencia insuficiente (874). |
 
