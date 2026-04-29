@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
 import { calculateBarracksRosterPreview } from "@/core/GameBalance";
 import type { BuildingId } from "@/lib/buildings";
@@ -1172,7 +1172,6 @@ function emit(store: ImperialStore) {
 
 export function useImperialState(worldId: string, villages: ImperialVillage[]) {
   const store = useMemo(() => ensureStore(worldId, villages), [worldId, villages]);
-  const serverSnapshotRef = useRef<ImperialState>(buildDefaultImperialState(villages));
   const [isImperialStateReady, setIsImperialStateReady] = useState(false);
 
   useEffect(() => {
@@ -1180,7 +1179,6 @@ export function useImperialState(worldId: string, villages: ImperialVillage[]) {
   }, [worldId]);
 
   useEffect(() => {
-    serverSnapshotRef.current = buildDefaultImperialState(villages);
     const fallback = buildDefaultImperialState(villages);
     const next = mergeImperialState(fallback, store.state);
     
@@ -1231,7 +1229,7 @@ export function useImperialState(worldId: string, villages: ImperialVillage[]) {
   }, [store]);
 
   const getSnapshot = useMemo(() => () => store.state, [store]);
-  const getServerSnapshot = useMemo(() => () => serverSnapshotRef.current, []);
+  const getServerSnapshot = getSnapshot;
 
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 

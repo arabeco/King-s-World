@@ -50,6 +50,8 @@ type VillageCityStateRow = {
   village_site_id: string;
   world_id: string;
   world_player_id: string;
+  city_class?: string | null;
+  city_class_locked?: boolean | null;
   population_current: number;
   production_focus: string;
   society_focus: string;
@@ -101,6 +103,11 @@ type ExplorationStateRow = {
   reward_label: string;
   action_label: string;
 };
+
+const CITY_STATE_SELECT_WITH_CLASS =
+  "village_site_id,world_id,world_player_id,city_class,city_class_locked,population_current,production_focus,society_focus,barracks_focus,defense_protocol,production_materials_workers,production_supplies_workers,production_commerce_workers,production_logistics_workers,jobs_medics,jobs_crafts,jobs_order,jobs_scholars,recruits_militia,recruits_shooters,recruits_scouts,recruits_machinery,defense_guards,defense_archers,defense_ballistae,deployed_count";
+const CITY_STATE_SELECT_LEGACY =
+  "village_site_id,world_id,world_player_id,population_current,production_focus,society_focus,barracks_focus,defense_protocol,production_materials_workers,production_supplies_workers,production_commerce_workers,production_logistics_workers,jobs_medics,jobs_crafts,jobs_order,jobs_scholars,recruits_militia,recruits_shooters,recruits_scouts,recruits_machinery,defense_guards,defense_archers,defense_ballistae,deployed_count";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -348,17 +355,12 @@ async function persistStructureState(worldId: string, worldPlayerId: string, nex
 }
 
 async function loadCityState(worldPlayerId: string) {
-  try {
-    const search = new URLSearchParams();
-    search.set(
-      "select",
-      "village_site_id,world_id,world_player_id,population_current,production_focus,society_focus,barracks_focus,defense_protocol,production_materials_workers,production_supplies_workers,production_commerce_workers,production_logistics_workers,jobs_medics,jobs_crafts,jobs_order,jobs_scholars,recruits_militia,recruits_shooters,recruits_scouts,recruits_machinery,defense_guards,defense_archers,defense_ballistae,deployed_count",
-    );
-    search.set("world_player_id", `eq.${worldPlayerId}`);
-    const rows = await supabaseSelect<VillageCityStateRow>("village_city_states", search);
-
-    return rows.reduce(
+  const mapRows = (rows: VillageCityStateRow[]) =>
+    rows.reduce(
       (acc, row) => {
+        const cityClass = pickString(row.city_class, ["neutral", "metropole", "posto_avancado", "bastiao", "celeiro"], "neutral");
+        acc.cityClassByVillage[row.village_site_id] = cityClass;
+        acc.cityClassLockedByVillage[row.village_site_id] = Boolean(row.city_class_locked) || cityClass !== "neutral";
         acc.populationByVillage[row.village_site_id] = clampCount(row.population_current);
         acc.productionFocusByVillage[row.village_site_id] = pickString(row.production_focus, ["materials", "supplies", "commerce", "logistics"], "materials");
         acc.societyFocusByVillage[row.village_site_id] = pickString(row.society_focus, ["medics", "crafts", "order", "scholars"], "order");
@@ -391,6 +393,8 @@ async function loadCityState(worldPlayerId: string) {
         return acc;
       },
       {
+        cityClassByVillage: {} as Record<string, string>,
+        cityClassLockedByVillage: {} as Record<string, boolean>,
         populationByVillage: {} as Record<string, number>,
         productionFocusByVillage: {} as Record<string, string>,
         societyFocusByVillage: {} as Record<string, string>,
@@ -403,8 +407,24 @@ async function loadCityState(worldPlayerId: string) {
         deployedByVillage: {} as Record<string, number>,
       },
     );
+
+  try {
+    const search = new URLSearchParams();
+    search.set("select", CITY_STATE_SELECT_WITH_CLASS);
+    search.set("world_player_id", `eq.${worldPlayerId}`);
+    const rows = await supabaseSelect<VillageCityStateRow>("village_city_states", search);
+
+    return mapRows(rows);
   } catch {
-    return {};
+    try {
+      const search = new URLSearchParams();
+      search.set("select", CITY_STATE_SELECT_LEGACY);
+      search.set("world_player_id", `eq.${worldPlayerId}`);
+      const rows = await supabaseSelect<VillageCityStateRow>("village_city_states", search);
+      return mapRows(rows);
+    } catch {
+      return {};
+    }
   }
 }
 
@@ -430,6 +450,8 @@ async function loadTroopStacks(worldPlayerId: string) {
 async function persistCityState(worldId: string, worldPlayerId: string, nextState: Record<string, unknown>) {
   const villageIds = new Set<string>();
   const mapKeys = [
+    "cityClassByVillage",
+    "cityClassLockedByVillage",
     "populationByVillage",
     "productionFocusByVillage",
     "societyFocusByVillage",
@@ -464,6 +486,8 @@ async function persistCityState(worldId: string, worldPlayerId: string, nextStat
       village_site_id: villageId,
       world_id: worldId,
       world_player_id: worldPlayerId,
+      city_class: isRecord(nextState.cityClassByVillage) ? pickString(nextState.cityClassByVillage[villageId], ["neutral", "metropole", "posto_avancado", "bastiao", "celeiro"], "neutral") : "neutral",
+      city_class_locked: isRecord(nextState.cityClassLockedByVillage) ? Boolean(nextState.cityClassLockedByVillage[villageId]) : false,
       population_current: isRecord(nextState.populationByVillage) ? clampCount(nextState.populationByVillage[villageId]) : 0,
       production_focus: isRecord(nextState.productionFocusByVillage) ? pickString(nextState.productionFocusByVillage[villageId], ["materials", "supplies", "commerce", "logistics"], "materials") : "materials",
       society_focus: isRecord(nextState.societyFocusByVillage) ? pickString(nextState.societyFocusByVillage[villageId], ["medics", "crafts", "order", "scholars"], "order") : "order",
