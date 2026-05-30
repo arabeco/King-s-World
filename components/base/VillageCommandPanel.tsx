@@ -7,7 +7,7 @@ import { calculateVillageDevelopment } from "@/core/GameBalance";
 import type { BuildingId } from "@/lib/buildings";
 import {
   projectStructureLevelsToBuildingLevels,
-  useImperialState,
+  useImperialStateContext,
   type ImperialResources,
   type ImperialTroops,
 } from "@/lib/imperial-state";
@@ -160,7 +160,7 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
     () => villages.find((entry) => entry.type === "Capital") ?? villages[0] ?? village,
     [village, villages],
   );
-  const { imperialState, setImperialState } = useImperialState(worldId, villages);
+  const { imperialState, setImperialState } = useImperialStateContext();
   const levelOverrides = imperialState.buildingLevelsByVillage[village.id] ?? {};
   const effectiveLevels = useMemo(
     () => ({
@@ -562,7 +562,7 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
           </div>
           <p className="text-[11px] text-slate-300">
             {isCapitalView
-              ? "A Capital nao consome diplomata: o Rei ja cobre a gestao politica local."
+              ? "A Capital não consome diplomata: o Rei já cobre a gestão política local."
               : assignedDiplomat
                 ? "Esta cidade tem diplomata alocado para tutela, estabilizacao e politica local."
                 : "Sem diplomata local. Se a Colonia ja liberou slot e houver agente contratado, aloque pela aba Herois."}

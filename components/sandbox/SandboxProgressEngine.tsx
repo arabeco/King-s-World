@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 
-import { mergeImperialVillages, useImperialState, type ImperialState, type SandboxSnapshot } from "@/lib/imperial-state";
+import { mergeImperialVillages, useImperialStateContext, type ImperialState, type SandboxSnapshot } from "@/lib/imperial-state";
 import type { VillageSummary } from "@/lib/mock-data";
 import { collectCompletedActionsForDay, resolveSandboxDay } from "@/lib/sandbox-day-resolution";
 
@@ -78,6 +78,11 @@ function cloneState(state: ImperialState): ImperialState {
     },
     mapMovements: state.mapMovements.map((movement) => ({ ...movement, route: [...movement.route], meta: { ...movement.meta } })),
     mobilization: { ...state.mobilization },
+    exploredCoordKeys: [...state.exploredCoordKeys],
+    discoveriesByCoord: Object.fromEntries(
+      Object.entries(state.discoveriesByCoord).map(([coordKey, discovery]) => [coordKey, { ...discovery }]),
+    ),
+    decisionInbox: state.decisionInbox.map((entry) => ({ ...entry })),
     sandboxCompletedActionIds: [...state.sandboxCompletedActionIds],
     sandboxSnapshots: { ...state.sandboxSnapshots },
     logs: [...state.logs],
@@ -163,6 +168,7 @@ function createSnapshot(state: ImperialState): SandboxSnapshot {
     discoveriesByCoord: Object.fromEntries(
       Object.entries(state.discoveriesByCoord).map(([coordKey, discovery]) => [coordKey, { ...discovery }]),
     ),
+    decisionInbox: state.decisionInbox.map((entry) => ({ ...entry })),
     logs: [...state.logs],
   };
 }
@@ -243,6 +249,11 @@ function restoreSnapshot(state: ImperialState, snapshot: SandboxSnapshot, day: n
     },
     mapMovements: snapshot.mapMovements.map((movement) => ({ ...movement, route: [...movement.route], meta: { ...movement.meta } })),
     mobilization: { ...snapshot.mobilization },
+    exploredCoordKeys: [...snapshot.exploredCoordKeys],
+    discoveriesByCoord: Object.fromEntries(
+      Object.entries(snapshot.discoveriesByCoord).map(([coordKey, discovery]) => [coordKey, { ...discovery }]),
+    ),
+    decisionInbox: snapshot.decisionInbox.map((entry) => ({ ...entry })),
     sandboxLastSyncedDay: day,
     logs: [...snapshot.logs],
   };
@@ -303,7 +314,7 @@ function passiveDailyIncome(state: ImperialState, villages: VillageSummary[], da
 }
 
 export function SandboxProgressEngine({ worldId, currentDay, villages }: SandboxProgressEngineProps) {
-  const { imperialState, setImperialState } = useImperialState(worldId, villages);
+  const { imperialState, setImperialState } = useImperialStateContext();
   const hydratingRef = useRef(false);
 
   const snapshotKey = useMemo(() => String(Math.max(0, currentDay)), [currentDay]);

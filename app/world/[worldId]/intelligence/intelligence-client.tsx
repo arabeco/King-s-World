@@ -1,17 +1,17 @@
 ﻿﻿"use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangle, Bell, Coins, Compass, ShieldAlert, Swords, Target, type LucideIcon } from "lucide-react";
 
 import { PlayerAlertCards } from "@/components/player-alert-cards";
 import { TimeOfDestinyPanel } from "@/components/sandbox/TimeOfDestinyPanel";
 import { calculateVillageDevelopment } from "@/core/GameBalance";
-import { mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
-import { buildPlayerAlertDeck, type PlayerAlertChoice } from "@/lib/player-alerts";
+import { mergeImperialVillages, useImperialStateContext } from "@/lib/imperial-state";
+import { buildPlayerAlertDeck, type PlayerAlertCard, type PlayerAlertChoice } from "@/lib/player-alerts";
 import type { ProfileHealthCard } from "@/lib/season-audit-analytics";
 import { emitUiFeedback } from "@/lib/ui-feedback";
 import { buildGuide, resolveBuild } from "@/lib/world-assistant-guide";
-import { useLiveWorld } from "@/lib/world-runtime";
+import { useLiveWorldContext } from "@/lib/world-runtime";
 
 type FeedKind = "combate" | "ações" | "movimento" | "economia" | "alertas";
 
@@ -116,8 +116,9 @@ export function IntelligenceClient({
   profileHealth: ProfileHealthCard[];
 }) {
   void profileHealth;
-  const { world } = useLiveWorld(params.worldId);
-  const { imperialState } = useImperialState(params.worldId, world.villages);
+  const { world } = useLiveWorldContext();
+  const { imperialState } = useImperialStateContext();
+  const [openedDecision, setOpenedDecision] = useState<PlayerAlertCard | null>(null);
   const mergedVillages = useMemo(() => mergeImperialVillages(world.villages, imperialState), [imperialState, world.villages]);
   const activeVillage = useMemo(
     () => mergedVillages.find((village) => village.id === world.activeVillageId) ?? mergedVillages[0],
@@ -294,6 +295,10 @@ export function IntelligenceClient({
     window.location.assign(`/world/${params.worldId}/${tab}${paramsQuery.toString() ? `?${paramsQuery.toString()}` : ""}`);
   };
 
+  const decisionsTop = [alertDeck.primary, ...alertDeck.secondary].slice(0, 3);
+  const senateMeeting = imperialState.senate.activeMeeting;
+  const hasSenateMeeting = Boolean(senateMeeting);
+
   return (
     <section className="space-y-3">
       {params.worldId === "world-test" ? (
@@ -309,7 +314,7 @@ export function IntelligenceClient({
         className="relative overflow-hidden rounded-[30px] border border-white/14 p-3 text-slate-100 shadow-[0_20px_60px_rgba(2,6,23,0.28)]"
         style={{
           backgroundImage:
-            "linear-gradient(145deg, rgba(2,6,23,0.42), rgba(2,6,23,0.92)), url('/images/card-intelligence.jpg')",
+            "linear-gradient(145deg, rgba(2,6,23,0.42), rgba(2,6,23,0.92)), url('/images/card-opportunity.jpg')",
           backgroundPosition: "center",
           backgroundSize: "cover",
         }}
@@ -359,17 +364,46 @@ export function IntelligenceClient({
         </div>
       </article>
 
-      <PlayerAlertCards
-        primary={alertDeck.primary}
-        secondary={alertDeck.secondary}
-        onChoice={handleAlertChoice}
-        title="Leitura viva da run"
-        subtitle="Risco, janela e clique útil."
-      />
+      <article className="kw-glass rounded-3xl p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h2 className="kw-title text-base">Decisões agora</h2>
+          <span className="kw-subtle text-[11px]">{hasSenateMeeting ? "Senado ativo" : "Run ativa"}</span>
+        </div>
+
+        {hasSenateMeeting ? (
+          <button
+            type="button"
+            onClick={() => jumpTo("empire", { s: "meeting" })}
+            className="mb-2 w-full rounded-2xl border border-amber-300/35 bg-amber-500/14 p-2 text-left"
+          >
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-100">Reunião do Senado</p>
+            <p className="mt-1 text-[13px] font-bold text-amber-50">{senateMeeting?.title}</p>
+            <p className="mt-1 text-[11px] text-amber-100/90">Atalho no Império para decidir agora.</p>
+          </button>
+        ) : null}
+
+        <div className="grid grid-cols-3 gap-2">
+          {decisionsTop.map((card) => (
+            <button
+              key={card.id}
+              type="button"
+              onClick={() => {
+                emitUiFeedback("open", "light");
+                setOpenedDecision(card);
+              }}
+              className="rounded-2xl border border-white/12 bg-white/7 p-2 text-left"
+            >
+              <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-300">{card.severity}</p>
+              <p className="mt-1 text-[12px] font-bold leading-4 text-slate-50">{card.title}</p>
+              <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-300">{card.reason}</p>
+            </button>
+          ))}
+        </div>
+      </article>
 
       <article className="kw-glass rounded-3xl p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="kw-title text-base">Precisa de atenção</h2>
+          <h2 className="kw-title text-base">Notas do reino</h2>
           <span className="kw-subtle text-[11px]">{feed.length} sinais</span>
         </div>
 
@@ -400,7 +434,78 @@ export function IntelligenceClient({
                 : "Prioridade: ajustar cidade/build e confirmar se salvou."}
           </p>
         </div>
+
+        <div className="mt-3 -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">
+          {feed.slice(0, 16).map((entry) => (
+            <article
+              key={entry.id}
+              className={`min-w-[220px] snap-start rounded-2xl border p-2 ${entry.cardClass}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em]">{entry.badge}</p>
+                <entry.icon className="h-3.5 w-3.5" />
+              </div>
+              <p className="mt-1 text-[12px] font-bold text-slate-50">{entry.title}</p>
+              <p className="mt-1 text-[10px] leading-4 text-slate-200">{entry.summary}</p>
+              <p className="mt-1 text-[10px] leading-4 text-slate-300">{entry.utility}</p>
+            </article>
+          ))}
+        </div>
       </article>
+
+      {openedDecision ? (
+        <div className="fixed inset-0 z-[90]">
+          <button
+            type="button"
+            aria-label="Fechar decisão"
+            onClick={() => setOpenedDecision(null)}
+            className="absolute inset-0 bg-slate-950/76 backdrop-blur-sm"
+          />
+          <div className="absolute inset-x-4 top-[calc(env(safe-area-inset-top)+72px)] bottom-[calc(env(safe-area-inset-bottom)+16px)] mx-auto flex w-full max-w-md">
+            <article
+              className="relative w-full overflow-hidden rounded-[28px] border border-white/15 p-3 text-slate-100"
+              style={{
+                backgroundImage:
+                  "linear-gradient(160deg, rgba(2,6,23,0.2), rgba(2,6,23,0.82)), url('/images/card-opportunity.jpg')",
+                backgroundPosition: "center",
+                backgroundSize: "cover",
+              }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-300">{openedDecision.severity}</p>
+                  <h3 className="mt-1 text-xl font-black text-slate-50">{openedDecision.title}</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpenedDecision(null)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/20 text-slate-50"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="mt-2 text-[12px] leading-5 text-slate-100">{openedDecision.situation}</p>
+              <p className="mt-2 text-[11px] leading-5 text-slate-200">{openedDecision.impact}</p>
+              <div className="mt-3 grid gap-2">
+                {openedDecision.choices.map((choice) => (
+                  <button
+                    key={choice.id}
+                    type="button"
+                    onClick={() => {
+                      handleAlertChoice(choice);
+                      setOpenedDecision(null);
+                    }}
+                    className="rounded-xl border border-cyan-300/35 bg-cyan-500/16 px-2.5 py-2 text-left text-[11px] font-semibold text-cyan-50"
+                  >
+                    {choice.label}
+                    {choice.note ? <p className="mt-1 text-[10px] font-normal text-cyan-100/85">{choice.note}</p> : null}
+                  </button>
+                ))}
+              </div>
+            </article>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

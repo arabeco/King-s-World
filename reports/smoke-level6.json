@@ -1,0 +1,287 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-04-25T02:51:57.866Z",
+  "checks": [
+    {
+      "label": "smoke:level5 passou",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "balance PASS",
+      "ok": true,
+      "details": "PASS"
+    },
+    {
+      "label": "rota nao seleciona influence_stock",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "rota nao seleciona energy_stock",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "strip remove rei do snapshot quando dedicado",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "strip remove exploracao do snapshot quando dedicado",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "getServerSnapshot cacheado por ref",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "core sem influenceStock acumulado",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "cidade sem bonus I/d",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "campanha code smoke ok",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "Supabase configurado",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "predios usam tabela dedicada",
+      "ok": true,
+      "details": "supabase:village_structure_states"
+    },
+    {
+      "label": "cidade usa tabela dedicada",
+      "ok": true,
+      "details": "supabase:village_city_states"
+    },
+    {
+      "label": "rei usa tabela dedicada",
+      "ok": true,
+      "details": "supabase:world_player_king_states"
+    },
+    {
+      "label": "exploracao usa tabela dedicada",
+      "ok": true,
+      "details": "supabase:world_player_exploration_states"
+    },
+    {
+      "label": "tropas por site usam tabela dedicada",
+      "ok": true,
+      "details": "supabase:site_troop_stacks"
+    },
+    {
+      "label": "opening: snapshot sem rei",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "opening: snapshot sem predios",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "opening: snapshot sem cidade",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "opening: snapshot sem exploracao",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "opening: source rei dedicada",
+      "ok": true,
+      "details": "world_player_king_states"
+    },
+    {
+      "label": "opening: source estrutura dedicada",
+      "ok": true,
+      "details": "village_structure_states"
+    },
+    {
+      "label": "opening: source cidade dedicada",
+      "ok": true,
+      "details": "village_city_states"
+    },
+    {
+      "label": "opening: source exploracao dedicada",
+      "ok": true,
+      "details": "world_player_exploration_states"
+    },
+    {
+      "label": "mid: snapshot sem rei",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "mid: snapshot sem predios",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "mid: snapshot sem cidade",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "mid: snapshot sem exploracao",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "mid: source rei dedicada",
+      "ok": true,
+      "details": "world_player_king_states"
+    },
+    {
+      "label": "mid: source estrutura dedicada",
+      "ok": true,
+      "details": "village_structure_states"
+    },
+    {
+      "label": "mid: source cidade dedicada",
+      "ok": true,
+      "details": "village_city_states"
+    },
+    {
+      "label": "mid: source exploracao dedicada",
+      "ok": true,
+      "details": "world_player_exploration_states"
+    },
+    {
+      "label": "late: snapshot sem rei",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "late: snapshot sem predios",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "late: snapshot sem cidade",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "late: snapshot sem exploracao",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "late: source rei dedicada",
+      "ok": true,
+      "details": "world_player_king_states"
+    },
+    {
+      "label": "late: source estrutura dedicada",
+      "ok": true,
+      "details": "village_structure_states"
+    },
+    {
+      "label": "late: source cidade dedicada",
+      "ok": true,
+      "details": "village_city_states"
+    },
+    {
+      "label": "late: source exploracao dedicada",
+      "ok": true,
+      "details": "world_player_exploration_states"
+    },
+    {
+      "label": "final: snapshot sem rei",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "final: snapshot sem predios",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "final: snapshot sem cidade",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "final: snapshot sem exploracao",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "final: source rei dedicada",
+      "ok": true,
+      "details": "world_player_king_states"
+    },
+    {
+      "label": "final: source estrutura dedicada",
+      "ok": true,
+      "details": "village_structure_states"
+    },
+    {
+      "label": "final: source cidade dedicada",
+      "ok": true,
+      "details": "village_city_states"
+    },
+    {
+      "label": "final: source exploracao dedicada",
+      "ok": true,
+      "details": "world_player_exploration_states"
+    },
+    {
+      "label": "opening nao obriga rei",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "mid rei persistido",
+      "ok": true,
+      "details": {
+        "king_profile_id": "aurelian",
+        "king_name": "Smoke Crown"
+      }
+    },
+    {
+      "label": "late exploracao persistida",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "final mundo readOnly",
+      "ok": true,
+      "details": {
+        "status": "finalized",
+        "readOnly": true,
+        "result": "victorious",
+        "finalRank": 1,
+        "finalScore": 1680
+      }
+    },
+    {
+      "label": "final mundo finalized",
+      "ok": true,
+      "details": {
+        "status": "finalized",
+        "readOnly": true,
+        "result": "victorious",
+        "finalRank": 1,
+        "finalScore": 1680
+      }
+    }
+  ],
+  "failed": []
+}

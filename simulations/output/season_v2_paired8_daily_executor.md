@@ -21,39 +21,39 @@
 | 2 | 83 | -1417 | 1 | 198 | Palacio -> Nv 2 + Senado -> Nv 2 | Palacio -> Nv 2 + Senado -> Nv 2 |
 | 3 | 89 | -1411 | 1 | 213 | Fazendas -> Nv 3 + Minas -> Nv 3 | Fazendas -> Nv 3 + Minas -> Nv 3 |
 | 4 | 95 | -1405 | 1 | 228 | Palacio -> Nv 3 + Senado -> Nv 3 | Palacio -> Nv 3 + Senado -> Nv 3 |
-| 5 | 100 | -1400 | 1 | 243 | Minas foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 6 | 106 | -1394 | 1 | 257 | Fazendas foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~14 tropas na Capital | Sem marco novo. |
-| 7 | 112 | -1388 | 1 | 272 | Palacio foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 8 | 116 | -1384 | 1 | 287 | Rodar buscas e coletas + Senado foco -> Nv 2 + Recrutar ~15 tropas na Capital | Buscas e coletas (7) |
-| 9 | 123 | -1377 | 1 | 302 | Centro de Pesquisa foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 10 | 130 | -1370 | 1 | 316 | Recrutar lote principal na Capital + Minas foco -> Nv 3 + Rodar buscas e coletas | Formou a primeira reserva militar na Capital |
-| 11 | 136 | -1364 | 1 | 331 | Fazendas foco -> Nv 3 + Rodar buscas e coletas + Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 12 | 213 | -1287 | 2 | 346 | Conquistou/Fundou a 2a aldeia + Palacio foco -> Nv 3 + Senado foco -> Nv 3 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~15 tropas na Capital | Conquistou/Fundou a 2a aldeia |
+| 5 | 100 | -1400 | 1 | 243 | Minas foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~15 tropas na Capital | Sem marco novo. |
+| 6 | 106 | -1394 | 1 | 257 | Fazendas foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~14 tropas na Capital | Sem marco novo. |
+| 7 | 112 | -1388 | 1 | 272 | Palacio foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~15 tropas na Capital | Sem marco novo. |
+| 8 | 116 | -1384 | 1 | 287 | Cartografar novos territorios + Senado foco -> Nv 2 + Recrutar ~15 tropas na Capital | Expedicao territorial (7 frentes) |
+| 9 | 123 | -1377 | 1 | 302 | Centro de Pesquisa foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~15 tropas na Capital | Sem marco novo. |
+| 10 | 130 | -1370 | 1 | 316 | Recrutar lote principal na Capital + Minas foco -> Nv 3 + Cartografar novos territorios proximos | Formou a primeira reserva militar na Capital |
+| 11 | 136 | -1364 | 1 | 331 | Fazendas foco -> Nv 3 + Cartografar novos territorios proximos + Recrutar ~15 tropas na Capital | Sem marco novo. |
+| 12 | 213 | -1287 | 2 | 346 | Conquistou/Fundou a 2a aldeia + Palacio foco -> Nv 3 + Senado foco -> Nv 3 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~15 tropas na Capital | Conquistou/Fundou a 2a aldeia |
 | 13 | 220 | -1280 | 2 | 360 | Centro de Pesquisa foco -> Nv 3 + Minas foco -> Nv 4 | Sem marco novo. |
 | 14 | 227 | -1273 | 2 | 375 | Fazendas foco -> Nv 4 + Palacio foco -> Nv 4 + Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 15 | 236 | -1264 | 2 | 390 | Senado foco -> Nv 4 + Centro de Pesquisa foco -> Nv 4 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 15 | 236 | -1264 | 2 | 390 | Senado foco -> Nv 4 + Centro de Pesquisa foco -> Nv 4 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 16 | 244 | -1256 | 2 | 405 | Minas foco -> Nv 5 + Fazendas foco -> Nv 5 + Recrutar ~15 tropas na Capital | Sem marco novo. |
 | 17 | 323 | -1177 | 3 | 419 | Palacio foco -> Nv 5 + Senado foco -> Nv 5 | Sem marco novo. |
-| 18 | 332 | -1168 | 3 | 434 | Centro de Pesquisa foco -> Nv 5 + Minas foco -> Nv 6 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~15 tropas na Capital | Sem marco novo. |
+| 18 | 332 | -1168 | 3 | 434 | Centro de Pesquisa foco -> Nv 5 + Minas foco -> Nv 6 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~15 tropas na Capital | Sem marco novo. |
 | 19 | 341 | -1159 | 3 | 449 | Fazendas foco -> Nv 6 + Palacio foco -> Nv 6 | Sem marco novo. |
 | 20 | 384 | -1116 | 3 | 463 | Concluiu Quest 1/3 + Senado foco -> Nv 6 + Centro de Pesquisa foco -> Nv 6 + Recrutar ~14 tropas na Capital | Concluiu Quest 1/3 |
-| 21 | 393 | -1107 | 3 | 478 | Minas foco -> Nv 7 + Fazendas foco -> Nv 7 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 21 | 393 | -1107 | 3 | 478 | Minas foco -> Nv 7 + Fazendas foco -> Nv 7 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 22 | 402 | -1098 | 3 | 493 | Palacio foco -> Nv 7 + Senado foco -> Nv 7 + Recrutar ~15 tropas na Capital | Sem marco novo. |
 | 23 | 409 | -1091 | 3 | 508 | Centro de Pesquisa foco -> Nv 7 + Minas foco -> Nv 8 | Sem marco novo. |
-| 24 | 418 | -1082 | 3 | 522 | Fazendas foco -> Nv 8 + Palacio foco -> Nv 8 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~14 tropas na Capital | Sem marco novo. |
+| 24 | 418 | -1082 | 3 | 522 | Fazendas foco -> Nv 8 + Palacio foco -> Nv 8 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~14 tropas na Capital | Sem marco novo. |
 | 25 | 477 | -1023 | 3 | 537 | Contratou Engenheiro + Senado foco -> Nv 8 + Centro de Pesquisa foco -> Nv 8 | Contratou Engenheiro |
 | 26 | 485 | -1015 | 3 | 552 | Minas foco -> Nv 9 + Fazendas foco -> Nv 9 + Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 27 | 624 | -876 | 4 | 567 | Contratou Erudito + Palacio foco -> Nv 9 + Senado foco -> Nv 9 + Vasculhar arredores para saque e bonus de exploracao | Contratou Erudito |
+| 27 | 624 | -876 | 4 | 567 | Contratou Erudito + Palacio foco -> Nv 9 + Senado foco -> Nv 9 + Abrir rota de fronteira e registrar novos territorios | Contratou Erudito |
 | 28 | 634 | -866 | 4 | 581 | Centro de Pesquisa foco -> Nv 9 + Minas foco -> Nv 10 + Recrutar ~14 tropas na Capital | Sem marco novo. |
 | 29 | 642 | -858 | 4 | 596 | Fazendas foco -> Nv 10 + Palacio foco -> Nv 10 | Sem marco novo. |
-| 30 | 652 | -848 | 4 | 611 | Chegou a 4 aldeias + Senado foco -> Nv 10 + Centro de Pesquisa foco -> Nv 10 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~15 tropas na Capital | Chegou a 4 aldeias |
-| 31 | 661 | -839 | 4 | 625 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
+| 30 | 652 | -848 | 4 | 611 | Chegou a 4 aldeias + Senado foco -> Nv 10 + Centro de Pesquisa foco -> Nv 10 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~15 tropas na Capital | Chegou a 4 aldeias |
+| 31 | 661 | -839 | 4 | 625 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
 | 32 | 670 | -830 | 4 | 640 | Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 33 | 679 | -821 | 4 | 655 | Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 33 | 679 | -821 | 4 | 655 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 34 | 692 | -808 | 4 | 670 | Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 35 | 705 | -795 | 4 | 684 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
-| 36 | 718 | -782 | 4 | 699 | Vasculhar arredores para saque e bonus de exploracao + Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 37 | 823 | -677 | 5 | 714 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
+| 35 | 705 | -795 | 4 | 684 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 36 | 718 | -782 | 4 | 699 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~15 tropas na Capital | Sem marco novo. |
+| 37 | 823 | -677 | 5 | 714 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
 | 38 | 837 | -663 | 5 | 728 | Recrutar ~14 tropas na Capital | Sem marco novo. |
 | 39 | 902 | -598 | 5 | 743 | Primeira aldeia atingiu 100/100 + Contratou Engenheiro (2a vaga) + Habitacoes foco -> Nv 2 + Doar recursos internos para a aldeia foco de Maravilha + Recrutar ~15 tropas na Capital | Primeira aldeia atingiu 100/100 + Contratou Engenheiro (2a vaga) |
 | 40 | 1018 | -482 | 5 | 758 | Habitacoes foco -> Nv 3 + Doar recursos internos para a aldeia foco de Maravilha + Recrutar ~15 tropas na Capital | Sem marco novo. |
@@ -153,47 +153,47 @@
 | 2 | 69 | -1431 | 1 | 169 | Arsenal -> Nv 2 + Quartel -> Nv 2 | Arsenal -> Nv 2 + Quartel -> Nv 2 |
 | 3 | 74 | -1426 | 1 | 185 | Fazendas -> Nv 3 + Minas -> Nv 3 | Fazendas -> Nv 3 + Minas -> Nv 3 |
 | 4 | 80 | -1420 | 1 | 202 | Arsenal -> Nv 3 + Quartel -> Nv 3 | Arsenal -> Nv 3 + Quartel -> Nv 3 |
-| 5 | 85 | -1415 | 1 | 218 | Minas foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 6 | 91 | -1409 | 1 | 235 | Fazendas foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 7 | 97 | -1403 | 1 | 251 | Quartel foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 8 | 102 | -1398 | 1 | 267 | Arsenal foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 9 | 109 | -1391 | 1 | 284 | Palacio foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 10 | 117 | -1383 | 1 | 300 | Rodar buscas e coletas + Minas foco -> Nv 3 + Recrutar ~16 tropas na Capital | Buscas e coletas (7) |
-| 11 | 123 | -1377 | 1 | 317 | Fazendas foco -> Nv 3 + Rodar buscas e coletas + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 12 | 131 | -1369 | 1 | 333 | Recrutar lote principal na Capital + Quartel foco -> Nv 3 + Rodar buscas e coletas | Formou a primeira reserva militar na Capital |
-| 13 | 139 | -1361 | 1 | 350 | Arsenal foco -> Nv 3 + Rodar buscas e coletas + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 5 | 85 | -1415 | 1 | 218 | Minas foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 6 | 91 | -1409 | 1 | 235 | Fazendas foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 7 | 97 | -1403 | 1 | 251 | Quartel foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 8 | 102 | -1398 | 1 | 267 | Arsenal foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 9 | 109 | -1391 | 1 | 284 | Palacio foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 10 | 117 | -1383 | 1 | 300 | Cartografar novos territorios + Minas foco -> Nv 3 + Recrutar ~16 tropas na Capital | Expedicao territorial (7 frentes) |
+| 11 | 123 | -1377 | 1 | 317 | Fazendas foco -> Nv 3 + Cartografar novos territorios proximos + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 12 | 131 | -1369 | 1 | 333 | Recrutar lote principal na Capital + Quartel foco -> Nv 3 + Cartografar novos territorios proximos | Formou a primeira reserva militar na Capital |
+| 13 | 139 | -1361 | 1 | 350 | Arsenal foco -> Nv 3 + Cartografar novos territorios proximos + Recrutar ~17 tropas na Capital | Sem marco novo. |
 | 14 | 204 | -1296 | 2 | 366 | Conquistou/Fundou a 2a aldeia + Palacio foco -> Nv 3 + Minas foco -> Nv 4 + Recrutar ~16 tropas na Capital | Conquistou/Fundou a 2a aldeia |
-| 15 | 213 | -1287 | 2 | 383 | Fazendas foco -> Nv 4 + Quartel foco -> Nv 4 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 15 | 213 | -1287 | 2 | 383 | Fazendas foco -> Nv 4 + Quartel foco -> Nv 4 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 16 | 222 | -1278 | 2 | 399 | Arsenal foco -> Nv 4 + Palacio foco -> Nv 4 + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 17 | 231 | -1269 | 2 | 415 | Minas foco -> Nv 5 + Fazendas foco -> Nv 5 | Sem marco novo. |
-| 18 | 240 | -1260 | 2 | 432 | Quartel foco -> Nv 5 + Arsenal foco -> Nv 5 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 18 | 240 | -1260 | 2 | 432 | Quartel foco -> Nv 5 + Arsenal foco -> Nv 5 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~17 tropas na Capital | Sem marco novo. |
 | 19 | 313 | -1187 | 3 | 448 | Palacio foco -> Nv 5 + Minas foco -> Nv 6 | Sem marco novo. |
 | 20 | 356 | -1144 | 3 | 465 | Concluiu Quest 1/3 + Fazendas foco -> Nv 6 + Quartel foco -> Nv 6 + Recrutar ~17 tropas na Capital | Concluiu Quest 1/3 |
-| 21 | 365 | -1135 | 3 | 481 | Arsenal foco -> Nv 6 + Palacio foco -> Nv 6 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 21 | 365 | -1135 | 3 | 481 | Arsenal foco -> Nv 6 + Palacio foco -> Nv 6 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 22 | 374 | -1126 | 3 | 498 | Minas foco -> Nv 7 + Fazendas foco -> Nv 7 + Recrutar ~17 tropas na Capital | Sem marco novo. |
 | 23 | 382 | -1118 | 3 | 514 | Quartel foco -> Nv 7 + Arsenal foco -> Nv 7 | Sem marco novo. |
-| 24 | 391 | -1109 | 3 | 530 | Palacio foco -> Nv 7 + Minas foco -> Nv 8 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 24 | 391 | -1109 | 3 | 530 | Palacio foco -> Nv 7 + Minas foco -> Nv 8 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 25 | 399 | -1101 | 3 | 547 | Fazendas foco -> Nv 8 + Quartel foco -> Nv 8 | Sem marco novo. |
 | 26 | 407 | -1093 | 3 | 563 | Arsenal foco -> Nv 8 + Palacio foco -> Nv 8 + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 27 | 416 | -1084 | 3 | 580 | Minas foco -> Nv 9 + Fazendas foco -> Nv 9 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 27 | 416 | -1084 | 3 | 580 | Minas foco -> Nv 9 + Fazendas foco -> Nv 9 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 28 | 425 | -1075 | 3 | 596 | Quartel foco -> Nv 9 + Arsenal foco -> Nv 9 + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 29 | 505 | -995 | 4 | 613 | Palacio foco -> Nv 9 + Minas foco -> Nv 10 | Sem marco novo. |
-| 30 | 514 | -986 | 4 | 629 | Chegou a 4 aldeias + Fazendas foco -> Nv 10 + Quartel foco -> Nv 10 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~16 tropas na Capital | Chegou a 4 aldeias |
+| 30 | 514 | -986 | 4 | 629 | Chegou a 4 aldeias + Fazendas foco -> Nv 10 + Quartel foco -> Nv 10 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Chegou a 4 aldeias |
 | 31 | 524 | -976 | 4 | 645 | Arsenal foco -> Nv 10 + Palacio foco -> Nv 10 | Sem marco novo. |
 | 32 | 533 | -967 | 4 | 662 | Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 33 | 543 | -957 | 4 | 678 | Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 33 | 543 | -957 | 4 | 678 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 34 | 552 | -948 | 4 | 695 | Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 35 | 561 | -939 | 4 | 711 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
-| 36 | 570 | -930 | 4 | 728 | Vasculhar arredores para saque e bonus de exploracao + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 37 | 580 | -920 | 4 | 744 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
+| 35 | 561 | -939 | 4 | 711 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 36 | 570 | -930 | 4 | 728 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 37 | 580 | -920 | 4 | 744 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
 | 38 | 667 | -833 | 5 | 760 | Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 39 | 678 | -822 | 5 | 777 | Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 39 | 678 | -822 | 5 | 777 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 40 | 788 | -712 | 5 | 793 | Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 41 | 797 | -703 | 5 | 810 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
-| 42 | 807 | -693 | 5 | 826 | Vasculhar arredores para saque e bonus de exploracao + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 41 | 797 | -703 | 5 | 810 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 42 | 807 | -693 | 5 | 826 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 43 | 868 | -632 | 5 | 843 | Contratou Marechal | Contratou Marechal |
 | 44 | 877 | -623 | 5 | 859 | Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 45 | 887 | -613 | 5 | 876 | Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 45 | 887 | -613 | 5 | 876 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 46 | 948 | -552 | 5 | 892 | Primeira aldeia atingiu 100/100 + Contratou Erudito + Centro de Pesquisa foco -> Nv 2 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Primeira aldeia atingiu 100/100 + Contratou Erudito |
 | 47 | 957 | -543 | 5 | 908 | Centro de Pesquisa foco -> Nv 3 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 48 | 1059 | -441 | 6 | 925 | Centro de Pesquisa foco -> Nv 4 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
@@ -285,45 +285,45 @@
 | 2 | 68 | -1432 | 1 | 191 | Habitacoes -> Nv 2 + Muralha -> Nv 2 | Habitacoes -> Nv 2 + Muralha -> Nv 2 |
 | 3 | 73 | -1427 | 1 | 207 | Fazendas -> Nv 3 + Minas -> Nv 3 | Fazendas -> Nv 3 + Minas -> Nv 3 |
 | 4 | 79 | -1421 | 1 | 222 | Habitacoes -> Nv 3 + Muralha -> Nv 3 | Habitacoes -> Nv 3 + Muralha -> Nv 3 |
-| 5 | 83 | -1417 | 1 | 238 | Rodar buscas e coletas + Minas foco -> Nv 2 + Recrutar ~16 tropas na Capital | Buscas e coletas (8) |
-| 6 | 89 | -1411 | 1 | 254 | Fazendas foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 7 | 95 | -1405 | 1 | 270 | Recrutar lote principal na Capital + Habitacoes foco -> Nv 2 + Rodar buscas e coletas | Formou a primeira reserva militar na Capital |
-| 8 | 100 | -1400 | 1 | 286 | Muralha foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 9 | 157 | -1343 | 2 | 302 | Conquistou/Fundou a 2a aldeia + Palacio foco -> Nv 2 + Minas foco -> Nv 3 + Vasculhar arredores para saque e bonus de exploracao | Conquistou/Fundou a 2a aldeia |
+| 5 | 83 | -1417 | 1 | 238 | Cartografar novos territorios + Minas foco -> Nv 2 + Recrutar ~16 tropas na Capital | Expedicao territorial (8 frentes) |
+| 6 | 89 | -1411 | 1 | 254 | Fazendas foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 7 | 95 | -1405 | 1 | 270 | Recrutar lote principal na Capital + Habitacoes foco -> Nv 2 + Cartografar novos territorios proximos | Formou a primeira reserva militar na Capital |
+| 8 | 100 | -1400 | 1 | 286 | Muralha foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 9 | 157 | -1343 | 2 | 302 | Conquistou/Fundou a 2a aldeia + Palacio foco -> Nv 2 + Minas foco -> Nv 3 + Abrir rota de fronteira e registrar novos territorios | Conquistou/Fundou a 2a aldeia |
 | 10 | 167 | -1333 | 2 | 317 | Fazendas foco -> Nv 3 + Habitacoes foco -> Nv 3 + Recrutar ~15 tropas na Capital | Sem marco novo. |
 | 11 | 175 | -1325 | 2 | 333 | Muralha foco -> Nv 3 + Palacio foco -> Nv 3 | Sem marco novo. |
-| 12 | 184 | -1316 | 2 | 349 | Minas foco -> Nv 4 + Fazendas foco -> Nv 4 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 12 | 184 | -1316 | 2 | 349 | Minas foco -> Nv 4 + Fazendas foco -> Nv 4 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 13 | 192 | -1308 | 2 | 365 | Habitacoes foco -> Nv 4 + Muralha foco -> Nv 4 | Sem marco novo. |
 | 14 | 200 | -1300 | 2 | 381 | Palacio foco -> Nv 4 + Minas foco -> Nv 5 + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 15 | 267 | -1233 | 3 | 397 | Fazendas foco -> Nv 5 + Habitacoes foco -> Nv 5 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 15 | 267 | -1233 | 3 | 397 | Fazendas foco -> Nv 5 + Habitacoes foco -> Nv 5 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 16 | 277 | -1223 | 3 | 412 | Muralha foco -> Nv 5 + Palacio foco -> Nv 5 + Recrutar ~15 tropas na Capital | Sem marco novo. |
 | 17 | 287 | -1213 | 3 | 428 | Minas foco -> Nv 6 + Fazendas foco -> Nv 6 | Sem marco novo. |
-| 18 | 297 | -1203 | 3 | 444 | Habitacoes foco -> Nv 6 + Muralha foco -> Nv 6 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 18 | 297 | -1203 | 3 | 444 | Habitacoes foco -> Nv 6 + Muralha foco -> Nv 6 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 19 | 307 | -1193 | 3 | 460 | Palacio foco -> Nv 6 + Minas foco -> Nv 7 | Sem marco novo. |
 | 20 | 352 | -1148 | 3 | 476 | Concluiu Quest 1/3 + Fazendas foco -> Nv 7 + Habitacoes foco -> Nv 7 + Recrutar ~16 tropas na Capital | Concluiu Quest 1/3 |
-| 21 | 361 | -1139 | 3 | 492 | Muralha foco -> Nv 7 + Palacio foco -> Nv 7 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 21 | 361 | -1139 | 3 | 492 | Muralha foco -> Nv 7 + Palacio foco -> Nv 7 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 22 | 370 | -1130 | 3 | 507 | Minas foco -> Nv 8 + Fazendas foco -> Nv 8 + Recrutar ~15 tropas na Capital | Sem marco novo. |
 | 23 | 377 | -1123 | 3 | 523 | Habitacoes foco -> Nv 8 + Muralha foco -> Nv 8 | Sem marco novo. |
-| 24 | 386 | -1114 | 3 | 539 | Palacio foco -> Nv 8 + Minas foco -> Nv 9 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 24 | 386 | -1114 | 3 | 539 | Palacio foco -> Nv 8 + Minas foco -> Nv 9 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 25 | 395 | -1105 | 3 | 555 | Fazendas foco -> Nv 9 + Habitacoes foco -> Nv 9 | Sem marco novo. |
 | 26 | 403 | -1097 | 3 | 571 | Muralha foco -> Nv 9 + Palacio foco -> Nv 9 + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 27 | 481 | -1019 | 4 | 587 | Minas foco -> Nv 10 + Fazendas foco -> Nv 10 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 27 | 481 | -1019 | 4 | 587 | Minas foco -> Nv 10 + Fazendas foco -> Nv 10 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 28 | 491 | -1009 | 4 | 602 | Habitacoes foco -> Nv 10 + Muralha foco -> Nv 10 + Recrutar ~15 tropas na Capital | Sem marco novo. |
 | 29 | 499 | -1001 | 4 | 618 | Palacio foco -> Nv 10 | Sem marco novo. |
-| 30 | 508 | -992 | 4 | 634 | Chegou a 4 aldeias + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~16 tropas na Capital | Chegou a 4 aldeias |
-| 31 | 518 | -982 | 4 | 650 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
+| 30 | 508 | -992 | 4 | 634 | Chegou a 4 aldeias + Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Chegou a 4 aldeias |
+| 31 | 518 | -982 | 4 | 650 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
 | 32 | 526 | -974 | 4 | 666 | Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 33 | 537 | -963 | 4 | 682 | Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 33 | 537 | -963 | 4 | 682 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 34 | 546 | -954 | 4 | 697 | Recrutar ~15 tropas na Capital | Sem marco novo. |
-| 35 | 555 | -945 | 4 | 713 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
-| 36 | 564 | -936 | 4 | 729 | Vasculhar arredores para saque e bonus de exploracao + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 37 | 573 | -927 | 4 | 745 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
+| 35 | 555 | -945 | 4 | 713 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 36 | 564 | -936 | 4 | 729 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 37 | 573 | -927 | 4 | 745 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
 | 38 | 659 | -841 | 5 | 761 | Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 39 | 669 | -831 | 5 | 777 | Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 39 | 669 | -831 | 5 | 777 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 40 | 830 | -670 | 5 | 792 | Contratou Marechal + Recrutar ~15 tropas na Capital | Contratou Marechal |
-| 41 | 839 | -661 | 5 | 808 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
-| 42 | 849 | -651 | 5 | 824 | Vasculhar arredores para saque e bonus de exploracao + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 43 | 859 | -641 | 5 | 840 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
+| 41 | 839 | -661 | 5 | 808 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 42 | 849 | -651 | 5 | 824 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 43 | 859 | -641 | 5 | 840 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
 | 44 | 869 | -631 | 5 | 856 | Primeira aldeia atingiu 100/100 + Centro de Pesquisa foco -> Nv 2 + Subir defesa util sem sacrificar a execucao de score + Recrutar ~16 tropas na Capital | Primeira aldeia atingiu 100/100 |
 | 45 | 879 | -621 | 5 | 872 | Centro de Pesquisa foco -> Nv 3 + Subir defesa util sem sacrificar a execucao de score + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 46 | 1039 | -461 | 5 | 887 | Contratou Erudito (2a vaga) + Contratou Marechal (2a vaga) + Centro de Pesquisa foco -> Nv 4 + Subir defesa util sem sacrificar a execucao de score + Recrutar ~15 tropas na Capital | Contratou Erudito (2a vaga) + Contratou Erudito (2a vaga) + Contratou Marechal (2a vaga) |
@@ -417,47 +417,47 @@
 | 2 | 69 | -1431 | 1 | 206 | Minas -> Nv 2 + Palacio -> Nv 2 | Minas -> Nv 2 + Palacio -> Nv 2 |
 | 3 | 74 | -1426 | 1 | 224 | Fazendas -> Nv 3 + Habitacoes -> Nv 3 | Fazendas -> Nv 3 + Habitacoes -> Nv 3 |
 | 4 | 78 | -1422 | 1 | 242 | Minas -> Nv 3 + Palacio -> Nv 3 | Minas -> Nv 3 + Palacio -> Nv 3 |
-| 5 | 83 | -1417 | 1 | 260 | Fazendas foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 6 | 88 | -1412 | 1 | 278 | Habitacoes foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 7 | 93 | -1407 | 1 | 296 | Minas foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 8 | 98 | -1402 | 1 | 314 | Palacio foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 9 | 103 | -1397 | 1 | 332 | Centro de Pesquisa foco -> Nv 2 + Rodar buscas e coletas + Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 10 | 110 | -1390 | 1 | 350 | Rodar buscas e coletas + Fazendas foco -> Nv 3 + Recrutar ~18 tropas na Capital | Buscas e coletas (6) |
-| 11 | 116 | -1384 | 1 | 368 | Habitacoes foco -> Nv 3 + Rodar buscas e coletas + Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 12 | 123 | -1377 | 1 | 386 | Recrutar lote principal na Capital + Minas foco -> Nv 3 + Rodar buscas e coletas | Formou a primeira reserva militar na Capital |
-| 13 | 131 | -1369 | 1 | 404 | Palacio foco -> Nv 3 + Rodar buscas e coletas + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 5 | 83 | -1417 | 1 | 260 | Fazendas foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 6 | 88 | -1412 | 1 | 278 | Habitacoes foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 7 | 93 | -1407 | 1 | 296 | Minas foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 8 | 98 | -1402 | 1 | 314 | Palacio foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 9 | 103 | -1397 | 1 | 332 | Centro de Pesquisa foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 10 | 110 | -1390 | 1 | 350 | Cartografar novos territorios + Fazendas foco -> Nv 3 + Recrutar ~18 tropas na Capital | Expedicao territorial (6 frentes) |
+| 11 | 116 | -1384 | 1 | 368 | Habitacoes foco -> Nv 3 + Cartografar novos territorios proximos + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 12 | 123 | -1377 | 1 | 386 | Recrutar lote principal na Capital + Minas foco -> Nv 3 + Cartografar novos territorios proximos | Formou a primeira reserva militar na Capital |
+| 13 | 131 | -1369 | 1 | 404 | Palacio foco -> Nv 3 + Cartografar novos territorios proximos + Recrutar ~18 tropas na Capital | Sem marco novo. |
 | 14 | 196 | -1304 | 2 | 422 | Conquistou/Fundou a 2a aldeia + Centro de Pesquisa foco -> Nv 3 + Fazendas foco -> Nv 4 + Recrutar ~18 tropas na Capital | Conquistou/Fundou a 2a aldeia |
-| 15 | 204 | -1296 | 2 | 440 | Habitacoes foco -> Nv 4 + Minas foco -> Nv 4 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 15 | 204 | -1296 | 2 | 440 | Habitacoes foco -> Nv 4 + Minas foco -> Nv 4 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 16 | 212 | -1288 | 2 | 458 | Palacio foco -> Nv 4 + Centro de Pesquisa foco -> Nv 4 + Recrutar ~18 tropas na Capital | Sem marco novo. |
 | 17 | 220 | -1280 | 2 | 476 | Fazendas foco -> Nv 5 + Habitacoes foco -> Nv 5 | Sem marco novo. |
-| 18 | 228 | -1272 | 2 | 494 | Minas foco -> Nv 5 + Palacio foco -> Nv 5 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 18 | 228 | -1272 | 2 | 494 | Minas foco -> Nv 5 + Palacio foco -> Nv 5 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~18 tropas na Capital | Sem marco novo. |
 | 19 | 236 | -1264 | 2 | 512 | Centro de Pesquisa foco -> Nv 5 + Fazendas foco -> Nv 6 | Sem marco novo. |
 | 20 | 344 | -1156 | 3 | 530 | Concluiu Quest 1/3 + Habitacoes foco -> Nv 6 + Minas foco -> Nv 6 + Recrutar ~18 tropas na Capital | Concluiu Quest 1/3 |
-| 21 | 352 | -1148 | 3 | 548 | Palacio foco -> Nv 6 + Centro de Pesquisa foco -> Nv 6 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 21 | 352 | -1148 | 3 | 548 | Palacio foco -> Nv 6 + Centro de Pesquisa foco -> Nv 6 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 22 | 361 | -1139 | 3 | 566 | Fazendas foco -> Nv 7 + Habitacoes foco -> Nv 7 + Recrutar ~18 tropas na Capital | Sem marco novo. |
 | 23 | 369 | -1131 | 3 | 585 | Minas foco -> Nv 7 + Palacio foco -> Nv 7 | Sem marco novo. |
-| 24 | 377 | -1123 | 3 | 603 | Centro de Pesquisa foco -> Nv 7 + Fazendas foco -> Nv 8 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 24 | 377 | -1123 | 3 | 603 | Centro de Pesquisa foco -> Nv 7 + Fazendas foco -> Nv 8 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~18 tropas na Capital | Sem marco novo. |
 | 25 | 384 | -1116 | 3 | 621 | Habitacoes foco -> Nv 8 + Minas foco -> Nv 8 | Sem marco novo. |
 | 26 | 392 | -1108 | 3 | 639 | Palacio foco -> Nv 8 + Centro de Pesquisa foco -> Nv 8 + Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 27 | 400 | -1100 | 3 | 657 | Fazendas foco -> Nv 9 + Habitacoes foco -> Nv 9 + Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 27 | 400 | -1100 | 3 | 657 | Fazendas foco -> Nv 9 + Habitacoes foco -> Nv 9 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 28 | 408 | -1092 | 3 | 675 | Minas foco -> Nv 9 + Palacio foco -> Nv 9 + Recrutar ~18 tropas na Capital | Sem marco novo. |
 | 29 | 416 | -1084 | 3 | 693 | Centro de Pesquisa foco -> Nv 9 + Fazendas foco -> Nv 10 | Sem marco novo. |
-| 30 | 424 | -1076 | 3 | 711 | Chegou a 3 aldeias + Habitacoes foco -> Nv 10 + Minas foco -> Nv 10 + Vasculhar arredores para saque e bonus de exploracao + Recrutar ~18 tropas na Capital | Chegou a 3 aldeias |
+| 30 | 424 | -1076 | 3 | 711 | Chegou a 3 aldeias + Habitacoes foco -> Nv 10 + Minas foco -> Nv 10 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~18 tropas na Capital | Chegou a 3 aldeias |
 | 31 | 505 | -995 | 4 | 729 | Palacio foco -> Nv 10 + Centro de Pesquisa foco -> Nv 10 | Sem marco novo. |
 | 32 | 514 | -986 | 4 | 747 | Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 33 | 522 | -978 | 4 | 765 | Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 33 | 522 | -978 | 4 | 765 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 34 | 531 | -969 | 4 | 783 | Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 35 | 539 | -961 | 4 | 801 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
-| 36 | 548 | -952 | 4 | 819 | Vasculhar arredores para saque e bonus de exploracao + Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 37 | 557 | -943 | 4 | 837 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
+| 35 | 539 | -961 | 4 | 801 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 36 | 548 | -952 | 4 | 819 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 37 | 557 | -943 | 4 | 837 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
 | 38 | 566 | -934 | 4 | 855 | Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 39 | 574 | -926 | 4 | 873 | Vasculhar arredores para saque e bonus de exploracao | Sem marco novo. |
+| 39 | 574 | -926 | 4 | 873 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 40 | 683 | -817 | 4 | 891 | Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 41 | 691 | -809 | 4 | 909 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Vasculhar arredores | Sem marco novo. |
-| 42 | 782 | -718 | 5 | 927 | Vasculhar arredores para saque e bonus de exploracao + Recrutar ~18 tropas na Capital | Sem marco novo. |
+| 41 | 691 | -809 | 4 | 909 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 42 | 782 | -718 | 5 | 927 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~18 tropas na Capital | Sem marco novo. |
 | 43 | 841 | -659 | 5 | 945 | Contratou Engenheiro | Contratou Engenheiro |
 | 44 | 850 | -650 | 5 | 963 | Recrutar ~18 tropas na Capital | Sem marco novo. |
-| 45 | 911 | -589 | 5 | 981 | Contratou Intendente + Vasculhar arredores para saque e bonus de exploracao | Contratou Intendente |
+| 45 | 911 | -589 | 5 | 981 | Contratou Intendente + Abrir rota de fronteira e registrar novos territorios | Contratou Intendente |
 | 46 | 1020 | -480 | 5 | 999 | Contratou Erudito (2a vaga) + Recrutar ~18 tropas na Capital | Contratou Erudito (2a vaga) + Contratou Erudito (2a vaga) |
 | 47 | 1029 | -471 | 5 | 1.017 | Primeira aldeia atingiu 100/100 + Doar recursos internos x5 para acelerar aldeia foco + Recrutar ~18 tropas na Capital | Primeira aldeia atingiu 100/100 |
 | 48 | 1043 | -457 | 5 | 1.035 | Doar recursos internos x5 para acelerar aldeia foco + Recrutar ~18 tropas na Capital | Sem marco novo. |

@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST="{\"node_modules\\\\@capgo\\\\native-purchases\\\\dist\\\\esm\\\\index.js -> ./web\":{\"id\":\"node_modules\\\\@capgo\\\\native-purchases\\\\dist\\\\esm\\\\index.js -> ./web\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_capgo_native-purchases_dist_esm_web_js.js\"]}}"

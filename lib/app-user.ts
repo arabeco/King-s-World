@@ -1,7 +1,8 @@
 import "server-only";
 
+import { buildDevUser, isDevAuthEnabled } from "@/lib/dev-auth";
 import { getAuthenticatedUser } from "@/lib/supabase-server";
-import { supabaseInsertReturning, supabaseSelect } from "@/lib/supabase-rest";
+import { shouldUseLocalSupabaseFallback, supabaseInsertReturning, supabaseSelect } from "@/lib/supabase-rest";
 
 export type AppUserRecord = {
   id: string;
@@ -13,6 +14,26 @@ export type AppUserRecord = {
 function normalizeUsername(seed: string): string {
   const cleaned = seed.toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
   return cleaned.length >= 3 ? cleaned.slice(0, 18) : `player_${cleaned || "coroa"}`;
+}
+
+function localAppUserFromAuth(authUser: {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+}): AppUserRecord {
+  const rawUsername =
+    typeof authUser.user_metadata?.username === "string"
+      ? authUser.user_metadata.username
+      : typeof authUser.user_metadata?.name === "string"
+        ? authUser.user_metadata.name
+        : authUser.email?.split("@")[0] ?? "player";
+
+  return {
+    id: authUser.id,
+    username: normalizeUsername(rawUsername),
+    email: authUser.email ?? undefined,
+    auth_user_id: authUser.id,
+  };
 }
 
 export async function fetchOrCreateAppUser(authUser: {
@@ -70,10 +91,17 @@ export async function fetchOrCreateAppUser(authUser: {
 }
 
 export async function requireAuthenticatedAppUser(): Promise<AppUserRecord> {
-  const authUser = await getAuthenticatedUser();
+  const authUser = await getAuthenticatedUser() ?? (isDevAuthEnabled() ? buildDevUser("1") : null);
   if (!authUser) {
     throw new Error("Unauthorized");
   }
 
-  return fetchOrCreateAppUser(authUser);
+  try {
+    return await fetchOrCreateAppUser(authUser);
+  } catch (error) {
+    if (shouldUseLocalSupabaseFallback(error)) {
+      return localAppUserFromAuth(authUser);
+    }
+    throw error;
+  }
 }

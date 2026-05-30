@@ -78,9 +78,9 @@ export function LobbyWorldSelector({
   };
 
   return (
-    <div className="dashboard-grid">
-      <SectionCard title={username} eyebrow="Sua conta" mediaSrc="/images/card-premium.jpg" accent="gold">
-        <div className="world-card" style={{ background: "rgba(2,6,23,0.42)", borderColor: "rgba(255,255,255,0.16)" }}>
+    <div className="dashboard-grid lobby-world-grid">
+      <SectionCard title={username} eyebrow="Sua conta" mediaSrc="/images/card-premium.jpg" accent="gold" className="lobby-card lobby-card--account">
+        <div className="world-card lobby-compact-card" style={{ background: "rgba(2,6,23,0.42)", borderColor: "rgba(255,255,255,0.16)" }}>
           <div className="card-row">
             <div>
               <strong>Passe da Coroa</strong>
@@ -88,7 +88,7 @@ export function LobbyWorldSelector({
             </div>
             <StatusBadge label="Teste" tone="warning" />
           </div>
-          <div className="metric-grid" style={{ marginTop: "1rem" }}>
+          <div className="metric-grid lobby-metric-grid" style={{ marginTop: "1rem" }}>
             <div>
               <span>Nivel</span>
               <strong>1</strong>
@@ -101,7 +101,7 @@ export function LobbyWorldSelector({
         </div>
       </SectionCard>
 
-      <SectionCard title="Entrar no mundo" eyebrow="Seletor" mediaSrc="/images/capital.jpg">
+      <SectionCard title="Entrar no mundo" eyebrow="Seletor" mediaSrc="/images/capital.jpg" className="lobby-card lobby-card--entry">
         <div className="form-stack">
           <label className="list-meta" htmlFor="lobby-world-picker">
             Mundo ativo da campanha
@@ -120,14 +120,14 @@ export function LobbyWorldSelector({
           </select>
 
           {!hasPlayableWorld ? (
-            <div className="world-card" style={{ background: "rgba(120,53,15,0.24)", borderColor: "rgba(251,191,36,0.28)", textAlign: "center" }}>
+            <div className="world-card lobby-compact-card" style={{ background: "rgba(120,53,15,0.24)", borderColor: "rgba(251,191,36,0.28)", textAlign: "center" }}>
               <strong>Todos os mundos estao arquivados</strong>
               <p className="list-meta">Voce ainda pode abrir o relatorio/leitura. Para jogar uma campanha nova, precisamos criar ou reativar um mundo no Supabase.</p>
             </div>
           ) : null}
 
           {selectedWorld ? (
-            <div className="world-card" style={{ background: "rgba(2,6,23,0.46)", borderColor: "rgba(255,255,255,0.16)" }}>
+            <div className="world-card lobby-compact-card lobby-selected-world" style={{ background: "rgba(2,6,23,0.46)", borderColor: "rgba(255,255,255,0.16)" }}>
               <div className="card-row">
                 <div>
                   <strong>{selectedWorld.name}</strong>
@@ -144,7 +144,7 @@ export function LobbyWorldSelector({
             {selectedWorld?.status === "Finalizado" ? "Ver relatorio" : "Entrar"}
           </button>
           {process.env.NODE_ENV !== "production" ? (
-            <div className="inline-actions">
+            <div className="inline-actions lobby-dev-actions">
               <button className="secondary-button" type="button" onClick={() => createTestWorld("classic")} disabled={creatingWorld} data-smoke="create-test-world">
                 {creatingWorld ? "Criando..." : "Alpha classica"}
               </button>
@@ -157,12 +157,12 @@ export function LobbyWorldSelector({
         </div>
       </SectionCard>
 
-      <SectionCard title="Atalhos" eyebrow="Conta" accent="cyan">
-        <div className="world-card" style={{ marginBottom: "1rem", background: "rgba(2,6,23,0.42)", borderColor: "rgba(255,255,255,0.14)" }}>
+      <SectionCard title="Atalhos" eyebrow="Conta" accent="cyan" className="lobby-card lobby-card--shortcuts">
+        <div className="world-card lobby-compact-card lobby-flow-card" style={{ marginBottom: "1rem", background: "rgba(2,6,23,0.42)", borderColor: "rgba(255,255,255,0.14)" }}>
           <strong>Fluxo da campanha</strong>
           <p className="list-meta">Entrar no mundo - escolher a Coroa - evoluir a Capital - explorar o mapa - fechar 1500 de influencia.</p>
         </div>
-        <div className="metric-grid">
+        <div className="metric-grid lobby-metric-grid">
           <div>
             <span>Premium</span>
             <strong>

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-25T11:58:38.974Z",
+  "generatedAt": "2026-05-17T17:56:31.466Z",
   "outputBasename": "season_v2_paired8",
   "status": "PASS",
   "playbooks": {
@@ -86,12 +86,12 @@
           "troopsLabel": "243",
           "actions": [
             "Minas foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~15 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -104,12 +104,12 @@
           "troopsLabel": "257",
           "actions": [
             "Fazendas foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~14 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -122,12 +122,12 @@
           "troopsLabel": "272",
           "actions": [
             "Palacio foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~15 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -139,16 +139,16 @@
           "villages": 1,
           "troopsLabel": "287",
           "actions": [
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios",
             "Senado foco -> Nv 2",
             "Recrutar ~15 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
-          "milestone": "Buscas e coletas (7)"
+          "milestone": "Expedicao territorial (7 frentes)"
         },
         {
           "day": 9,
@@ -158,12 +158,12 @@
           "troopsLabel": "302",
           "actions": [
             "Centro de Pesquisa foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~15 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -177,11 +177,11 @@
           "actions": [
             "Recrutar lote principal na Capital",
             "Minas foco -> Nv 3",
-            "Rodar buscas e coletas"
+            "Cartografar novos territorios proximos"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Formou a primeira reserva militar na Capital"
@@ -194,12 +194,12 @@
           "troopsLabel": "331",
           "actions": [
             "Fazendas foco -> Nv 3",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~15 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -214,7 +214,7 @@
             "Conquistou/Fundou a 2a aldeia",
             "Palacio foco -> Nv 3",
             "Senado foco -> Nv 3",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~15 tropas na Capital"
           ],
           "priorities": [
@@ -268,7 +268,7 @@
           "actions": [
             "Senado foco -> Nv 4",
             "Centro de Pesquisa foco -> Nv 4",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Escolher uma aldeia foco e funilar tudo nela ate 100/100.",
@@ -321,7 +321,7 @@
           "actions": [
             "Centro de Pesquisa foco -> Nv 5",
             "Minas foco -> Nv 6",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~15 tropas na Capital"
           ],
           "priorities": [
@@ -376,7 +376,7 @@
           "actions": [
             "Minas foco -> Nv 7",
             "Fazendas foco -> Nv 7",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Escolher uma aldeia foco e funilar tudo nela ate 100/100.",
@@ -429,7 +429,7 @@
           "actions": [
             "Fazendas foco -> Nv 8",
             "Palacio foco -> Nv 8",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~14 tropas na Capital"
           ],
           "priorities": [
@@ -485,7 +485,7 @@
             "Contratou Erudito",
             "Palacio foco -> Nv 9",
             "Senado foco -> Nv 9",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Fechar contratacao do heroi e realinhar a build ao bonus dele.",
@@ -539,7 +539,7 @@
             "Chegou a 4 aldeias",
             "Senado foco -> Nv 10",
             "Centro de Pesquisa foco -> Nv 10",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~15 tropas na Capital"
           ],
           "priorities": [
@@ -558,7 +558,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Escolher uma aldeia foco e funilar tudo nela ate 100/100.",
@@ -590,7 +590,7 @@
           "villages": 4,
           "troopsLabel": "655",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Escolher uma aldeia foco e funilar tudo nela ate 100/100.",
@@ -624,7 +624,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Escolher uma aldeia foco e funilar tudo nela ate 100/100.",
@@ -640,7 +640,7 @@
           "villages": 4,
           "troopsLabel": "699",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~15 tropas na Capital"
           ],
           "priorities": [
@@ -659,7 +659,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Escolher uma aldeia foco e funilar tudo nela ate 100/100.",
@@ -2161,7 +2161,7 @@
           ],
           "priorities": [
             "Subir Minas/Fazendas e destravar Quartel/Arsenal logo no inicio.",
-            "Vasculhar arredores para converter saque em ritmo de build.",
+            "Cartografar arredores para converter territorio conhecido em ritmo de build.",
             "Criar a primeira massa de ataque na Capital."
           ],
           "milestone": "Fazendas -> Nv 2 + Minas -> Nv 2"
@@ -2178,7 +2178,7 @@
           ],
           "priorities": [
             "Subir Minas/Fazendas e destravar Quartel/Arsenal logo no inicio.",
-            "Vasculhar arredores para converter saque em ritmo de build.",
+            "Cartografar arredores para converter territorio conhecido em ritmo de build.",
             "Criar a primeira massa de ataque na Capital."
           ],
           "milestone": "Arsenal -> Nv 2 + Quartel -> Nv 2"
@@ -2195,7 +2195,7 @@
           ],
           "priorities": [
             "Subir Minas/Fazendas e destravar Quartel/Arsenal logo no inicio.",
-            "Vasculhar arredores para converter saque em ritmo de build.",
+            "Cartografar arredores para converter territorio conhecido em ritmo de build.",
             "Criar a primeira massa de ataque na Capital."
           ],
           "milestone": "Fazendas -> Nv 3 + Minas -> Nv 3"
@@ -2212,7 +2212,7 @@
           ],
           "priorities": [
             "Subir Minas/Fazendas e destravar Quartel/Arsenal logo no inicio.",
-            "Vasculhar arredores para converter saque em ritmo de build.",
+            "Cartografar arredores para converter territorio conhecido em ritmo de build.",
             "Criar a primeira massa de ataque na Capital."
           ],
           "milestone": "Arsenal -> Nv 3 + Quartel -> Nv 3"
@@ -2225,12 +2225,12 @@
           "troopsLabel": "218",
           "actions": [
             "Minas foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -2243,12 +2243,12 @@
           "troopsLabel": "235",
           "actions": [
             "Fazendas foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~17 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -2261,12 +2261,12 @@
           "troopsLabel": "251",
           "actions": [
             "Quartel foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -2279,12 +2279,12 @@
           "troopsLabel": "267",
           "actions": [
             "Arsenal foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -2297,12 +2297,12 @@
           "troopsLabel": "284",
           "actions": [
             "Palacio foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~17 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -2314,16 +2314,16 @@
           "villages": 1,
           "troopsLabel": "300",
           "actions": [
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios",
             "Minas foco -> Nv 3",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
-          "milestone": "Buscas e coletas (7)"
+          "milestone": "Expedicao territorial (7 frentes)"
         },
         {
           "day": 11,
@@ -2333,12 +2333,12 @@
           "troopsLabel": "317",
           "actions": [
             "Fazendas foco -> Nv 3",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~17 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -2352,11 +2352,11 @@
           "actions": [
             "Recrutar lote principal na Capital",
             "Quartel foco -> Nv 3",
-            "Rodar buscas e coletas"
+            "Cartografar novos territorios proximos"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Formou a primeira reserva militar na Capital"
@@ -2369,12 +2369,12 @@
           "troopsLabel": "350",
           "actions": [
             "Arsenal foco -> Nv 3",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~17 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -2407,7 +2407,7 @@
           "actions": [
             "Fazendas foco -> Nv 4",
             "Quartel foco -> Nv 4",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Converter agressao em aldeias e marcos, nao so em combate vazio.",
@@ -2460,7 +2460,7 @@
           "actions": [
             "Quartel foco -> Nv 5",
             "Arsenal foco -> Nv 5",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~17 tropas na Capital"
           ],
           "priorities": [
@@ -2515,7 +2515,7 @@
           "actions": [
             "Arsenal foco -> Nv 6",
             "Palacio foco -> Nv 6",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Converter agressao em aldeias e marcos, nao so em combate vazio.",
@@ -2568,7 +2568,7 @@
           "actions": [
             "Palacio foco -> Nv 7",
             "Minas foco -> Nv 8",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
@@ -2622,7 +2622,7 @@
           "actions": [
             "Minas foco -> Nv 9",
             "Fazendas foco -> Nv 9",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Converter agressao em aldeias e marcos, nao so em combate vazio.",
@@ -2676,7 +2676,7 @@
             "Chegou a 4 aldeias",
             "Fazendas foco -> Nv 10",
             "Quartel foco -> Nv 10",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
@@ -2726,7 +2726,7 @@
           "villages": 4,
           "troopsLabel": "678",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Converter agressao em aldeias e marcos, nao so em combate vazio.",
@@ -2760,7 +2760,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Converter agressao em aldeias e marcos, nao so em combate vazio.",
@@ -2776,7 +2776,7 @@
           "villages": 4,
           "troopsLabel": "728",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~17 tropas na Capital"
           ],
           "priorities": [
@@ -2795,7 +2795,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Converter agressao em aldeias e marcos, nao so em combate vazio.",
@@ -2827,7 +2827,7 @@
           "villages": 5,
           "troopsLabel": "777",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Converter agressao em aldeias e marcos, nao so em combate vazio.",
@@ -2861,7 +2861,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Converter agressao em aldeias e marcos, nao so em combate vazio.",
@@ -2877,7 +2877,7 @@
           "villages": 5,
           "troopsLabel": "826",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
@@ -2926,7 +2926,7 @@
           "villages": 5,
           "troopsLabel": "876",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Converter agressao em aldeias e marcos, nao so em combate vazio.",
@@ -4357,16 +4357,16 @@
           "villages": 1,
           "troopsLabel": "238",
           "actions": [
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios",
             "Minas foco -> Nv 2",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
-          "milestone": "Buscas e coletas (8)"
+          "milestone": "Expedicao territorial (8 frentes)"
         },
         {
           "day": 6,
@@ -4376,12 +4376,12 @@
           "troopsLabel": "254",
           "actions": [
             "Fazendas foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -4395,11 +4395,11 @@
           "actions": [
             "Recrutar lote principal na Capital",
             "Habitacoes foco -> Nv 2",
-            "Rodar buscas e coletas"
+            "Cartografar novos territorios proximos"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Formou a primeira reserva militar na Capital"
@@ -4412,12 +4412,12 @@
           "troopsLabel": "286",
           "actions": [
             "Muralha foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -4432,7 +4432,7 @@
             "Conquistou/Fundou a 2a aldeia",
             "Palacio foco -> Nv 2",
             "Minas foco -> Nv 3",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Garantir recursos e influencia para expansao sem travar a Capital.",
@@ -4485,7 +4485,7 @@
           "actions": [
             "Minas foco -> Nv 4",
             "Fazendas foco -> Nv 4",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
@@ -4539,7 +4539,7 @@
           "actions": [
             "Fazendas foco -> Nv 5",
             "Habitacoes foco -> Nv 5",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -4592,7 +4592,7 @@
           "actions": [
             "Habitacoes foco -> Nv 6",
             "Muralha foco -> Nv 6",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
@@ -4647,7 +4647,7 @@
           "actions": [
             "Muralha foco -> Nv 7",
             "Palacio foco -> Nv 7",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -4700,7 +4700,7 @@
           "actions": [
             "Palacio foco -> Nv 8",
             "Minas foco -> Nv 9",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
@@ -4754,7 +4754,7 @@
           "actions": [
             "Minas foco -> Nv 10",
             "Fazendas foco -> Nv 10",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -4805,7 +4805,7 @@
           "troopsLabel": "634",
           "actions": [
             "Chegou a 4 aldeias",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
@@ -4824,7 +4824,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -4856,7 +4856,7 @@
           "villages": 4,
           "troopsLabel": "682",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -4890,7 +4890,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -4906,7 +4906,7 @@
           "villages": 4,
           "troopsLabel": "729",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
@@ -4925,7 +4925,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -4957,7 +4957,7 @@
           "villages": 5,
           "troopsLabel": "777",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -4992,7 +4992,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -5008,7 +5008,7 @@
           "villages": 5,
           "troopsLabel": "824",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~16 tropas na Capital"
           ],
           "priorities": [
@@ -5027,7 +5027,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Subir aldeia foco 100/100 sem abandonar muralha e habitacoes.",
@@ -6493,12 +6493,12 @@
           "troopsLabel": "260",
           "actions": [
             "Fazendas foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -6511,12 +6511,12 @@
           "troopsLabel": "278",
           "actions": [
             "Habitacoes foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -6529,12 +6529,12 @@
           "troopsLabel": "296",
           "actions": [
             "Minas foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -6547,12 +6547,12 @@
           "troopsLabel": "314",
           "actions": [
             "Palacio foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -6565,12 +6565,12 @@
           "troopsLabel": "332",
           "actions": [
             "Centro de Pesquisa foco -> Nv 2",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -6582,16 +6582,16 @@
           "villages": 1,
           "troopsLabel": "350",
           "actions": [
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios",
             "Fazendas foco -> Nv 3",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
-          "milestone": "Buscas e coletas (6)"
+          "milestone": "Expedicao territorial (6 frentes)"
         },
         {
           "day": 11,
@@ -6601,12 +6601,12 @@
           "troopsLabel": "368",
           "actions": [
             "Habitacoes foco -> Nv 3",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -6620,11 +6620,11 @@
           "actions": [
             "Recrutar lote principal na Capital",
             "Minas foco -> Nv 3",
-            "Rodar buscas e coletas"
+            "Cartografar novos territorios proximos"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Formou a primeira reserva militar na Capital"
@@ -6637,12 +6637,12 @@
           "troopsLabel": "404",
           "actions": [
             "Palacio foco -> Nv 3",
-            "Rodar buscas e coletas",
+            "Cartografar novos territorios proximos",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
             "Juntar recurso para a 2a aldeia.",
-            "Fazer buscas/coletas sem atrasar o salto territorial.",
+            "Explorar novos territorios sem atrasar o salto territorial.",
             "Recrutar um lote leve na Capital para nao ficar nu no mapa."
           ],
           "milestone": "Sem marco novo."
@@ -6675,7 +6675,7 @@
           "actions": [
             "Habitacoes foco -> Nv 4",
             "Minas foco -> Nv 4",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Doar recursos internamente para acelerar a aldeia foco.",
@@ -6728,7 +6728,7 @@
           "actions": [
             "Minas foco -> Nv 5",
             "Palacio foco -> Nv 5",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
@@ -6783,7 +6783,7 @@
           "actions": [
             "Palacio foco -> Nv 6",
             "Centro de Pesquisa foco -> Nv 6",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Doar recursos internamente para acelerar a aldeia foco.",
@@ -6836,7 +6836,7 @@
           "actions": [
             "Centro de Pesquisa foco -> Nv 7",
             "Fazendas foco -> Nv 8",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
@@ -6890,7 +6890,7 @@
           "actions": [
             "Fazendas foco -> Nv 9",
             "Habitacoes foco -> Nv 9",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Doar recursos internamente para acelerar a aldeia foco.",
@@ -6944,7 +6944,7 @@
             "Chegou a 3 aldeias",
             "Habitacoes foco -> Nv 10",
             "Minas foco -> Nv 10",
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
@@ -6994,7 +6994,7 @@
           "villages": 4,
           "troopsLabel": "765",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Doar recursos internamente para acelerar a aldeia foco.",
@@ -7028,7 +7028,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Doar recursos internamente para acelerar a aldeia foco.",
@@ -7044,7 +7044,7 @@
           "villages": 4,
           "troopsLabel": "819",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
@@ -7063,7 +7063,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Doar recursos internamente para acelerar a aldeia foco.",
@@ -7095,7 +7095,7 @@
           "villages": 4,
           "troopsLabel": "873",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Doar recursos internamente para acelerar a aldeia foco.",
@@ -7129,7 +7129,7 @@
           "actions": [
             "Transferir recursos para a aldeia foco",
             "Recrutar lote leve na Capital",
-            "Vasculhar arredores"
+            "Cartografar arredores"
           ],
           "priorities": [
             "Doar recursos internamente para acelerar a aldeia foco.",
@@ -7145,7 +7145,7 @@
           "villages": 5,
           "troopsLabel": "927",
           "actions": [
-            "Vasculhar arredores para saque e bonus de exploracao",
+            "Abrir rota de fronteira e registrar novos territorios",
             "Recrutar ~18 tropas na Capital"
           ],
           "priorities": [
@@ -7195,7 +7195,7 @@
           "troopsLabel": "981",
           "actions": [
             "Contratou Intendente",
-            "Vasculhar arredores para saque e bonus de exploracao"
+            "Abrir rota de fronteira e registrar novos territorios"
           ],
           "priorities": [
             "Fechar contratacao do heroi e realinhar a build ao bonus dele.",

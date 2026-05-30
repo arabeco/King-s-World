@@ -8,7 +8,7 @@ import { emitUiFeedback } from "@/lib/ui-feedback";
 const tabs = [
   { key: "empire", label: "Império", iconSrc: "/icons/nav-empire.png", center: false },
   { key: "base", label: "Cidades", iconSrc: "/icons/nav-cities.png", center: false },
-  { key: "intelligence", label: "Intel", iconSrc: "/icons/nav-intel.png", center: true },
+  { key: "intelligence", label: "Comando", iconSrc: "/icons/nav-intel.png", center: true },
   { key: "board", label: "Mundo", iconSrc: "/icons/nav-world.png", center: false },
   { key: "guide", label: "Perfil", iconSrc: "/icons/nav-profile.png", center: false },
 ] as const;
@@ -95,7 +95,7 @@ export function BottomNavigation({
                     }`}
                   >
                     <img src={tab.iconSrc} alt="" className="h-9 w-9 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]" />
-                    <span className="mt-0.5 text-[8px] font-bold tracking-[0.02em]">INTEL</span>
+                    <span className="mt-0.5 text-[8px] font-bold tracking-[0.02em]">CMD</span>
                   </button>
                 );
               }

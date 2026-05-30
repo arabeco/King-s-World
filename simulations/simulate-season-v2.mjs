@@ -2286,8 +2286,8 @@ function buildActionTimeline(player) {
       timeline,
       Math.max(4, player.secondVillageDay - 4),
       "explore",
-      `Buscas e coletas (${player.explorationSorties})`,
-      `Raid score ${player.raidLootScore} e bonus de exploracao ${player.explorationBonus}.`,
+      `Expedicao territorial (${player.explorationSorties} frentes)`,
+      `Cartografia de fronteira com saque secundario ${player.raidLootScore} e bonus de exploracao ${player.explorationBonus}.`,
     );
   }
 
@@ -2657,7 +2657,7 @@ function baseDailyFocus(record, day) {
   }
 
   if (day < record.secondVillageDay) {
-    return "Juntar recurso para a 2a aldeia, manter coletas e formar reserva militar basica na Capital.";
+    return "Juntar recurso para a 2a aldeia, cartografar fronteira proxima e formar reserva militar basica na Capital.";
   }
 
   if (day < record.firstVillage100Day) {
@@ -2734,7 +2734,7 @@ function inferOptimalDailyPriorities(record, day, dayEvents) {
       priorities.push("Preparar a capital para a 2a aldeia antes do D15.");
     } else if (record.profile === "posto") {
       priorities.push("Subir Minas/Fazendas e destravar Quartel/Arsenal logo no inicio.");
-      priorities.push("Vasculhar arredores para converter saque em ritmo de build.");
+      priorities.push("Cartografar arredores para converter territorio conhecido em ritmo de build.");
       priorities.push("Criar a primeira massa de ataque na Capital.");
     } else if (record.profile === "bastiao") {
       priorities.push("Subir Minas/Fazendas junto de Habitacoes/Muralha.");
@@ -2747,7 +2747,7 @@ function inferOptimalDailyPriorities(record, day, dayEvents) {
     }
   } else if (stage === "prep_second") {
     priorities.push("Juntar recurso para a 2a aldeia.");
-    priorities.push("Fazer buscas/coletas sem atrasar o salto territorial.");
+    priorities.push("Explorar novos territorios sem atrasar o salto territorial.");
     priorities.push("Recrutar um lote leve na Capital para nao ficar nu no mapa.");
   } else if (stage === "prep_first100") {
     if (record.profile === "metropole") {
@@ -2889,7 +2889,7 @@ function imperativeFromEvent(event) {
   if (event.type === "group") return "Ativar reagrupar na Capital";
   if (event.type === "march") return "Disparar marcha final ao Portal";
   if (event.type === "horde") return event.action;
-  if (event.type === "explore") return "Rodar buscas e coletas";
+  if (event.type === "explore") return "Cartografar novos territorios";
   if (event.type === "recruit") return "Recrutar lote principal na Capital";
   return event.action;
 }
@@ -2920,7 +2920,7 @@ function buildConcreteDayActions(record, day, state, dayEvents) {
     const up = nextRotationUpgrade(state, record, stage);
     if (up) actions.push(up);
     if (!dayEvents.some((item) => item.type === "explore")) {
-      actions.push("Rodar buscas e coletas");
+      actions.push("Cartografar novos territorios proximos");
     }
     const recruit = estimateRecruitDelta(record, day);
     if (recruit > 0 && !dayEvents.some((item) => item.type === "recruit")) {
@@ -2932,7 +2932,7 @@ function buildConcreteDayActions(record, day, state, dayEvents) {
     if (up1) actions.push(up1);
     if (up2) actions.push(up2);
     if (day % 3 === 0 && !dayEvents.some((item) => item.type === "explore")) {
-      actions.push("Vasculhar arredores para saque e bonus de exploracao");
+      actions.push("Abrir rota de fronteira e registrar novos territorios");
     }
     const recruit = estimateRecruitDelta(record, day);
     if (recruit > 0 && day % 2 === 0) {
@@ -2977,7 +2977,7 @@ function buildConcreteDayActions(record, day, state, dayEvents) {
     if (stage === "prep_first100") {
       unique.push("Transferir recursos para a aldeia foco");
       unique.push("Recrutar lote leve na Capital");
-      unique.push("Vasculhar arredores");
+      unique.push("Cartografar arredores");
     } else if (stage === "scale_score") {
       unique.push("Doar recursos internos para acelerar score");
       unique.push("Recrutar reposicao na Capital");

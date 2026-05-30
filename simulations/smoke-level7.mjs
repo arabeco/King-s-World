@@ -48,7 +48,13 @@ function inspectConnectionFlow() {
   pushCheck(checks, "Coroa mostra salvando", worldShell.includes("kingSelectionSaving"));
   pushCheck(checks, "Coroa mostra erro se Supabase nao confirmar", worldShell.includes("kingSelectionError"));
   pushCheck(checks, "entrada bloqueia jogo ate carregar Coroa", worldShell.includes("waitingForKingState") && worldShell.includes("showWorldChrome"));
-  pushCheck(checks, "modal de rei so abre depois do estado pronto", worldShell.includes("isImperialStateReady && !imperialState.kingProfileId"));
+  pushCheck(
+    checks,
+    "modal de rei so abre depois do estado pronto",
+    worldShell.includes("const needsKingSelection = isImperialStateReady && isImperialStateHydrated && !imperialState.kingProfileId") &&
+      worldShell.includes('data-smoke="king-selection-modal"') &&
+      worldShell.includes("showWorldChrome = !waitingForKingState && !needsKingSelection"),
+  );
   pushCheck(checks, "reis tem traits positivos e negativos", kingProfiles.includes('tone: "bonus"') && kingProfiles.includes('tone: "penalty"'));
   pushCheck(checks, "GET carrega rei da tabela dedicada", imperialRoute.includes("loadKingState(payload.worldPlayerId)"));
   pushCheck(checks, "PUT persiste rei na tabela dedicada", imperialRoute.includes("persistKingState(payload.world.id, payload.worldPlayerId, nextStateRecord)"));

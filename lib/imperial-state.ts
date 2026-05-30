@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { createContext, createElement, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { calculateBarracksRosterPreview } from "@/core/GameBalance";
 import type { BuildingId } from "@/lib/buildings";
@@ -78,6 +78,22 @@ export type ImperialExplorationDiscovery = {
   rewardLabel: string;
   actionLabel: string;
 };
+export type ImperialDecisionSeverity = "high" | "medium" | "low";
+export type ImperialDecisionStatus = "pending" | "resolved" | "expired";
+export type ImperialDecisionConsequenceType = "materials" | "supplies" | "troops" | "satisfaction";
+export type ImperialDecisionInboxItem = {
+  id: string;
+  title: string;
+  severity: ImperialDecisionSeverity;
+  source: "senate" | "field" | "intel";
+  createdAtDay: number;
+  expiresAtDay: number;
+  status: ImperialDecisionStatus;
+  consequenceApplied: boolean;
+  consequenceType: ImperialDecisionConsequenceType;
+  consequenceAmount: number;
+  consequenceLabel: string;
+};
 export type ImperialMapMovement = {
   id: string;
   worldId: string;
@@ -89,6 +105,12 @@ export type ImperialMapMovement = {
   arrivalAt: string;
   etaMinutes: number;
   route: string[];
+  routeSteps?: Array<{
+    coordKey: string;
+    legMinutes: number;
+    elapsedMinutes: number;
+    arrivalAt?: string;
+  }>;
   status: "traveling" | "arrived" | "failed";
   meta: {
     buildMode: MapBuildMode | null;
@@ -107,6 +129,7 @@ export type ImperialMapMovement = {
     annexConsumesDiplomat?: boolean;
     diplomatToken?: string;
     targetLabel?: string;
+    reportedIntelCoordKeys?: string[];
   };
 };
 export type ImperialMobilizationState = {
@@ -171,6 +194,7 @@ export type SandboxSnapshot = {
   mobilization: ImperialMobilizationState;
   exploredCoordKeys: string[];
   discoveriesByCoord: Record<string, ImperialExplorationDiscovery>;
+  decisionInbox: ImperialDecisionInboxItem[];
   logs: string[];
 };
 
@@ -223,6 +247,7 @@ export type ImperialState = {
   mobilization: ImperialMobilizationState;
   exploredCoordKeys: string[];
   discoveriesByCoord: Record<string, ImperialExplorationDiscovery>;
+  decisionInbox: ImperialDecisionInboxItem[];
   logs: string[];
 };
 
@@ -249,7 +274,8 @@ type ImperialStore = {
 
 const STRUCTURE_IDS: CityStructureId[] = ["crown", "economy", "society", "recruitment", "defense"];
 
-function mapLegacyBuildingToStructureId(buildingId: string): CityStructureId | null {
+export function mapLegacyBuildingToStructureId(buildingId: string): CityStructureId | null {
+  if (STRUCTURE_IDS.includes(buildingId as CityStructureId)) return buildingId as CityStructureId;
   if (buildingId === "palace" || buildingId === "senate") return "crown";
   if (buildingId === "mines" || buildingId === "farms" || buildingId === "roads") return "economy";
   if (buildingId === "housing" || buildingId === "research") return "society";
@@ -303,7 +329,7 @@ type ImperialVillage = Pick<
   "id" | "materials" | "supplies" | "buildingLevels"
 >;
 
-const IMPERIAL_STATE_VERSION = 16;
+const IMPERIAL_STATE_VERSION = 18;
 const stores = new Map<string, ImperialStore>();
 
 function emptyTroops(): ImperialTroops {
@@ -461,20 +487,28 @@ function normalizeBuildingSkillsMap(value: unknown): Record<string, VillageBuild
         return [villageId, {}];
       }
 
-      const buildingSkills = Object.fromEntries(
-        Object.entries(entry as Record<string, unknown>).map(([buildingId, rawDots]) => {
-          const dots = rawDots && typeof rawDots === "object" ? (rawDots as Partial<Record<BuildingSkillSlotId, unknown>>) : {};
-          return [
-            buildingId,
-            {
-              a: Math.max(0, Math.min(3, Math.floor(normalizeNumber(dots.a)))),
-              b: Math.max(0, Math.min(3, Math.floor(normalizeNumber(dots.b)))),
-              c: Math.max(0, Math.min(3, Math.floor(normalizeNumber(dots.c)))),
-              d: Math.max(0, Math.min(3, Math.floor(normalizeNumber(dots.d)))),
-            },
-          ];
-        }),
-      ) as VillageBuildingSkills;
+      const buildingSkills: VillageBuildingSkills = {};
+
+      for (const [buildingId, rawDots] of Object.entries(entry as Record<string, unknown>)) {
+        const structureId = mapLegacyBuildingToStructureId(buildingId);
+        if (!structureId) continue;
+        const dots = rawDots && typeof rawDots === "object" ? (rawDots as Partial<Record<BuildingSkillSlotId, unknown>>) : {};
+        const normalized = {
+          a: Math.max(0, Math.min(3, Math.floor(normalizeNumber(dots.a)))),
+          b: Math.max(0, Math.min(3, Math.floor(normalizeNumber(dots.b)))),
+          c: Math.max(0, Math.min(3, Math.floor(normalizeNumber(dots.c)))),
+          d: Math.max(0, Math.min(3, Math.floor(normalizeNumber(dots.d)))),
+        };
+        const current = buildingSkills[structureId];
+        buildingSkills[structureId] = current
+          ? {
+              a: Math.max(current.a, normalized.a),
+              b: Math.max(current.b, normalized.b),
+              c: Math.max(current.c, normalized.c),
+              d: Math.max(current.d, normalized.d),
+            }
+          : normalized;
+      }
 
       return [villageId, buildingSkills];
     }),
@@ -491,10 +525,24 @@ function normalizeMapMovements(value: unknown): ImperialMapMovement[] {
     .map((entry) => ({
       ...entry,
       route: Array.isArray(entry.route) ? entry.route.filter((item): item is string => typeof item === "string") : [],
+      routeSteps: Array.isArray(entry.routeSteps)
+        ? entry.routeSteps
+            .filter((step) => Boolean(step && typeof step === "object" && typeof (step as { coordKey?: unknown }).coordKey === "string"))
+            .map((step) => {
+              const raw = step as { coordKey?: unknown; legMinutes?: unknown; elapsedMinutes?: unknown; arrivalAt?: unknown };
+              return {
+                coordKey: String(raw.coordKey),
+                legMinutes: Math.max(0, normalizeNumber(raw.legMinutes)),
+                elapsedMinutes: Math.max(0, normalizeNumber(raw.elapsedMinutes)),
+                arrivalAt: typeof raw.arrivalAt === "string" ? raw.arrivalAt : undefined,
+              };
+            })
+        : undefined,
       meta: {
         ...entry.meta,
         buildMode: entry.meta?.buildMode === "outpost" || entry.meta?.buildMode === "road" ? entry.meta.buildMode : null,
         district: typeof entry.meta?.district === "string" ? entry.meta.district : "A",
+        reportedIntelCoordKeys: normalizeStringArray(entry.meta?.reportedIntelCoordKeys).slice(0, 160),
       },
     }));
 }
@@ -672,6 +720,7 @@ function buildDefaultImperialState(villages: ImperialVillage[]): ImperialState {
     mobilization: emptyMobilization(),
     exploredCoordKeys: [],
     discoveriesByCoord: {},
+    decisionInbox: [],
     sandboxLastSyncedDay: 0,
     sandboxSnapshots: {},
     logs: [],
@@ -834,6 +883,44 @@ function normalizeExplorationDiscoveries(value: unknown): Record<string, Imperia
   );
 }
 
+function isDecisionSeverity(value: unknown): value is ImperialDecisionSeverity {
+  return value === "high" || value === "medium" || value === "low";
+}
+
+function isDecisionStatus(value: unknown): value is ImperialDecisionStatus {
+  return value === "pending" || value === "resolved" || value === "expired";
+}
+
+function isDecisionConsequenceType(value: unknown): value is ImperialDecisionConsequenceType {
+  return value === "materials" || value === "supplies" || value === "troops" || value === "satisfaction";
+}
+
+function normalizeDecisionInbox(value: unknown): ImperialDecisionInboxItem[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((entry): entry is Partial<ImperialDecisionInboxItem> => Boolean(entry && typeof entry === "object"))
+    .map((entry, index) => ({
+      id: typeof entry.id === "string" ? entry.id : `decision-${index + 1}`,
+      title: typeof entry.title === "string" ? entry.title.slice(0, 120) : "Decisao do reino",
+      severity: isDecisionSeverity(entry.severity) ? entry.severity : "medium",
+      source: entry.source === "senate" || entry.source === "field" || entry.source === "intel" ? entry.source : "intel",
+      createdAtDay: Math.max(0, Math.floor(normalizeNumber(entry.createdAtDay))),
+      expiresAtDay: Math.max(0, Math.floor(normalizeNumber(entry.expiresAtDay))),
+      status: isDecisionStatus(entry.status) ? entry.status : "pending",
+      consequenceApplied: Boolean(entry.consequenceApplied),
+      consequenceType: isDecisionConsequenceType(entry.consequenceType) ? entry.consequenceType : "supplies",
+      consequenceAmount: Math.max(0, Math.floor(normalizeNumber(entry.consequenceAmount))),
+      consequenceLabel:
+        typeof entry.consequenceLabel === "string" && entry.consequenceLabel.trim().length > 0
+          ? entry.consequenceLabel.slice(0, 180)
+          : "Perda de ritmo do reino",
+    }))
+    .slice(0, 120);
+}
+
 function normalizeVillageNameMap(value: unknown): Record<string, string> {
   if (!value || typeof value !== "object") {
     return {};
@@ -905,6 +992,7 @@ function normalizeSandboxSnapshots(value: unknown): Record<string, SandboxSnapsh
             mobilization: normalizeMobilizationState(snapshot?.mobilization),
             exploredCoordKeys: normalizeStringArray(snapshot?.exploredCoordKeys),
             discoveriesByCoord: normalizeExplorationDiscoveries(snapshot?.discoveriesByCoord),
+            decisionInbox: normalizeDecisionInbox(snapshot?.decisionInbox),
             logs: normalizeStringArray(snapshot?.logs).slice(0, 12),
           } satisfies SandboxSnapshot,
         ];
@@ -1142,6 +1230,7 @@ function mergeImperialState(base: ImperialState, incoming: unknown): ImperialSta
     mobilization: normalizeMobilizationState(raw.mobilization),
     exploredCoordKeys: normalizeStringArray(raw.exploredCoordKeys),
     discoveriesByCoord: normalizeExplorationDiscoveries(raw.discoveriesByCoord),
+    decisionInbox: normalizeDecisionInbox(raw.decisionInbox),
     sandboxLastSyncedDay: Math.max(0, Math.min(120, Math.floor(normalizeNumber(raw.sandboxLastSyncedDay)))),
     sandboxSnapshots: normalizeSandboxSnapshots(raw.sandboxSnapshots),
     logs: Array.isArray(raw.logs) ? raw.logs.filter((entry): entry is string => typeof entry === "string").slice(0, 12) : base.logs,
@@ -1172,13 +1261,17 @@ function emit(store: ImperialStore) {
 
 export function useImperialState(worldId: string, villages: ImperialVillage[]) {
   const store = useMemo(() => ensureStore(worldId, villages), [worldId, villages]);
+  const serverSnapshotRef = useRef<ImperialState>(buildDefaultImperialState(villages));
   const [isImperialStateReady, setIsImperialStateReady] = useState(false);
+  const [isImperialStateHydrated, setIsImperialStateHydrated] = useState(false);
 
   useEffect(() => {
     setIsImperialStateReady(false);
+    setIsImperialStateHydrated(false);
   }, [worldId]);
 
   useEffect(() => {
+    serverSnapshotRef.current = buildDefaultImperialState(villages);
     const fallback = buildDefaultImperialState(villages);
     const next = mergeImperialState(fallback, store.state);
     
@@ -1193,10 +1286,18 @@ export function useImperialState(worldId: string, villages: ImperialVillage[]) {
     let active = true;
 
     const load = async () => {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 4500);
       try {
-        const response = await fetch(`/api/worlds/${worldId}/imperial-state`, { cache: "no-store" });
+        const response = await fetch(`/api/worlds/${worldId}/imperial-state`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         if (!response.ok) {
           return;
+        }
+        if (active) {
+          setIsImperialStateHydrated(true);
         }
 
         const payload = (await response.json()) as { imperialState?: unknown };
@@ -1209,6 +1310,7 @@ export function useImperialState(worldId: string, villages: ImperialVillage[]) {
       } catch {
         // keep derived fallback if the persistent state is temporarily unavailable
       } finally {
+        window.clearTimeout(timeout);
         if (active) {
           setIsImperialStateReady(true);
         }
@@ -1229,13 +1331,21 @@ export function useImperialState(worldId: string, villages: ImperialVillage[]) {
   }, [store]);
 
   const getSnapshot = useMemo(() => () => store.state, [store]);
-  const getServerSnapshot = getSnapshot;
+  const getServerSnapshot = useMemo(() => () => serverSnapshotRef.current, []);
 
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const setState = (updater: ImperialState | ((current: ImperialState) => ImperialState)): Promise<boolean> => {
     const nextRaw = typeof updater === "function" ? updater(store.state) : updater;
+    if (nextRaw === store.state) {
+      return Promise.resolve(false);
+    }
+
     const next = mergeImperialState(buildDefaultImperialState(villages), nextRaw);
+    if (JSON.stringify(next) === JSON.stringify(store.state)) {
+      return Promise.resolve(false);
+    }
+
     store.state = next;
     emit(store);
 
@@ -1257,7 +1367,24 @@ export function useImperialState(worldId: string, villages: ImperialVillage[]) {
     imperialState: state,
     setImperialState: setState,
     isImperialStateReady,
+    isImperialStateHydrated,
   };
+}
+
+type ImperialStateContextValue = ReturnType<typeof useImperialState>;
+
+const ImperialStateContext = createContext<ImperialStateContextValue | null>(null);
+
+export function ImperialStateProvider({ value, children }: { value: ImperialStateContextValue; children: ReactNode }) {
+  return createElement(ImperialStateContext.Provider, { value }, children);
+}
+
+export function useImperialStateContext() {
+  const value = useContext(ImperialStateContext);
+  if (!value) {
+    throw new Error("useImperialStateContext must be used inside ImperialStateProvider");
+  }
+  return value;
 }
 
 export function mergeImperialVillages(

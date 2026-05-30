@@ -93,6 +93,19 @@ export type ReportEntry = {
   unread: boolean;
 };
 
+export type WorldParticipantRelation = "self" | "ally" | "neutral" | "wary";
+
+export type WorldParticipant = {
+  id: string;
+  name: string;
+  influence: number;
+  status: string;
+  relation: WorldParticipantRelation;
+  tribeName: string | null;
+  kingName: string | null;
+  isAi: boolean;
+};
+
 export type WorldState = {
   id: string;
   name: string;
@@ -110,6 +123,7 @@ export type WorldState = {
   buildings: BuildingEntry[];
   boardSites: BoardSite[];
   reports: ReportEntry[];
+  participants: WorldParticipant[];
   mobilization: {
     available: boolean;
     active: boolean;
@@ -647,6 +661,38 @@ const worldState: WorldState = {
       ],
       time: "ha 41 min",
       unread: false,
+    },
+  ],
+  participants: [
+    {
+      id: "mock-self",
+      name: "Afonso",
+      influence: 1340,
+      status: "alive",
+      relation: "self",
+      tribeName: "Lua Negra",
+      kingName: "Aurelian",
+      isAi: false,
+    },
+    {
+      id: "mock-ally",
+      name: "Casa da Ponte",
+      influence: 980,
+      status: "alive",
+      relation: "ally",
+      tribeName: "Lua Negra",
+      kingName: "Serenna",
+      isAi: true,
+    },
+    {
+      id: "mock-wary",
+      name: "Ordem Rubra",
+      influence: 1210,
+      status: "alive",
+      relation: "wary",
+      tribeName: "Ordem Rubra",
+      kingName: "Magnor",
+      isAi: true,
     },
   ],
   mobilization: {

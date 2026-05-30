@@ -13,7 +13,8 @@ import {
   restorePremiumTransactions,
   type PremiumProductOffer,
 } from "@/lib/native-purchases-client";
-import { PLAY_PREMIUM_PRODUCT_ID } from "@/lib/premium-config";
+import { PLAY_PACKAGE_NAME, PLAY_PREMIUM_PRODUCT_ID } from "@/lib/premium-config";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type PremiumEntitlementsResponse = {
   premium?: {
@@ -74,24 +75,22 @@ export function PremiumPaywallCard() {
   }, []);
 
   async function verifyTransaction(purchaseToken: string, productId: string) {
-    const response = await fetch("/api/billing/google/verify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        purchaseToken,
-        productId,
-      }),
-    });
+    const supabase = getSupabaseBrowserClient();
 
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error ?? "Falha ao validar compra.");
-    }
+    const { data: payload, error } = await supabase.functions.invoke(
+      "verify-google-play-purchase",
+      { body: { purchaseToken, productId, packageName: PLAY_PACKAGE_NAME } },
+    );
+
+    if (error) throw new Error(error.message ?? "Falha ao validar compra.");
+    if (!payload?.success) throw new Error(payload?.error ?? "Validação server falhou.");
 
     setPremiumActive(Boolean(payload.premiumActive));
-    setEntitlement(payload.entitlement ?? null);
+    setEntitlement(
+      payload.entitlementId
+        ? { id: payload.entitlementId, status: payload.status, expires_at: payload.expiresAt ?? null } as any
+        : null,
+    );
   }
 
   async function handlePurchase() {

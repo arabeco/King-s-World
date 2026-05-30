@@ -1,0 +1,293 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-05-02T13:20:39.620Z",
+  "server": {
+    "mode": "spawned"
+  },
+  "accounts": [
+    {
+      "key": "1",
+      "ok": true,
+      "worldPlayerId": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+      "activeVillageId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+      "day": 0,
+      "durationDays": 30,
+      "speedMultiplier": 4
+    },
+    {
+      "key": "2",
+      "ok": true,
+      "worldPlayerId": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+      "activeVillageId": "709f438a-c9db-430b-b21d-4fb593c308b2",
+      "day": 0,
+      "durationDays": 30,
+      "speedMultiplier": 4
+    }
+  ],
+  "sqlProof": {
+    "world": {
+      "id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+      "slug": "alpha-expresso",
+      "season_mode": "express",
+      "speed_multiplier": 4
+    },
+    "users": [
+      {
+        "id": "ae0e481b-2abc-4566-9c0c-c7bc1525be61",
+        "username": "afonso_dev_000000",
+        "email": "afonso.dev@kingsworld.local",
+        "auth_user_id": "00000000-0000-4000-8000-000000000001"
+      },
+      {
+        "id": "a0a67c4e-7968-4cf1-97b1-49190a1b8512",
+        "username": "smoke_2_000000",
+        "email": "smoke_2@kingsworld.local",
+        "auth_user_id": "00000000-0000-4000-8000-000000000032"
+      }
+    ],
+    "players": [
+      {
+        "id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+        "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "user_id": "ae0e481b-2abc-4566-9c0c-c7bc1525be61",
+        "status": "alive",
+        "current_capital_site_id": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3"
+      },
+      {
+        "id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+        "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "user_id": "a0a67c4e-7968-4cf1-97b1-49190a1b8512",
+        "status": "alive",
+        "current_capital_site_id": "709f438a-c9db-430b-b21d-4fb593c308b2"
+      }
+    ],
+    "villages": [
+      {
+        "site_id": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+        "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "owner_world_player_id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+        "name": "afonso_dev_000000 Capital",
+        "village_type": "capital",
+        "is_original_capital": true
+      },
+      {
+        "site_id": "709f438a-c9db-430b-b21d-4fb593c308b2",
+        "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "owner_world_player_id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+        "name": "smoke_2_000000 Capital",
+        "village_type": "capital",
+        "is_original_capital": true
+      }
+    ],
+    "imperialStates": [
+      {
+        "world_player_id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+        "materials_stock": 9900,
+        "supplies_stock": 8800,
+        "militia_count": 78
+      },
+      {
+        "world_player_id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+        "materials_stock": 10200,
+        "supplies_stock": 61200,
+        "militia_count": 900
+      }
+    ],
+    "suggestedSql": [
+      "select id, slug, season_mode, speed_multiplier from worlds where slug = 'alpha-expresso';",
+      "select id, username, email, auth_user_id from users where auth_user_id in ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000032');",
+      "select id, world_id, user_id, status, current_capital_site_id from world_players where world_id = 'b8b32ba3-07b6-464b-b283-7774fd04aafb' and user_id in ('ae0e481b-2abc-4566-9c0c-c7bc1525be61', 'a0a67c4e-7968-4cf1-97b1-49190a1b8512');",
+      "select site_id, owner_world_player_id, name, village_type, is_original_capital from villages where world_id = 'b8b32ba3-07b6-464b-b283-7774fd04aafb' and owner_world_player_id in ('f19f3e0c-9e3b-4368-a73a-3abbfb04999d', '7a44bc28-3985-46ab-9ac4-d717c80a1415');"
+    ]
+  },
+  "checks": [
+    {
+      "label": "dev login conta 1",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "userKey": "1"
+        }
+      }
+    },
+    {
+      "label": "dev login conta 2",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "userKey": "2"
+        }
+      }
+    },
+    {
+      "label": "cria/reusa Alpha Expressa",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "reused": true,
+          "world": {
+            "slug": "alpha-expresso",
+            "href": "/world/alpha-expresso/empire"
+          }
+        }
+      }
+    },
+    {
+      "label": "conta 1 entrou no mesmo mundo",
+      "ok": true,
+      "details": {
+        "key": "1",
+        "ok": true,
+        "worldPlayerId": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+        "activeVillageId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+        "day": 0,
+        "durationDays": 30,
+        "speedMultiplier": 4
+      }
+    },
+    {
+      "label": "conta 2 entrou no mesmo mundo",
+      "ok": true,
+      "details": {
+        "key": "2",
+        "ok": true,
+        "worldPlayerId": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+        "activeVillageId": "709f438a-c9db-430b-b21d-4fb593c308b2",
+        "day": 0,
+        "durationDays": 30,
+        "speedMultiplier": 4
+      }
+    },
+    {
+      "label": "SQL tem mundo express x4",
+      "ok": true,
+      "details": {
+        "id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "slug": "alpha-expresso",
+        "season_mode": "express",
+        "speed_multiplier": 4
+      }
+    },
+    {
+      "label": "SQL tem 2 usuarios dev diferentes",
+      "ok": true,
+      "details": [
+        {
+          "id": "ae0e481b-2abc-4566-9c0c-c7bc1525be61",
+          "username": "afonso_dev_000000",
+          "email": "afonso.dev@kingsworld.local",
+          "auth_user_id": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "id": "a0a67c4e-7968-4cf1-97b1-49190a1b8512",
+          "username": "smoke_2_000000",
+          "email": "smoke_2@kingsworld.local",
+          "auth_user_id": "00000000-0000-4000-8000-000000000032"
+        }
+      ]
+    },
+    {
+      "label": "SQL tem 2 participantes no mesmo mundo",
+      "ok": true,
+      "details": [
+        {
+          "id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+          "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+          "user_id": "ae0e481b-2abc-4566-9c0c-c7bc1525be61",
+          "status": "alive",
+          "current_capital_site_id": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3"
+        },
+        {
+          "id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+          "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+          "user_id": "a0a67c4e-7968-4cf1-97b1-49190a1b8512",
+          "status": "alive",
+          "current_capital_site_id": "709f438a-c9db-430b-b21d-4fb593c308b2"
+        }
+      ]
+    },
+    {
+      "label": "SQL tem 2 capitais diferentes",
+      "ok": true,
+      "details": [
+        {
+          "id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+          "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+          "user_id": "ae0e481b-2abc-4566-9c0c-c7bc1525be61",
+          "status": "alive",
+          "current_capital_site_id": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3"
+        },
+        {
+          "id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+          "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+          "user_id": "a0a67c4e-7968-4cf1-97b1-49190a1b8512",
+          "status": "alive",
+          "current_capital_site_id": "709f438a-c9db-430b-b21d-4fb593c308b2"
+        }
+      ]
+    },
+    {
+      "label": "SQL tem cidades/capitais para os 2",
+      "ok": true,
+      "details": [
+        {
+          "site_id": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+          "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+          "owner_world_player_id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+          "name": "afonso_dev_000000 Capital",
+          "village_type": "capital",
+          "is_original_capital": true
+        },
+        {
+          "site_id": "709f438a-c9db-430b-b21d-4fb593c308b2",
+          "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+          "owner_world_player_id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+          "name": "smoke_2_000000 Capital",
+          "village_type": "capital",
+          "is_original_capital": true
+        }
+      ]
+    },
+    {
+      "label": "SQL tem estado imperial para os 2",
+      "ok": true,
+      "details": [
+        {
+          "world_player_id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+          "materials_stock": 9900,
+          "supplies_stock": 8800,
+          "militia_count": 78
+        },
+        {
+          "world_player_id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+          "materials_stock": 10200,
+          "supplies_stock": 61200,
+          "militia_count": 900
+        }
+      ]
+    },
+    {
+      "label": "payload da conta 1 aponta para a propria capital",
+      "ok": true,
+      "details": {
+        "payloadActiveVillageId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+        "sqlCurrentCapitalSiteId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3"
+      }
+    },
+    {
+      "label": "payload da conta 2 aponta para a propria capital",
+      "ok": true,
+      "details": {
+        "payloadActiveVillageId": "709f438a-c9db-430b-b21d-4fb593c308b2",
+        "sqlCurrentCapitalSiteId": "709f438a-c9db-430b-b21d-4fb593c308b2"
+      }
+    }
+  ],
+  "failed": []
+}

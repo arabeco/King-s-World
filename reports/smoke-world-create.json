@@ -1,0 +1,73 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-05-02T12:22:58.467Z",
+  "world": {
+    "id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+    "slug": "alpha-expresso",
+    "name": "Alpha Expresso",
+    "status": "open",
+    "phase": "phase_1",
+    "day_number": 0,
+    "runtime_started": false,
+    "sandbox_enabled": false
+  },
+  "checks": [
+    {
+      "label": "upsert retornou mundo",
+      "ok": true,
+      "details": {
+        "id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "slug": "alpha-expresso",
+        "name": "Alpha Expresso",
+        "status": "open",
+        "phase": "phase_1",
+        "day_number": 0,
+        "runtime_started": false,
+        "sandbox_enabled": false
+      }
+    },
+    {
+      "label": "select retornou mundo",
+      "ok": true,
+      "details": {
+        "id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "slug": "alpha-expresso",
+        "name": "Alpha Expresso",
+        "status": "open",
+        "phase": "phase_1",
+        "day_number": 0,
+        "runtime_started": false,
+        "sandbox_enabled": false
+      }
+    },
+    {
+      "label": "slug correto",
+      "ok": true,
+      "details": "alpha-expresso"
+    },
+    {
+      "label": "status open",
+      "ok": true,
+      "details": "open"
+    },
+    {
+      "label": "dia zero",
+      "ok": true,
+      "details": 0
+    },
+    {
+      "label": "sandbox desligado",
+      "ok": true,
+      "details": false
+    },
+    {
+      "label": "modo expresso preparado",
+      "ok": true,
+      "details": {
+        "slug": "alpha-expresso",
+        "usedModeColumns": true
+      }
+    }
+  ],
+  "failed": []
+}

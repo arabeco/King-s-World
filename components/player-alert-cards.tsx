@@ -3,6 +3,7 @@
 import { AlertTriangle, ArrowRight, Compass, Lightbulb, ShieldAlert } from "lucide-react";
 
 import type { PlayerAlertCard, PlayerAlertChoice } from "@/lib/player-alerts";
+import type { ImperialDecisionInboxItem } from "@/lib/imperial-state";
 import { emitUiFeedback } from "@/lib/ui-feedback";
 
 function tone(card: PlayerAlertCard) {
@@ -51,18 +52,61 @@ function choiceClass(card: PlayerAlertCard, choice: PlayerAlertChoice) {
   return `${base} border-cyan-300/35 bg-cyan-500/16 text-cyan-50 hover:bg-cyan-500/22`;
 }
 
+function urgencyMeta(
+  card: PlayerAlertCard,
+  decisionState?: ImperialDecisionInboxItem,
+): { expiresIn: string; ignoreCost: string } | null {
+  if (card.kind !== "decision") {
+    return null;
+  }
+  if (decisionState) {
+    const statusLabel =
+      decisionState.status === "expired"
+        ? "Expirada"
+        : decisionState.status === "resolved"
+          ? "Resolvida"
+          : `Expira no dia ${decisionState.expiresAtDay}`;
+    return {
+      expiresIn: statusLabel,
+      ignoreCost: decisionState.consequenceLabel,
+    };
+  }
+  if (card.severity === "high") {
+    return {
+      expiresIn: "Expira em 2 dias",
+      ignoreCost: "Se ignorar: custo moderado por atraso em uma frente real.",
+    };
+  }
+  if (card.severity === "medium") {
+    return {
+      expiresIn: "Expira em 3 dias",
+      ignoreCost: "Se ignorar: perde eficiencia e margem pequena.",
+    };
+  }
+  return {
+    expiresIn: "Expira em 4 dias",
+    ignoreCost: "Se ignorar: a janela fecha e o ganho potencial cai.",
+  };
+}
+
 export function PlayerAlertCards({
   primary,
   secondary,
   onChoice,
   title = "O que importa agora",
   subtitle = "Prioridade, risco e proximo clique.",
+  decisionInboxById,
+  onIgnoreDecision,
+  showChoices = true,
 }: {
-  primary: PlayerAlertCard;
+  primary: PlayerAlertCard | null;
   secondary: PlayerAlertCard[];
   onChoice: (choice: PlayerAlertChoice) => void;
   title?: string;
   subtitle?: string;
+  decisionInboxById?: Map<string, ImperialDecisionInboxItem>;
+  onIgnoreDecision?: (cardId: string) => void;
+  showChoices?: boolean;
 }) {
   return (
     <article className="kw-glass rounded-3xl p-3">
@@ -72,16 +116,22 @@ export function PlayerAlertCards({
           <p className="kw-subtle text-[11px]">{subtitle}</p>
         </div>
         <span className="rounded-full border border-white/10 bg-white/6 px-2 py-1 text-[10px] font-semibold text-slate-300" title="Foco principal e sinais de apoio">
-          1 + {secondary.length}
+          {primary ? `1 + ${secondary.length}` : "0"}
         </span>
       </div>
 
-      <AlertCard card={primary} onChoice={onChoice} featured />
+      {primary ? (
+        <AlertCard card={primary} onChoice={onChoice} featured decisionState={decisionInboxById?.get(primary.id)} onIgnoreDecision={onIgnoreDecision} showChoices={showChoices} />
+      ) : (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-[11px] leading-5 text-slate-300">
+          Nada exige escolha agora. Use a aba Info para leitura fina da run.
+        </div>
+      )}
 
       {secondary.length > 0 ? (
         <div className="mt-2 grid gap-2">
           {secondary.map((card) => (
-            <AlertCard key={card.id} card={card} onChoice={onChoice} />
+            <AlertCard key={card.id} card={card} onChoice={onChoice} decisionState={decisionInboxById?.get(card.id)} onIgnoreDecision={onIgnoreDecision} showChoices={showChoices} />
           ))}
         </div>
       ) : null}
@@ -93,13 +143,20 @@ function AlertCard({
   card,
   onChoice,
   featured = false,
+  decisionState,
+  onIgnoreDecision,
+  showChoices,
 }: {
   card: PlayerAlertCard;
   onChoice: (choice: PlayerAlertChoice) => void;
   featured?: boolean;
+  decisionState?: ImperialDecisionInboxItem;
+  onIgnoreDecision?: (cardId: string) => void;
+  showChoices: boolean;
 }) {
   const cardTone = tone(card);
   const Icon = cardTone.icon;
+  const urgency = urgencyMeta(card, decisionState);
 
   return (
     <section className={`rounded-2xl border p-2.5 ${cardTone.shell} ${featured ? "shadow-[0_18px_40px_rgba(15,23,42,0.24)]" : ""}`}>
@@ -124,8 +181,14 @@ function AlertCard({
         <p>{card.situation}</p>
         <p className="mt-1 text-slate-300">{card.impact}</p>
       </div>
+      {urgency ? (
+        <div className="mt-2 rounded-xl border border-amber-300/22 bg-amber-500/10 px-2 py-1.5 text-[10px] font-semibold text-amber-100">
+          <p>{urgency.expiresIn}</p>
+          <p className="mt-1 text-amber-50/90">{urgency.ignoreCost}</p>
+        </div>
+      ) : null}
 
-      {card.choices.length > 0 ? (
+      {showChoices && card.choices.length > 0 ? (
         <div className="mt-2 grid gap-1.5">
           {card.choices.map((choice) => (
             <button
@@ -146,6 +209,15 @@ function AlertCard({
               {choice.note ? <p className="mt-1 text-[10px] font-normal opacity-90">{choice.note}</p> : null}
             </button>
           ))}
+          {card.kind === "decision" ? (
+            <button
+              type="button"
+              onClick={() => onIgnoreDecision?.(card.id)}
+              className="rounded-xl border border-rose-300/30 bg-rose-500/12 px-2.5 py-2 text-left text-[10px] font-semibold text-rose-50 transition hover:bg-rose-500/20"
+            >
+              Ignorar (aceitar custo)
+            </button>
+          ) : null}
         </div>
       ) : null}
     </section>

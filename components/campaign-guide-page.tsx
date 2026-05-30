@@ -4,10 +4,10 @@ import { BookOpen, CalendarDays, ChevronLeft, ChevronRight, Compass, Map, Target
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
-import { mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
+import { mergeImperialVillages, useImperialStateContext } from "@/lib/imperial-state";
 import { inferSandboxStrategyId } from "@/lib/sandbox-playbook-selection";
 import { emitUiFeedback } from "@/lib/ui-feedback";
-import { useLiveWorld } from "@/lib/world-runtime";
+import { useLiveWorldContext } from "@/lib/world-runtime";
 import type { SandboxPlaybookLoadResult, SandboxStrategyId, SandboxStrategyPlaybook } from "@/lib/sandbox-playbooks";
 
 type RouteTab = "base" | "board" | "operations" | "empire";
@@ -202,8 +202,8 @@ export function CampaignGuidePage({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { world, setManualDay, advanceDay, rewindDay } = useLiveWorld(worldId);
-  const { imperialState } = useImperialState(worldId, world.villages);
+  const { world, setManualDay, advanceDay, rewindDay } = useLiveWorldContext();
+  const { imperialState } = useImperialStateContext();
   const villages = useMemo(() => mergeImperialVillages(world.villages, imperialState), [imperialState, world.villages]);
 
   const selectedStrategyId = useMemo(

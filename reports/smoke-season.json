@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-04-18T04:13:31.803Z",
+  "simulation": {
+    "mode": "paired8",
+    "stdout": "Simulacao concluida.\nStatus dos artefatos: PASS\nIteracao de calibragem: 3\nMedia 2a aldeia: 15.1\nMedia 1a aldeia 100: 44.1\nMedia sobreviventes no Portal/seed: 13.88\nMedia elegiveis >=1500 no D90/seed: 22.13\nETA Navegador+Flow (media): 45.68h\nPico 2500 por seed: 0.88"
+  },
+  "checks": {
+    "balance": true,
+    "artifacts": true,
+    "runtime": true
+  },
+  "errors": [],
+  "warnings": []
+}

@@ -1,0 +1,156 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-05-02T15:23:59.183Z",
+  "server": {
+    "mode": "spawned"
+  },
+  "flow": {
+    "world": {
+      "id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+      "slug": "alpha-expresso",
+      "season_mode": "express",
+      "speed_multiplier": 4
+    },
+    "worldPlayerId": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+    "activeVillageId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+    "king": {
+      "world_player_id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+      "king_profile_id": "serenna",
+      "king_name": "Smoke Serenna"
+    },
+    "structure": {
+      "world_player_id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+      "village_site_id": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+      "structure_code": "crown",
+      "slot_a": 1,
+      "slot_b": 0,
+      "slot_c": 0,
+      "slot_d": 0,
+      "level": 1
+    }
+  },
+  "checks": [
+    {
+      "label": "dev login cria sessao de participante",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "cria/reusa Alpha Expressa",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "reused": true,
+          "world": {
+            "slug": "alpha-expresso",
+            "href": "/world/alpha-expresso/empire"
+          }
+        }
+      }
+    },
+    {
+      "label": "participante entrou no mundo",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "worldId": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "worldPlayerId": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+        "activeVillageId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3"
+      }
+    },
+    {
+      "label": "estado imperial carregou",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "upgrade persistiu via API",
+      "ok": true,
+      "details": {
+        "ok": true
+      }
+    },
+    {
+      "label": "reload ve rei escolhido",
+      "ok": true,
+      "details": {
+        "kingProfileId": "serenna",
+        "kingName": "Smoke Serenna"
+      }
+    },
+    {
+      "label": "reload ve predio upado",
+      "ok": true,
+      "details": {
+        "crownA": 1
+      }
+    },
+    {
+      "label": "Supabase tem mundo express x4",
+      "ok": true,
+      "details": {
+        "id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "slug": "alpha-expresso",
+        "season_mode": "express",
+        "speed_multiplier": 4
+      }
+    },
+    {
+      "label": "Supabase tem participante vivo",
+      "ok": true,
+      "details": {
+        "id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+        "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "user_id": "ae0e481b-2abc-4566-9c0c-c7bc1525be61",
+        "status": "alive",
+        "current_capital_site_id": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3"
+      }
+    },
+    {
+      "label": "Supabase tem estado imperial atualizado",
+      "ok": true,
+      "details": {
+        "materials_stock": 9900,
+        "militia_count": 78
+      }
+    },
+    {
+      "label": "Supabase tem rei dedicado",
+      "ok": true,
+      "details": {
+        "world_player_id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+        "king_profile_id": "serenna",
+        "king_name": "Smoke Serenna"
+      }
+    },
+    {
+      "label": "Supabase tem predio dedicado upado",
+      "ok": true,
+      "details": {
+        "world_player_id": "f19f3e0c-9e3b-4368-a73a-3abbfb04999d",
+        "village_site_id": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+        "structure_code": "crown",
+        "slot_a": 1,
+        "slot_b": 0,
+        "slot_c": 0,
+        "slot_d": 0,
+        "level": 1
+      }
+    },
+    {
+      "label": "snapshot nao guarda rei/predio como verdade escondida",
+      "ok": true,
+      "details": {
+        "snapshot_has_king": false,
+        "snapshot_has_structure": false
+      }
+    }
+  ],
+  "failed": []
+}

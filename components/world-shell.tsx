@@ -9,20 +9,76 @@ import { BottomNavigation } from "@/components/BottomNavigation";
 import { Header } from "@/components/Header";
 import { SandboxDayDeltaModal } from "@/components/sandbox/SandboxDayDeltaModal";
 import { SandboxProgressEngine } from "@/components/sandbox/SandboxProgressEngine";
+import { WorldLoadingScreen } from "@/components/world-loading-screen";
 import { WorldAssistant } from "@/components/world-assistant";
 import { calculateDefensePower, calculateSovereigntyScore, calculateTribeProgressStage, calculateTroopPower, calculateVillageDevelopment, type EvolutionMode } from "@/core/GameBalance";
 import { countUnlockedMilitaryTechs } from "@/lib/empire-systems";
-import { mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
+import { ImperialStateProvider, mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
 import { KING_PROFILES, type KingProfileId } from "@/lib/king-profiles";
 import { buildKingdomSurvivalState } from "@/lib/kingdom-survival";
-import { emitUiFeedback } from "@/lib/ui-feedback";
+import { emitUiFeedback, emitUiToast } from "@/lib/ui-feedback";
 import type { WorldPayload } from "@/lib/world-data";
 import { buildGuide, buildSandboxCoachCta, resolveBuild, type WorldTab as GuideWorldTab } from "@/lib/world-assistant-guide";
-import { useLiveWorld } from "@/lib/world-runtime";
+import { LiveWorldProvider, useLiveWorld } from "@/lib/world-runtime";
 
 type WorldTab = "empire" | "base" | "board" | "intelligence" | "guide";
 
 const EVOLUTION_MODE_IDS: EvolutionMode[] = ["balanced", "metropole", "vanguard", "bastion", "flow"];
+
+const WORLD_PRELOAD_IMAGES = [
+  "/world/main-map0.png",
+  "/world/lobby2.png",
+  "/icons/nav-empire.png",
+  "/icons/nav-cities.png",
+  "/icons/nav-intel.png",
+  "/icons/nav-world.png",
+  "/icons/nav-profile.png",
+  "/icons/influencia-icon.png",
+  "/icons/producao.png",
+  "/icons/recursos.png",
+  "/icons/populacao.png",
+  "/icons/exercito.png",
+  "/images/governo.jpg",
+  "/images/producao.jpg",
+  "/images/sociedade.jpg",
+  "/images/quartel.jpg",
+  "/images/muralha.jpg",
+  "/images/help.jpg",
+  "/images/card-council.jpg",
+  "/images/card-expansion.jpg",
+  "/images/card-opportunity.jpg",
+  "/images/day-report.jpg",
+  "/images/battle-report.jpg",
+  "/images/capital.jpg",
+  "/images/metropole.jpg",
+  "/images/cidade.jpg",
+  "/images/king-aurelian.jpg",
+  "/images/king-magnor.jpg",
+  "/images/king-valerius.jpg",
+  "/images/king-orian.jpg",
+  "/images/queen-serenna.jpg",
+  "/images/queen-isolde.jpg",
+  "/images/queen-maelis.jpg",
+  "/images/queen-nyra.jpg",
+  "/images/king-corven.jpg",
+  "/cities/capital-icon.png",
+  "/cities/neutra-icon.png",
+  "/cities/metropole-icon.png",
+  "/cities/bastiao-icon.png",
+  "/cities/celeiro-icon.png",
+  "/cities/postoavancado-icon.png",
+];
+
+const WORLD_BOOT_MIN_MS = 2400;
+const WORLD_BOOT_MAX_MS = 5000;
+
+function resolveKingPortraitStyle(kingId: KingProfileId): { backgroundPositionY: string; backgroundSize: string } {
+  void kingId;
+  return {
+    backgroundPositionY: "100%",
+    backgroundSize: "100%",
+  };
+}
 
 function normalizeEvolutionMode(input: string | null): EvolutionMode | undefined {
   if (!input) {
@@ -70,7 +126,7 @@ function worldTabLabel(tab: GuideWorldTab): string {
   if (tab === "board") return "Mundo";
   if (tab === "empire") return "Império";
   if (tab === "guide") return "Perfil";
-  return "Intel";
+  return "Comando";
 }
 
 export function WorldShell({
@@ -92,9 +148,14 @@ export function WorldShell({
   const [kingSelectionSaving, setKingSelectionSaving] = useState(false);
   const [kingSelectionError, setKingSelectionError] = useState<string | null>(null);
   const [endModalOpen, setEndModalOpen] = useState(false);
+  const [bootReady, setBootReady] = useState(false);
+  const [bootProgress, setBootProgress] = useState(0);
+  const [bootBypass, setBootBypass] = useState(false);
 
-  const { world, worldMeta, runtimeState, isSandboxWorld, campaignDate } = useLiveWorld(worldId, initialPayload);
-  const { imperialState, setImperialState, isImperialStateReady } = useImperialState(worldId, world.villages);
+  const liveWorld = useLiveWorld(worldId, initialPayload);
+  const { world, worldMeta, runtimeState, isSandboxWorld, campaignDate } = liveWorld;
+  const imperialRuntime = useImperialState(worldId, world.villages);
+  const { imperialState, setImperialState, isImperialStateReady, isImperialStateHydrated } = imperialRuntime;
   const selectedKingProfile = useMemo(
     () => KING_PROFILES.find((profile) => profile.id === selectedKingId) ?? KING_PROFILES[0],
     [selectedKingId],
@@ -247,8 +308,19 @@ export function WorldShell({
     ? buildSandboxCoachCta(world.day, imperialState.sandboxStrategyId, capitalVillageId, focusVillageId)
     : null;
   const waitingForKingState = !isImperialStateReady && !worldMeta.readOnly;
-  const needsKingSelection = isImperialStateReady && !imperialState.kingProfileId && !worldMeta.readOnly;
+  const needsKingSelection = isImperialStateReady && isImperialStateHydrated && !imperialState.kingProfileId && !worldMeta.readOnly;
   const showWorldChrome = !waitingForKingState && !needsKingSelection;
+  const worldTabHrefs = useMemo(() => {
+    const tabs: WorldTab[] = ["empire", "base", "intelligence", "board", "guide"];
+    return tabs.map((tab) => {
+      const params = new URLSearchParams();
+      params.set("v", activeVillage.id);
+      if (evolutionMode) {
+        params.set("m", evolutionMode);
+      }
+      return `/world/${worldId}/${tab}?${params.toString()}`;
+    });
+  }, [activeVillage.id, evolutionMode, worldId]);
   const campaignEnded = worldMeta.readOnly || crownState.gameOver;
   const endResult = worldMeta.readOnly
     ? worldMeta.result ?? "world_end"
@@ -286,6 +358,113 @@ export function WorldShell({
     }
   }, [campaignEnded]);
 
+  useEffect(() => {
+    setBootReady(false);
+    setBootProgress(0);
+    setBootBypass(false);
+  }, [worldId]);
+
+  useEffect(() => {
+    if (bootReady) {
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      setBootBypass(true);
+      setBootProgress(100);
+    }, 12000);
+    return () => window.clearTimeout(timeout);
+  }, [bootReady]);
+
+  useEffect(() => {
+    const canPrewarmWorld = !needsKingSelection && (waitingForKingState || showWorldChrome);
+    if (!canPrewarmWorld || bootReady) {
+      return;
+    }
+
+    let cancelled = false;
+    const setProgress = (value: number) => {
+      if (!cancelled) {
+        setBootProgress((current) => Math.max(current, Math.min(95, value)));
+      }
+    };
+    const finish = () => {
+      if (!cancelled) {
+        setBootProgress(100);
+        window.setTimeout(() => {
+          if (cancelled) return;
+          setBootReady(true);
+        }, 900);
+      }
+    };
+
+    setProgress(8);
+    const warmRoutes = [...worldTabHrefs, "/profile", "/lobby", "/premium"];
+    warmRoutes.forEach((href) => router.prefetch(href));
+    setProgress(18);
+    let imagesWarmupDone = false;
+    let routeWarmupDone = false;
+    let minElapsed = false;
+    const maybeFinish = () => {
+      if (cancelled) return;
+      if (imagesWarmupDone && routeWarmupDone && minElapsed && isImperialStateReady) {
+        finish();
+      }
+    };
+    const imageJobs = WORLD_PRELOAD_IMAGES.map(
+      (src) =>
+        new Promise<void>((resolve) => {
+          const image = new Image();
+          image.decoding = "async";
+          image.onload = () => resolve();
+          image.onerror = () => resolve();
+          image.src = src;
+        }),
+    );
+    void Promise.allSettled(imageJobs).then(() => {
+      imagesWarmupDone = true;
+      setProgress(86);
+      maybeFinish();
+    });
+
+    const stageTimer = window.setTimeout(() => setProgress(22), 900);
+    const fetchWarmupTimer = window.setTimeout(() => {
+      const routeJobs = warmRoutes.map((href) =>
+        fetch(href, { method: "GET", credentials: "include" }).catch(() => undefined),
+      );
+      const apiJobs = [
+        fetch("/api/me/profile", { method: "GET", credentials: "include", cache: "no-store" }).catch(() => undefined),
+        fetch(`/api/worlds/${worldId}/imperial-state`, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => undefined),
+      ];
+      void Promise.allSettled([...routeJobs, ...apiJobs]).then(() => {
+        routeWarmupDone = true;
+        setProgress(64);
+        maybeFinish();
+      });
+      setProgress(36);
+    }, 1300);
+    const routesTimer = window.setTimeout(() => setProgress(50), 2400);
+    const assetsTimer = window.setTimeout(() => setProgress(62), 3600);
+    const minTimer = window.setTimeout(() => {
+      minElapsed = true;
+      setProgress(82);
+      maybeFinish();
+    }, WORLD_BOOT_MIN_MS);
+    const maxTimer = window.setTimeout(() => {
+      setProgress(95);
+      finish();
+    }, WORLD_BOOT_MAX_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(stageTimer);
+      window.clearTimeout(fetchWarmupTimer);
+      window.clearTimeout(routesTimer);
+      window.clearTimeout(assetsTimer);
+      window.clearTimeout(minTimer);
+      window.clearTimeout(maxTimer);
+    };
+  }, [bootReady, isImperialStateReady, needsKingSelection, router, showWorldChrome, waitingForKingState, worldTabHrefs]);
+
   const confirmKingSelection = async () => {
     if (kingSelectionSaving) {
       return;
@@ -303,15 +482,25 @@ export function WorldShell({
         logs: [`Coroa assumida por ${name.slice(0, 32)}.`, ...current.logs].slice(0, 12),
       }));
 
-      if (!persisted) {
-        setKingSelectionError("A Coroa ficou no aparelho, mas ainda nao confirmou no Supabase. Tente novamente antes de recarregar.");
-        emitUiFeedback("close", "medium");
-        return;
-      }
+        if (!persisted) {
+          setKingSelectionError("A Coroa ficou no aparelho, mas ainda não confirmou no Supabase. Tente novamente antes de recarregar.");
+          emitUiFeedback("close", "medium");
+          emitUiToast({
+            tone: "error",
+            title: "Coroa não confirmou no banco",
+            message: "Tente novamente antes de recarregar.",
+          });
+          return;
+        }
 
-      emitUiFeedback("open", "medium");
-      setHelpOpen(true);
-    } finally {
+        emitUiFeedback("open", "medium");
+        emitUiToast({
+          tone: "success",
+          title: "Coroa assumida",
+          message: `${name.slice(0, 32)} foi salvo nesta campanha.`,
+        });
+        setHelpOpen(true);
+      } finally {
       setKingSelectionSaving(false);
     }
   };
@@ -339,6 +528,8 @@ export function WorldShell({
   };
 
   return (
+    <LiveWorldProvider value={liveWorld}>
+    <ImperialStateProvider value={imperialRuntime}>
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-700">
       {isSandboxWorld ? <SandboxProgressEngine worldId={worldId} currentDay={world.day} villages={mergedVillages} /> : null}
       {isSandboxWorld ? <SandboxDayDeltaModal currentDay={world.day} imperialState={imperialState} /> : null}
@@ -470,6 +661,7 @@ export function WorldShell({
             questsCompleted={questsCompleted}
             wondersControlled={wondersControlled}
             activeAlerts={world.activeAlerts}
+            setImperialState={setImperialState}
           />
         ) : null}
         {children}
@@ -573,20 +765,10 @@ export function WorldShell({
                 onClick={() => jumpToCoachTarget("intelligence")}
                 className="inline-flex items-center justify-center gap-1 rounded-xl border border-white/15 bg-white/8 px-3 py-3 text-[10px] font-black text-slate-200"
               >
-                Abrir Intel
+                Abrir Comando
               </button>
             </div>
           </section>
-        </div>
-      ) : null}
-
-      {waitingForKingState ? (
-        <div className="fixed inset-0 z-[94] flex items-center justify-center bg-slate-950/92 px-6 text-center backdrop-blur-md">
-          <div className="max-w-sm rounded-[30px] border border-white/14 bg-white/8 p-5 shadow-[0_28px_70px_rgba(2,6,23,0.7)]">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80">Preparando campanha</p>
-            <h2 className="mt-2 text-2xl font-black text-slate-50">Carregando Coroa</h2>
-            <p className="mt-2 text-[12px] leading-5 text-slate-300">Antes de abrir o reino, vamos confirmar seu estado salvo.</p>
-          </div>
         </div>
       ) : null}
 
@@ -603,11 +785,12 @@ export function WorldShell({
               Objetivo da temporada: construir um reino vivo, passar de <strong>1500 de influência</strong> e chegar ao Exodo sem perder a Coroa.
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {KING_PROFILES.map((profile) => {
-                const active = profile.id === selectedKingProfile.id;
-                return (
-                  <button
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {KING_PROFILES.map((profile) => {
+                  const active = profile.id === selectedKingProfile.id;
+                  const portraitStyle = resolveKingPortraitStyle(profile.id);
+                  return (
+                    <button
                     key={profile.id}
                     type="button"
                     data-smoke={`king-card-${profile.id}`}
@@ -619,12 +802,12 @@ export function WorldShell({
                     className={`min-h-[208px] overflow-hidden rounded-[24px] border text-left shadow-lg transition active:scale-95 ${
                       active ? "border-cyan-200/80 bg-cyan-500/16" : "border-white/12 bg-white/6"
                     }`}
-                    style={{
-                      backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0), rgba(2,6,23,0.26) 48%, rgba(2,6,23,0.94)), url('${profile.imageSrc}')`,
-                      backgroundPosition: "center top",
-                      backgroundSize: "cover",
-                    }}
-                  >
+                      style={{
+                        backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0), rgba(2,6,23,0.26) 48%, rgba(2,6,23,0.94)), url('${profile.imageSrc}')`,
+                        backgroundPosition: `center ${portraitStyle.backgroundPositionY}`,
+                        backgroundSize: portraitStyle.backgroundSize,
+                      }}
+                    >
                     <div className="flex h-full min-h-[208px] flex-col justify-end p-2.5">
                       <p className="text-[8px] font-black uppercase tracking-[0.14em] text-cyan-100/85">{profile.title}</p>
                       <p className="mt-0.5 text-[12px] font-black leading-tight text-slate-50 drop-shadow-[0_2px_8px_rgba(0,0,0,0.82)]">{profile.name}</p>
@@ -651,9 +834,14 @@ export function WorldShell({
             <div
               className="mt-3 overflow-hidden rounded-[28px] border border-white/16 bg-white/8"
               style={{
+                ...(() => {
+                  const portraitStyle = resolveKingPortraitStyle(selectedKingProfile.id);
+                  return {
+                    backgroundPosition: `center ${portraitStyle.backgroundPositionY}`,
+                    backgroundSize: portraitStyle.backgroundSize,
+                  };
+                })(),
                 backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0), rgba(2,6,23,0.26) 48%, rgba(2,6,23,0.95)), url('${selectedKingProfile.imageSrc}')`,
-                backgroundPosition: "center top",
-                backgroundSize: "cover",
               }}
             >
               <div className="p-3 pt-52">
@@ -757,7 +945,7 @@ export function WorldShell({
                     <span className="mt-1 block text-slate-50">{finalPlacementLabel}</span>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/6 px-3 py-3">
-                    <span className="block text-slate-500">{worldMeta.finalRank ? "PosiÃ§Ã£o" : "Dia"}</span>
+                    <span className="block text-slate-500">{worldMeta.finalRank ? "Posição" : "Dia"}</span>
                     <span className="mt-1 block text-slate-50">{worldMeta.finalRank ? `#${worldMeta.finalRank}` : world.day}</span>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/6 px-3 py-3">
@@ -803,7 +991,7 @@ export function WorldShell({
                   data-smoke="open-final-report"
                   className="rounded-2xl border border-amber-200/45 bg-amber-400/20 px-4 py-3 text-sm font-black text-amber-50"
                 >
-                  Ver relatÃ³rio final
+                  Ver relatório final
                 </button>
                 <button
                   type="button"
@@ -829,7 +1017,11 @@ export function WorldShell({
         </div>
       ) : null}
 
+      {((waitingForKingState || (showWorldChrome && !bootReady)) && !bootBypass) && !needsKingSelection ? <WorldLoadingScreen progress={bootProgress} /> : null}
+
       {showWorldChrome && showBottomNavigation ? <BottomNavigation worldId={worldId} activeTab={activeTab} villageId={activeVillage.id} evolutionMode={evolutionMode} /> : null}
     </div>
+    </ImperialStateProvider>
+    </LiveWorldProvider>
   );
 }

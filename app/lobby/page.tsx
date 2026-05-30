@@ -27,8 +27,10 @@ export default async function LobbyPage() {
       {worlds.length > 0 ? (
         <LobbyWorldSelector username={appUser.username} worlds={worlds} />
       ) : (
-        <SectionCard title="Nenhum mundo disponivel" eyebrow="Lobby">
-          <p>Crie ou ative um mundo no Supabase para liberar a entrada.</p>
+        <SectionCard title="Nenhuma campanha ativa" eyebrow="Aguardando mundo">
+          <p style={{ color: "rgba(248,250,252,0.75)", lineHeight: 1.6 }}>
+            Nenhuma campanha está disponível no momento. Se você é beta tester, aguarde o criador ativar um mundo — você receberá acesso em breve.
+          </p>
         </SectionCard>
       )}
 

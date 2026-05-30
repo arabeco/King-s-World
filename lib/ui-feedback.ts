@@ -1,7 +1,17 @@
 "use client";
 
+import { getUiSettings } from "@/lib/ui-settings";
+
 type HapticTone = "light" | "medium" | "heavy";
 type UiTone = "tap" | "open" | "close" | "route";
+export type UiToastTone = "success" | "error" | "info";
+export type UiToastPayload = {
+  tone?: UiToastTone;
+  title: string;
+  message?: string;
+};
+
+export const UI_TOAST_EVENT = "kw-ui-toast";
 
 let audioContextRef: AudioContext | null = null;
 
@@ -23,6 +33,10 @@ function resolveAudioContext(): AudioContext | null {
 }
 
 export function triggerHaptic(tone: HapticTone = "light") {
+  const settings = getUiSettings();
+  if (settings.silentMode || !settings.hapticsEnabled) {
+    return;
+  }
   if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") {
     return;
   }
@@ -41,6 +55,10 @@ export function triggerHaptic(tone: HapticTone = "light") {
 }
 
 export function playUiTone(tone: UiTone = "tap") {
+  const settings = getUiSettings();
+  if (settings.silentMode || !settings.uiSoundEnabled) {
+    return;
+  }
   const audioContext = resolveAudioContext();
   if (!audioContext) {
     return;
@@ -79,4 +97,20 @@ export function playUiTone(tone: UiTone = "tap") {
 export function emitUiFeedback(tone: UiTone = "tap", haptic: HapticTone = "light") {
   triggerHaptic(haptic);
   playUiTone(tone);
+}
+
+export function emitUiToast(payload: UiToastPayload) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent<UiToastPayload>(UI_TOAST_EVENT, {
+      detail: {
+        tone: payload.tone ?? "info",
+        title: payload.title,
+        message: payload.message,
+      },
+    }),
+  );
 }

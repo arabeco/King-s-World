@@ -9,10 +9,10 @@ import { VillageScene } from "@/components/base/VillageScene";
 import { SandboxOpeningPanel } from "@/components/sandbox/SandboxOpeningPanel";
 import type { SectorId } from "@/components/base/village-scene-config";
 import type { BuildingId } from "@/lib/buildings";
-import { mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
-import type { ResearchEntry, TimelineEntry, VillageSummary } from "@/lib/mock-data";
+import { mergeImperialVillages, useImperialStateContext } from "@/lib/imperial-state";
 import type { SandboxStrategyPlaybook, SandboxStrategyId } from "@/lib/sandbox-playbooks";
 import { emitUiFeedback } from "@/lib/ui-feedback";
+import { useLiveWorldContext } from "@/lib/world-runtime";
 
 export type LocalCommand = "guard" | "drill" | "sortie" | "fortify" | "rations";
 export type BaseSubTab = "city";
@@ -29,33 +29,6 @@ const LOCAL_COMMAND_META: Record<LocalCommand, { label: string; summary: string 
 
 type BasePageClientProps = {
   worldId: string;
-  villages: VillageSummary[];
-  researches: ResearchEntry[];
-  timeline: TimelineEntry[];
-  worldName: string;
-  worldDay: number;
-  worldPhase: string;
-  worldSpeedMultiplier?: number;
-  averageInfluenceScore: number;
-  activeAlerts: string[];
-  tribe: {
-    name: string;
-    citadelStatus: string;
-    totalScore: number;
-    rank: number;
-    membersAlive: number;
-  };
-  sovereignty: {
-    kingAlive: boolean;
-    councilHeroes: number;
-    militaryRankingPoints: number;
-    wondersControlled: number;
-    eraQuestsCompleted: number;
-    tribeDomeUnlocked: boolean;
-    tribeLoyaltyStage?: number;
-  };
-  readOnly: boolean;
-  selectedVillageId: string;
   evolutionMode: EvolutionMode;
   initialLocalCommand: LocalCommand;
   initialSubTab: BaseSubTab;
@@ -66,19 +39,6 @@ type BasePageClientProps = {
 
 export function BasePageClient({
   worldId,
-  villages,
-  researches,
-  timeline,
-  worldName,
-  worldDay,
-  worldPhase,
-  worldSpeedMultiplier = 1,
-  averageInfluenceScore,
-  activeAlerts,
-  tribe,
-  sovereignty,
-  readOnly,
-  selectedVillageId,
   evolutionMode,
   initialLocalCommand,
   initialSubTab,
@@ -90,8 +50,10 @@ export function BasePageClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [localCommand, setLocalCommand] = useState<LocalCommand>(initialLocalCommand);
-  const { imperialState, setImperialState } = useImperialState(worldId, villages);
-  const mergedVillages = mergeImperialVillages(villages, imperialState);
+  const { world, worldMeta, isSandboxWorld } = useLiveWorldContext();
+  const { imperialState } = useImperialStateContext();
+  const mergedVillages = mergeImperialVillages(world.villages, imperialState);
+  const selectedVillageId = searchParams.get("v") ?? world.activeVillageId;
 
   useEffect(() => {
     setLocalCommand(initialLocalCommand);
@@ -101,7 +63,7 @@ export function BasePageClient({
 
   return (
     <>
-      {sandboxPlaybooks ? (
+      {isSandboxWorld && sandboxPlaybooks ? (
         <SandboxOpeningPanel
           worldId={worldId}
           villages={mergedVillages}
@@ -114,12 +76,12 @@ export function BasePageClient({
         worldId={worldId}
         villages={mergedVillages}
         village={activeVillage}
-        readOnly={readOnly}
-        researchEntries={researches}
-        timelineEntries={timeline}
+        readOnly={worldMeta.readOnly}
+        researchEntries={world.researches}
+        timelineEntries={world.timeline}
         evolutionMode={evolutionMode}
         localCommand={localCommand}
-        worldSpeedMultiplier={worldSpeedMultiplier}
+        worldSpeedMultiplier={world.speedMultiplier ?? 1}
         initialSelectedSectorId={initialSelectedSectorId}
         initialSelectedBuildingId={initialSelectedBuildingId}
       />

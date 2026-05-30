@@ -1,0 +1,302 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-05-04T21:03:16.048Z",
+  "server": {
+    "mode": "spawned"
+  },
+  "browserClicks": {
+    "creator": {
+      "profileOpened": true,
+      "kingModalClicked": false,
+      "fillAiClicked": false,
+      "scheduleMidnightClicked": true
+    },
+    "participant": {
+      "kingModalClicked": false,
+      "tabsOpened": [
+        "base",
+        "intelligence",
+        "board",
+        "guide"
+      ]
+    }
+  },
+  "sqlProof": {
+    "world": {
+      "id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+      "slug": "alpha-expresso",
+      "status": "open",
+      "starts_at": "2026-05-05T03:00:00+00:00",
+      "runtime_started": false,
+      "runtime_real_time_enabled": true,
+      "runtime_anchor_day": 0,
+      "runtime_anchor_started_at": "2026-05-05T03:00:00+00:00"
+    },
+    "participantPlayer": {
+      "id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+      "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+      "user_id": "a0a67c4e-7968-4cf1-97b1-49190a1b8512",
+      "status": "alive",
+      "power_score_cached": 0
+    },
+    "participantCount": 50,
+    "aiLikeCount": 48,
+    "king": {
+      "world_player_id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+      "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+      "king_profile_id": "serenna",
+      "king_name": "Smoke N8 Serenna"
+    },
+    "exploration": {
+      "world_player_id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+      "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+      "coord_key": "1:0",
+      "q": 1,
+      "r": 0,
+      "discovery_type": "opportunity",
+      "status": "new",
+      "title": "Smoke N8: fronteira encontrada"
+    },
+    "state": {
+      "world_player_id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+      "materials_stock": 12345,
+      "supplies_stock": 9876,
+      "militia_count": 900,
+      "scouts_count": 100,
+      "movementProof": {
+        "id": "smoke-n8-1777928637691",
+        "meta": {
+          "district": "A",
+          "buildMode": null,
+          "targetLabel": "Smoke N8 - clareira de prova",
+          "reportedIntelCoordKeys": [
+            "1:0"
+          ]
+        },
+        "route": [
+          "0:0",
+          "1:0"
+        ],
+        "status": "traveling",
+        "worldId": "alpha-expresso",
+        "arrivalAt": "2026-05-04T21:05:27.691Z",
+        "etaMinutes": 2,
+        "launchedAt": "2026-05-04T21:03:57.691Z",
+        "routeSteps": [
+          {
+            "coordKey": "1:0",
+            "arrivalAt": "2026-05-04T21:05:27.691Z",
+            "legMinutes": 2,
+            "elapsedMinutes": 2
+          }
+        ],
+        "sourceCoord": "0:0",
+        "targetCoord": "1:0",
+        "movementType": "scout",
+        "commandAction": "explore"
+      },
+      "clientStateHasExploration": false
+    },
+    "suggestedSql": [
+      "select id, slug, status, starts_at, runtime_started, runtime_real_time_enabled from worlds where slug = 'alpha-expresso';",
+      "select count(*) as participants from world_players where world_id = 'b8b32ba3-07b6-464b-b283-7774fd04aafb';",
+      "select world_player_id, king_profile_id, king_name from world_player_king_states where world_player_id = '7a44bc28-3985-46ab-9ac4-d717c80a1415';",
+      "select coord_key, q, r, discovery_type, status, title from world_player_exploration_states where world_player_id = '7a44bc28-3985-46ab-9ac4-d717c80a1415' and coord_key = '1:0';",
+      "select sandbox_snapshots_json #> '{__runtimeMap,mapMovements}' as movements, sandbox_snapshots_json #> '{__clientState,exploredCoordKeys}' as hidden_exploration from world_player_imperial_states where world_player_id = '7a44bc28-3985-46ab-9ac4-d717c80a1415';"
+    ]
+  },
+  "checks": [
+    {
+      "label": "dev login conta 1",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "userKey": "1"
+        }
+      }
+    },
+    {
+      "label": "dev login conta 2",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "userKey": "2"
+        }
+      }
+    },
+    {
+      "label": "criador cria/reusa Alpha Expressa",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "reused": true,
+          "world": {
+            "slug": "alpha-expresso",
+            "href": "/world/alpha-expresso/empire"
+          }
+        }
+      }
+    },
+    {
+      "label": "criador clicou Perfil/IA/runtime",
+      "ok": true,
+      "details": {
+        "profileOpened": true,
+        "kingModalClicked": false,
+        "fillAiClicked": false,
+        "scheduleMidnightClicked": true
+      }
+    },
+    {
+      "label": "participante entrou no mundo",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "worldId": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "worldPlayerId": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+        "activeVillageId": "709f438a-c9db-430b-b21d-4fb593c308b2",
+        "participantCount": 50
+      }
+    },
+    {
+      "label": "participante clicou coroa/telas principais",
+      "ok": true,
+      "details": {
+        "kingModalClicked": false,
+        "tabsOpened": [
+          "base",
+          "intelligence",
+          "board",
+          "guide"
+        ]
+      }
+    },
+    {
+      "label": "estado imperial do participante carregou",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "participante persistiu rei + exploracao",
+      "ok": true,
+      "details": {
+        "ok": true
+      }
+    },
+    {
+      "label": "ranking recarregado mostra 50 participantes",
+      "ok": true,
+      "details": {
+        "participantCount": 50
+      }
+    },
+    {
+      "label": "SQL mundo ficou agendado ou rodando",
+      "ok": true,
+      "details": {
+        "id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "slug": "alpha-expresso",
+        "status": "open",
+        "starts_at": "2026-05-05T03:00:00+00:00",
+        "runtime_started": false,
+        "runtime_real_time_enabled": true,
+        "runtime_anchor_day": 0,
+        "runtime_anchor_started_at": "2026-05-05T03:00:00+00:00"
+      }
+    },
+    {
+      "label": "SQL mundo tem 50 participantes",
+      "ok": true,
+      "details": {
+        "participantCount": 50
+      }
+    },
+    {
+      "label": "SQL participante esta vivo",
+      "ok": true,
+      "details": {
+        "id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+        "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "user_id": "a0a67c4e-7968-4cf1-97b1-49190a1b8512",
+        "status": "alive",
+        "power_score_cached": 0
+      }
+    },
+    {
+      "label": "SQL rei dedicado do participante",
+      "ok": true,
+      "details": {
+        "world_player_id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+        "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "king_profile_id": "serenna",
+        "king_name": "Smoke N8 Serenna"
+      }
+    },
+    {
+      "label": "SQL exploracao dedicada gravada",
+      "ok": true,
+      "details": {
+        "world_player_id": "7a44bc28-3985-46ab-9ac4-d717c80a1415",
+        "world_id": "b8b32ba3-07b6-464b-b283-7774fd04aafb",
+        "coord_key": "1:0",
+        "q": 1,
+        "r": 0,
+        "discovery_type": "opportunity",
+        "status": "new",
+        "title": "Smoke N8: fronteira encontrada"
+      }
+    },
+    {
+      "label": "SQL movimento de mapa ficou no runtime",
+      "ok": true,
+      "details": {
+        "id": "smoke-n8-1777928637691",
+        "meta": {
+          "district": "A",
+          "buildMode": null,
+          "targetLabel": "Smoke N8 - clareira de prova",
+          "reportedIntelCoordKeys": [
+            "1:0"
+          ]
+        },
+        "route": [
+          "0:0",
+          "1:0"
+        ],
+        "status": "traveling",
+        "worldId": "alpha-expresso",
+        "arrivalAt": "2026-05-04T21:05:27.691Z",
+        "etaMinutes": 2,
+        "launchedAt": "2026-05-04T21:03:57.691Z",
+        "routeSteps": [
+          {
+            "coordKey": "1:0",
+            "arrivalAt": "2026-05-04T21:05:27.691Z",
+            "legMinutes": 2,
+            "elapsedMinutes": 2
+          }
+        ],
+        "sourceCoord": "0:0",
+        "targetCoord": "1:0",
+        "movementType": "scout",
+        "commandAction": "explore"
+      }
+    },
+    {
+      "label": "snapshot nao guarda exploracao como verdade escondida",
+      "ok": true,
+      "details": {
+        "clientStateHasExploration": false
+      }
+    }
+  ],
+  "failed": []
+}

@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-05-17T17:56:31.525Z",
+  "rules": {
+    "days": 120,
+    "players": 50,
+    "influenceCap": 2500,
+    "portalCut": 1500,
+    "infrastructureCap": 1000,
+    "governmentCap": 500,
+    "militaryCap": 400,
+    "societyCap": 300,
+    "legacyCap": 300
+  },
+  "windows": {
+    "secondVillageDay": {
+      "target": 15,
+      "tolerance": 2
+    },
+    "firstVillage100Day": {
+      "target": 45,
+      "tolerance": 5
+    },
+    "portalSurvivors": {
+      "min": 10,
+      "max": 22
+    },
+    "day90Eligible": {
+      "min": 15,
+      "max": 30
+    },
+    "reached2500": {
+      "min": 0.25,
+      "max": 2
+    }
+  },
+  "checks": {
+    "execution": true,
+    "artifacts": true,
+    "metadata": true,
+    "balance": true
+  },
+  "metrics": {
+    "records": 400,
+    "maxInfluenceObserved": 2500,
+    "avgSecondVillageDay": 15.2975,
+    "avgFirstVillage100Day": 44.6375,
+    "avgPortalSurvivors": 16.125,
+    "avgDay90Eligible": 26.625,
+    "avgReached2500": 1
+  },
+  "errors": [],
+  "warnings": []
+}

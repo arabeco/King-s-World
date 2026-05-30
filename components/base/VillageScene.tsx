@@ -27,7 +27,7 @@ import { CITY_CLASS_META, cityClassToArchetype, type CityClass } from "@/lib/cit
 import { HERO_META } from "@/lib/empire-systems";
 import {
   projectStructureLevelsToBuildingLevels,
-  useImperialState,
+  useImperialStateContext,
   type BuildingSkillSlotId,
   type CityProductionAllocations,
   type CityDefenseRecruitId,
@@ -288,8 +288,7 @@ export function VillageScene({
   const [showHeroPromotionOptions, setShowHeroPromotionOptions] = useState(false);
   const [selectedHeroBuild, setSelectedHeroBuild] = useState<HeroBuildId>("leadership");
   const [pendingSkillUpgrade, setPendingSkillUpgrade] = useState<PendingSkillUpgrade | null>(null);
-  const [pendingCityClass, setPendingCityClass] = useState<CityClass | null>(null);
-  const { imperialState, setImperialState } = useImperialState(worldId, villages);
+  const { imperialState, setImperialState } = useImperialStateContext();
   const resources = imperialState.resources;
   const villageLevelOverrides = imperialState.buildingLevelsByVillage[village.id] ?? {};
   const projectedVillageLevelOverrides = useMemo(
@@ -586,17 +585,12 @@ export function VillageScene({
     emitUiFeedback("tap", "light");
   };
 
-  const requestCityClassChoice = (nextClass: CityClass) => {
+  const chooseCityClass = (nextClass: CityClass) => {
     if (blockReadOnly()) return;
-    if (isCapitalVillage || cityClassLocked || nextClass === cityClass || nextClass === "neutral") return;
-    setPendingCityClass(nextClass);
-    emitUiFeedback("tap", "light");
-  };
-
-  const confirmCityClassChoice = () => {
-    if (blockReadOnly()) return;
-    if (!pendingCityClass || isCapitalVillage || cityClassLocked || pendingCityClass === "neutral") {
-      setPendingCityClass(null);
+    if (isCapitalVillage) {
+      return;
+    }
+    if (cityClassLocked && nextClass !== cityClass) {
       return;
     }
 
@@ -604,16 +598,15 @@ export function VillageScene({
       ...current,
       cityClassByVillage: {
         ...current.cityClassByVillage,
-        [village.id]: pendingCityClass,
+        [village.id]: nextClass,
       },
       cityClassLockedByVillage: {
         ...current.cityClassLockedByVillage,
-        [village.id]: true,
+        [village.id]: nextClass !== "neutral",
       },
-      logs: [`${village.name}: vocação travada como ${CITY_CLASS_META[pendingCityClass].label}`, ...current.logs].slice(0, 12),
+      logs: [`${village.name}: vocação definida como ${CITY_CLASS_META[nextClass].label}`, ...current.logs].slice(0, 12),
     }));
-    pushLog(`Vocação fixa -> ${CITY_CLASS_META[pendingCityClass].label}`);
-    setPendingCityClass(null);
+    pushLog(`Vocação -> ${CITY_CLASS_META[nextClass].label}`);
     emitUiFeedback("open", "medium");
   };
 
@@ -1047,7 +1040,7 @@ export function VillageScene({
                     <button
                       key={classId}
                       type="button"
-                      onClick={() => requestCityClassChoice(classId)}
+                      onClick={() => chooseCityClass(classId)}
                       disabled={disabled}
                       className={`rounded-full border px-3 py-1.5 text-[10px] font-black transition disabled:opacity-45 ${
                         active
@@ -1626,48 +1619,6 @@ export function VillageScene({
                 Confirmar upgrade
               </button>
             </div>
-          </article>
-        </div>
-      ) : null}
-      {pendingCityClass ? (
-        <div className="fixed inset-0 z-[84] flex items-center justify-center bg-slate-950/58 p-4 backdrop-blur-sm" data-smoke="city-class-confirm-popup">
-          <article
-            className="relative w-full max-w-[330px] overflow-hidden rounded-[26px] border border-white/12 bg-slate-950/95 px-4 py-3 text-slate-100 shadow-[0_18px_60px_rgba(2,6,23,0.55)]"
-            style={{
-              backgroundImage:
-                `linear-gradient(145deg, rgba(2,6,23,0.28), rgba(2,6,23,0.88)), url('${CITY_CLASS_IMAGE_BY_ID[pendingCityClass]}')`,
-              backgroundPosition: "center",
-              backgroundSize: "cover",
-            }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200">Vocação permanente</p>
-                <p className="mt-1 text-xl font-black tracking-tight text-slate-100">{CITY_CLASS_META[pendingCityClass].label}</p>
-                <p className="mt-2 text-[11px] font-semibold leading-relaxed text-slate-200">
-                  Esta escolha define a função da cidade no reino e fica travada depois da confirmação.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPendingCityClass(null)}
-                data-smoke="close-city-class-confirm-popup"
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/6 text-slate-300"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mt-3 rounded-2xl border border-white/12 bg-slate-950/62 p-3 text-[11px] font-semibold text-slate-200">
-              {CITY_CLASS_META[pendingCityClass].summary}
-            </div>
-            <button
-              type="button"
-              onClick={confirmCityClassChoice}
-              data-smoke="confirm-city-class-choice"
-              className="mt-3 w-full rounded-xl border border-amber-300/35 bg-amber-500/16 px-3 py-3 text-[11px] font-black text-amber-100"
-            >
-              Confirmar vocação fixa
-            </button>
           </article>
         </div>
       ) : null}

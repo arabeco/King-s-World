@@ -1,0 +1,110 @@
+{
+  "ok": false,
+  "startedAt": "2026-04-23T19:46:53.002Z",
+  "finishedAt": "2026-04-23T19:48:06.654Z",
+  "worldId": "exodo",
+  "worldUrl": "http://localhost:3000/world/exodo/empire",
+  "clicks": [
+    {
+      "at": "2026-04-23T19:46:55.868Z",
+      "label": "Entrada dev por API de smoke",
+      "url": "http://localhost:3000/login"
+    },
+    {
+      "at": "2026-04-23T19:46:57.739Z",
+      "label": "Entrar no mundo",
+      "url": "http://localhost:3000/lobby"
+    },
+    {
+      "at": "2026-04-23T19:47:25.981Z",
+      "label": "Escolher rei Aurelian",
+      "url": "http://localhost:3000/world/exodo/empire"
+    },
+    {
+      "at": "2026-04-23T19:47:26.633Z",
+      "label": "Preencher nome do rei",
+      "url": "http://localhost:3000/world/exodo/empire"
+    },
+    {
+      "at": "2026-04-23T19:47:26.633Z",
+      "label": "Confirmar rei",
+      "url": "http://localhost:3000/world/exodo/empire"
+    },
+    {
+      "at": "2026-04-23T19:47:26.714Z",
+      "label": "Abrir Cidades",
+      "url": "http://localhost:3000/world/exodo/empire"
+    },
+    {
+      "at": "2026-04-23T19:47:27.104Z",
+      "label": "Abrir setor Governo",
+      "url": "http://localhost:3000/world/exodo/base?v=6a443bc0-0fc8-46a8-9a27-bfc2fc6495c2"
+    },
+    {
+      "at": "2026-04-23T19:47:30.039Z",
+      "label": "Subir skill da Coroa",
+      "url": "http://localhost:3000/world/exodo/base?v=6a443bc0-0fc8-46a8-9a27-bfc2fc6495c2&b=palace"
+    },
+    {
+      "at": "2026-04-23T19:47:30.122Z",
+      "label": "Confirmar upgrade",
+      "url": "http://localhost:3000/world/exodo/base?v=6a443bc0-0fc8-46a8-9a27-bfc2fc6495c2&b=palace"
+    },
+    {
+      "at": "2026-04-23T19:47:30.499Z",
+      "label": "Abrir Mundo",
+      "url": "http://localhost:3000/world/exodo/base?v=6a443bc0-0fc8-46a8-9a27-bfc2fc6495c2&b=palace"
+    }
+  ],
+  "assertions": [
+    {
+      "at": "2026-04-23T19:46:57.733Z",
+      "label": "Lobby carregou",
+      "ok": true,
+      "url": "http://localhost:3000/lobby"
+    },
+    {
+      "at": "2026-04-23T19:47:13.284Z",
+      "label": "Campanha movida para opening",
+      "ok": true,
+      "url": "http://localhost:3000/world/exodo/empire"
+    },
+    {
+      "at": "2026-04-23T19:47:25.981Z",
+      "label": "Modal de rei apareceu",
+      "ok": true,
+      "url": "http://localhost:3000/world/exodo/empire"
+    },
+    {
+      "at": "2026-04-23T19:47:27.104Z",
+      "label": "Cena da cidade visível",
+      "ok": true,
+      "url": "http://localhost:3000/world/exodo/base?v=6a443bc0-0fc8-46a8-9a27-bfc2fc6495c2"
+    },
+    {
+      "at": "2026-04-23T19:47:30.039Z",
+      "label": "Modal de setor visível",
+      "ok": true,
+      "url": "http://localhost:3000/world/exodo/base?v=6a443bc0-0fc8-46a8-9a27-bfc2fc6495c2&b=palace"
+    },
+    {
+      "at": "2026-04-23T19:47:30.122Z",
+      "label": "Popup de upgrade apareceu",
+      "ok": true,
+      "url": "http://localhost:3000/world/exodo/base?v=6a443bc0-0fc8-46a8-9a27-bfc2fc6495c2&b=palace"
+    }
+  ],
+  "console": [],
+  "screenshots": [
+    "C:\\Users\\Afonso\\Downloads\\King-s-World-main\\King-s-World-main\\reports\\smoke-campaign\\screenshots\\01-login.png",
+    "C:\\Users\\Afonso\\Downloads\\King-s-World-main\\King-s-World-main\\reports\\smoke-campaign\\screenshots\\02-lobby.png",
+    "C:\\Users\\Afonso\\Downloads\\King-s-World-main\\King-s-World-main\\reports\\smoke-campaign\\screenshots\\03-king-selection.png",
+    "C:\\Users\\Afonso\\Downloads\\King-s-World-main\\King-s-World-main\\reports\\smoke-campaign\\screenshots\\04-base-tab.png",
+    "C:\\Users\\Afonso\\Downloads\\King-s-World-main\\King-s-World-main\\reports\\smoke-campaign\\screenshots\\05-city-upgrade.png"
+  ],
+  "restore": {
+    "imperial": true,
+    "campaign": true
+  },
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /Mundo/i })\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"flex min-w-[50px] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[8px] font-semibold transition active:scale-95 text-slate-300 hover:bg-white/10 hover:text-white\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"relative w-full overflow-hidden rounded-[30px] border border-white/14 bg-transparent px-1.5 py-1.5 text-slate-100 shadow-[0_24px_80px_rgba(2,6,23,0.45)]\">…</div> from <main class=\"mx-auto flex min-h-screen w-full max-w-md flex-col px-3 pb-[calc(env(safe-area-inset-bottom)+48px)] pt-[calc(env(safe-area-inset-top)+206px)]\">…</main> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"relative w-full overflow-hidden rounded-[30px] border border-white/14 bg-transparent px-1.5 py-1.5 text-slate-100 shadow-[0_24px_80px_rgba(2,6,23,0.45)]\">…</div> from <main class=\"mx-auto flex min-h-screen w-full max-w-md flex-col px-3 pb-[calc(env(safe-area-inset-bottom)+48px)] pt-[calc(env(safe-area-inset-top)+206px)]\">…</main> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    57 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"relative w-full overflow-hidden rounded-[30px] border border-white/14 bg-transparent px-1.5 py-1.5 text-slate-100 shadow-[0_24px_80px_rgba(2,6,23,0.45)]\">…</div> from <main class=\"mx-auto flex min-h-screen w-full max-w-md flex-col px-3 pb-[calc(env(safe-area-inset-bottom)+48px)] pt-[calc(env(safe-area-inset-top)+206px)]\">…</main> subtree intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+}

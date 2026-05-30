@@ -1,0 +1,192 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-05-02T15:14:01.966Z",
+  "checks": [
+    {
+      "label": "smoke:level6 ja passou",
+      "ok": true,
+      "details": "PASS"
+    },
+    {
+      "label": "layout em pt-BR",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "metadata sem mojibake conhecido",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "setImperialState retorna Promise<boolean>",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "persistencia de estado confirma response.ok",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "confirmacao da Coroa aguarda persistencia",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "Coroa mostra salvando",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "Coroa mostra erro se Supabase nao confirmar",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "entrada bloqueia jogo ate carregar Coroa",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "modal de rei so abre depois do estado pronto",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "reis tem traits positivos e negativos",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "GET carrega rei da tabela dedicada",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "PUT persiste rei na tabela dedicada",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "world payload cria app user autenticado",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "world payload garante world player",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "server auth usa Supabase ou dev cookie",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "rota de perfil exige app user",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "perfil atualiza username",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "lobby nasce com app user real",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "perfil nasce com app user real",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "perfil nao usa placeholder Seu reino",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "lobby lembra ultimo mundo por conta",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "lobby tem botao de criar campanha Alpha",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "lobby permite Alpha expressa",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "rota Alpha exige usuario autenticado",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "rota Alpha grava no Supabase",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "rota Alpha suporta modo expresso sem quebrar SQL antigo",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "rota Alpha reutiliza mundo aberto",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "rota Alpha nasce aberta dia zero",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "rota cria mundo teste apenas em dev",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "mundo teste nasce aberto dia zero",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "mundo finalizado abre relatorio",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "label finalizado fala relatorio",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "acoes inline centralizadas",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "botoes centralizam texto",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "perfil global sem mojibake conhecido",
+      "ok": true,
+      "details": null
+    },
+    {
+      "label": "modal de predio usa medalha sem label Nivel",
+      "ok": true,
+      "details": null
+    }
+  ],
+  "failed": []
+}

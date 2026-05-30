@@ -29,8 +29,9 @@ export function createSupabaseServerClient() {
 }
 
 export async function getAuthenticatedUser(): Promise<User | null> {
-  if (isDevAuthEnabled() && cookies().get(DEV_AUTH_COOKIE)?.value === "1") {
-    return buildDevUser();
+  const devAuthCookie = cookies().get(DEV_AUTH_COOKIE)?.value;
+  if (isDevAuthEnabled() && devAuthCookie) {
+    return buildDevUser(devAuthCookie);
   }
 
   if (!hasPublicSupabaseEnv()) {

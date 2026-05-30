@@ -8,6 +8,18 @@ export function isSupabaseConfigured(): boolean {
   return Boolean(SUPABASE_URL && SUPABASE_SERVER_KEY);
 }
 
+export function isSupabaseConnectivityError(error: unknown): boolean {
+  const message = error instanceof Error
+    ? `${error.name}: ${error.message}${error.cause ? ` ${String(error.cause)}` : ""}`
+    : String(error);
+
+  return /fetch failed|getaddrinfo|enotfound|eai_again|dns|network/i.test(message);
+}
+
+export function shouldUseLocalSupabaseFallback(error: unknown): boolean {
+  return process.env.NODE_ENV !== "production" && isSupabaseConnectivityError(error);
+}
+
 function requireSupabaseEnv() {
   if (!SUPABASE_URL || !SUPABASE_SERVER_KEY) {
     throw new Error(
@@ -116,4 +128,12 @@ export function inFilter(values: string[]): string {
 
 export function looksLikeUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+export async function supabaseRpc<TOut>(fn: string, params: Record<string, unknown>): Promise<TOut> {
+  const { data, error } = await createServerClient().rpc(fn, params);
+  if (error) {
+    throw new Error(`Supabase RPC ${fn} failed: ${error.message}`);
+  }
+  return data as TOut;
 }

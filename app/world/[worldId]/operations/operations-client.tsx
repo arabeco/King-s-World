@@ -32,10 +32,10 @@ import {
 } from "@/core/GameBalance";
 import { DetailSheet, type DetailSheetContent } from "@/components/detail-sheet";
 import { countCouncilSlots, formatCouncilLoadout, type HeroSpecialistId } from "@/lib/council";
-import { mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
+import { mergeImperialVillages, useImperialStateContext } from "@/lib/imperial-state";
 import { cityClassLabel } from "@/lib/cities";
 import { emitUiFeedback } from "@/lib/ui-feedback";
-import { useLiveWorld } from "@/lib/world-runtime";
+import { useLiveWorldContext } from "@/lib/world-runtime";
 
 type HeroSpecialist = {
   id: HeroSpecialistId;
@@ -52,7 +52,7 @@ const HERO_SPECIALISTS: HeroSpecialist[] = [
   { id: "marshal", name: "General", role: "Combate", icon: Swords, directValue: 50, summary: "Reduz atrito do exercito e empurra ranking militar.", buildHook: "Guia Posto Avancado e converte ataque em pontos reais." },
   { id: "navigator", name: "Explorador", role: "Mapa", icon: Compass, directValue: 50, summary: "Revela territorio, derruba ETA e limpa rotas longas.", buildHook: "Guia Celeiro e qualquer spawn longe do centro." },
   { id: "intendente", name: "Administrador", role: "Fluxo", icon: Users, directValue: 50, summary: "Organiza suprimentos, comboios e sustentacao de expansao.", buildHook: "Guia expansao com muitas cidades e cadeia de Maravilhas." },
-  { id: "erudite", name: "Sabio", role: "Pesquisa", icon: FlaskConical, directValue: 50, summary: "Puxa quests, doutrina e reduz atraso de branch.", buildHook: "Guia rotas de build que vencem por timing e nao por massa." },
+  { id: "erudite", name: "Sábio", role: "Pesquisa", icon: FlaskConical, directValue: 50, summary: "Puxa quests, doutrina e reduz atraso de branch.", buildHook: "Guia rotas de build que vencem por timing e não por massa." },
 ];
 
 const HERO_LABELS = Object.fromEntries(
@@ -153,8 +153,8 @@ export function OperationsClient({
   params: { worldId: string };
   searchParams: { v?: string; m?: string };
 }) {
-  const { world } = useLiveWorld(params.worldId);
-  const { imperialState, setImperialState } = useImperialState(params.worldId, world.villages);
+  const { world } = useLiveWorldContext();
+  const { imperialState, setImperialState } = useImperialStateContext();
   const mergedVillages = mergeImperialVillages(world.villages, imperialState);
   const [openedDetailId, setOpenedDetailId] = useState<string | null>(null);
   const selectedVillageId = typeof searchParams.v === "string" ? searchParams.v : world.activeVillageId;
@@ -238,7 +238,7 @@ export function OperationsClient({
       "research-summary": {
         eyebrow: "Pesquisa",
         title: "Pesquisa e Branch ativa",
-        description: "Pesquisa nao entra como score fixo direto, mas e ela que puxa a personalidade da build. Se a branch estiver errada, a run entra tarde na curva boa.",
+        description: "Pesquisa não entra como score fixo direto, mas é ela que puxa a personalidade da build. Se a branch estiver errada, a run entra tarde na curva boa.",
         formula: "Branch certa = mais velocidade na sua linha forte. Branch errada = custo de oportunidade e atraso de timing.",
         valueLabel: `${avgResearchProgress}% de media global`,
         progressPct: avgResearchProgress,
@@ -291,14 +291,14 @@ export function OperationsClient({
       "diplomats-summary": {
         eyebrow: "Diplomacia",
         title: "Diplomatas das Colonias",
-        description: "Diplomatas nao ocupam os 5 slots do Conselho. Cada Colonia madura abre 1 slot diplomatico, mas voce ainda precisa contratar esse agente na aba de Herois.",
-        formula: `Cada Colonia com ${CITY_DIPLOMAT_UNLOCK_DEVELOPMENT}/100 ou mais libera 1 slot (max ${MAX_CITY_DIPLOMATS}). O pool de Colonias cuida de cidades e anexacao. A Tribo usa 2 enviados proprios.`,
+        description: "Diplomatas não ocupam os 5 slots do Conselho. Cada Colônia madura abre 1 slot diplomático, mas você ainda precisa contratar esse agente na aba de Heróis.",
+        formula: `Cada Colônia com ${CITY_DIPLOMAT_UNLOCK_DEVELOPMENT}/100 ou mais libera 1 slot (max ${MAX_CITY_DIPLOMATS}). O pool de Colônias cuida de cidades e anexação. A Tribo usa 2 enviados próprios.`,
         valueLabel: `${totalDiplomats}/${MAX_TOTAL_DIPLOMATS} agentes`,
         progressPct: diplomatPct,
         color: "blue",
         metrics: [
-          { label: "Slots", value: `${unlockedDiplomatSlots}/${MAX_CITY_DIPLOMATS}`, note: "Colonias maduras que ja abriram um slot diplomatico." },
-          { label: "Contratados", value: `${recruitedDiplomats}/${MAX_CITY_DIPLOMATS}`, note: "Agentes de Colonias realmente recrutados na aba de Herois." },
+          { label: "Slots", value: `${unlockedDiplomatSlots}/${MAX_CITY_DIPLOMATS}`, note: "Colônias maduras que já abriram um slot diplomático." },
+          { label: "Contratados", value: `${recruitedDiplomats}/${MAX_CITY_DIPLOMATS}`, note: "Agentes de Colônias realmente recrutados na aba de Heróis." },
           { label: "Em cidades", value: `${assignedCityDiplomats}`, note: "Diplomatas hoje cuidando de uma cidade especifica." },
           { label: "Em missao", value: `${annexEnvoysCommitted}`, note: "Diplomatas em campo anexando cidades vazias ou estabilizando posse." },
           { label: "Livres", value: `${freeDiplomats}`, note: "Pool pronto para designar cidade ou anexar no mapa." },
@@ -314,14 +314,14 @@ export function OperationsClient({
               : `Ainda bloqueado. Falta chegar em ${CITY_DIPLOMAT_UNLOCK_DEVELOPMENT}/100.`,
         })),
         missing: [
-          "Colonias abaixo do limiar ainda nao liberam slot diplomatico.",
-          "Aqui voce decide quantos agentes de Colonias quer contratar de verdade, em vez de ganhar tudo automaticamente.",
+          "Colônias abaixo do limiar ainda não liberam slot diplomático.",
+          "Aqui você decide quantos agentes de Colônias quer contratar de verdade, em vez de ganhar tudo automaticamente.",
         ],
       },
       "tribe-summary": {
         eyebrow: "Tribo",
         title: "Representacao no Domo da Tribo",
-        description: "A Tribo agora usa 2 enviados proprios. O primeiro abre os 20 iniciais para quem joga mais solo; o segundo fecha o ultimo selo de 20 no late game.",
+        description: "A Tribo agora usa 2 enviados próprios. O primeiro abre os 20 iniciais para quem joga mais solo; o segundo fecha o último selo de 20 no late game.",
         formula: "5 etapas x 20 = 100. Etapa 1 abre com o 1o enviado tribal. Etapas 2, 3 e 4 sobem por permanencia no tempo. Etapa 5 fecha com o 2o enviado tribal no fim.",
         valueLabel: `${tribeInfluenceStage}/5 etapas`,
         progressPct: tribePct,
@@ -330,7 +330,7 @@ export function OperationsClient({
           { label: "Etapa", value: tribeInfluenceStageLabel(tribeInfluenceStage), note: "Estado atual da sua trilha de 100 da Tribo." },
           { label: "Enviados", value: `${tribeEnvoysCommitted}/${MAX_TRIBE_ENVOYS}`, note: "Dois enviados especiais da Tribo, separados dos 9 de Colonia." },
           { label: "Contratados", value: `${recruitedTribeEnvoys}/${MAX_TRIBE_ENVOYS}`, note: "Quantos enviados tribais ja foram recrutados na aba de Herois." },
-          { label: "Proximo +20", value: nextTribeStep, note: "Proximo passo para subir a proxima faixa da Tribo." },
+          { label: "Próximo +20", value: nextTribeStep, note: "Próximo passo para subir a próxima faixa da Tribo." },
         ],
         breakdown: [
           { label: "1. Representacao", current: tribeInfluenceStage >= 1 ? 20 : 0, max: 20, note: "Envie o 1o enviado tribal e abra o piso de +20." },
@@ -347,15 +347,15 @@ export function OperationsClient({
       "military-summary": {
         eyebrow: "Militar",
         title: "Ranking Militar",
-        description: "Militar vale 300 no score. O ponto aqui nao e quantidade cega; e a capacidade de transformar recrutamento, atrito, pesquisa e heroi certo em ranking forte.",
-        formula: "Poder militar = qualidade de composicao + herois certos + build tatico/logistico.",
+        description: "Militar vale 300 no score. O ponto aqui não é quantidade cega; é a capacidade de transformar recrutamento, atrito, pesquisa e herói certo em ranking forte.",
+        formula: "Poder militar = qualidade de composição + heróis certos + build tático/logístico.",
         valueLabel: `${world.sovereignty.militaryRankingPoints}/${SOVEREIGNTY_MILITARY_SCORE_CAP}`,
         progressPct: militaryPct,
         color: "red",
         metrics: [
           { label: "Pontos atuais", value: `${world.sovereignty.militaryRankingPoints}/${SOVEREIGNTY_MILITARY_SCORE_CAP}`, note: "Quanto do teto militar ja virou score." },
           { label: "Faltam", value: `${Math.max(0, SOVEREIGNTY_MILITARY_SCORE_CAP - world.sovereignty.militaryRankingPoints)}`, note: "Gap de ranking ainda aberto." },
-                  { label: "Catalisador", value: activeHeroCount > 0 ? "Herois ativos" : "Sem suporte", note: "General e branch tatico precisam aparecer cedo para este pilar explodir." },
+                  { label: "Catalisador", value: activeHeroCount > 0 ? "Heróis ativos" : "Sem suporte", note: "General e branch tático precisam aparecer cedo para este pilar explodir." },
           { label: "Leitura", value: militaryPct >= 70 ? "Ja pesa" : "Ainda leve", note: "Se ficar baixo ate D90, a build depende demais de predio/tribo." },
         ],
         breakdown: [
@@ -364,7 +364,7 @@ export function OperationsClient({
           { label: "Pesquisa aplicada", current: Math.min(100, avgResearchProgress), max: 100, note: "Sem branch certa, o ranking cresce devagar." },
         ],
         missing: [
-                "Se o objetivo e ganhar por militar, o quartel sozinho nao basta: Tatica e General precisam puxar a composicao.",
+                "Se o objetivo é ganhar por militar, o quartel sozinho não basta: Tática e General precisam puxar a composição.",
           "Celeiro e Metropole normalmente convertem militar mais tarde; Posto faz isso mais cedo.",
         ],
       },
@@ -378,7 +378,7 @@ export function OperationsClient({
         color: "green",
         metrics: [
           { label: "Score direto", value: `${world.sovereignty.eraQuestsCompleted * 100}/300`, note: "Valor bruto ja travado por quest fechada." },
-          { label: "Faltam", value: `${Math.max(0, 3 - world.sovereignty.eraQuestsCompleted)}`, note: "Quests que ainda nao viraram influencia." },
+          { label: "Faltam", value: `${Math.max(0, 3 - world.sovereignty.eraQuestsCompleted)}`, note: "Quests que ainda não viraram influência." },
                   { label: "Puxa qual build", value: "Sabio", note: "Sabio e pesquisa certa encurtam o atraso das quests." },
           { label: "Momento", value: world.day >= 84 ? "Late" : "Mid", note: "Quest atrasada demais vira problema de portal." },
         ],

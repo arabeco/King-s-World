@@ -4,8 +4,6 @@ create table if not exists public.village_city_states (
   village_site_id uuid primary key references public.villages(site_id) on delete cascade,
   world_id uuid not null references public.worlds(id) on delete cascade,
   world_player_id uuid not null references public.world_players(id) on delete cascade,
-  city_class text not null default 'neutral',
-  city_class_locked boolean not null default false,
   population_current integer not null default 0 check (population_current >= 0),
   production_focus text not null default 'materials',
   society_focus text not null default 'order',
@@ -40,9 +38,6 @@ create table if not exists public.village_city_states (
   ),
   constraint village_city_states_defense_protocol_check check (
     defense_protocol in ('hold', 'recall', 'alarm')
-  ),
-  constraint village_city_states_city_class_check check (
-    city_class in ('neutral', 'metropole', 'posto_avancado', 'bastiao', 'celeiro')
   )
 );
 

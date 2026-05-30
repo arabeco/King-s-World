@@ -131,12 +131,20 @@ export type TroopTypeId = "militia" | "shooters" | "scouts" | "machinery";
 export type TroopSelection = Record<TroopTypeId, number>;
 export type TroopPreset = "light" | "balanced" | "heavy" | "custom";
 
+export type MovementRouteStep = {
+  coordKey: string;
+  legMinutes: number;
+  elapsedMinutes: number;
+  arrivalAt?: string;
+};
+
 export type MovementDraft = {
   action: Exclude<TileActionKind, "inspect">;
   from: AxialCoord;
   to: AxialCoord;
   etaMinutes: number;
   route: AxialCoord[];
+  routeSteps: MovementRouteStep[];
 };
 
 export type BuildMode = "outpost" | "road";
@@ -152,6 +160,7 @@ export type StoredMapMovement = {
   arrivalAt: string;
   etaMinutes: number;
   route: string[];
+  routeSteps?: MovementRouteStep[];
   status: "traveling" | "arrived" | "failed";
   meta: {
     buildMode: BuildMode | null;
@@ -176,5 +185,6 @@ export type StoredMapMovement = {
     annexConsumesDiplomat?: boolean;
     diplomatToken?: string;
     targetLabel?: string;
+    reportedIntelCoordKeys?: string[];
   };
 };

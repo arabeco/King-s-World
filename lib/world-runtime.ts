@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { createContext, createElement, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import type { WorldPayload } from "@/lib/world-data";
 import type { WorldState } from "@/lib/mock-data";
@@ -51,6 +51,7 @@ function createFallbackPayload(worldId: string): WorldPayload {
     buildings: [],
     boardSites: [],
     reports: [],
+    participants: [],
     mobilization: {
       available: false,
       active: false,
@@ -154,4 +155,20 @@ export function useLiveWorld(worldId: string, initialPayload?: WorldPayload) {
     setManualDay: (_day: number): void => undefined,
     resetWorld: (): void => undefined,
   };
+}
+
+type LiveWorldValue = ReturnType<typeof useLiveWorld>;
+
+const LiveWorldContext = createContext<LiveWorldValue | null>(null);
+
+export function LiveWorldProvider({ value, children }: { value: LiveWorldValue; children: ReactNode }) {
+  return createElement(LiveWorldContext.Provider, { value }, children);
+}
+
+export function useLiveWorldContext() {
+  const value = useContext(LiveWorldContext);
+  if (!value) {
+    throw new Error("useLiveWorldContext must be used inside LiveWorldProvider");
+  }
+  return value;
 }

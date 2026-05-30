@@ -2,7 +2,6 @@ import { type EvolutionMode } from "@/core/GameBalance";
 import { BasePageClient, type BaseSubTab, type LocalCommand } from "@/components/base/BasePageClient";
 import type { SectorId } from "@/components/base/village-scene-config";
 import type { BuildingId } from "@/lib/buildings";
-import { getWorldPayload } from "@/lib/world-data";
 import { getSandboxPlaybooks } from "@/lib/sandbox-playbooks";
 
 const MODE_IDS: EvolutionMode[] = ["balanced", "metropole", "vanguard", "bastion", "flow"];
@@ -35,17 +34,14 @@ function normalizeSector(input: string | undefined): SectorId | null {
   return SECTOR_IDS.includes(input as SectorId) ? (input as SectorId) : null;
 }
 
-export default async function BasePage({
+export default function BasePage({
   params,
   searchParams,
 }: {
   params: { worldId: string };
   searchParams: { v?: string; m?: string; lc?: string; sb?: string; s?: string; b?: string };
 }) {
-  const payload = await getWorldPayload(params.worldId);
-  const world = payload.world;
-  const sandboxPlaybooks = payload.isSandboxWorld ? (getSandboxPlaybooks() ?? undefined) : undefined;
-  const selectedVillageId = typeof searchParams.v === "string" ? searchParams.v : world.activeVillageId;
+  const sandboxPlaybooks = getSandboxPlaybooks() ?? undefined;
   const evolutionMode = normalizeMode(typeof searchParams.m === "string" ? searchParams.m : undefined);
   const localCommand = normalizeLocalCommand(typeof searchParams.lc === "string" ? searchParams.lc : undefined);
   const subTab = normalizeSubTab(typeof searchParams.sb === "string" ? searchParams.sb : undefined);
@@ -55,19 +51,6 @@ export default async function BasePage({
   return (
     <BasePageClient
       worldId={params.worldId}
-      villages={world.villages}
-      researches={world.researches}
-      timeline={world.timeline}
-      worldName={world.name}
-      worldDay={world.day}
-      worldPhase={world.phase}
-      worldSpeedMultiplier={world.speedMultiplier ?? 1}
-      averageInfluenceScore={world.averageInfluenceScore}
-      activeAlerts={world.activeAlerts}
-      tribe={world.tribe}
-      sovereignty={world.sovereignty}
-      readOnly={payload.worldMeta.readOnly}
-      selectedVillageId={selectedVillageId}
       evolutionMode={evolutionMode}
       initialLocalCommand={localCommand}
       initialSubTab={subTab}

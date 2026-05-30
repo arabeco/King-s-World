@@ -1,6 +1,7 @@
 import "server-only";
 
 import { unstable_noStore as noStore } from "next/cache";
+import { cache } from "react";
 
 import { SOVEREIGNTY_MILITARY_SCORE_CAP } from "@/core/GameBalance";
 import { normalizeImperialVillageIds, stripDedicatedImperialClientState } from "@/lib/imperial-persistence";
@@ -12,11 +13,12 @@ import type {
   ResearchEntry,
   TimelineEntry,
   VillageSummary,
+  WorldParticipant,
   WorldState,
   WorldSummary,
 } from "@/lib/mock-data";
 import { getAuthenticatedUser } from "@/lib/supabase-server";
-import { inFilter, isSupabaseConfigured, looksLikeUuid, supabaseInsertReturning, supabasePatchReturning, supabaseSelect } from "@/lib/supabase-rest";
+import { inFilter, isSupabaseConfigured, looksLikeUuid, shouldUseLocalSupabaseFallback, supabaseInsertReturning, supabasePatchReturning, supabaseSelect } from "@/lib/supabase-rest";
 
 const WORLD_DURATION_DAYS = 120;
 const EXPRESS_WORLD_DURATION_DAYS = 30;
@@ -24,7 +26,7 @@ const IMPERIAL_CLIENT_STATE_VERSION = 16;
 const REAL_DAY_MS = 24 * 60 * 60 * 1000;
 const STRUCTURE_IDS = ["crown", "economy", "society", "recruitment", "defense"] as const;
 type SeasonMode = "classic" | "express";
-const WORLD_SELECT_BASE = "id,slug,name,status,phase,day_number,runtime_started,runtime_real_time_enabled,runtime_anchor_day,runtime_anchor_started_at,sandbox_enabled";
+const WORLD_SELECT_BASE = "id,slug,name,status,phase,day_number,starts_at,runtime_started,runtime_real_time_enabled,runtime_anchor_day,runtime_anchor_started_at,sandbox_enabled";
 const WORLD_SELECT_WITH_MODE = `${WORLD_SELECT_BASE},season_mode,speed_multiplier`;
 
 type CityStructureId = (typeof STRUCTURE_IDS)[number];
@@ -39,6 +41,7 @@ type DbWorld = {
   status: "open" | "running" | "finalized";
   phase: "phase_1" | "phase_2" | "phase_3" | "phase_4" | "closed";
   day_number: number;
+  starts_at?: string | null;
   runtime_started?: boolean;
   runtime_real_time_enabled?: boolean;
   runtime_anchor_day?: number;
@@ -56,6 +59,11 @@ type DbWorldPlayer = {
   current_capital_site_id?: string | null;
   power_score_cached: number;
   status: string;
+};
+
+type DbKingState = {
+  world_player_id: string;
+  king_name: string;
 };
 
 type DbUser = {
@@ -150,7 +158,7 @@ type CompactClientState = {
   villageNameByVillage?: Record<string, string>;
   cityClassByVillage?: Record<string, VillageSummary["cityClass"]>;
   cityClassLockedByVillage?: Record<string, boolean>;
-  buildingLevelsByVillage?: Record<string, VillageSummary["buildingLevels"]>;
+  buildingLevelsByVillage?: Record<string, VillageStructureLevels | VillageSummary["buildingLevels"]>;
   buildingSkillsByVillage?: Record<string, unknown>;
   extraVillages?: Array<Partial<VillageSummary> & { id?: string; coord?: string; axial?: { q: number; r: number } }>;
   kingProfileId?: string | null;
@@ -246,10 +254,16 @@ function computeRuntime(world: DbWorld) {
   const seasonMode = normalizeSeasonMode(world.season_mode);
   const durationDays = worldDurationDays(world);
   const speedMultiplier = worldSpeedMultiplier(world);
-  const started = Boolean(world.runtime_started ?? world.status !== "open");
+  const scheduledStartMs = world.starts_at ? Date.parse(world.starts_at) : null;
+  const scheduledStarted = world.status === "open" && scheduledStartMs !== null && Date.now() >= scheduledStartMs;
+  const started = Boolean(world.runtime_started ?? world.status !== "open") || scheduledStarted;
   const realTimeEnabled = Boolean(world.runtime_real_time_enabled);
   const anchorDay = clampDay(world.runtime_anchor_day ?? world.day_number ?? 0, durationDays);
-  const anchorStartedAtMs = world.runtime_anchor_started_at ? Date.parse(world.runtime_anchor_started_at) : null;
+  const anchorStartedAtMs = world.runtime_anchor_started_at
+    ? Date.parse(world.runtime_anchor_started_at)
+    : scheduledStarted
+      ? scheduledStartMs
+      : null;
 
   let day = started ? anchorDay : clampDay(world.day_number ?? 0, durationDays);
   if (started && realTimeEnabled && anchorStartedAtMs) {
@@ -399,15 +413,35 @@ function buildStructureStateMap(rows: DbVillageStructureState[]) {
   return map;
 }
 
-function sumFiveStructureLevels(levels: VillageSummary["buildingLevels"]): number {
-  const structureLevels = levels as VillageSummary["buildingLevels"] & Partial<Record<"crown" | "economy" | "society" | "recruitment" | "defense", number>>;
+function sumFiveStructureLevels(levels: Record<string, unknown>): number {
+  const structureLevels = levels as Partial<Record<"palace" | "mines" | "housing" | "barracks" | "wall" | "crown" | "economy" | "society" | "recruitment" | "defense", number>>;
   return (
-    Number(structureLevels.palace ?? structureLevels.crown ?? 0) +
-    Number(structureLevels.mines ?? structureLevels.economy ?? 0) +
-    Number(structureLevels.housing ?? structureLevels.society ?? 0) +
-    Number(structureLevels.barracks ?? structureLevels.recruitment ?? 0) +
-    Number(structureLevels.wall ?? structureLevels.defense ?? 0)
+    Number(structureLevels.crown ?? structureLevels.palace ?? 0) +
+    Number(structureLevels.economy ?? structureLevels.mines ?? 0) +
+    Number(structureLevels.society ?? structureLevels.housing ?? 0) +
+    Number(structureLevels.recruitment ?? structureLevels.barracks ?? 0) +
+    Number(structureLevels.defense ?? structureLevels.wall ?? 0)
   );
+}
+
+function mapLegacyBuildingToStructureId(buildingId: string): CityStructureId | null {
+  if (STRUCTURE_IDS.includes(buildingId as CityStructureId)) return buildingId as CityStructureId;
+  if (buildingId === "palace" || buildingId === "senate") return "crown";
+  if (buildingId === "mines" || buildingId === "farms" || buildingId === "roads") return "economy";
+  if (buildingId === "housing" || buildingId === "research") return "society";
+  if (buildingId === "barracks" || buildingId === "arsenal") return "recruitment";
+  if (buildingId === "wall") return "defense";
+  return null;
+}
+
+function normalizeStructureLevelsFromAny(levels: Record<string, unknown>): VillageStructureLevels {
+  const normalized: VillageStructureLevels = {};
+  for (const [buildingId, rawLevel] of Object.entries(levels)) {
+    const structureId = mapLegacyBuildingToStructureId(buildingId);
+    if (!structureId) continue;
+    normalized[structureId] = Math.max(normalized[structureId] ?? 0, clampStructureLevel(rawLevel));
+  }
+  return normalized;
 }
 
 function buildCompactCapital({
@@ -421,8 +455,8 @@ function buildCompactCapital({
 }): VillageSummary {
   const clientState = readClientState(imperialState);
   const capitalId = clientState.royalCapitalVillageId ?? worldPlayer.current_capital_site_id ?? `capital-${worldPlayer.id}`;
-  const levels = clientState.buildingLevelsByVillage?.[capitalId] ?? {};
-  const structureLevels = levels as VillageSummary["buildingLevels"] & Partial<Record<"crown", number>>;
+  const structureLevels = normalizeStructureLevelsFromAny(clientState.buildingLevelsByVillage?.[capitalId] ?? {});
+  const buildingLevels = projectStructureLevelsToFormulaBuildings(structureLevels);
 
   return {
     id: capitalId,
@@ -437,12 +471,12 @@ function buildCompactCapital({
     materials: imperialState?.materials_stock ?? 0,
     supplies: imperialState?.supplies_stock ?? 0,
     influence: 0,
-    palaceLevel: Math.max(Number(structureLevels.palace ?? 0), Number(structureLevels.crown ?? 0)),
+    palaceLevel: buildingLevels.palace ?? 0,
     kingHere: worldPlayer.status === "alive",
     princeHere: false,
     underAttack: false,
     deficits: [],
-    buildingLevels: levels,
+    buildingLevels,
   };
 }
 
@@ -472,11 +506,11 @@ function buildInitialImperialSeed(world: Pick<DbWorld, "slug">, worldPlayerId: s
         },
         buildingLevelsByVillage: {
           [capitalId]: {
-            palace: 7,
-            mines: 8,
-            housing: 7,
-            barracks: 6,
-            wall: 6,
+            crown: 7,
+            economy: 8,
+            society: 7,
+            recruitment: 6,
+            defense: 6,
           },
         },
         buildingSkillsByVillage: {
@@ -556,7 +590,12 @@ function seedStructureRows(
         })
       : (() => {
           const levelRecord = isRecord(rawLevels) ? (rawLevels as Record<string, unknown>) : {};
-          let remaining = clampStructureLevel(levelRecord[structure_code]);
+          const legacyFallback = Object.entries(levelRecord).reduce((max, [buildingId, rawLevel]) => {
+            return mapLegacyBuildingToStructureId(buildingId) === structure_code
+              ? Math.max(max, clampStructureLevel(rawLevel))
+              : max;
+          }, 0);
+          let remaining = clampStructureLevel(levelRecord[structure_code] ?? legacyFallback);
           const values: StructureDots = { a: 0, b: 0, c: 0, d: 0 };
           for (const slot of ["a", "b", "c", "d"] as const) {
             values[slot] = Math.min(3, remaining);
@@ -621,6 +660,18 @@ async function fetchWorldPlayers(worldDbId: string): Promise<DbWorldPlayer[]> {
   params.set("select", "id,world_id,user_id,tribe_id,current_capital_site_id,power_score_cached,status");
   params.set("world_id", `eq.${worldDbId}`);
   return supabaseSelect<DbWorldPlayer>("world_players", params);
+}
+
+async function fetchKingNames(worldPlayerIds: string[]): Promise<Map<string, string>> {
+  if (!worldPlayerIds.length) {
+    return new Map();
+  }
+
+  const params = new URLSearchParams();
+  params.set("select", "world_player_id,king_name");
+  params.set("world_player_id", inFilter(worldPlayerIds));
+  const rows = await optionalSupabaseSelect<DbKingState>("world_player_king_states", params);
+  return new Map(rows.filter((row) => row.king_name).map((row) => [row.world_player_id, row.king_name]));
 }
 
 function normalizeUsername(seed: string): string {
@@ -1028,69 +1079,85 @@ export async function listWorldSummaries(): Promise<WorldSummary[]> {
     return mockWorldSummaries.map((world) => ({ ...world }));
   }
 
-  const params = new URLSearchParams();
-  params.set("select", WORLD_SELECT_WITH_MODE);
-  let worlds: DbWorld[];
   try {
-    worlds = await supabaseSelect<DbWorld>("worlds", params);
+    const params = new URLSearchParams();
+    params.set("select", WORLD_SELECT_WITH_MODE);
+    let worlds: DbWorld[];
+    try {
+      worlds = await supabaseSelect<DbWorld>("worlds", params);
+    } catch (error) {
+      if (shouldUseLocalSupabaseFallback(error)) {
+        throw error;
+      }
+      params.set("select", WORLD_SELECT_BASE);
+      worlds = await supabaseSelect<DbWorld>("worlds", params);
+    }
+
+    const worldPlayers = await supabaseSelect<Pick<DbWorldPlayer, "world_id">>("world_players", new URLSearchParams([["select", "world_id"]]));
+    const counts = new Map<string, number>();
+    for (const row of worldPlayers) {
+      counts.set(row.world_id, (counts.get(row.world_id) ?? 0) + 1);
+    }
+
+    return worlds.map((world) => {
+      const runtime = computeRuntime(world);
+      return {
+        id: world.slug,
+        name: world.name,
+        status: summaryStatus(world.status),
+        day: runtime.currentDay,
+        phase: phaseLabel(runtime.currentDay, runtime.runtimeState.started, runtime.durationDays),
+        players: counts.get(world.id) ?? 0,
+        actionLabel: actionLabel(world.status),
+        seasonMode: runtime.seasonMode,
+        speedMultiplier: runtime.speedMultiplier,
+        durationDays: runtime.durationDays,
+      };
+    });
   } catch (error) {
-    params.set("select", WORLD_SELECT_BASE);
-    worlds = await supabaseSelect<DbWorld>("worlds", params);
+    if (shouldUseLocalSupabaseFallback(error)) {
+      console.warn("Supabase unavailable in local dev. Using mock world summaries.", error);
+      return mockWorldSummaries.map((world) => ({ ...world }));
+    }
+    throw error;
   }
-
-  const worldPlayers = await supabaseSelect<Pick<DbWorldPlayer, "world_id">>("world_players", new URLSearchParams([["select", "world_id"]]));
-  const counts = new Map<string, number>();
-  for (const row of worldPlayers) {
-    counts.set(row.world_id, (counts.get(row.world_id) ?? 0) + 1);
-  }
-
-  return worlds.map((world) => {
-    const runtime = computeRuntime(world);
-    return {
-      id: world.slug,
-      name: world.name,
-      status: summaryStatus(world.status),
-      day: runtime.currentDay,
-      phase: phaseLabel(runtime.currentDay, runtime.runtimeState.started, runtime.durationDays),
-      players: counts.get(world.id) ?? 0,
-      actionLabel: actionLabel(world.status),
-      seasonMode: runtime.seasonMode,
-      speedMultiplier: runtime.speedMultiplier,
-      durationDays: runtime.durationDays,
-    };
-  });
 }
 
-export async function getWorldPayload(worldRouteId: string): Promise<WorldPayload> {
+function buildMockWorldPayload(worldRouteId: string): WorldPayload {
+  const world = getWorldState(worldRouteId);
+  return {
+    world,
+    worldMeta: {
+      status: "running",
+      finalReason: null,
+      readOnly: false,
+      result: null,
+      finalRank: null,
+      finalScore: null,
+    },
+    runtimeState: {
+      started: world.day > 0,
+      realTimeEnabled: false,
+      anchorDay: world.day,
+      anchorStartedAtMs: null,
+      seasonMode: world.seasonMode ?? "classic",
+      speedMultiplier: world.speedMultiplier ?? 1,
+      durationDays: world.durationDays ?? WORLD_DURATION_DAYS,
+    },
+    isSandboxWorld: worldRouteId === "world-test",
+    routeWorldId: worldRouteId,
+    worldPlayerId: null,
+  };
+}
+
+export const getWorldPayload = cache(async function getWorldPayload(worldRouteId: string): Promise<WorldPayload> {
   noStore();
 
   if (!isSupabaseConfigured()) {
-    const world = getWorldState(worldRouteId);
-    return {
-      world,
-      worldMeta: {
-        status: "running",
-        finalReason: null,
-        readOnly: false,
-        result: null,
-        finalRank: null,
-        finalScore: null,
-      },
-      runtimeState: {
-        started: world.day > 0,
-        realTimeEnabled: false,
-        anchorDay: world.day,
-        anchorStartedAtMs: null,
-        seasonMode: world.seasonMode ?? "classic",
-        speedMultiplier: world.speedMultiplier ?? 1,
-        durationDays: world.durationDays ?? WORLD_DURATION_DAYS,
-      },
-      isSandboxWorld: worldRouteId === "world-test",
-      routeWorldId: worldRouteId,
-      worldPlayerId: null,
-    };
+    return buildMockWorldPayload(worldRouteId);
   }
 
+  try {
   const worldRecord = await fetchWorldRecord(worldRouteId);
   const runtime = computeRuntime(worldRecord);
   const authUser = await getAuthenticatedUser();
@@ -1111,6 +1178,7 @@ export async function getWorldPayload(worldRouteId: string): Promise<WorldPayloa
   const playerCollapsed = playerResult === "defeated" || playerResult === "eliminated";
   const currentTribeId = currentWorldPlayer?.tribe_id ?? null;
   const usernameMap = await fetchUsers(Array.from(new Set(worldPlayers.map((entry) => entry.user_id))));
+  const kingNameMap = await fetchKingNames(worldPlayers.map((entry) => entry.id));
 
   const [{ villages, resources, structures }, { sites, tiles }, tribeBundle, imperialDbState, heroAssignments] = await Promise.all([
     fetchVillages(worldRecord.id),
@@ -1136,9 +1204,10 @@ export async function getWorldPayload(worldRouteId: string): Promise<WorldPayloa
     const buildingLevels = tableStructureLevels
       ? {
           ...projectStructureLevelsToFormulaBuildings(tableStructureLevels),
-          ...tableStructureLevels,
         } as VillageSummary["buildingLevels"]
-      : clientState.buildingLevelsByVillage?.[entry.site_id] ?? {};
+      : projectStructureLevelsToFormulaBuildings(
+          normalizeStructureLevelsFromAny(clientState.buildingLevelsByVillage?.[entry.site_id] ?? {}),
+        );
     const currentPlayerHasCrownHere =
       currentWorldPlayer?.status === "alive" && currentWorldPlayer.current_capital_site_id === entry.site_id;
     return {
@@ -1169,7 +1238,11 @@ export async function getWorldPayload(worldRouteId: string): Promise<WorldPayloa
 
   const compactExtraVillages = (clientState.extraVillages ?? []).map((entry, index): VillageSummary => {
     const id = entry.id ?? `city-${currentWorldPlayer?.id ?? "local"}-${index + 1}`;
-    const buildingLevels = clientState.buildingLevelsByVillage?.[id] ?? entry.buildingLevels ?? {};
+    const structureLevels = normalizeStructureLevelsFromAny({
+      ...(entry.buildingLevels ?? {}),
+      ...(clientState.buildingLevelsByVillage?.[id] ?? {}),
+    });
+    const buildingLevels = projectStructureLevelsToFormulaBuildings(structureLevels);
     return {
       id,
       name: clientState.villageNameByVillage?.[id] ?? entry.name ?? `Cidade ${index + 2}`,
@@ -1183,7 +1256,7 @@ export async function getWorldPayload(worldRouteId: string): Promise<WorldPayloa
       materials: entry.materials ?? 0,
       supplies: entry.supplies ?? 0,
       influence: entry.influence ?? 0,
-      palaceLevel: entry.palaceLevel ?? Number(buildingLevels.palace ?? 0),
+      palaceLevel: Number(buildingLevels.palace ?? entry.palaceLevel ?? 0),
       kingHere: entry.type === "Capital" && currentWorldPlayer?.status === "alive",
       princeHere: false,
       underAttack: false,
@@ -1269,6 +1342,31 @@ export async function getWorldPayload(worldRouteId: string): Promise<WorldPayloa
     worldPlayers.length > 0
       ? Math.round(worldPlayers.reduce((sum, entry) => sum + (entry.power_score_cached ?? 0), 0) / worldPlayers.length)
       : 0;
+  const participants: WorldParticipant[] = [...worldPlayers]
+    .sort((a, b) => (b.power_score_cached ?? 0) - (a.power_score_cached ?? 0))
+    .map((entry) => {
+      const participantTribe = entry.tribe_id ? tribeBundle.tribes.get(entry.tribe_id) : undefined;
+      const relation: WorldParticipant["relation"] =
+        entry.id === currentWorldPlayer?.id
+          ? "self"
+          : entry.tribe_id && currentTribeId && entry.tribe_id === currentTribeId
+            ? "ally"
+            : entry.tribe_id
+              ? "wary"
+              : "neutral";
+      const name = usernameMap.get(entry.user_id) ?? "Reino sem nome";
+
+      return {
+        id: entry.id,
+        name,
+        influence: entry.power_score_cached ?? 0,
+        status: entry.status,
+        relation,
+        tribeName: participantTribe?.name ?? null,
+        kingName: kingNameMap.get(entry.id) ?? null,
+        isAi: name.startsWith("ia_") || name.startsWith("reino_ia_"),
+      };
+    });
 
   const world: WorldState = {
     id: worldRecord.id,
@@ -1286,13 +1384,20 @@ export async function getWorldPayload(worldRouteId: string): Promise<WorldPayloa
       runtime.currentDay >= runtime.portalStartDay ? "Portal Central e pressao final ativos." : "Campanha em progresso com estado persistente.",
       `Fonte unica: world ${worldRecord.slug}.`,
     ],
-    activeVillageId: villageSummaries.find((entry) => entry.type === "Capital")?.id ?? villageSummaries[0]?.id ?? "",
+    activeVillageId:
+      currentWorldPlayer?.current_capital_site_id && villageSummaries.some((entry) => entry.id === currentWorldPlayer.current_capital_site_id)
+        ? currentWorldPlayer.current_capital_site_id
+        : villageSummaries.find((entry) => entry.type === "Capital" && entry.kingHere)?.id ??
+          villageSummaries.find((entry) => entry.type === "Capital")?.id ??
+          villageSummaries[0]?.id ??
+          "",
     villages: villageSummaries,
     researches: [] as ResearchEntry[],
     timeline: buildLiveTimeline(imperialDbState),
     buildings: [] as BuildingEntry[],
     boardSites,
     reports: buildLiveReports(imperialDbState),
+    participants,
     mobilization: {
       available: runtime.currentDay >= runtime.portalStartDay,
       active: false,
@@ -1342,4 +1447,11 @@ export async function getWorldPayload(worldRouteId: string): Promise<WorldPayloa
     routeWorldId: worldRecord.slug,
     worldPlayerId: currentWorldPlayer?.id ?? null,
   };
-}
+  } catch (error) {
+    if (shouldUseLocalSupabaseFallback(error)) {
+      console.warn(`Supabase unavailable in local dev. Using mock world payload for ${worldRouteId}.`, error);
+      return buildMockWorldPayload(worldRouteId);
+    }
+    throw error;
+  }
+});

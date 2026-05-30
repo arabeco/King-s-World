@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-05-04T20:53:32.943Z",
+  "execution": {
+    "status": 0,
+    "stdout": "Simulacao concluida.\nStatus dos artefatos: PASS\nStatus da auditoria: PASS\nIteracao de calibragem: 2\nMedia 2a aldeia: 15.3\nMedia 1a aldeia 100: 44.64\nMedia sobreviventes no Portal/seed: 16.13\nMedia elegiveis >=1500 no D90/seed: 26.63\nETA Navegador+Flow (media): 44.52h\nPico 2500 por seed: 1",
+    "stderr": ""
+  },
+  "checks": {
+    "simulation": true,
+    "mainArtifacts": true,
+    "auditArtifacts": true
+  },
+  "errors": [],
+  "warnings": [
+    "O simulador de temporada nao persiste estoque inicial real; o saldo de recursos desta auditoria e normalizado a partir do Dia 1.",
+    "O motor atual nao registra tipos individuais de tropa; a auditoria expõe totais e perdas agregadas.",
+    "A abertura exata/estado aberto de cada quest nao e persistido; a auditoria registra gates, conclusoes e bloqueios observaveis.",
+    "A trilha tribal atual e booleana no simulador; a auditoria registra ativacao, efeito e marcos do fluxo final."
+  ]
+}

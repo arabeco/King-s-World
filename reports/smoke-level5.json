@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-05-17T17:57:57.071Z",
+  "checks": {
+    "staticRules": true,
+    "typecheck": true,
+    "build": true,
+    "balance": true,
+    "campaignCode": true
+  },
+  "errors": [],
+  "warnings": [],
+  "executions": [
+    {
+      "script": "typecheck",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "script": "build",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "script": "smoke:balance",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "script": "smoke:campaign:code",
+      "ok": true,
+      "status": 0
+    }
+  ]
+}

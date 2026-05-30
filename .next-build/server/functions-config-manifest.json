@@ -1,0 +1,1 @@
+{"version":1,"functions":{"/api/dev-worlds/test":{},"/api/worlds/[worldId]":{},"/api/dev-smoke/worlds/[worldId]/campaign":{},"/api/worlds/[worldId]/runtime":{},"/api/worlds/alpha":{},"/api/worlds":{},"/world/[worldId]/board":{},"/world/[worldId]/empire":{},"/api/worlds/[worldId]/imperial-state":{}}}

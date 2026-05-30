@@ -1,12 +1,12 @@
 # KingsWorld: Relatorio Operacional
 
-Data: 25/04/2026
+Data: 02/05/2026
 
 ## Veredito Do Dia
 
 O KingsWorld saiu da fase de "sistemas soltos" e entrou numa base bem mais confiavel de produto jogavel. A mudanca mais importante foi consolidar a influencia como score fixo do imperio, e nao como recurso gasto. Isso destrava o jogo como corrida de soberania: o jogador evolui cidade, herois, exercito, sociedade e legado para chegar ao corte final.
 
-O app ainda nao esta pronto para beta externo, mas a base tecnica principal ficou muito mais forte. Pela regua atual, os niveis 1 a 6 estao fechados, e o nivel 7 entrou em validacao real: Supabase ja confirma mundo, player, rei, capital, estado imperial e campanha Alpha persistente.
+O app ainda nao esta pronto para beta externo, mas a base tecnica principal ficou muito mais forte. Pela regua atual, o Nivel 7 foi conquistado, e o Nivel 8 esta em andamento: Supabase ja confirma mundo, player, rei, capital, estado imperial, participantes, runtime agendado e exploracao persistente.
 
 ## O Que Fechamos Hoje
 
@@ -63,6 +63,7 @@ npm run smoke:balance
 npm run smoke:level5
 npm run smoke:level6
 npm run smoke:level7
+npm run smoke:level8
 npm run smoke:world:create
 npm run smoke:participant
 npm run typecheck
@@ -79,8 +80,11 @@ Resultado importante:
 - Estado final fica `readOnly`
 - Score final do smoke: 1680
 - Gate 7 PASS no smoke estatico de conexao
+- Gate 8 tecnico PASS no smoke criador + participante
 - Criacao de mundo Alpha PASS no Supabase
 - Fluxo de participante PASS: login dev, entrada no mundo, rei, upgrade de predio e consulta no Supabase
+- Fluxo N8 PASS: criador abre Perfil, agenda proxima 00:00, mundo chega a 50 participantes, participante navega telas, rei fica dedicado, exploracao entra em tabela dedicada e movimento fica no runtime
+- Refino N8 iniciado: toast global plugado no layout raiz e validado nos fluxos de Coroa, IA e comando GM
 
 ### 6. Supabase Real Confirmado
 
@@ -91,8 +95,10 @@ O fluxo novo deixou de ser apenas mock/local:
 - `world_players` registra jogador vivo.
 - `world_player_imperial_states` salva recursos e estado imperial.
 - `world_player_king_states` salva rei escolhido.
+- `world_player_exploration_states` salva exploracao dedicada por coordenada.
 - `map_sites` guarda a capital ligada ao `current_capital_site_id`.
 - `village_structure_states` confirmou upgrade real de Governo/Coroa.
+- `sandbox_snapshots_json.__runtimeMap.mapMovements` guarda o rastro de marcha/exploracao, sem esconder exploracao em `__clientState`.
 
 A tabela antiga `villages` nao e a fonte principal desse fluxo. A capital real do Alpha foi confirmada em `map_sites`, o que evita confundir persistencia nova com tabela legada.
 
@@ -133,19 +139,20 @@ O projeto ja tem mais engine e persistencia do que a aparencia sugere. O gargalo
 
 ### Nivel Atual
 
-Nivel 6 fechado. Nivel 7 tecnicamente aprovado por smoke de participante; falta teste humano visual para cravar o gate como fechado.
+Nivel 7 conquistado. Nivel 8 em andamento, ja com smoke de refino criador + participante aprovado; ainda nao e Nivel 8 final porque mobile fisico, Lighthouse e paywall real continuam pendentes.
 
 ### Proximo Gate
 
-Nivel 7: Conexao.
+Nivel 8: Refino.
 
-Para fechar de verdade, falta validar em teste humano curto:
+Para fechar de verdade, falta validar em teste humano curto e refino de loja:
 
 - Login/lobby/Alpha Expressa.
 - Escolha de rei uma unica vez.
 - Upar predio, recarregar e manter estado.
 - Mapa, perfil e cidade sem reset.
 - Confirmar que a campanha continua igual depois de F5/reabrir app.
+- Rodar performance/Lighthouse, build mobile fisico e paywall real.
 
 ## Riscos Abertos
 
@@ -154,10 +161,10 @@ Para fechar de verdade, falta validar em teste humano curto:
 - O fluxo de onboarding precisa explicar melhor o que fazer dia a dia.
 - Paywall Play Store ainda nao foi validado como compra real.
 - Componentes gigantes ainda existem e podem atrapalhar manutencao.
-- Nivel 7 passou em smoke, mas ainda falta teste humano completo para virar gate fechado.
+- Nivel 8 esta em andamento: passou em smoke tecnico, mas ainda falta teste humano/mobile completo para virar gate fechado.
 
 ## Proxima Ordem Recomendada
 
-1. Fazer o teste humano curto do Nivel 7 no Alpha Expressa.
-2. Se passar, marcar Nivel 7 como fechado em `progresso.md`.
-3. Depois atacar Nivel 8: feedbacks/toasts, performance, mobile, paywall Play Store e polimento final.
+1. Fazer o teste humano curto do Nivel 8 no Alpha Expressa.
+2. Conferir as queries sugeridas em `reports/smoke-level8-creator-participant.json`.
+3. Depois atacar o fechamento real do Nivel 8: feedbacks/toasts, performance, mobile, paywall Play Store e polimento final.

@@ -1,0 +1,674 @@
+{
+  "ok": true,
+  "generatedAt": "2026-05-17T17:56:32.253Z",
+  "baseUrl": "http://localhost:3000",
+  "world": {
+    "routeId": "alpha-expresso",
+    "name": "Alpha Expresso",
+    "status": "Em Aberto"
+  },
+  "server": {
+    "mode": "start",
+    "booted": true
+  },
+  "supabaseConfigured": true,
+  "persistenceModel": {
+    "resourcesAndTroops": "supabase:world_player_imperial_states",
+    "worldPhaseAndRank": "supabase:worlds + world_players",
+    "buildingSkillsAndLevels": "supabase:village_structure_states",
+    "populationJobsAndRecruitment": "supabase:village_city_states",
+    "troopStacksBySite": "supabase:site_troop_stacks",
+    "kingSelection": "supabase:world_player_king_states",
+    "exploredTiles": "supabase:world_player_exploration_states",
+    "discoveries": "supabase:world_player_exploration_states",
+    "logs": "supabase:world_player_imperial_states.logs_json"
+  },
+  "stages": [
+    {
+      "stage": "opening",
+      "worldMeta": {
+        "status": "running",
+        "readOnly": false,
+        "result": null,
+        "finalRank": 49,
+        "finalScore": 60
+      },
+      "capitalVillageId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+      "assertions": [
+        {
+          "label": "opening: materials",
+          "ok": true,
+          "actual": 3600,
+          "expected": 3600
+        },
+        {
+          "label": "opening: supplies",
+          "ok": true,
+          "actual": 3100,
+          "expected": 3100
+        },
+        {
+          "label": "opening: militia",
+          "ok": true,
+          "actual": 82,
+          "expected": 82
+        },
+        {
+          "label": "opening: kingProfileId",
+          "ok": true,
+          "actual": null,
+          "expected": null
+        },
+        {
+          "label": "opening: kingName",
+          "ok": true,
+          "actual": null,
+          "expected": null
+        },
+        {
+          "label": "opening: capital crown level",
+          "ok": true,
+          "actual": 0,
+          "expected": 0
+        },
+        {
+          "label": "opening: capital population",
+          "ok": true,
+          "actual": 22,
+          "expected": 22
+        },
+        {
+          "label": "opening: world running",
+          "ok": true,
+          "actual": "running",
+          "expected": "running"
+        },
+        {
+          "label": "opening: snapshot has no king",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "opening: snapshot has no structure",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "opening: snapshot has no city",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "opening: snapshot has no exploration",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        }
+      ],
+      "persistence": {
+        "supabaseStateRow": {
+          "materials_stock": 3600,
+          "supplies_stock": 3100,
+          "militia_count": 82,
+          "snapshot_has_king": false,
+          "snapshot_has_exploration": false,
+          "snapshot_has_structure": false,
+          "snapshot_has_city": false
+        },
+        "structureRow": {
+          "slot_a": 0,
+          "slot_b": 0,
+          "slot_c": 0,
+          "slot_d": 0,
+          "level": 0
+        },
+        "cityRow": {
+          "population_current": 22,
+          "production_materials_workers": 0,
+          "production_supplies_workers": 0,
+          "production_commerce_workers": 0,
+          "production_logistics_workers": 0,
+          "jobs_medics": 0,
+          "jobs_crafts": 0,
+          "jobs_order": 0,
+          "jobs_scholars": 0,
+          "recruits_militia": 0,
+          "recruits_shooters": 0,
+          "recruits_scouts": 0,
+          "recruits_machinery": 0,
+          "defense_guards": 0,
+          "defense_archers": 0,
+          "defense_ballistae": 0
+        },
+        "kingRow": null,
+        "explorationRows": [],
+        "sourceSummary": {
+          "resources": "world_player_imperial_states",
+          "troops": "world_player_imperial_states",
+          "king": "world_player_king_states",
+          "exploration": "world_player_exploration_states",
+          "structure": "village_structure_states",
+          "city": "village_city_states"
+        }
+      }
+    },
+    {
+      "stage": "mid",
+      "worldMeta": {
+        "status": "running",
+        "readOnly": false,
+        "result": null,
+        "finalRank": 16,
+        "finalScore": 520
+      },
+      "capitalVillageId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+      "assertions": [
+        {
+          "label": "mid: materials",
+          "ok": true,
+          "actual": 8200,
+          "expected": 8200
+        },
+        {
+          "label": "mid: supplies",
+          "ok": true,
+          "actual": 7400,
+          "expected": 7400
+        },
+        {
+          "label": "mid: militia",
+          "ok": true,
+          "actual": 180,
+          "expected": 180
+        },
+        {
+          "label": "mid: kingProfileId",
+          "ok": true,
+          "actual": "aurelian",
+          "expected": "aurelian"
+        },
+        {
+          "label": "mid: kingName",
+          "ok": true,
+          "actual": "Smoke Crown",
+          "expected": "Smoke Crown"
+        },
+        {
+          "label": "mid: capital crown level",
+          "ok": true,
+          "actual": 2,
+          "expected": 2
+        },
+        {
+          "label": "mid: capital population",
+          "ok": true,
+          "actual": 48,
+          "expected": 48
+        },
+        {
+          "label": "mid: world running",
+          "ok": true,
+          "actual": "running",
+          "expected": "running"
+        },
+        {
+          "label": "mid: snapshot has no king",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "mid: snapshot has no structure",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "mid: snapshot has no city",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "mid: snapshot has no exploration",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "mid: king dedicated row",
+          "ok": true,
+          "actual": "aurelian",
+          "expected": "aurelian"
+        }
+      ],
+      "persistence": {
+        "supabaseStateRow": {
+          "materials_stock": 8200,
+          "supplies_stock": 7400,
+          "militia_count": 180,
+          "snapshot_has_king": false,
+          "snapshot_has_exploration": false,
+          "snapshot_has_structure": false,
+          "snapshot_has_city": false
+        },
+        "structureRow": {
+          "slot_a": 1,
+          "slot_b": 1,
+          "slot_c": 0,
+          "slot_d": 0,
+          "level": 2
+        },
+        "cityRow": {
+          "population_current": 48,
+          "production_materials_workers": 8,
+          "production_supplies_workers": 7,
+          "production_commerce_workers": 4,
+          "production_logistics_workers": 3,
+          "jobs_medics": 1,
+          "jobs_crafts": 3,
+          "jobs_order": 2,
+          "jobs_scholars": 2,
+          "recruits_militia": 12,
+          "recruits_shooters": 8,
+          "recruits_scouts": 2,
+          "recruits_machinery": 1,
+          "defense_guards": 6,
+          "defense_archers": 3,
+          "defense_ballistae": 1
+        },
+        "kingRow": {
+          "king_profile_id": "aurelian",
+          "king_name": "Smoke Crown"
+        },
+        "explorationRows": [],
+        "sourceSummary": {
+          "resources": "world_player_imperial_states",
+          "troops": "world_player_imperial_states",
+          "king": "world_player_king_states",
+          "exploration": "world_player_exploration_states",
+          "structure": "village_structure_states",
+          "city": "village_city_states"
+        }
+      }
+    },
+    {
+      "stage": "late",
+      "worldMeta": {
+        "status": "running",
+        "readOnly": false,
+        "result": null,
+        "finalRank": 1,
+        "finalScore": 1180
+      },
+      "capitalVillageId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+      "assertions": [
+        {
+          "label": "late: materials",
+          "ok": true,
+          "actual": 14600,
+          "expected": 14600
+        },
+        {
+          "label": "late: supplies",
+          "ok": true,
+          "actual": 12800,
+          "expected": 12800
+        },
+        {
+          "label": "late: militia",
+          "ok": true,
+          "actual": 420,
+          "expected": 420
+        },
+        {
+          "label": "late: kingProfileId",
+          "ok": true,
+          "actual": "aurelian",
+          "expected": "aurelian"
+        },
+        {
+          "label": "late: kingName",
+          "ok": true,
+          "actual": "Smoke Crown",
+          "expected": "Smoke Crown"
+        },
+        {
+          "label": "late: capital crown level",
+          "ok": true,
+          "actual": 5,
+          "expected": 5
+        },
+        {
+          "label": "late: capital population",
+          "ok": true,
+          "actual": 72,
+          "expected": 72
+        },
+        {
+          "label": "late: explored ruin tile",
+          "ok": true,
+          "actual": true,
+          "expected": true
+        },
+        {
+          "label": "late: discovery title",
+          "ok": true,
+          "actual": "Ruína antiga",
+          "expected": "Ruína antiga"
+        },
+        {
+          "label": "late: world running",
+          "ok": true,
+          "actual": "running",
+          "expected": "running"
+        },
+        {
+          "label": "late: snapshot has no king",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "late: snapshot has no structure",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "late: snapshot has no city",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "late: snapshot has no exploration",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "late: king dedicated row",
+          "ok": true,
+          "actual": "aurelian",
+          "expected": "aurelian"
+        },
+        {
+          "label": "late: exploration dedicated row",
+          "ok": true,
+          "actual": true,
+          "expected": true
+        }
+      ],
+      "persistence": {
+        "supabaseStateRow": {
+          "materials_stock": 14600,
+          "supplies_stock": 12800,
+          "militia_count": 420,
+          "snapshot_has_king": false,
+          "snapshot_has_exploration": false,
+          "snapshot_has_structure": false,
+          "snapshot_has_city": false
+        },
+        "structureRow": {
+          "slot_a": 2,
+          "slot_b": 2,
+          "slot_c": 1,
+          "slot_d": 0,
+          "level": 5
+        },
+        "cityRow": {
+          "population_current": 72,
+          "production_materials_workers": 12,
+          "production_supplies_workers": 12,
+          "production_commerce_workers": 8,
+          "production_logistics_workers": 7,
+          "jobs_medics": 3,
+          "jobs_crafts": 5,
+          "jobs_order": 4,
+          "jobs_scholars": 4,
+          "recruits_militia": 22,
+          "recruits_shooters": 16,
+          "recruits_scouts": 6,
+          "recruits_machinery": 4,
+          "defense_guards": 12,
+          "defense_archers": 8,
+          "defense_ballistae": 3
+        },
+        "kingRow": {
+          "king_profile_id": "aurelian",
+          "king_name": "Smoke Crown"
+        },
+        "explorationRows": [
+          {
+            "coord_key": "0:0",
+            "title": "Area conhecida",
+            "status": "new",
+            "discovery_type": "empty"
+          },
+          {
+            "coord_key": "1:0",
+            "title": "Area conhecida",
+            "status": "new",
+            "discovery_type": "empty"
+          },
+          {
+            "coord_key": "1:-1",
+            "title": "Ruína antiga",
+            "status": "new",
+            "discovery_type": "opportunity"
+          },
+          {
+            "coord_key": "2:-1",
+            "title": "Area conhecida",
+            "status": "new",
+            "discovery_type": "empty"
+          }
+        ],
+        "sourceSummary": {
+          "resources": "world_player_imperial_states",
+          "troops": "world_player_imperial_states",
+          "king": "world_player_king_states",
+          "exploration": "world_player_exploration_states",
+          "structure": "village_structure_states",
+          "city": "village_city_states"
+        }
+      }
+    },
+    {
+      "stage": "final",
+      "worldMeta": {
+        "status": "finalized",
+        "readOnly": true,
+        "result": "victorious",
+        "finalRank": 1,
+        "finalScore": 1680
+      },
+      "capitalVillageId": "58a7e9ff-0c74-478a-8bb3-51c7428cc5c3",
+      "assertions": [
+        {
+          "label": "final: materials",
+          "ok": true,
+          "actual": 18200,
+          "expected": 18200
+        },
+        {
+          "label": "final: supplies",
+          "ok": true,
+          "actual": 16900,
+          "expected": 16900
+        },
+        {
+          "label": "final: militia",
+          "ok": true,
+          "actual": 520,
+          "expected": 520
+        },
+        {
+          "label": "final: kingProfileId",
+          "ok": true,
+          "actual": "aurelian",
+          "expected": "aurelian"
+        },
+        {
+          "label": "final: kingName",
+          "ok": true,
+          "actual": "Smoke Crown",
+          "expected": "Smoke Crown"
+        },
+        {
+          "label": "final: capital crown level",
+          "ok": true,
+          "actual": 5,
+          "expected": 5
+        },
+        {
+          "label": "final: capital population",
+          "ok": true,
+          "actual": 72,
+          "expected": 72
+        },
+        {
+          "label": "final: explored ruin tile",
+          "ok": true,
+          "actual": true,
+          "expected": true
+        },
+        {
+          "label": "final: discovery title",
+          "ok": true,
+          "actual": "Ruína antiga",
+          "expected": "Ruína antiga"
+        },
+        {
+          "label": "final: readOnly final",
+          "ok": true,
+          "actual": true,
+          "expected": true
+        },
+        {
+          "label": "final: final world status",
+          "ok": true,
+          "actual": "finalized",
+          "expected": "finalized"
+        },
+        {
+          "label": "final: snapshot has no king",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "final: snapshot has no structure",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "final: snapshot has no city",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "final: snapshot has no exploration",
+          "ok": true,
+          "actual": false,
+          "expected": false
+        },
+        {
+          "label": "final: king dedicated row",
+          "ok": true,
+          "actual": "aurelian",
+          "expected": "aurelian"
+        },
+        {
+          "label": "final: exploration dedicated row",
+          "ok": true,
+          "actual": true,
+          "expected": true
+        }
+      ],
+      "persistence": {
+        "supabaseStateRow": {
+          "materials_stock": 18200,
+          "supplies_stock": 16900,
+          "militia_count": 520,
+          "snapshot_has_king": false,
+          "snapshot_has_exploration": false,
+          "snapshot_has_structure": false,
+          "snapshot_has_city": false
+        },
+        "structureRow": {
+          "slot_a": 2,
+          "slot_b": 2,
+          "slot_c": 1,
+          "slot_d": 0,
+          "level": 5
+        },
+        "cityRow": {
+          "population_current": 72,
+          "production_materials_workers": 12,
+          "production_supplies_workers": 12,
+          "production_commerce_workers": 8,
+          "production_logistics_workers": 7,
+          "jobs_medics": 3,
+          "jobs_crafts": 5,
+          "jobs_order": 4,
+          "jobs_scholars": 4,
+          "recruits_militia": 22,
+          "recruits_shooters": 16,
+          "recruits_scouts": 6,
+          "recruits_machinery": 4,
+          "defense_guards": 12,
+          "defense_archers": 8,
+          "defense_ballistae": 3
+        },
+        "kingRow": {
+          "king_profile_id": "aurelian",
+          "king_name": "Smoke Crown"
+        },
+        "explorationRows": [
+          {
+            "coord_key": "0:0",
+            "title": "Area conhecida",
+            "status": "new",
+            "discovery_type": "empty"
+          },
+          {
+            "coord_key": "1:0",
+            "title": "Area conhecida",
+            "status": "new",
+            "discovery_type": "empty"
+          },
+          {
+            "coord_key": "1:-1",
+            "title": "Ruína antiga",
+            "status": "new",
+            "discovery_type": "opportunity"
+          },
+          {
+            "coord_key": "2:-1",
+            "title": "Area conhecida",
+            "status": "new",
+            "discovery_type": "empty"
+          }
+        ],
+        "sourceSummary": {
+          "resources": "world_player_imperial_states",
+          "troops": "world_player_imperial_states",
+          "king": "world_player_king_states",
+          "exploration": "world_player_exploration_states",
+          "structure": "village_structure_states",
+          "city": "village_city_states"
+        }
+      }
+    }
+  ],
+  "assertions": [],
+  "warnings": [],
+  "error": null
+}

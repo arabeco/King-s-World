@@ -723,6 +723,60 @@ p {
   grid-template-columns: 1.3fr 1fr;
 }
 
+.lobby-world-grid {
+  align-items: start;
+  gap: 0.85rem;
+}
+
+.lobby-card {
+  min-height: 0;
+}
+
+.lobby-card--entry {
+  grid-row: span 2;
+}
+
+.lobby-card .section-card__header {
+  margin-bottom: 0.75rem;
+}
+
+.lobby-card .form-stack {
+  gap: 0.75rem;
+}
+
+.lobby-compact-card {
+  gap: 0.4rem;
+  padding: 0.65rem 0.7rem;
+}
+
+.lobby-compact-card .card-row {
+  gap: 0.5rem;
+}
+
+.lobby-selected-world .list-meta,
+.lobby-flow-card .list-meta {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.lobby-metric-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.lobby-metric-grid div {
+  min-height: 54px;
+  padding: 0.55rem 0.6rem;
+}
+
+.lobby-metric-grid strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .split-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -840,6 +894,99 @@ p {
   .section-card {
     padding: 1rem;
   }
+
+  .lobby-world-grid {
+    gap: 0.65rem;
+  }
+
+  .lobby-card {
+    padding: 0.72rem;
+    border-radius: 18px;
+  }
+
+  .lobby-card--entry {
+    order: -2;
+  }
+
+  .lobby-card--account {
+    order: -1;
+  }
+
+  .lobby-card .section-card__media {
+    opacity: 0.22;
+  }
+
+  .lobby-card .section-card__header {
+    gap: 0.18rem;
+    margin-bottom: 0.58rem;
+  }
+
+  .lobby-card .section-card__header h2 {
+    font-size: 1.05rem;
+  }
+
+  .lobby-card .section-card__eyebrow {
+    font-size: 0.68rem;
+  }
+
+  .lobby-card .form-stack {
+    gap: 0.58rem;
+  }
+
+  .lobby-card select {
+    padding: 0.72rem 0.8rem;
+  }
+
+  .lobby-compact-card {
+    padding: 0.58rem 0.62rem;
+    border-radius: 10px;
+  }
+
+  .lobby-selected-world .card-row {
+    flex-wrap: nowrap;
+  }
+
+  .lobby-selected-world .status-badge {
+    flex: 0 0 auto;
+    min-height: 28px;
+    padding-inline: 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .lobby-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .lobby-metric-grid div {
+    min-height: 48px;
+    padding: 0.48rem 0.5rem;
+  }
+
+  .lobby-metric-grid span {
+    font-size: 0.66rem;
+  }
+
+  .lobby-metric-grid strong {
+    font-size: 0.82rem;
+  }
+
+  .lobby-dev-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .lobby-dev-actions .secondary-button {
+    min-width: 0;
+    width: 100%;
+    padding-inline: 0.55rem;
+    font-size: 0.74rem;
+  }
+
+  .lobby-flow-card {
+    margin-bottom: 0.55rem !important;
+  }
 }
 
 .kw-premium-panel {
@@ -878,6 +1025,10 @@ p {
   .split-grid,
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .lobby-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .world-header__top {

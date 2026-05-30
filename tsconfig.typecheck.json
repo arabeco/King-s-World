@@ -9,6 +9,7 @@
     "node_modules",
     ".next",
     ".next-dev",
-    ".next-build"
+    ".next-build",
+    "supabase/functions"
   ]
 }

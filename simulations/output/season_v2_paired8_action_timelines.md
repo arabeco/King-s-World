@@ -23,7 +23,7 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Palacio -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Senado -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 8 | I | explore | Buscas e coletas (7) | Raid score 382 e bonus de exploracao 2. |
+| 8 | I | explore | Expedicao territorial (7 frentes) | Cartografia de fronteira com saque secundario 382 e bonus de exploracao 2. |
 | 10 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 390 tropas ate D15. |
 | 12 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 54 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
@@ -75,7 +75,7 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Palacio -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Senado -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 10 | I | explore | Buscas e coletas (5) | Raid score 222 e bonus de exploracao 1. |
+| 10 | I | explore | Expedicao territorial (5 frentes) | Cartografia de fronteira com saque secundario 222 e bonus de exploracao 1. |
 | 12 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 455 tropas ate D15. |
 | 14 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 62 hex. |
 | 30 | II | expand | Chegou a 3 aldeias | Influencia 371 e 712 tropas no D30. |
@@ -105,7 +105,7 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Arsenal -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Quartel -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 10 | I | explore | Buscas e coletas (7) | Raid score 413 e bonus de exploracao 2. |
+| 10 | I | explore | Expedicao territorial (7 frentes) | Cartografia de fronteira com saque secundario 413 e bonus de exploracao 2. |
 | 12 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 383 tropas ate D15. |
 | 14 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 54 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
@@ -155,7 +155,7 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Arsenal -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Quartel -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 15 | I | explore | Buscas e coletas (2) | Raid score 118 e bonus de exploracao 1. |
+| 15 | I | explore | Expedicao territorial (2 frentes) | Cartografia de fronteira com saque secundario 118 e bonus de exploracao 1. |
 | 17 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 450 tropas ate D15. |
 | 19 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 38 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
@@ -188,7 +188,7 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Habitacoes -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Muralha -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 5 | I | explore | Buscas e coletas (8) | Raid score 452 e bonus de exploracao 3. |
+| 5 | I | explore | Expedicao territorial (8 frentes) | Cartografia de fronteira com saque secundario 452 e bonus de exploracao 3. |
 | 7 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 397 tropas ate D15. |
 | 9 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 54 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
@@ -238,7 +238,7 @@
 | 3 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Habitacoes -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Muralha -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 9 | I | explore | Buscas e coletas (2) | Raid score 111 e bonus de exploracao 1. |
+| 9 | I | explore | Expedicao territorial (2 frentes) | Cartografia de fronteira com saque secundario 111 e bonus de exploracao 1. |
 | 11 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 322 tropas ate D15. |
 | 13 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 44 hex. |
 | 30 | II | expand | Chegou a 3 aldeias | Influencia 244 e 515 tropas no D30. |
@@ -270,7 +270,7 @@
 | 3 | I | upgrade | Habitacoes -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Palacio -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 10 | I | explore | Buscas e coletas (6) | Raid score 413 e bonus de exploracao 2. |
+| 10 | I | explore | Expedicao territorial (6 frentes) | Cartografia de fronteira com saque secundario 413 e bonus de exploracao 2. |
 | 12 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 440 tropas ate D15. |
 | 14 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 66 hex. |
 | 20 | I | quest | Concluiu Quest 1/3 | Quest fechada na fase I. |
@@ -320,7 +320,7 @@
 | 3 | I | upgrade | Habitacoes -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Minas -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
 | 4 | I | upgrade | Palacio -> Nv 3 | Abertura padrao da build para liberar economia e identidade do arquétipo. |
-| 11 | I | explore | Buscas e coletas (4) | Raid score 187 e bonus de exploracao 1. |
+| 11 | I | explore | Expedicao territorial (4 frentes) | Cartografia de fronteira com saque secundario 187 e bonus de exploracao 1. |
 | 13 | I | recruit | Formou a primeira reserva militar na Capital | Projecao de 409 tropas ate D15. |
 | 15 | I | expand | Conquistou/Fundou a 2a aldeia | Marco de expansao principal da run. Distancia ao centro: 64 hex. |
 | 30 | II | expand | Chegou a 3 aldeias | Influencia 342 e 630 tropas no D30. |

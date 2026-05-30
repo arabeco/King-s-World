@@ -1,0 +1,15 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/worlds/[worldId]/imperial-state/route": "app/api/worlds/[worldId]/imperial-state/route.js",
+  "/profile/page": "app/profile/page.js",
+  "/premium/page": "app/premium/page.js",
+  "/api/worlds/[worldId]/route": "app/api/worlds/[worldId]/route.js",
+  "/api/me/profile/route": "app/api/me/profile/route.js",
+  "/icon.png/route": "app/icon.png/route.js",
+  "/lobby/page": "app/lobby/page.js",
+  "/world/[worldId]/intelligence/page": "app/world/[worldId]/intelligence/page.js",
+  "/world/[worldId]/base/page": "app/world/[worldId]/base/page.js",
+  "/world/[worldId]/empire/page": "app/world/[worldId]/empire/page.js",
+  "/world/[worldId]/board/page": "app/world/[worldId]/board/page.js",
+  "/world/[worldId]/guide/page": "app/world/[worldId]/guide/page.js"
+}

@@ -6,12 +6,16 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { calculateVillageDevelopment, canStartWonder } from "@/core/GameBalance";
 import { BUILDING_NAME_TO_ID, type BuildingId } from "@/lib/buildings";
-import { useImperialState } from "@/lib/imperial-state";
+import {
+  mapLegacyBuildingToStructureId,
+  projectStructureLevelsToBuildingLevels,
+  useImperialStateContext,
+} from "@/lib/imperial-state";
 import type { VillageSummary } from "@/lib/mock-data";
 import { collectCompletedActionsForDay, resolveSandboxDay } from "@/lib/sandbox-day-resolution";
 import type { SandboxDayPlan, SandboxStrategyId, SandboxStrategyPlaybook } from "@/lib/sandbox-playbooks";
 import { emitUiFeedback } from "@/lib/ui-feedback";
-import { useLiveWorld } from "@/lib/world-runtime";
+import { useLiveWorldContext } from "@/lib/world-runtime";
 
 type SandboxOpeningPanelProps = {
   worldId: string;
@@ -153,8 +157,8 @@ export function SandboxOpeningPanel({ worldId, villages, selectedVillageId, play
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { world, advanceDay, rewindDay, setManualDay } = useLiveWorld(worldId);
-  const { imperialState, setImperialState } = useImperialState(worldId, villages);
+  const { world, advanceDay, rewindDay, setManualDay } = useLiveWorldContext();
+  const { imperialState, setImperialState } = useImperialStateContext();
 
   const selectedStrategyId = imperialState.sandboxStrategyId ?? "metropole";
   const selectedPlaybook = playbooks[selectedStrategyId];
@@ -210,18 +214,22 @@ export function SandboxOpeningPanel({ worldId, villages, selectedVillageId, play
 
       if (buildingAction) {
         const villageId = buildingAction.focusMode === "focus" ? focusVillage.id : capital.id;
+        const structureId = mapLegacyBuildingToStructureId(buildingAction.buildingId);
+        if (!structureId) {
+          return current;
+        }
         next.buildingLevelsByVillage = {
           ...current.buildingLevelsByVillage,
           [villageId]: {
             ...(current.buildingLevelsByVillage[villageId] ?? {}),
-            [buildingAction.buildingId]: buildingAction.targetLevel,
+            [structureId]: buildingAction.targetLevel,
           },
         };
         next.logs = dedupeLogs(next.logs, `${action} aplicado em ${villageId === capital.id ? capital.name : focusVillage.name}.`);
         effect = {
           label: `${action} aplicado.`,
           routeTab: "base",
-          query: { v: villageId, b: buildingAction.buildingId, sb: "city" },
+          query: { v: villageId, s: structureId, sb: "city" },
         };
         return next;
       }
@@ -297,7 +305,7 @@ export function SandboxOpeningPanel({ worldId, villages, selectedVillageId, play
         const hasCompleteCity = [...villages, ...current.extraVillages].some((entry) =>
           canStartWonder({
             ...entry.buildingLevels,
-            ...(current.buildingLevelsByVillage[entry.id] ?? {}),
+            ...projectStructureLevelsToBuildingLevels(current.buildingLevelsByVillage[entry.id] ?? {}),
           } as Partial<Record<BuildingId, number>>),
         );
         if (!hasCompleteCity) {
@@ -504,20 +512,20 @@ export function SandboxOpeningPanel({ worldId, villages, selectedVillageId, play
 
         <div className="mt-3 space-y-2">
           <div className="rounded-2xl border border-emerald-300/20 bg-emerald-500/8 px-3 py-2 text-[11px] text-emerald-50">
-            <p className="font-semibold text-emerald-100">Ao ir para o prÃ³ximo dia</p>
+            <p className="font-semibold text-emerald-100">Ao ir para o próximo dia</p>
             {nextDayPreview.actionCount > 0 ? (
               <>
                 <p className="mt-1 leading-5">
-                  Materiais +{nextDayPreview.resources.materials}, Suprimentos +{nextDayPreview.resources.supplies}, InfluÃªncia +{nextDayPreview.resources.influence}.
+                  Materiais +{nextDayPreview.resources.materials}, Suprimentos +{nextDayPreview.resources.supplies}, Influência +{nextDayPreview.resources.influence}.
                 </p>
                 <p className="mt-1 leading-5">
-                  Tropas: +{nextDayPreview.troops.militia} milÃ­cia, +{nextDayPreview.troops.shooters} atiradores, +{nextDayPreview.troops.scouts} batedores, +{nextDayPreview.troops.machinery} mÃ¡quinas.
+                  Tropas: +{nextDayPreview.troops.militia} milícia, +{nextDayPreview.troops.shooters} atiradores, +{nextDayPreview.troops.scouts} batedores, +{nextDayPreview.troops.machinery} máquinas.
                 </p>
                 <p className="mt-1 leading-5">{nextDayPreview.notes.slice(0, 2).join(" ")}</p>
               </>
             ) : (
               <p className="mt-1 leading-5">
-                Nenhuma ordem do Dia {currentPlan.day} foi registrada ainda. Se avanÃ§ar agora, quase nada vai mudar.
+                Nenhuma ordem do Dia {currentPlan.day} foi registrada ainda. Se avançar agora, quase nada vai mudar.
               </p>
             )}
           </div>

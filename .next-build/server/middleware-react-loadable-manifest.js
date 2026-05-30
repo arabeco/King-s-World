@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST='{"node_modules\\\\@capgo\\\\native-purchases\\\\dist\\\\esm\\\\index.js -> ./web":{"id":9203,"files":["static/chunks/217.8b3beea75ced3f32.js"]}}';

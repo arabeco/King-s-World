@@ -953,11 +953,11 @@ export function KingdomOverviewPanel({
                             className="mt-3 w-full rounded-xl border border-cyan-300/35 bg-cyan-500/15 px-3 py-2 text-[11px] font-bold text-cyan-100 disabled:border-white/15 disabled:bg-white/8 disabled:text-slate-400"
                           >
                             {capitalTransfer.active
-                              ? `Transferencia em curso ate o Dia ${capitalTransfer.endsAtDay}`
+                              ? `Transferência em curso até o Dia ${capitalTransfer.endsAtDay}`
                               : crownState.crownRiskBand !== "danger"
-                                ? "So em situacao critica"
+                                ? "Só em situação crítica"
                                 : !activeVillageCanReceiveCapital
-                                  ? "Cidade selecionada ainda nao segura a Coroa"
+                                  ? "Cidade selecionada ainda não segura a Coroa"
                                   : !canAffordCapitalTransfer
                                     ? "Recursos insuficientes"
                                     : `Transferir Capital para ${activeVillage.name}`}
