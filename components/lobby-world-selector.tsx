@@ -1,6 +1,6 @@
 "use client";
 
-import { Crown, ShieldCheck, Sparkles, Trophy } from "lucide-react";
+import { Crown, KeyRound, ShieldCheck, Sparkles, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useMemo, useState } from "react";
 
@@ -32,6 +32,9 @@ export function LobbyWorldSelector({
   const [selectedWorldId, setSelectedWorldId] = useState(firstPlayableWorld?.id ?? "");
   const [creatingWorld, setCreatingWorld] = useState(false);
   const [createWorldError, setCreateWorldError] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState("");
+  const [joiningCode, setJoiningCode] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
   const selectedWorld = useMemo(
     () => worlds.find((world) => world.id === selectedWorldId) ?? firstPlayableWorld,
     [firstPlayableWorld, selectedWorldId, worlds],
@@ -74,6 +77,33 @@ export function LobbyWorldSelector({
       setCreateWorldError(error instanceof Error ? error.message : "Nao foi possivel criar a campanha Alpha.");
     } finally {
       setCreatingWorld(false);
+    }
+  };
+
+  const joinByCode = async () => {
+    const code = joinCode.trim().toUpperCase();
+    if (!code) return;
+    setJoiningCode(true);
+    setJoinError(null);
+    try {
+      const response = await fetch("/api/worlds/join", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const payload = (await response.json()) as { world?: { slug?: string; href?: string }; error?: string };
+      if (!response.ok || !payload.world?.href) {
+        throw new Error(payload.error ?? "Código inválido.");
+      }
+      if (payload.world.slug) {
+        window.localStorage.setItem(storageKey, payload.world.slug);
+      }
+      router.push(payload.world.href);
+      router.refresh();
+    } catch (error) {
+      setJoinError(error instanceof Error ? error.message : "Código inválido.");
+    } finally {
+      setJoiningCode(false);
     }
   };
 
@@ -154,6 +184,34 @@ export function LobbyWorldSelector({
             </div>
           ) : null}
           {createWorldError ? <p role="alert" className="list-meta">{createWorldError}</p> : null}
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Entrar por código" eyebrow="Beta" accent="gold" className="lobby-card lobby-card--join">
+        <div className="form-stack">
+          <p className="list-meta">Recebeu um código de acesso? Cola aqui e entra direto no mundo.</p>
+          <div className="inline-actions" style={{ alignItems: "flex-start" }}>
+            <input
+              type="text"
+              placeholder="KW-XXXXXX"
+              value={joinCode}
+              maxLength={9}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === "Enter" && joinByCode()}
+              style={{ letterSpacing: "0.1em", fontWeight: 700, flex: 1 }}
+              data-smoke="join-code-input"
+            />
+            <button
+              className="primary-button"
+              type="button"
+              onClick={joinByCode}
+              disabled={joiningCode || !joinCode.trim()}
+              data-smoke="join-code-submit"
+            >
+              {joiningCode ? "Buscando..." : <><KeyRound size={15} /> Entrar</>}
+            </button>
+          </div>
+          {joinError ? <p role="alert" className="list-meta" style={{ color: "#fecaca" }}>{joinError}</p> : null}
         </div>
       </SectionCard>
 

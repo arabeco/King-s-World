@@ -33,7 +33,8 @@ const KNOWN_PRODUCTS: Record<string, { kind: "subscription"; durationDays: numbe
 // ---------------------------------------------------------------------------
 const ALLOWED_ORIGINS = [
   SUPABASE_URL,
-  "https://kingsworld.vercel.app",
+  "https://king-s-world.vercel.app",
+  "https://king-s-world-three.vercel.app",
   "capacitor://localhost",
   "ionic://localhost",
   "http://localhost",

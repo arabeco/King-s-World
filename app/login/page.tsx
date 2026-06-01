@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 import { MarketingShell } from "@/components/marketing-shell";
+import { LEGAL_LINKS } from "@/lib/legal-config";
 import { getSupabaseBrowserClient, hasPublicSupabaseEnv } from "@/lib/supabase-browser";
 
 function GoogleLogo() {
@@ -57,7 +58,7 @@ export default function LoginPage() {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}${getRedirectPath()}`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(getRedirectPath())}`,
         },
       });
       if (oauthError) {
@@ -209,6 +210,16 @@ export default function LoginPage() {
           <Link className="ghost-link" href="/forgot-password">
             Esqueci minha senha
           </Link>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-2 text-[11px] text-slate-500">
+          <a href={LEGAL_LINKS.privacy} target="_blank" rel="noopener noreferrer" className="hover:text-slate-300">
+            Privacidade
+          </a>
+          <span className="text-slate-700">·</span>
+          <a href={LEGAL_LINKS.terms} target="_blank" rel="noopener noreferrer" className="hover:text-slate-300">
+            Termos de Uso
+          </a>
         </div>
       </div>
     </MarketingShell>
