@@ -146,6 +146,9 @@ export type CapitalTransferState = {
   materialsCost: number;
   suppliesCost: number;
   influenceCost: number;
+  // Após uma transferência completar, não dá pra começar outra até este dia.
+  // Impede fuga infinita do rei.
+  cooldownUntilDay: number;
 };
 
 export type SandboxSnapshot = {
@@ -351,6 +354,7 @@ function emptyCapitalTransfer(): CapitalTransferState {
     materialsCost: 0,
     suppliesCost: 0,
     influenceCost: 0,
+    cooldownUntilDay: 0,
   };
 }
 
@@ -773,6 +777,7 @@ function normalizeCapitalTransfer(value: unknown): CapitalTransferState {
     materialsCost: Math.max(0, Math.floor(normalizeNumber(raw.materialsCost))),
     suppliesCost: Math.max(0, Math.floor(normalizeNumber(raw.suppliesCost))),
     influenceCost: Math.max(0, Math.floor(normalizeNumber(raw.influenceCost))),
+    cooldownUntilDay: Math.max(0, Math.floor(normalizeNumber(raw.cooldownUntilDay))),
   };
 }
 

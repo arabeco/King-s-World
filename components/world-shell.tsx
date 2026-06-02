@@ -276,6 +276,8 @@ export function WorldShell({
       // 🌾 Excedente de suprimento
       surplusSupplies: imperialState.resources.supplies,
     },
+    // Rei em trânsito durante transferência → defesa cai pela metade.
+    kingInTransit: imperialState.capitalTransfer.active,
   });
   const activeTab: WorldTab =
     segment === "empire" ||

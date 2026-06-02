@@ -73,6 +73,8 @@ const CAPITAL_TRANSFER_COST = {
 } as const;
 
 const CAPITAL_TRANSFER_DAYS = 2;
+// Após uma transferência, não dá pra começar outra por 10 dias (impede fuga infinita).
+const CAPITAL_TRANSFER_COOLDOWN_DAYS = 10;
 
 function toneClass(tone: "amber" | "cyan" | "rose" | "emerald" | "violet") {
   if (tone === "amber") return "kw-progress__bar--green";
@@ -362,9 +364,13 @@ export function KingdomOverviewPanel({
   const canAffordCapitalTransfer =
     imperialState.resources.materials >= CAPITAL_TRANSFER_COST.materials &&
     imperialState.resources.supplies >= CAPITAL_TRANSFER_COST.supplies;
+  // Pode transferir preventivamente (planeando), não só em emergência.
+  // O trade-off é o custo + os 2 dias de marcha em que o rei fica vulnerável + 10 dias de cooldown.
+  const isInCooldown = worldDay < (capitalTransfer.cooldownUntilDay ?? 0);
+  const cooldownDaysLeft = Math.max(0, (capitalTransfer.cooldownUntilDay ?? 0) - worldDay);
   const canStartCapitalTransfer =
-    crownState.crownRiskBand === "danger" &&
     !capitalTransfer.active &&
+    !isInCooldown &&
     activeVillageCanReceiveCapital &&
     canAffordCapitalTransfer;
   const transferTarget = capitalTransfer.targetVillageId
@@ -390,6 +396,8 @@ export function KingdomOverviewPanel({
         materialsCost: 0,
         suppliesCost: 0,
         influenceCost: 0,
+        // Cooldown de 10 dias após completar — impede fuga em série.
+        cooldownUntilDay: worldDay + CAPITAL_TRANSFER_COOLDOWN_DAYS,
       },
       senate: {
         ...current.senate,
@@ -525,6 +533,8 @@ export function KingdomOverviewPanel({
         materialsCost: CAPITAL_TRANSFER_COST.materials,
         suppliesCost: CAPITAL_TRANSFER_COST.supplies,
         influenceCost: 0,
+        // Cooldown só passa a valer depois da transferência concluir.
+        cooldownUntilDay: current.capitalTransfer.cooldownUntilDay ?? 0,
       },
       senate: {
         ...current.senate,
@@ -961,8 +971,8 @@ export function KingdomOverviewPanel({
                           >
                             {capitalTransfer.active
                               ? `Transferência em curso até o Dia ${capitalTransfer.endsAtDay}`
-                              : crownState.crownRiskBand !== "danger"
-                                ? "Só em situação crítica"
+                              : isInCooldown
+                                ? `Coroa fixada por mais ${cooldownDaysLeft} dia(s)`
                                 : !activeVillageCanReceiveCapital
                                   ? "Cidade selecionada ainda não segura a Coroa"
                                   : !canAffordCapitalTransfer

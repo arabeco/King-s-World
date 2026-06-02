@@ -43,6 +43,9 @@ type BuildKingdomSurvivalInput = {
     councilHeroes?: number;            // 🏛️ metrópole
     surplusSupplies?: number;          // 🌾 celeiro/logístico
   };
+  // Rei em trânsito (transferência de capital ativa) → defesa cai pela metade.
+  // É o trade-off de mover preventivamente: ficou exposto.
+  kingInTransit?: boolean;
 };
 
 export function buildKingdomSurvivalState(input: BuildKingdomSurvivalInput): KingdomSurvivalState {
@@ -79,8 +82,12 @@ export function buildKingdomSurvivalState(input: BuildKingdomSurvivalInput): Kin
   ];
   const topDefensePillar = [...defensePillars].sort((a, b) => b.value - a.value)[0]?.id ?? "wall";
 
-  // Score combinado — muralha domina mas os outros pilares somam de verdade
-  const capitalDefenseScore = Math.max(0, Math.min(100, wallPillar + troopsPillar + wondersPillar + supplyPillar));
+  // Score combinado — muralha domina mas os outros pilares somam de verdade.
+  // Rei em trânsito → defesa total cai pela metade (capital fica exposta).
+  const inTransitMult = input.kingInTransit ? 0.5 : 1;
+  const capitalDefenseScore = Math.max(0, Math.min(100,
+    Math.round((wallPillar + troopsPillar + wondersPillar + supplyPillar) * inTransitMult)
+  ));
   const capitalDefenseLabel =
     capitalDefenseScore >= 84 ? "Ultimo Bastiao" : capitalDefenseScore >= 62 ? "Fortaleza Viva" : capitalDefenseScore >= 42 ? "Segurando" : "Fragil";
   const frontierCollapse = attackedVillages >= 3;
@@ -94,6 +101,7 @@ export function buildKingdomSurvivalState(input: BuildKingdomSurvivalInput): Kin
   else if (capitalDefenseScore <= 55) reasons.push("a defesa da capital ainda nao segura tudo sozinha");
   if (frontierCollapse) reasons.push("a frente abriu largura demais para defender");
   if (hostileAlerts) reasons.push("o mundo ja esta sinalizando pressao hostil");
+  if (input.kingInTransit) reasons.push("o rei esta em transito — capital exposta");
 
   // Base compartilhada por todos os returns
   const base = {
