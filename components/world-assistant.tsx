@@ -16,7 +16,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { calculateVillageDevelopment, type EvolutionMode } from "@/core/GameBalance";
+import { calculateVillageDevelopment, getThreatCalendar, type EvolutionMode } from "@/core/GameBalance";
 import { PlayerAlertCards } from "@/components/player-alert-cards";
 import type { ImperialDecisionConsequenceType, ImperialDecisionInboxItem, ImperialState } from "@/lib/imperial-state";
 import type { VillageSummary } from "@/lib/mock-data";
@@ -497,6 +497,29 @@ export function WorldAssistant({
             </div>
             <p className="mt-1 text-[11px] leading-5 text-slate-200">{guide.nextAction}</p>
           </div>
+
+          {(() => {
+            const threat = getThreatCalendar(currentDay);
+            if (threat.activeWave) {
+              return (
+                <div className="mt-2 rounded-2xl border border-rose-300/35 bg-rose-500/15 p-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-rose-200">⚔ Ataque agora</p>
+                  <p className="mt-0.5 text-[11px] font-bold text-rose-50">{threat.activeWave.label} — prepare a defesa da capital</p>
+                </div>
+              );
+            }
+            if (threat.nextWave && threat.daysUntilNext !== null && threat.daysUntilNext <= 12) {
+              return (
+                <div className="mt-2 rounded-2xl border border-amber-300/30 bg-amber-500/12 p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-200">Próxima ameaça</p>
+                  <p className="mt-0.5 text-[11px] text-amber-50">
+                    {threat.nextWave.label} em <strong>{threat.daysUntilNext} dia(s)</strong> — reforce a defesa antes.
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          })()}
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             <button

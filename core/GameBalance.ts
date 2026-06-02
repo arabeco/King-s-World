@@ -51,6 +51,50 @@ export const MAX_CITY_DIPLOMATS = 9;
 export const MAX_TRIBE_ENVOYS = 2;
 export const MAX_TOTAL_DIPLOMATS = MAX_CITY_DIPLOMATS + MAX_TRIBE_ENVOYS;
 
+// --- Calendário de ameaças (ataques NPC recorrentes) ---
+// Em vez de só o pico do D110, ataques distribuídos com intensidade crescente,
+// para forçar adaptação contínua ao longo dos 120 dias.
+export type ThreatWave = {
+  day: number;
+  intensity: number; // 0..1
+  label: string;
+};
+
+export type ThreatCalendarState = {
+  waves: ThreatWave[];
+  nextWave: ThreatWave | null;
+  daysUntilNext: number | null;
+  activeWave: ThreatWave | null; // ataque a acontecer agora (janela de ±1 dia)
+  peakDay: number;
+};
+
+export function getThreatCalendar(currentDay: number, durationDays = GAME_BALANCE_CONSTANTS.worldDays): ThreatCalendarState {
+  const peakDay = Math.round(durationDays * (GAME_BALANCE_CONSTANTS.hordeSpikeDay / GAME_BALANCE_CONSTANTS.worldDays));
+  // Ondas a cada ~15% da campanha, começando em ~17%, intensidade crescente até o pico.
+  const anchors = [0.17, 0.33, 0.5, 0.67, 0.82, 0.92];
+  const waves: ThreatWave[] = anchors.map((frac, index) => {
+    const day = Math.round(durationDays * frac);
+    const intensity = clamp(0.25 + index * 0.14, 0.25, 0.95);
+    const label =
+      index === 0 ? "Primeira incursão"
+      : index === anchors.length - 1 ? "Pico da horda"
+      : intensity >= 0.6 ? "Ataque pesado"
+      : "Investida de fronteira";
+    return { day, intensity, label };
+  });
+  // Garante que o pico real (D110 equivalente) está na lista
+  if (!waves.some((w) => Math.abs(w.day - peakDay) <= 2)) {
+    waves.push({ day: peakDay, intensity: 0.95, label: "Pico da horda" });
+  }
+  waves.sort((a, b) => a.day - b.day);
+
+  const activeWave = waves.find((w) => Math.abs(w.day - currentDay) <= 1) ?? null;
+  const nextWave = waves.find((w) => w.day > currentDay) ?? null;
+  const daysUntilNext = nextWave ? nextWave.day - currentDay : null;
+
+  return { waves, nextWave, daysUntilNext, activeWave, peakDay };
+}
+
 const SOVEREIGNTY_BUILDING_IDS: BuildingId[] = ["palace", "mines", "housing", "barracks", "wall"];
 export const CITY_POPULATION_MAX = 100;
 export const POPULATION_PER_HOUSING_LEVEL = 10;

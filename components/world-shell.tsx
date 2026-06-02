@@ -653,6 +653,30 @@ export function WorldShell({
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">Sobrevivencia da Coroa</p>
             <p className="mt-1 text-sm font-black text-slate-50">{crownState.headline}</p>
             <p className="mt-1 text-[11px] leading-5 text-slate-200">{crownState.detail}</p>
+            <div className="mt-2.5 flex items-center justify-between gap-1.5">
+              <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">Defesa: {crownState.capitalDefenseLabel}</span>
+              <span className="text-[9px] font-bold text-slate-300">{crownState.capitalDefenseScore}/100</span>
+            </div>
+            <div className="mt-1 grid grid-cols-4 gap-1">
+              {crownState.defensePillars.map((pillar) => {
+                const isTop = pillar.id === crownState.topDefensePillar && pillar.value > 0;
+                return (
+                  <div
+                    key={pillar.id}
+                    className={`rounded-lg border px-1.5 py-1 text-center ${
+                      isTop
+                        ? "border-cyan-300/40 bg-cyan-500/15"
+                        : pillar.value > 0
+                          ? "border-white/12 bg-white/6"
+                          : "border-white/8 bg-white/[0.03] opacity-50"
+                    }`}
+                  >
+                    <p className="text-[8px] font-bold uppercase tracking-[0.06em] text-slate-300">{pillar.label}</p>
+                    <p className={`text-[12px] font-black ${isTop ? "text-cyan-100" : "text-slate-100"}`}>{pillar.value}</p>
+                  </div>
+                );
+              })}
+            </div>
           </article>
         ) : null}
         {showAssistant ? (
