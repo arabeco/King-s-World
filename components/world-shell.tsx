@@ -105,18 +105,25 @@ function TopMetric({
   value,
   tone,
   iconSrc,
+  full = false,
 }: {
   label: string;
   value: string;
   tone: string;
   iconSrc: string;
+  full?: boolean;
 }) {
   return (
-    <div title={label} className="kw-hud-chip kw-resource-chip flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5">
+    <div
+      title={full ? `${label} — armazém CHEIO, produção desperdiçada` : label}
+      className={`kw-resource-chip flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5 ${
+        full ? "animate-pulse border border-rose-300/60 bg-rose-500/20" : "kw-hud-chip"
+      }`}
+    >
       <span className={`flex h-7 w-7 shrink-0 items-center justify-center ${tone}`}>
         <img src={iconSrc} alt="" className="h-8 w-8 max-w-none object-contain drop-shadow-[0_3px_7px_rgba(0,0,0,0.72)]" />
       </span>
-      <span className="truncate text-[10px] font-black text-slate-100">{value}</span>
+      <span className={`truncate text-[10px] font-black ${full ? "text-rose-100" : "text-slate-100"}`}>{value}</span>
     </div>
   );
 }
@@ -596,8 +603,26 @@ export function WorldShell({
             </div>
           </div>
           <div className="mt-2 grid grid-cols-4 gap-1.5 text-[10px] font-semibold text-slate-100">
-            <TopMetric label="Materiais" value={compactAmount(imperialState.resources.materials)} tone="text-zinc-100" iconSrc="/icons/producao.png" />
-            <TopMetric label="Suprimentos" value={compactAmount(imperialState.resources.supplies)} tone="text-emerald-100" iconSrc="/icons/recursos.png" />
+            <TopMetric
+              label="Materiais"
+              value={compactAmount(imperialState.resources.materials)}
+              tone="text-zinc-100"
+              iconSrc="/icons/producao.png"
+              full={(() => {
+                const cap = (imperialState.resources as { materialsCapacity?: number }).materialsCapacity;
+                return typeof cap === "number" && cap > 0 && imperialState.resources.materials >= cap * 0.97;
+              })()}
+            />
+            <TopMetric
+              label="Suprimentos"
+              value={compactAmount(imperialState.resources.supplies)}
+              tone="text-emerald-100"
+              iconSrc="/icons/recursos.png"
+              full={(() => {
+                const cap = (imperialState.resources as { suppliesCapacity?: number }).suppliesCapacity;
+                return typeof cap === "number" && cap > 0 && imperialState.resources.supplies >= cap * 0.97;
+              })()}
+            />
             <TopMetric label="População" value={`${populationSummary.current}/${populationSummary.cap}`} tone="text-sky-100" iconSrc="/icons/populacao.png" />
             <TopMetric
               label="Tropas"

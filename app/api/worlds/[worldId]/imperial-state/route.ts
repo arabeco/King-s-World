@@ -13,9 +13,11 @@ type StoredImperialStateRow = {
   materials_anchor_value: number;
   materials_anchor_at: string;
   materials_rate_per_sec: number;
+  materials_capacity: number;
   supplies_anchor_value: number;
   supplies_anchor_at: string;
   supplies_rate_per_sec: number;
+  supplies_capacity: number;
   militia_count: number;
   shooters_count: number;
   scouts_count: number;
@@ -284,16 +286,24 @@ async function recalculatePlayerRates(
     const materialsRatePerSec = totalMaterialsPerDay / gameDaySeconds;
     const suppliesRatePerSec = (totalSuppliesPerDay - totalUpkeepPerDay) / gameDaySeconds;
 
-    // Settle o jogador e actualiza as taxas
+    // Teto de armazenamento: base + por cidade. Mais infra = mais armazém.
+    // Calibrado pra ~3-4 dias de produção (força o jogador a entrar e gastar).
+    const cityCount = Math.max(1, cityStates.length);
+    const materialsCapacity = 4000 + cityCount * 3000 + totalMaterialsPerDay * 3;
+    const suppliesCapacity = 4000 + cityCount * 3000 + Math.max(0, totalSuppliesPerDay) * 3;
+
+    // Settle o jogador e actualiza taxas + tetos
     await supabaseRpc("kw_settle_player", { p_world_player_id: worldPlayerId });
     const rateParams = new URLSearchParams();
     rateParams.set("world_player_id", `eq.${worldPlayerId}`);
     await supabasePatchReturning<
-      { materials_rate_per_sec: number; supplies_rate_per_sec: number },
+      { materials_rate_per_sec: number; supplies_rate_per_sec: number; materials_capacity: number; supplies_capacity: number },
       { world_player_id: string }
     >("world_player_imperial_states", rateParams, {
       materials_rate_per_sec: materialsRatePerSec,
       supplies_rate_per_sec: suppliesRatePerSec,
+      materials_capacity: Math.round(materialsCapacity),
+      supplies_capacity: Math.round(suppliesCapacity),
     });
   } catch {
     // Não-fatal: taxa desactualizada é corrigida no próximo tick
@@ -310,12 +320,14 @@ function mapRowToImperialState(row: StoredImperialStateRow) {
   const clientResources = isRecord(sandboxPayload.clientState.resources) ? sandboxPayload.clientState.resources : {};
   const clientTroops = isRecord(sandboxPayload.clientState.troops) ? sandboxPayload.clientState.troops : {};
 
-  // Deriva materiais e suprimentos da âncora se disponível, fallback para *_stock
+  // Deriva materiais e suprimentos da âncora, clampado no teto (capacity)
+  const matCap = row.materials_capacity || 8000;
+  const supCap = row.supplies_capacity || 8000;
   const materialsFromAnchor = row.materials_anchor_at
-    ? deriveAnchorValue(row.materials_anchor_value, row.materials_rate_per_sec, row.materials_anchor_at)
+    ? Math.min(matCap, deriveAnchorValue(row.materials_anchor_value, row.materials_rate_per_sec, row.materials_anchor_at))
     : row.materials_stock;
   const suppliesFromAnchor = row.supplies_anchor_at
-    ? deriveAnchorValue(row.supplies_anchor_value, row.supplies_rate_per_sec, row.supplies_anchor_at)
+    ? Math.min(supCap, deriveAnchorValue(row.supplies_anchor_value, row.supplies_rate_per_sec, row.supplies_anchor_at))
     : row.supplies_stock;
 
   return {
@@ -326,6 +338,9 @@ function mapRowToImperialState(row: StoredImperialStateRow) {
       materials: Math.floor(materialsFromAnchor),
       supplies: Math.floor(suppliesFromAnchor),
       influence: 0,
+      // Teto de armazenamento — recurso não acumula infinito
+      materialsCapacity: matCap,
+      suppliesCapacity: supCap,
       // Tripla âncora exposta pro cliente interpolar localmente (suavidade visual)
       materialsAnchor: { value: row.materials_anchor_value, at: row.materials_anchor_at, ratePerSec: row.materials_rate_per_sec },
       suppliesAnchor:  { value: row.supplies_anchor_value,  at: row.supplies_anchor_at,  ratePerSec: row.supplies_rate_per_sec },
@@ -762,7 +777,7 @@ export async function GET(
     const search = new URLSearchParams();
     search.set(
       "select",
-      "version,materials_stock,supplies_stock,materials_anchor_value,materials_anchor_at,materials_rate_per_sec,supplies_anchor_value,supplies_anchor_at,supplies_rate_per_sec,militia_count,shooters_count,scouts_count,machinery_count,recruited_diplomats,recruited_tribe_envoys,tribe_envoys_committed,annex_envoys_committed,sandbox_strategy_id,sandbox_completed_action_ids,sandbox_quests_completed,sandbox_wonders_built,sandbox_dome_active,sandbox_march_started,sandbox_last_synced_day,sandbox_snapshots_json,logs_json",
+      "version,materials_stock,supplies_stock,materials_anchor_value,materials_anchor_at,materials_rate_per_sec,materials_capacity,supplies_anchor_value,supplies_anchor_at,supplies_rate_per_sec,supplies_capacity,militia_count,shooters_count,scouts_count,machinery_count,recruited_diplomats,recruited_tribe_envoys,tribe_envoys_committed,annex_envoys_committed,sandbox_strategy_id,sandbox_completed_action_ids,sandbox_quests_completed,sandbox_wonders_built,sandbox_dome_active,sandbox_march_started,sandbox_last_synced_day,sandbox_snapshots_json,logs_json",
     );
     search.set("world_player_id", `eq.${payload.worldPlayerId}`);
     const rows = await supabaseSelect<StoredImperialStateRow>("world_player_imperial_states", search);
