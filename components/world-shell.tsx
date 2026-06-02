@@ -259,6 +259,16 @@ export function WorldShell({
     sovereignty: {
       kingAlive: world.sovereignty.kingAlive,
     },
+    defense: {
+      // ⚔️ Tropas totais do império (proxy de guarnição da capital)
+      capitalStationedTroops:
+        imperialState.troops.militia + imperialState.troops.shooters + imperialState.troops.scouts + imperialState.troops.machinery,
+      // 🏛️ Maravilhas + heróis de conselho
+      wondersControlled: wondersControlled,
+      councilHeroes: Math.max(world.sovereignty.councilHeroes, assignedHeroCount),
+      // 🌾 Excedente de suprimento
+      surplusSupplies: imperialState.resources.supplies,
+    },
   });
   const activeTab: WorldTab =
     segment === "empire" ||
@@ -877,7 +887,8 @@ export function WorldShell({
               onChange={(event) => setKingNameDraft(event.target.value)}
               maxLength={32}
               placeholder={selectedKingProfile.name}
-              className="relative z-10 mt-2 w-full rounded-2xl border border-white/18 bg-slate-950/82 px-3 py-3 text-sm font-bold text-slate-50 outline-none placeholder:text-slate-500"
+              className="relative z-10 mt-2 w-full rounded-2xl border border-white/18 px-3 py-3 text-sm font-bold text-slate-50 outline-none placeholder:text-slate-500"
+              style={{ background: "rgb(2 6 23)" }}
             />
             <button
               type="button"

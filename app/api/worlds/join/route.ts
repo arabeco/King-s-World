@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
+import { ensureWorldFilled } from "@/lib/npc-fill";
 import { supabaseSelect } from "@/lib/supabase-rest";
 
 type WorldRow = {
+  id: string;
   slug: string;
   name: string;
   status: string;
@@ -23,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     const params = new URLSearchParams();
-    params.set("select", "slug,name,status,day_number,join_code");
+    params.set("select", "id,slug,name,status,day_number,join_code");
     params.set("join_code", `eq.${raw}`);
     params.set("limit", "1");
 
@@ -37,6 +39,10 @@ export async function POST(request: Request) {
     if (world.status === "finalized") {
       return NextResponse.json({ error: "Este mundo já foi finalizado." }, { status: 410 });
     }
+
+    // Auto-fill: garante que o mundo tem NPCs ativos quando um humano entra.
+    // Não-fatal — se falhar, o jogador entra na mesma.
+    void ensureWorldFilled(world.id, world.slug).catch(() => undefined);
 
     const href = world.status === "finalized"
       ? `/world/${world.slug}/report`

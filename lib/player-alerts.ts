@@ -77,6 +77,8 @@ type StateSignals = {
   expansionActive: boolean;
   openingSprawlPressure: boolean;
   firstHeroPressure: boolean;
+  exploredCount: number;
+  canExplore: boolean;
 };
 
 const CARD_PRIORITY: Record<string, number> = {
@@ -268,6 +270,8 @@ function buildStateSignals(input: BuildPlayerAlertInput): StateSignals {
     expansionActive,
     openingSprawlPressure,
     firstHeroPressure,
+    exploredCount: Array.isArray(input.imperialState.exploredCoordKeys) ? input.imperialState.exploredCoordKeys.length : 0,
+    canExplore: (input.imperialState.resources?.supplies ?? 0) >= 40 && input.currentDay < 80,
   };
 }
 
@@ -725,6 +729,37 @@ function buildStableWindowCard(signals: StateSignals): PlayerAlertCard | null {
   };
 }
 
+function buildExploreCard(input: BuildPlayerAlertInput, signals: StateSignals): PlayerAlertCard | null {
+  // Aparece quando: pode explorar + ainda não explorou muito + não é late game
+  if (!signals.canExplore) return null;
+  if (signals.exploredCount >= 8) return null;
+  if (signals.portalPressure || signals.exodusActive) return null;
+
+  const neverExplored = signals.exploredCount === 0;
+
+  return {
+    id: "explore-map",
+    kind: "opportunity",
+    severity: "low",
+    title: neverExplored ? "O mapa está inexplorado" : "Ainda há território por descobrir",
+    situation: neverExplored
+      ? "Você ainda não explorou nenhum tile do mapa. Explorar revela oportunidades, recursos e hotspots estratégicos."
+      : `Você explorou ${signals.exploredCount} área(s). O mapa tem muito mais — oportunidades, ruínas e posições estratégicas esperam.`,
+    reason: "Explorar custa suprimentos mas gera bônus de exploração e pode revelar pontos de expansão valiosos.",
+    impact: "Cada tile revelado pode esconder uma oportunidade que muda o ritmo da run.",
+    choices: [
+      {
+        id: "explore-go",
+        label: neverExplored ? "Ir explorar agora" : "Explorar mais",
+        note: "Seleciona um tile no mapa e clica em Explorar.",
+        tab: "board",
+        query: {},
+      },
+    ],
+    sourceTags: ["opportunity", "exploration", "map"],
+  };
+}
+
 function buildFallbackCard(input: BuildPlayerAlertInput, focusVillageId: string): PlayerAlertCard {
   return {
     id: "guide-focus",
@@ -781,6 +816,7 @@ export function buildPlayerAlertDeck(input: BuildPlayerAlertInput): PlayerAlertD
   pushIfUnique(candidates, buildQuestCard(input, signals));
   pushIfUnique(candidates, buildEconomyCard(input, signals));
   pushIfUnique(candidates, buildStableWindowCard(signals));
+  pushIfUnique(candidates, buildExploreCard(input, signals));
 
   const ordered = candidates.sort((left, right) => {
     const score =

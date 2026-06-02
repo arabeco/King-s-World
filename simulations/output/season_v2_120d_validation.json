@@ -1,0 +1,24 @@
+{
+  "status": "FAIL",
+  "outputBasename": "season_v2_120d",
+  "generatedAt": "2026-06-02T02:02:51.103Z",
+  "errors": [
+    "playbooks.metropole.branch: vazio.",
+    "playbooks.metropole.secondVillageDay: invalido.",
+    "playbooks.metropole.firstHundredDay: invalido.",
+    "playbooks.metropole.days: vazio.",
+    "playbooks.posto_avancado.branch: vazio.",
+    "playbooks.posto_avancado.secondVillageDay: invalido.",
+    "playbooks.posto_avancado.firstHundredDay: invalido.",
+    "playbooks.posto_avancado.days: vazio.",
+    "playbooks.bastiao.branch: vazio.",
+    "playbooks.bastiao.secondVillageDay: invalido.",
+    "playbooks.bastiao.firstHundredDay: invalido.",
+    "playbooks.bastiao.days: vazio.",
+    "playbooks.celeiro.branch: vazio.",
+    "playbooks.celeiro.secondVillageDay: invalido.",
+    "playbooks.celeiro.firstHundredDay: invalido.",
+    "playbooks.celeiro.days: vazio."
+  ],
+  "warnings": []
+}

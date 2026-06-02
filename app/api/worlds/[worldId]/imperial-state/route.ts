@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
 
+import { calculateCityDailyProduction } from "@/core/GameBalance";
 import { normalizeImperialVillageIds, stripDedicatedImperialClientState } from "@/lib/imperial-persistence";
-import { supabaseDelete, supabaseSelect, supabaseUpsert } from "@/lib/supabase-rest";
+import { supabaseDelete, supabasePatchReturning, supabaseRpc, supabaseSelect, supabaseUpsert } from "@/lib/supabase-rest";
 import { getWorldPayload } from "@/lib/world-data";
 
 type StoredImperialStateRow = {
   version: number;
   materials_stock: number;
   supplies_stock: number;
+  // Âncora+taxa (modelo servidor fonte da verdade)
+  materials_anchor_value: number;
+  materials_anchor_at: string;
+  materials_rate_per_sec: number;
+  supplies_anchor_value: number;
+  supplies_anchor_at: string;
+  supplies_rate_per_sec: number;
   militia_count: number;
   shooters_count: number;
   scouts_count: number;
@@ -194,18 +202,133 @@ function splitSandboxPayload(value: Record<string, unknown> | null | undefined) 
   };
 }
 
+/**
+ * Calcula e grava a taxa de produção/consumo por segundo do jogador.
+ * Lê o estado de todas as cidades, usa calculateCityDailyProduction e divide
+ * pelo número de segundos num dia de jogo (86400 / speedMultiplier).
+ * Chamado após qualquer mudança que afecta produção (upgrade, workers, etc.).
+ */
+async function recalculatePlayerRates(
+  worldId: string,
+  worldPlayerId: string,
+  speedMultiplier: number,
+): Promise<void> {
+  try {
+    const gameDaySeconds = Math.max(1, Math.round(86400 / speedMultiplier));
+
+    // Lê estado das cidades do jogador
+    const cityParams = new URLSearchParams();
+    cityParams.set("select", "village_site_id,population_current,production_focus,society_focus,production_materials_workers,production_supplies_workers,production_commerce_workers,production_logistics_workers,jobs_medics,jobs_crafts,jobs_order,jobs_scholars");
+    cityParams.set("world_player_id", `eq.${worldPlayerId}`);
+    cityParams.set("world_id", `eq.${worldId}`);
+    const cityStates = await supabaseSelect<VillageCityStateRow>("village_city_states", cityParams);
+
+    // Lê níveis de estrutura das cidades
+    const structureParams = new URLSearchParams();
+    structureParams.set("select", "village_site_id,structure_code,level");
+    structureParams.set("world_player_id", `eq.${worldPlayerId}`);
+    structureParams.set("world_id", `eq.${worldId}`);
+    const structureStates = await supabaseSelect<VillageStructureRow>("village_structure_states", structureParams);
+
+    // Agrupa estruturas por cidade
+    const levelsByVillage = new Map<string, Partial<Record<string, number>>>();
+    for (const s of structureStates) {
+      if (!levelsByVillage.has(s.village_site_id)) levelsByVillage.set(s.village_site_id, {});
+      levelsByVillage.get(s.village_site_id)![s.structure_code] = s.level ?? 0;
+    }
+
+    // Soma produção de todas as cidades
+    let totalMaterialsPerDay = 0;
+    let totalSuppliesPerDay = 0;
+    let totalUpkeepPerDay = 0;
+
+    for (const city of cityStates) {
+      const rawLevels = levelsByVillage.get(city.village_site_id) ?? {};
+      // Mapeia structure codes para BuildingId (simplificado para o esqueleto)
+      const levels: Partial<Record<string, number>> = {
+        palace: rawLevels.crown ?? 0,
+        senate: rawLevels.crown ?? 0,
+        mines: rawLevels.economy ?? 0,
+        farms: rawLevels.economy ?? 0,
+        housing: rawLevels.society ?? 0,
+        barracks: rawLevels.recruitment ?? 0,
+        wall: rawLevels.defense ?? 0,
+      };
+
+      const result = calculateCityDailyProduction({
+        levels: levels as any,
+        productionWorkers: {
+          materials: city.production_materials_workers ?? 0,
+          supplies: city.production_supplies_workers ?? 0,
+          commerce: city.production_commerce_workers ?? 0,
+          logistics: city.production_logistics_workers ?? 0,
+        },
+        jobs: {
+          medics: city.jobs_medics ?? 0,
+          crafts: city.jobs_crafts ?? 0,
+          order: city.jobs_order ?? 0,
+          scholars: city.jobs_scholars ?? 0,
+        },
+        productionFocus: (city.production_focus as any) ?? "materials",
+        societyFocus: (city.society_focus as any) ?? "medics",
+        populationCurrent: city.population_current ?? 0,
+        worldSpeedMultiplier: speedMultiplier,
+      });
+
+      totalMaterialsPerDay += result.materials;
+      totalSuppliesPerDay += result.supplies;
+      // Upkeep base por cidade (42/dia) — calibrar com tropas nas fatias seguintes
+      totalUpkeepPerDay += 42 * speedMultiplier;
+    }
+
+    const materialsRatePerSec = totalMaterialsPerDay / gameDaySeconds;
+    const suppliesRatePerSec = (totalSuppliesPerDay - totalUpkeepPerDay) / gameDaySeconds;
+
+    // Settle o jogador e actualiza as taxas
+    await supabaseRpc("kw_settle_player", { p_world_player_id: worldPlayerId });
+    const rateParams = new URLSearchParams();
+    rateParams.set("world_player_id", `eq.${worldPlayerId}`);
+    await supabasePatchReturning<
+      { materials_rate_per_sec: number; supplies_rate_per_sec: number },
+      { world_player_id: string }
+    >("world_player_imperial_states", rateParams, {
+      materials_rate_per_sec: materialsRatePerSec,
+      supplies_rate_per_sec: suppliesRatePerSec,
+    });
+  } catch {
+    // Não-fatal: taxa desactualizada é corrigida no próximo tick
+  }
+}
+
+function deriveAnchorValue(anchorValue: number, ratePerSec: number, anchorAt: string): number {
+  const elapsedSeconds = (Date.now() - new Date(anchorAt).getTime()) / 1000;
+  return Math.max(0, anchorValue + ratePerSec * elapsedSeconds);
+}
+
 function mapRowToImperialState(row: StoredImperialStateRow) {
   const sandboxPayload = splitSandboxPayload(row.sandbox_snapshots_json);
   const clientResources = isRecord(sandboxPayload.clientState.resources) ? sandboxPayload.clientState.resources : {};
   const clientTroops = isRecord(sandboxPayload.clientState.troops) ? sandboxPayload.clientState.troops : {};
+
+  // Deriva materiais e suprimentos da âncora se disponível, fallback para *_stock
+  const materialsFromAnchor = row.materials_anchor_at
+    ? deriveAnchorValue(row.materials_anchor_value, row.materials_rate_per_sec, row.materials_anchor_at)
+    : row.materials_stock;
+  const suppliesFromAnchor = row.supplies_anchor_at
+    ? deriveAnchorValue(row.supplies_anchor_value, row.supplies_rate_per_sec, row.supplies_anchor_at)
+    : row.supplies_stock;
+
   return {
     ...sandboxPayload.clientState,
     version: row.version,
     resources: {
       ...clientResources,
-      materials: row.materials_stock,
-      supplies: row.supplies_stock,
+      materials: Math.floor(materialsFromAnchor),
+      supplies: Math.floor(suppliesFromAnchor),
       influence: 0,
+      // Tripla âncora exposta pro cliente interpolar localmente (suavidade visual)
+      materialsAnchor: { value: row.materials_anchor_value, at: row.materials_anchor_at, ratePerSec: row.materials_rate_per_sec },
+      suppliesAnchor:  { value: row.supplies_anchor_value,  at: row.supplies_anchor_at,  ratePerSec: row.supplies_rate_per_sec },
     },
     troops: {
       ...clientTroops,
@@ -557,13 +680,14 @@ async function persistKingState(worldId: string, worldPlayerId: string, nextStat
   const kingName = typeof nextState.kingName === "string" ? nextState.kingName.trim().slice(0, 32) : "";
 
   try {
+    // Só persiste se o cliente enviou um rei explícito.
+    // Nunca apaga — evita race condition onde PUT chega antes da hidratação.
+    if (!kingProfileId || !kingName) {
+      return false;
+    }
+
     const params = new URLSearchParams();
     params.set("world_player_id", `eq.${worldPlayerId}`);
-
-    if (!kingProfileId || !kingName) {
-      await supabaseDelete("world_player_king_states", params);
-      return true;
-    }
 
     await supabaseUpsert(
       "world_player_king_states",
@@ -638,7 +762,7 @@ export async function GET(
     const search = new URLSearchParams();
     search.set(
       "select",
-      "version,materials_stock,supplies_stock,militia_count,shooters_count,scouts_count,machinery_count,recruited_diplomats,recruited_tribe_envoys,tribe_envoys_committed,annex_envoys_committed,sandbox_strategy_id,sandbox_completed_action_ids,sandbox_quests_completed,sandbox_wonders_built,sandbox_dome_active,sandbox_march_started,sandbox_last_synced_day,sandbox_snapshots_json,logs_json",
+      "version,materials_stock,supplies_stock,materials_anchor_value,materials_anchor_at,materials_rate_per_sec,supplies_anchor_value,supplies_anchor_at,supplies_rate_per_sec,militia_count,shooters_count,scouts_count,machinery_count,recruited_diplomats,recruited_tribe_envoys,tribe_envoys_committed,annex_envoys_committed,sandbox_strategy_id,sandbox_completed_action_ids,sandbox_quests_completed,sandbox_wonders_built,sandbox_dome_active,sandbox_march_started,sandbox_last_synced_day,sandbox_snapshots_json,logs_json",
     );
     search.set("world_player_id", `eq.${payload.worldPlayerId}`);
     const rows = await supabaseSelect<StoredImperialStateRow>("world_player_imperial_states", search);
@@ -750,8 +874,8 @@ export async function PUT(
       world_id: payload.world.id,
       world_player_id: payload.worldPlayerId,
       version: Number(nextStateRecord.version ?? 9),
-      materials_stock: Number(nextResources.materials ?? 0),
-      supplies_stock: Number(nextResources.supplies ?? 0),
+      // materials_stock e supplies_stock são geridos exclusivamente pela âncora (kw_settle_player).
+      // O cliente não pode mais sobrescrever estes valores directamente.
       militia_count: Number(nextTroops.militia ?? 0),
       shooters_count: Number(nextTroops.shooters ?? 0),
       scouts_count: Number(nextTroops.scouts ?? 0),
@@ -786,6 +910,13 @@ export async function PUT(
       payload.worldPlayerId,
       typeof nextStateRecord.royalCapitalVillageId === "string" ? nextStateRecord.royalCapitalVillageId : payload.world.activeVillageId,
       nextTroops,
+    );
+
+    // Recalcula taxa de produção/consumo após qualquer mudança de estado
+    void recalculatePlayerRates(
+      payload.world.id,
+      payload.worldPlayerId,
+      typeof payload.world.speedMultiplier === "number" ? payload.world.speedMultiplier : 1,
     );
 
     return NextResponse.json({ ok: true });

@@ -411,8 +411,8 @@ export function CostChip({
   affordable?: boolean;
 }) {
   const baseTone = affordable
-    ? "border-white/12 bg-white/8 text-slate-100"
-    : "border-rose-300/30 bg-rose-500/12 text-rose-100";
+    ? "border-white/25 bg-slate-700/70 text-slate-50 font-black"
+    : "border-rose-300/50 bg-rose-500/30 text-rose-100 font-black";
 
   if (kind === "supplies") {
     return (

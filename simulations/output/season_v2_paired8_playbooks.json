@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-17T17:56:31.466Z",
+  "generatedAt": "2026-06-02T02:03:02.009Z",
   "outputBasename": "season_v2_paired8",
   "status": "PASS",
   "playbooks": {
@@ -2019,24 +2019,6 @@
           "villages": 10,
           "troopsLabel": "666",
           "actions": [
-            "Doar recursos das aldeias perifericas para a Capital",
-            "Chamar todas as tropas para a Capital",
-            "Parar upgrades perifericos e manter so o essencial"
-          ],
-          "priorities": [
-            "Reagrupar imperio na Capital e consolidar tropas.",
-            "Parar upgrades supérfluos em aldeias perifericas.",
-            "Confirmar que o score final segue >=1500 mesmo com perdas."
-          ],
-          "milestone": "Sem marco novo."
-        },
-        {
-          "day": 115,
-          "influence": 2485,
-          "margin": 985,
-          "villages": 10,
-          "troopsLabel": "632",
-          "actions": [
             "Disparar marcha final ao Portal",
             "Sustentar a marcha sem abrir novas frentes",
             "Usar apenas apoio e doacao critica de sobrevivencia",
@@ -2048,6 +2030,24 @@
             "So gastar recurso em manutencao critica de sobrevivencia."
           ],
           "milestone": "Iniciou marcha ao Portal"
+        },
+        {
+          "day": 115,
+          "influence": 2485,
+          "margin": 985,
+          "villages": 10,
+          "troopsLabel": "632",
+          "actions": [
+            "Sustentar a marcha sem abrir novas frentes",
+            "Usar apenas apoio e doacao critica de sobrevivencia",
+            "Preservar score >= 1500 ate tocar o Portal"
+          ],
+          "priorities": [
+            "Marcha em curso: preservar score e tempo.",
+            "So gastar recurso em manutencao critica de sobrevivencia.",
+            "Evitar qualquer desvio que nao aumente a chance de tocar o Portal."
+          ],
+          "milestone": "Sem marco novo."
         },
         {
           "day": 116,
@@ -2074,24 +2074,6 @@
           "villages": 10,
           "troopsLabel": "563",
           "actions": [
-            "Sustentar a marcha sem abrir novas frentes",
-            "Usar apenas apoio e doacao critica de sobrevivencia",
-            "Preservar score >= 1500 ate tocar o Portal"
-          ],
-          "priorities": [
-            "Marcha em curso: preservar score e tempo.",
-            "So gastar recurso em manutencao critica de sobrevivencia.",
-            "Evitar qualquer desvio que nao aumente a chance de tocar o Portal."
-          ],
-          "milestone": "Sem marco novo."
-        },
-        {
-          "day": 118,
-          "influence": 2489,
-          "margin": 989,
-          "villages": 10,
-          "troopsLabel": "528",
-          "actions": [
             "Entrou no Portal",
             "Sustentar a marcha sem abrir novas frentes",
             "Usar apenas apoio e doacao critica de sobrevivencia",
@@ -2103,6 +2085,24 @@
             "Evitar qualquer desvio que nao aumente a chance de tocar o Portal."
           ],
           "milestone": "Entrou no Portal"
+        },
+        {
+          "day": 118,
+          "influence": 2489,
+          "margin": 989,
+          "villages": 10,
+          "troopsLabel": "528",
+          "actions": [
+            "Sustentar a marcha sem abrir novas frentes",
+            "Usar apenas apoio e doacao critica de sobrevivencia",
+            "Preservar score >= 1500 ate tocar o Portal"
+          ],
+          "priorities": [
+            "Marcha em curso: preservar score e tempo.",
+            "So gastar recurso em manutencao critica de sobrevivencia.",
+            "Evitar qualquer desvio que nao aumente a chance de tocar o Portal."
+          ],
+          "milestone": "Sem marco novo."
         },
         {
           "day": 119,
@@ -2146,8 +2146,8 @@
       "branch": "tactical",
       "secondVillageDay": 14,
       "firstHundredDay": 46,
-      "day90Summary": "2320 influencia (+820) | 10 aldeias | 1.615 tropas",
-      "day120Summary": "2500 influencia (+1000) | 10 aldeias | 869 tropas",
+      "day90Summary": "2318 influencia (+818) | 10 aldeias | 1.615 tropas",
+      "day120Summary": "2400 influencia (+900) | 9 aldeias | 869 tropas",
       "days": [
         {
           "day": 1,
@@ -2309,8 +2309,8 @@
         },
         {
           "day": 10,
-          "influence": 117,
-          "margin": -1383,
+          "influence": 116,
+          "margin": -1384,
           "villages": 1,
           "troopsLabel": "300",
           "actions": [
@@ -2363,8 +2363,8 @@
         },
         {
           "day": 13,
-          "influence": 139,
-          "margin": -1361,
+          "influence": 138,
+          "margin": -1362,
           "villages": 1,
           "troopsLabel": "350",
           "actions": [
@@ -2453,8 +2453,8 @@
         },
         {
           "day": 18,
-          "influence": 240,
-          "margin": -1260,
+          "influence": 239,
+          "margin": -1261,
           "villages": 2,
           "troopsLabel": "432",
           "actions": [
@@ -2651,8 +2651,8 @@
         },
         {
           "day": 29,
-          "influence": 505,
-          "margin": -995,
+          "influence": 504,
+          "margin": -996,
           "villages": 4,
           "troopsLabel": "613",
           "actions": [
@@ -2705,8 +2705,8 @@
         },
         {
           "day": 32,
-          "influence": 533,
-          "margin": -967,
+          "influence": 532,
+          "margin": -968,
           "villages": 4,
           "troopsLabel": "662",
           "actions": [
@@ -2721,8 +2721,8 @@
         },
         {
           "day": 33,
-          "influence": 543,
-          "margin": -957,
+          "influence": 542,
+          "margin": -958,
           "villages": 4,
           "troopsLabel": "678",
           "actions": [
@@ -2737,8 +2737,8 @@
         },
         {
           "day": 34,
-          "influence": 552,
-          "margin": -948,
+          "influence": 551,
+          "margin": -949,
           "villages": 4,
           "troopsLabel": "695",
           "actions": [
@@ -2753,8 +2753,8 @@
         },
         {
           "day": 35,
-          "influence": 561,
-          "margin": -939,
+          "influence": 560,
+          "margin": -940,
           "villages": 4,
           "troopsLabel": "711",
           "actions": [
@@ -2771,8 +2771,8 @@
         },
         {
           "day": 36,
-          "influence": 570,
-          "margin": -930,
+          "influence": 569,
+          "margin": -931,
           "villages": 4,
           "troopsLabel": "728",
           "actions": [
@@ -2788,8 +2788,8 @@
         },
         {
           "day": 37,
-          "influence": 580,
-          "margin": -920,
+          "influence": 579,
+          "margin": -921,
           "villages": 4,
           "troopsLabel": "744",
           "actions": [
@@ -2806,8 +2806,8 @@
         },
         {
           "day": 38,
-          "influence": 667,
-          "margin": -833,
+          "influence": 666,
+          "margin": -834,
           "villages": 5,
           "troopsLabel": "760",
           "actions": [
@@ -2822,8 +2822,8 @@
         },
         {
           "day": 39,
-          "influence": 678,
-          "margin": -822,
+          "influence": 677,
+          "margin": -823,
           "villages": 5,
           "troopsLabel": "777",
           "actions": [
@@ -2838,8 +2838,8 @@
         },
         {
           "day": 40,
-          "influence": 788,
-          "margin": -712,
+          "influence": 787,
+          "margin": -713,
           "villages": 5,
           "troopsLabel": "793",
           "actions": [
@@ -2854,8 +2854,8 @@
         },
         {
           "day": 41,
-          "influence": 797,
-          "margin": -703,
+          "influence": 796,
+          "margin": -704,
           "villages": 5,
           "troopsLabel": "810",
           "actions": [
@@ -2872,8 +2872,8 @@
         },
         {
           "day": 42,
-          "influence": 807,
-          "margin": -693,
+          "influence": 806,
+          "margin": -694,
           "villages": 5,
           "troopsLabel": "826",
           "actions": [
@@ -2889,8 +2889,8 @@
         },
         {
           "day": 43,
-          "influence": 868,
-          "margin": -632,
+          "influence": 867,
+          "margin": -633,
           "villages": 5,
           "troopsLabel": "843",
           "actions": [
@@ -2905,8 +2905,8 @@
         },
         {
           "day": 44,
-          "influence": 877,
-          "margin": -623,
+          "influence": 876,
+          "margin": -624,
           "villages": 5,
           "troopsLabel": "859",
           "actions": [
@@ -2921,8 +2921,8 @@
         },
         {
           "day": 45,
-          "influence": 887,
-          "margin": -613,
+          "influence": 886,
+          "margin": -614,
           "villages": 5,
           "troopsLabel": "876",
           "actions": [
@@ -2937,8 +2937,8 @@
         },
         {
           "day": 46,
-          "influence": 948,
-          "margin": -552,
+          "influence": 946,
+          "margin": -554,
           "villages": 5,
           "troopsLabel": "892",
           "actions": [
@@ -2957,8 +2957,8 @@
         },
         {
           "day": 47,
-          "influence": 957,
-          "margin": -543,
+          "influence": 956,
+          "margin": -544,
           "villages": 5,
           "troopsLabel": "908",
           "actions": [
@@ -2975,8 +2975,8 @@
         },
         {
           "day": 48,
-          "influence": 1059,
-          "margin": -441,
+          "influence": 1058,
+          "margin": -442,
           "villages": 6,
           "troopsLabel": "925",
           "actions": [
@@ -2993,8 +2993,8 @@
         },
         {
           "day": 49,
-          "influence": 1127,
-          "margin": -373,
+          "influence": 1126,
+          "margin": -374,
           "villages": 6,
           "troopsLabel": "941",
           "actions": [
@@ -3012,8 +3012,8 @@
         },
         {
           "day": 50,
-          "influence": 1192,
-          "margin": -308,
+          "influence": 1191,
+          "margin": -309,
           "villages": 6,
           "troopsLabel": "958",
           "actions": [
@@ -3032,8 +3032,8 @@
         },
         {
           "day": 51,
-          "influence": 1209,
-          "margin": -291,
+          "influence": 1208,
+          "margin": -292,
           "villages": 6,
           "troopsLabel": "974",
           "actions": [
@@ -3050,8 +3050,8 @@
         },
         {
           "day": 52,
-          "influence": 1262,
-          "margin": -238,
+          "influence": 1261,
+          "margin": -239,
           "villages": 6,
           "troopsLabel": "991",
           "actions": [
@@ -3069,8 +3069,8 @@
         },
         {
           "day": 53,
-          "influence": 1277,
-          "margin": -223,
+          "influence": 1276,
+          "margin": -224,
           "villages": 6,
           "troopsLabel": "1.007",
           "actions": [
@@ -3087,8 +3087,8 @@
         },
         {
           "day": 54,
-          "influence": 1345,
-          "margin": -155,
+          "influence": 1343,
+          "margin": -157,
           "villages": 6,
           "troopsLabel": "1.023",
           "actions": [
@@ -3106,8 +3106,8 @@
         },
         {
           "day": 55,
-          "influence": 1361,
-          "margin": -139,
+          "influence": 1360,
+          "margin": -140,
           "villages": 6,
           "troopsLabel": "1.040",
           "actions": [
@@ -3123,8 +3123,8 @@
         },
         {
           "day": 56,
-          "influence": 1378,
-          "margin": -122,
+          "influence": 1376,
+          "margin": -124,
           "villages": 6,
           "troopsLabel": "1.056",
           "actions": [
@@ -3140,8 +3140,8 @@
         },
         {
           "day": 57,
-          "influence": 1497,
-          "margin": -3,
+          "influence": 1496,
+          "margin": -4,
           "villages": 7,
           "troopsLabel": "1.073",
           "actions": [
@@ -3157,8 +3157,8 @@
         },
         {
           "day": 58,
-          "influence": 1616,
-          "margin": 116,
+          "influence": 1614,
+          "margin": 114,
           "villages": 7,
           "troopsLabel": "1.089",
           "actions": [
@@ -3175,8 +3175,8 @@
         },
         {
           "day": 59,
-          "influence": 1633,
-          "margin": 133,
+          "influence": 1632,
+          "margin": 132,
           "villages": 7,
           "troopsLabel": "1.106",
           "actions": [
@@ -3192,8 +3192,8 @@
         },
         {
           "day": 60,
-          "influence": 1702,
-          "margin": 202,
+          "influence": 1700,
+          "margin": 200,
           "villages": 7,
           "troopsLabel": "1.122",
           "actions": [
@@ -3211,8 +3211,8 @@
         },
         {
           "day": 61,
-          "influence": 1709,
-          "margin": 209,
+          "influence": 1708,
+          "margin": 208,
           "villages": 7,
           "troopsLabel": "1.138",
           "actions": [
@@ -3228,8 +3228,8 @@
         },
         {
           "day": 62,
-          "influence": 1716,
-          "margin": 216,
+          "influence": 1714,
+          "margin": 214,
           "villages": 7,
           "troopsLabel": "1.155",
           "actions": [
@@ -3245,8 +3245,8 @@
         },
         {
           "day": 63,
-          "influence": 1723,
-          "margin": 223,
+          "influence": 1722,
+          "margin": 222,
           "villages": 7,
           "troopsLabel": "1.171",
           "actions": [
@@ -3263,8 +3263,8 @@
         },
         {
           "day": 64,
-          "influence": 1731,
-          "margin": 231,
+          "influence": 1729,
+          "margin": 229,
           "villages": 7,
           "troopsLabel": "1.188",
           "actions": [
@@ -3280,8 +3280,8 @@
         },
         {
           "day": 65,
-          "influence": 1788,
-          "margin": 288,
+          "influence": 1786,
+          "margin": 286,
           "villages": 7,
           "troopsLabel": "1.204",
           "actions": [
@@ -3298,8 +3298,8 @@
         },
         {
           "day": 66,
-          "influence": 1795,
-          "margin": 295,
+          "influence": 1794,
+          "margin": 294,
           "villages": 7,
           "troopsLabel": "1.221",
           "actions": [
@@ -3315,8 +3315,8 @@
         },
         {
           "day": 67,
-          "influence": 1911,
-          "margin": 411,
+          "influence": 1910,
+          "margin": 410,
           "villages": 8,
           "troopsLabel": "1.237",
           "actions": [
@@ -3332,8 +3332,8 @@
         },
         {
           "day": 68,
-          "influence": 1918,
-          "margin": 418,
+          "influence": 1916,
+          "margin": 416,
           "villages": 8,
           "troopsLabel": "1.253",
           "actions": [
@@ -3349,8 +3349,8 @@
         },
         {
           "day": 69,
-          "influence": 1926,
-          "margin": 426,
+          "influence": 1924,
+          "margin": 424,
           "villages": 8,
           "troopsLabel": "1.270",
           "actions": [
@@ -3366,8 +3366,8 @@
         },
         {
           "day": 70,
-          "influence": 1933,
-          "margin": 433,
+          "influence": 1932,
+          "margin": 432,
           "villages": 8,
           "troopsLabel": "1.286",
           "actions": [
@@ -3383,8 +3383,8 @@
         },
         {
           "day": 71,
-          "influence": 1940,
-          "margin": 440,
+          "influence": 1938,
+          "margin": 438,
           "villages": 8,
           "troopsLabel": "1.303",
           "actions": [
@@ -3400,8 +3400,8 @@
         },
         {
           "day": 72,
-          "influence": 1998,
-          "margin": 498,
+          "influence": 1996,
+          "margin": 496,
           "villages": 8,
           "troopsLabel": "1.319",
           "actions": [
@@ -3418,8 +3418,8 @@
         },
         {
           "day": 73,
-          "influence": 2005,
-          "margin": 505,
+          "influence": 2004,
+          "margin": 504,
           "villages": 8,
           "troopsLabel": "1.336",
           "actions": [
@@ -3435,8 +3435,8 @@
         },
         {
           "day": 74,
-          "influence": 2012,
-          "margin": 512,
+          "influence": 2010,
+          "margin": 510,
           "villages": 8,
           "troopsLabel": "1.352",
           "actions": [
@@ -3452,8 +3452,8 @@
         },
         {
           "day": 75,
-          "influence": 2020,
-          "margin": 520,
+          "influence": 2018,
+          "margin": 518,
           "villages": 8,
           "troopsLabel": "1.369",
           "actions": [
@@ -3470,8 +3470,8 @@
         },
         {
           "day": 76,
-          "influence": 2127,
-          "margin": 627,
+          "influence": 2125,
+          "margin": 625,
           "villages": 9,
           "troopsLabel": "1.385",
           "actions": [
@@ -3487,8 +3487,8 @@
         },
         {
           "day": 77,
-          "influence": 2134,
-          "margin": 634,
+          "influence": 2132,
+          "margin": 632,
           "villages": 9,
           "troopsLabel": "1.401",
           "actions": [
@@ -3504,8 +3504,8 @@
         },
         {
           "day": 78,
-          "influence": 2142,
-          "margin": 642,
+          "influence": 2140,
+          "margin": 640,
           "villages": 9,
           "troopsLabel": "1.418",
           "actions": [
@@ -3521,8 +3521,8 @@
         },
         {
           "day": 79,
-          "influence": 2149,
-          "margin": 649,
+          "influence": 2147,
+          "margin": 647,
           "villages": 9,
           "troopsLabel": "1.434",
           "actions": [
@@ -3538,8 +3538,8 @@
         },
         {
           "day": 80,
-          "influence": 2156,
-          "margin": 656,
+          "influence": 2154,
+          "margin": 654,
           "villages": 9,
           "troopsLabel": "1.451",
           "actions": [
@@ -3555,8 +3555,8 @@
         },
         {
           "day": 81,
-          "influence": 2164,
-          "margin": 664,
+          "influence": 2162,
+          "margin": 662,
           "villages": 9,
           "troopsLabel": "1.467",
           "actions": [
@@ -3572,8 +3572,8 @@
         },
         {
           "day": 82,
-          "influence": 2171,
-          "margin": 671,
+          "influence": 2169,
+          "margin": 669,
           "villages": 9,
           "troopsLabel": "1.484",
           "actions": [
@@ -3589,8 +3589,8 @@
         },
         {
           "day": 83,
-          "influence": 2178,
-          "margin": 678,
+          "influence": 2176,
+          "margin": 676,
           "villages": 9,
           "troopsLabel": "1.500",
           "actions": [
@@ -3606,8 +3606,8 @@
         },
         {
           "day": 84,
-          "influence": 2216,
-          "margin": 716,
+          "influence": 2214,
+          "margin": 714,
           "villages": 9,
           "troopsLabel": "1.516",
           "actions": [
@@ -3624,8 +3624,8 @@
         },
         {
           "day": 85,
-          "influence": 2223,
-          "margin": 723,
+          "influence": 2221,
+          "margin": 721,
           "villages": 9,
           "troopsLabel": "1.533",
           "actions": [
@@ -3641,8 +3641,8 @@
         },
         {
           "day": 86,
-          "influence": 2329,
-          "margin": 829,
+          "influence": 2327,
+          "margin": 827,
           "villages": 10,
           "troopsLabel": "1.549",
           "actions": [
@@ -3658,8 +3658,8 @@
         },
         {
           "day": 87,
-          "influence": 2332,
-          "margin": 832,
+          "influence": 2329,
+          "margin": 829,
           "villages": 10,
           "troopsLabel": "1.566",
           "actions": [
@@ -3675,8 +3675,8 @@
         },
         {
           "day": 88,
-          "influence": 2334,
-          "margin": 834,
+          "influence": 2332,
+          "margin": 832,
           "villages": 10,
           "troopsLabel": "1.582",
           "actions": [
@@ -3692,8 +3692,8 @@
         },
         {
           "day": 89,
-          "influence": 2337,
-          "margin": 837,
+          "influence": 2335,
+          "margin": 835,
           "villages": 10,
           "troopsLabel": "1.599",
           "actions": [
@@ -3709,8 +3709,8 @@
         },
         {
           "day": 90,
-          "influence": 2339,
-          "margin": 839,
+          "influence": 2337,
+          "margin": 837,
           "villages": 10,
           "troopsLabel": "1.615",
           "actions": [
@@ -3729,8 +3729,8 @@
         },
         {
           "day": 91,
-          "influence": 2403,
-          "margin": 903,
+          "influence": 2401,
+          "margin": 901,
           "villages": 10,
           "troopsLabel": "1.590",
           "actions": [
@@ -3748,8 +3748,8 @@
         },
         {
           "day": 92,
-          "influence": 2408,
-          "margin": 908,
+          "influence": 2406,
+          "margin": 906,
           "villages": 10,
           "troopsLabel": "1.565",
           "actions": [
@@ -3766,8 +3766,8 @@
         },
         {
           "day": 93,
-          "influence": 2411,
-          "margin": 911,
+          "influence": 2410,
+          "margin": 910,
           "villages": 10,
           "troopsLabel": "1.540",
           "actions": [
@@ -3784,8 +3784,8 @@
         },
         {
           "day": 94,
-          "influence": 2415,
-          "margin": 915,
+          "influence": 2413,
+          "margin": 913,
           "villages": 10,
           "troopsLabel": "1.516",
           "actions": [
@@ -3802,8 +3802,8 @@
         },
         {
           "day": 95,
-          "influence": 2420,
-          "margin": 920,
+          "influence": 2418,
+          "margin": 918,
           "villages": 10,
           "troopsLabel": "1.491",
           "actions": [
@@ -3820,8 +3820,8 @@
         },
         {
           "day": 96,
-          "influence": 2423,
-          "margin": 923,
+          "influence": 2422,
+          "margin": 922,
           "villages": 10,
           "troopsLabel": "1.466",
           "actions": [
@@ -3839,8 +3839,8 @@
         },
         {
           "day": 97,
-          "influence": 2427,
-          "margin": 927,
+          "influence": 2425,
+          "margin": 925,
           "villages": 10,
           "troopsLabel": "1.441",
           "actions": [
@@ -3857,26 +3857,27 @@
         },
         {
           "day": 98,
-          "influence": 2432,
-          "margin": 932,
+          "influence": 2430,
+          "margin": 930,
           "villages": 10,
           "troopsLabel": "1.416",
           "actions": [
+            "Perdeu 1 cidade(s) para PvP",
             "Doar recursos das aldeias perifericas para a Capital",
             "Chamar todas as tropas para a Capital",
             "Parar upgrades perifericos e manter so o essencial"
           ],
           "priorities": [
+            "Garantir recursos e influencia para expansao sem travar a Capital.",
             "Reagrupar imperio na Capital e consolidar tropas.",
-            "Parar upgrades supérfluos em aldeias perifericas.",
-            "Confirmar que o score final segue >=1500 mesmo com perdas."
+            "Parar upgrades supérfluos em aldeias perifericas."
           ],
-          "milestone": "Sem marco novo."
+          "milestone": "Perdeu 1 cidade(s) para PvP"
         },
         {
           "day": 99,
-          "influence": 2435,
-          "margin": 935,
+          "influence": 2433,
+          "margin": 933,
           "villages": 10,
           "troopsLabel": "1.391",
           "actions": [
@@ -3893,8 +3894,8 @@
         },
         {
           "day": 100,
-          "influence": 2439,
-          "margin": 939,
+          "influence": 2437,
+          "margin": 937,
           "villages": 10,
           "troopsLabel": "1.366",
           "actions": [
@@ -3911,8 +3912,8 @@
         },
         {
           "day": 101,
-          "influence": 2444,
-          "margin": 944,
+          "influence": 2442,
+          "margin": 942,
           "villages": 10,
           "troopsLabel": "1.341",
           "actions": [
@@ -3929,8 +3930,8 @@
         },
         {
           "day": 102,
-          "influence": 2447,
-          "margin": 947,
+          "influence": 2445,
+          "margin": 945,
           "villages": 10,
           "troopsLabel": "1.317",
           "actions": [
@@ -3947,8 +3948,8 @@
         },
         {
           "day": 103,
-          "influence": 2451,
-          "margin": 951,
+          "influence": 2449,
+          "margin": 949,
           "villages": 10,
           "troopsLabel": "1.292",
           "actions": [
@@ -3965,8 +3966,8 @@
         },
         {
           "day": 104,
-          "influence": 2456,
-          "margin": 956,
+          "influence": 2454,
+          "margin": 954,
           "villages": 10,
           "troopsLabel": "1.267",
           "actions": [
@@ -3983,8 +3984,8 @@
         },
         {
           "day": 105,
-          "influence": 2459,
-          "margin": 959,
+          "influence": 2457,
+          "margin": 957,
           "villages": 10,
           "troopsLabel": "1.242",
           "actions": [
@@ -4001,9 +4002,9 @@
         },
         {
           "day": 106,
-          "influence": 2463,
-          "margin": 963,
-          "villages": 10,
+          "influence": 2361,
+          "margin": 861,
+          "villages": 9,
           "troopsLabel": "1.217",
           "actions": [
             "Ergueu/garantiu Maravilha 5",
@@ -4020,9 +4021,9 @@
         },
         {
           "day": 107,
-          "influence": 2468,
-          "margin": 968,
-          "villages": 10,
+          "influence": 2366,
+          "margin": 866,
+          "villages": 9,
           "troopsLabel": "1.192",
           "actions": [
             "Doar recursos das aldeias perifericas para a Capital",
@@ -4038,9 +4039,9 @@
         },
         {
           "day": 108,
-          "influence": 2471,
-          "margin": 971,
-          "villages": 10,
+          "influence": 2369,
+          "margin": 869,
+          "villages": 9,
           "troopsLabel": "1.167",
           "actions": [
             "Doar recursos das aldeias perifericas para a Capital",
@@ -4056,9 +4057,9 @@
         },
         {
           "day": 109,
-          "influence": 2475,
-          "margin": 975,
-          "villages": 10,
+          "influence": 2373,
+          "margin": 873,
+          "villages": 9,
           "troopsLabel": "1.143",
           "actions": [
             "Doar recursos das aldeias perifericas para a Capital",
@@ -4074,9 +4075,9 @@
         },
         {
           "day": 110,
-          "influence": 2480,
-          "margin": 980,
-          "villages": 10,
+          "influence": 2378,
+          "margin": 878,
+          "villages": 9,
           "troopsLabel": "1.118",
           "actions": [
             "Horda contida sem perda de aldeia",
@@ -4093,9 +4094,9 @@
         },
         {
           "day": 111,
-          "influence": 2481,
-          "margin": 981,
-          "villages": 10,
+          "influence": 2379,
+          "margin": 879,
+          "villages": 9,
           "troopsLabel": "1.093",
           "actions": [
             "Doar recursos das aldeias perifericas para a Capital",
@@ -4111,9 +4112,9 @@
         },
         {
           "day": 112,
-          "influence": 2482,
-          "margin": 982,
-          "villages": 10,
+          "influence": 2380,
+          "margin": 880,
+          "villages": 9,
           "troopsLabel": "1.068",
           "actions": [
             "Doar recursos das aldeias perifericas para a Capital",
@@ -4129,9 +4130,9 @@
         },
         {
           "day": 113,
-          "influence": 2484,
-          "margin": 984,
-          "villages": 10,
+          "influence": 2382,
+          "margin": 882,
+          "villages": 9,
           "troopsLabel": "1.043",
           "actions": [
             "Doar recursos das aldeias perifericas para a Capital",
@@ -4147,9 +4148,9 @@
         },
         {
           "day": 114,
-          "influence": 2485,
-          "margin": 985,
-          "villages": 10,
+          "influence": 2383,
+          "margin": 883,
+          "villages": 9,
           "troopsLabel": "1.018",
           "actions": [
             "Doar recursos das aldeias perifericas para a Capital",
@@ -4165,9 +4166,9 @@
         },
         {
           "day": 115,
-          "influence": 2486,
-          "margin": 986,
-          "villages": 10,
+          "influence": 2384,
+          "margin": 884,
+          "villages": 9,
           "troopsLabel": "993",
           "actions": [
             "Disparar marcha final ao Portal",
@@ -4184,9 +4185,9 @@
         },
         {
           "day": 116,
-          "influence": 2488,
-          "margin": 988,
-          "villages": 10,
+          "influence": 2386,
+          "margin": 886,
+          "villages": 9,
           "troopsLabel": "968",
           "actions": [
             "Sustentar a marcha sem abrir novas frentes",
@@ -4202,9 +4203,9 @@
         },
         {
           "day": 117,
-          "influence": 2489,
-          "margin": 989,
-          "villages": 10,
+          "influence": 2387,
+          "margin": 887,
+          "villages": 9,
           "troopsLabel": "944",
           "actions": [
             "Sustentar a marcha sem abrir novas frentes",
@@ -4220,9 +4221,9 @@
         },
         {
           "day": 118,
-          "influence": 2490,
-          "margin": 990,
-          "villages": 10,
+          "influence": 2388,
+          "margin": 888,
+          "villages": 9,
           "troopsLabel": "919",
           "actions": [
             "Entrou no Portal",
@@ -4239,9 +4240,9 @@
         },
         {
           "day": 119,
-          "influence": 2492,
-          "margin": 992,
-          "villages": 10,
+          "influence": 2390,
+          "margin": 890,
+          "villages": 9,
           "troopsLabel": "894",
           "actions": [
             "Sustentar a marcha sem abrir novas frentes",
@@ -4257,9 +4258,9 @@
         },
         {
           "day": 120,
-          "influence": 2493,
-          "margin": 993,
-          "villages": 10,
+          "influence": 2391,
+          "margin": 891,
+          "villages": 9,
           "troopsLabel": "869",
           "actions": [
             "Sustentar a marcha sem abrir novas frentes",

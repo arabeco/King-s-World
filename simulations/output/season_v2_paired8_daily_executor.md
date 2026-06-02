@@ -130,11 +130,11 @@
 | 111 | 2480 | +980 | 10 | 770 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
 | 112 | 2481 | +981 | 10 | 735 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
 | 113 | 2483 | +983 | 10 | 701 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 114 | 2484 | +984 | 10 | 666 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 115 | 2485 | +985 | 10 | 632 | Disparar marcha final ao Portal + Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Iniciou marcha ao Portal |
+| 114 | 2484 | +984 | 10 | 666 | Disparar marcha final ao Portal + Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Iniciou marcha ao Portal |
+| 115 | 2485 | +985 | 10 | 632 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
 | 116 | 2487 | +987 | 10 | 597 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
-| 117 | 2488 | +988 | 10 | 563 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
-| 118 | 2489 | +989 | 10 | 528 | Entrou no Portal + Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Entrou no Portal |
+| 117 | 2488 | +988 | 10 | 563 | Entrou no Portal + Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Entrou no Portal |
+| 118 | 2489 | +989 | 10 | 528 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
 | 119 | 2491 | +991 | 10 | 494 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
 | 120 | 2492 | +992 | 10 | 459 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
 
@@ -144,8 +144,8 @@
 - Branch: tactical
 - 2a aldeia: D14
 - 1a aldeia 100: D46
-- D90: 2320 influencia (+820) | 10 aldeias | 1.615 tropas
-- D120: 2500 influencia (+1000) | 10 aldeias | 869 tropas
+- D90: 2318 influencia (+818) | 10 aldeias | 1.615 tropas
+- D120: 2400 influencia (+900) | 9 aldeias | 869 tropas
 
 | Dia | Infl. | Margem | Aldeias | Tropas | Execucao ideal do dia | Marco real |
 | ---: | ---: | ---: | ---: | ---: | --- | --- |
@@ -158,15 +158,15 @@
 | 7 | 97 | -1403 | 1 | 251 | Quartel foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 8 | 102 | -1398 | 1 | 267 | Arsenal foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 9 | 109 | -1391 | 1 | 284 | Palacio foco -> Nv 2 + Cartografar novos territorios proximos + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 10 | 117 | -1383 | 1 | 300 | Cartografar novos territorios + Minas foco -> Nv 3 + Recrutar ~16 tropas na Capital | Expedicao territorial (7 frentes) |
+| 10 | 116 | -1384 | 1 | 300 | Cartografar novos territorios + Minas foco -> Nv 3 + Recrutar ~16 tropas na Capital | Expedicao territorial (7 frentes) |
 | 11 | 123 | -1377 | 1 | 317 | Fazendas foco -> Nv 3 + Cartografar novos territorios proximos + Recrutar ~17 tropas na Capital | Sem marco novo. |
 | 12 | 131 | -1369 | 1 | 333 | Recrutar lote principal na Capital + Quartel foco -> Nv 3 + Cartografar novos territorios proximos | Formou a primeira reserva militar na Capital |
-| 13 | 139 | -1361 | 1 | 350 | Arsenal foco -> Nv 3 + Cartografar novos territorios proximos + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 13 | 138 | -1362 | 1 | 350 | Arsenal foco -> Nv 3 + Cartografar novos territorios proximos + Recrutar ~17 tropas na Capital | Sem marco novo. |
 | 14 | 204 | -1296 | 2 | 366 | Conquistou/Fundou a 2a aldeia + Palacio foco -> Nv 3 + Minas foco -> Nv 4 + Recrutar ~16 tropas na Capital | Conquistou/Fundou a 2a aldeia |
 | 15 | 213 | -1287 | 2 | 383 | Fazendas foco -> Nv 4 + Quartel foco -> Nv 4 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 16 | 222 | -1278 | 2 | 399 | Arsenal foco -> Nv 4 + Palacio foco -> Nv 4 + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 17 | 231 | -1269 | 2 | 415 | Minas foco -> Nv 5 + Fazendas foco -> Nv 5 | Sem marco novo. |
-| 18 | 240 | -1260 | 2 | 432 | Quartel foco -> Nv 5 + Arsenal foco -> Nv 5 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 18 | 239 | -1261 | 2 | 432 | Quartel foco -> Nv 5 + Arsenal foco -> Nv 5 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~17 tropas na Capital | Sem marco novo. |
 | 19 | 313 | -1187 | 3 | 448 | Palacio foco -> Nv 5 + Minas foco -> Nv 6 | Sem marco novo. |
 | 20 | 356 | -1144 | 3 | 465 | Concluiu Quest 1/3 + Fazendas foco -> Nv 6 + Quartel foco -> Nv 6 + Recrutar ~17 tropas na Capital | Concluiu Quest 1/3 |
 | 21 | 365 | -1135 | 3 | 481 | Arsenal foco -> Nv 6 + Palacio foco -> Nv 6 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
@@ -177,98 +177,98 @@
 | 26 | 407 | -1093 | 3 | 563 | Arsenal foco -> Nv 8 + Palacio foco -> Nv 8 + Recrutar ~16 tropas na Capital | Sem marco novo. |
 | 27 | 416 | -1084 | 3 | 580 | Minas foco -> Nv 9 + Fazendas foco -> Nv 9 + Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
 | 28 | 425 | -1075 | 3 | 596 | Quartel foco -> Nv 9 + Arsenal foco -> Nv 9 + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 29 | 505 | -995 | 4 | 613 | Palacio foco -> Nv 9 + Minas foco -> Nv 10 | Sem marco novo. |
+| 29 | 504 | -996 | 4 | 613 | Palacio foco -> Nv 9 + Minas foco -> Nv 10 | Sem marco novo. |
 | 30 | 514 | -986 | 4 | 629 | Chegou a 4 aldeias + Fazendas foco -> Nv 10 + Quartel foco -> Nv 10 + Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Chegou a 4 aldeias |
 | 31 | 524 | -976 | 4 | 645 | Arsenal foco -> Nv 10 + Palacio foco -> Nv 10 | Sem marco novo. |
-| 32 | 533 | -967 | 4 | 662 | Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 33 | 543 | -957 | 4 | 678 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
-| 34 | 552 | -948 | 4 | 695 | Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 35 | 561 | -939 | 4 | 711 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
-| 36 | 570 | -930 | 4 | 728 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 37 | 580 | -920 | 4 | 744 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
-| 38 | 667 | -833 | 5 | 760 | Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 39 | 678 | -822 | 5 | 777 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
-| 40 | 788 | -712 | 5 | 793 | Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 41 | 797 | -703 | 5 | 810 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
-| 42 | 807 | -693 | 5 | 826 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 43 | 868 | -632 | 5 | 843 | Contratou Marechal | Contratou Marechal |
-| 44 | 877 | -623 | 5 | 859 | Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 45 | 887 | -613 | 5 | 876 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
-| 46 | 948 | -552 | 5 | 892 | Primeira aldeia atingiu 100/100 + Contratou Erudito + Centro de Pesquisa foco -> Nv 2 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Primeira aldeia atingiu 100/100 + Contratou Erudito |
-| 47 | 957 | -543 | 5 | 908 | Centro de Pesquisa foco -> Nv 3 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 48 | 1059 | -441 | 6 | 925 | Centro de Pesquisa foco -> Nv 4 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 49 | 1127 | -373 | 6 | 941 | Contratou Marechal (2a vaga) + Centro de Pesquisa foco -> Nv 5 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Marechal (2a vaga) |
-| 50 | 1192 | -308 | 6 | 958 | Contratou Engenheiro + Ergueu/garantiu Maravilha 1 + Centro de Pesquisa foco -> Nv 6 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Contratou Engenheiro + Ergueu/garantiu Maravilha 1 |
-| 51 | 1209 | -291 | 6 | 974 | Centro de Pesquisa foco -> Nv 7 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 52 | 1262 | -238 | 6 | 991 | Concluiu Quest 2/3 + Centro de Pesquisa foco -> Nv 8 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Concluiu Quest 2/3 |
-| 53 | 1277 | -223 | 6 | 1.007 | Centro de Pesquisa foco -> Nv 9 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 54 | 1345 | -155 | 6 | 1.023 | Contratou Engenheiro (2a vaga) + Centro de Pesquisa foco -> Nv 10 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Engenheiro (2a vaga) |
-| 55 | 1361 | -139 | 6 | 1.040 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 56 | 1378 | -122 | 6 | 1.056 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 57 | 1497 | -3 | 7 | 1.073 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 58 | 1616 | +116 | 7 | 1.089 | Contratou Intendente (2a vaga) + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Intendente (2a vaga) + Contratou Intendente (2a vaga) |
-| 59 | 1633 | +133 | 7 | 1.106 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 60 | 1702 | +202 | 7 | 1.122 | Contratou Marechal (3a vaga) + Mid game com 7 aldeias + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Marechal (3a vaga) + Mid game com 7 aldeias |
-| 61 | 1709 | +209 | 7 | 1.138 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 62 | 1716 | +216 | 7 | 1.155 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 63 | 1723 | +223 | 7 | 1.171 | Ergueu/garantiu Maravilha 2 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Ergueu/garantiu Maravilha 2 |
-| 64 | 1731 | +231 | 7 | 1.188 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 65 | 1788 | +288 | 7 | 1.204 | Contratou Navegador + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Navegador |
-| 66 | 1795 | +295 | 7 | 1.221 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 67 | 1911 | +411 | 8 | 1.237 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 68 | 1918 | +418 | 8 | 1.253 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 69 | 1926 | +426 | 8 | 1.270 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 70 | 1933 | +433 | 8 | 1.286 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 71 | 1940 | +440 | 8 | 1.303 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 72 | 1998 | +498 | 8 | 1.319 | Contratou Navegador (2a vaga) + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Navegador (2a vaga) |
-| 73 | 2005 | +505 | 8 | 1.336 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 74 | 2012 | +512 | 8 | 1.352 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 75 | 2020 | +520 | 8 | 1.369 | Ergueu/garantiu Maravilha 3 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Ergueu/garantiu Maravilha 3 |
-| 76 | 2127 | +627 | 9 | 1.385 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 77 | 2134 | +634 | 9 | 1.401 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 78 | 2142 | +642 | 9 | 1.418 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 79 | 2149 | +649 | 9 | 1.434 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 80 | 2156 | +656 | 9 | 1.451 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 81 | 2164 | +664 | 9 | 1.467 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 82 | 2171 | +671 | 9 | 1.484 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 83 | 2178 | +678 | 9 | 1.500 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 84 | 2216 | +716 | 9 | 1.516 | Concluiu Quest 3/3 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Concluiu Quest 3/3 |
-| 85 | 2223 | +723 | 9 | 1.533 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 86 | 2329 | +829 | 10 | 1.549 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 87 | 2332 | +832 | 10 | 1.566 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 88 | 2334 | +834 | 10 | 1.582 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
-| 89 | 2337 | +837 | 10 | 1.599 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
-| 90 | 2339 | +839 | 10 | 1.615 | Chegou ao D90 com 10 aldeias + Ativar reagrupar na Capital + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Chegou ao D90 com 10 aldeias + Agrupamento liberado na Capital |
-| 91 | 2403 | +903 | 10 | 1.590 | Ativou Domo da Tribo + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Ativou Domo da Tribo |
-| 92 | 2408 | +908 | 10 | 1.565 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 93 | 2411 | +911 | 10 | 1.540 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 94 | 2415 | +915 | 10 | 1.516 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 95 | 2420 | +920 | 10 | 1.491 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 96 | 2423 | +923 | 10 | 1.466 | Ergueu/garantiu Maravilha 4 + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Ergueu/garantiu Maravilha 4 |
-| 97 | 2427 | +927 | 10 | 1.441 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 98 | 2432 | +932 | 10 | 1.416 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 99 | 2435 | +935 | 10 | 1.391 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 100 | 2439 | +939 | 10 | 1.366 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 101 | 2444 | +944 | 10 | 1.341 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 102 | 2447 | +947 | 10 | 1.317 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 103 | 2451 | +951 | 10 | 1.292 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 104 | 2456 | +956 | 10 | 1.267 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 105 | 2459 | +959 | 10 | 1.242 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 106 | 2463 | +963 | 10 | 1.217 | Ergueu/garantiu Maravilha 5 + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Ergueu/garantiu Maravilha 5 |
-| 107 | 2468 | +968 | 10 | 1.192 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 108 | 2471 | +971 | 10 | 1.167 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 109 | 2475 | +975 | 10 | 1.143 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 110 | 2480 | +980 | 10 | 1.118 | Horda contida sem perda de aldeia + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Horda contida sem perda de aldeia |
-| 111 | 2481 | +981 | 10 | 1.093 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 112 | 2482 | +982 | 10 | 1.068 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 113 | 2484 | +984 | 10 | 1.043 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 114 | 2485 | +985 | 10 | 1.018 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
-| 115 | 2486 | +986 | 10 | 993 | Disparar marcha final ao Portal + Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Iniciou marcha ao Portal |
-| 116 | 2488 | +988 | 10 | 968 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
-| 117 | 2489 | +989 | 10 | 944 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
-| 118 | 2490 | +990 | 10 | 919 | Entrou no Portal + Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Entrou no Portal |
-| 119 | 2492 | +992 | 10 | 894 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
-| 120 | 2493 | +993 | 10 | 869 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
+| 32 | 532 | -968 | 4 | 662 | Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 33 | 542 | -958 | 4 | 678 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
+| 34 | 551 | -949 | 4 | 695 | Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 35 | 560 | -940 | 4 | 711 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 36 | 569 | -931 | 4 | 728 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 37 | 579 | -921 | 4 | 744 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 38 | 666 | -834 | 5 | 760 | Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 39 | 677 | -823 | 5 | 777 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
+| 40 | 787 | -713 | 5 | 793 | Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 41 | 796 | -704 | 5 | 810 | Transferir recursos para a aldeia foco + Recrutar lote leve na Capital + Cartografar arredores | Sem marco novo. |
+| 42 | 806 | -694 | 5 | 826 | Abrir rota de fronteira e registrar novos territorios + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 43 | 867 | -633 | 5 | 843 | Contratou Marechal | Contratou Marechal |
+| 44 | 876 | -624 | 5 | 859 | Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 45 | 886 | -614 | 5 | 876 | Abrir rota de fronteira e registrar novos territorios | Sem marco novo. |
+| 46 | 946 | -554 | 5 | 892 | Primeira aldeia atingiu 100/100 + Contratou Erudito + Centro de Pesquisa foco -> Nv 2 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Primeira aldeia atingiu 100/100 + Contratou Erudito |
+| 47 | 956 | -544 | 5 | 908 | Centro de Pesquisa foco -> Nv 3 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 48 | 1058 | -442 | 6 | 925 | Centro de Pesquisa foco -> Nv 4 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 49 | 1126 | -374 | 6 | 941 | Contratou Marechal (2a vaga) + Centro de Pesquisa foco -> Nv 5 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Marechal (2a vaga) |
+| 50 | 1191 | -309 | 6 | 958 | Contratou Engenheiro + Ergueu/garantiu Maravilha 1 + Centro de Pesquisa foco -> Nv 6 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Contratou Engenheiro + Ergueu/garantiu Maravilha 1 |
+| 51 | 1208 | -292 | 6 | 974 | Centro de Pesquisa foco -> Nv 7 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 52 | 1261 | -239 | 6 | 991 | Concluiu Quest 2/3 + Centro de Pesquisa foco -> Nv 8 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Concluiu Quest 2/3 |
+| 53 | 1276 | -224 | 6 | 1.007 | Centro de Pesquisa foco -> Nv 9 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 54 | 1343 | -157 | 6 | 1.023 | Contratou Engenheiro (2a vaga) + Centro de Pesquisa foco -> Nv 10 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Engenheiro (2a vaga) |
+| 55 | 1360 | -140 | 6 | 1.040 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 56 | 1376 | -124 | 6 | 1.056 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 57 | 1496 | -4 | 7 | 1.073 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 58 | 1614 | +114 | 7 | 1.089 | Contratou Intendente (2a vaga) + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Intendente (2a vaga) + Contratou Intendente (2a vaga) |
+| 59 | 1632 | +132 | 7 | 1.106 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 60 | 1700 | +200 | 7 | 1.122 | Contratou Marechal (3a vaga) + Mid game com 7 aldeias + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Marechal (3a vaga) + Mid game com 7 aldeias |
+| 61 | 1708 | +208 | 7 | 1.138 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 62 | 1714 | +214 | 7 | 1.155 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 63 | 1722 | +222 | 7 | 1.171 | Ergueu/garantiu Maravilha 2 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Ergueu/garantiu Maravilha 2 |
+| 64 | 1729 | +229 | 7 | 1.188 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 65 | 1786 | +286 | 7 | 1.204 | Contratou Navegador + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Navegador |
+| 66 | 1794 | +294 | 7 | 1.221 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 67 | 1910 | +410 | 8 | 1.237 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 68 | 1916 | +416 | 8 | 1.253 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 69 | 1924 | +424 | 8 | 1.270 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 70 | 1932 | +432 | 8 | 1.286 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 71 | 1938 | +438 | 8 | 1.303 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 72 | 1996 | +496 | 8 | 1.319 | Contratou Navegador (2a vaga) + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Contratou Navegador (2a vaga) |
+| 73 | 2004 | +504 | 8 | 1.336 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 74 | 2010 | +510 | 8 | 1.352 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 75 | 2018 | +518 | 8 | 1.369 | Ergueu/garantiu Maravilha 3 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Ergueu/garantiu Maravilha 3 |
+| 76 | 2125 | +625 | 9 | 1.385 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 77 | 2132 | +632 | 9 | 1.401 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 78 | 2140 | +640 | 9 | 1.418 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 79 | 2147 | +647 | 9 | 1.434 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 80 | 2154 | +654 | 9 | 1.451 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 81 | 2162 | +662 | 9 | 1.467 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 82 | 2169 | +669 | 9 | 1.484 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 83 | 2176 | +676 | 9 | 1.500 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 84 | 2214 | +714 | 9 | 1.516 | Concluiu Quest 3/3 + Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Concluiu Quest 3/3 |
+| 85 | 2221 | +721 | 9 | 1.533 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 86 | 2327 | +827 | 10 | 1.549 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 87 | 2329 | +829 | 10 | 1.566 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 88 | 2332 | +832 | 10 | 1.582 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~16 tropas na Capital | Sem marco novo. |
+| 89 | 2335 | +835 | 10 | 1.599 | Pressionar mapa e transformar combate em expansao ou quest + Recrutar ~17 tropas na Capital | Sem marco novo. |
+| 90 | 2337 | +837 | 10 | 1.615 | Chegou ao D90 com 10 aldeias + Ativar reagrupar na Capital + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Chegou ao D90 com 10 aldeias + Agrupamento liberado na Capital |
+| 91 | 2401 | +901 | 10 | 1.590 | Ativou Domo da Tribo + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Ativou Domo da Tribo |
+| 92 | 2406 | +906 | 10 | 1.565 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 93 | 2410 | +910 | 10 | 1.540 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 94 | 2413 | +913 | 10 | 1.516 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 95 | 2418 | +918 | 10 | 1.491 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 96 | 2422 | +922 | 10 | 1.466 | Ergueu/garantiu Maravilha 4 + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Ergueu/garantiu Maravilha 4 |
+| 97 | 2425 | +925 | 10 | 1.441 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 98 | 2430 | +930 | 10 | 1.416 | Perdeu 1 cidade(s) para PvP + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Perdeu 1 cidade(s) para PvP |
+| 99 | 2433 | +933 | 10 | 1.391 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 100 | 2437 | +937 | 10 | 1.366 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 101 | 2442 | +942 | 10 | 1.341 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 102 | 2445 | +945 | 10 | 1.317 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 103 | 2449 | +949 | 10 | 1.292 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 104 | 2454 | +954 | 10 | 1.267 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 105 | 2457 | +957 | 10 | 1.242 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 106 | 2361 | +861 | 9 | 1.217 | Ergueu/garantiu Maravilha 5 + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Ergueu/garantiu Maravilha 5 |
+| 107 | 2366 | +866 | 9 | 1.192 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 108 | 2369 | +869 | 9 | 1.167 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 109 | 2373 | +873 | 9 | 1.143 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 110 | 2378 | +878 | 9 | 1.118 | Horda contida sem perda de aldeia + Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Horda contida sem perda de aldeia |
+| 111 | 2379 | +879 | 9 | 1.093 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 112 | 2380 | +880 | 9 | 1.068 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 113 | 2382 | +882 | 9 | 1.043 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 114 | 2383 | +883 | 9 | 1.018 | Doar recursos das aldeias perifericas para a Capital + Chamar todas as tropas para a Capital + Parar upgrades perifericos e manter so o essencial | Sem marco novo. |
+| 115 | 2384 | +884 | 9 | 993 | Disparar marcha final ao Portal + Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Iniciou marcha ao Portal |
+| 116 | 2386 | +886 | 9 | 968 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
+| 117 | 2387 | +887 | 9 | 944 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
+| 118 | 2388 | +888 | 9 | 919 | Entrou no Portal + Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Entrou no Portal |
+| 119 | 2390 | +890 | 9 | 894 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
+| 120 | 2391 | +891 | 9 | 869 | Sustentar a marcha sem abrir novas frentes + Usar apenas apoio e doacao critica de sobrevivencia + Preservar score >= 1500 ate tocar o Portal | Sem marco novo. |
 
 ## Bastiao - bastiao-perfect
 

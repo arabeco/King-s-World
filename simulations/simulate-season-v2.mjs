@@ -1291,9 +1291,18 @@ function simulatePlayer(index, scenario, rng, balance) {
   );
   const wallPeakReady = wallPeakCharge >= 0.32;
 
+  // Defesa multi-pilar: cada build tem o seu caminho de sobreviver à horda,
+  // não só muralha/bastião. Substitui o lock-in fixo do bastião.
+  const profileHordeFloor =
+    profileKey === "bastiao" ? 0.25 :          // 🧱 muralha (como antes)
+    profileKey === "metropole" ? 0.58 :        // 🏛️ maravilhas + heróis de conselho
+    profileKey === "celeiro" ? 0.72 :          // 🌾 excedente de suprimento/logística
+    profileKey === "posto_avancado" ? 0.84 :   // ⚔️ tropas estacionadas
+    1.0;
+
   const expectedHordeLossesBase =
     balance.hordeLossBase +
-    (profileKey === "bastiao" ? 0.25 : 1.0) +
+    profileHordeFloor +
     (branchKey === "defensive" ? -0.08 : 0.35) +
     (branchKey === "flow" ? -0.35 : 0) +
     (branchKey === "urban" ? -0.05 : 0) +
