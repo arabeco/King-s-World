@@ -772,8 +772,10 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             if (!alreadyExists) {
               const index = imperialState.extraVillages.length + 1;
               const villageId = `v-claim-${q}-${r}`;
-              const seededClass = movement.meta.settlementRecommendedClass ?? "neutral";
-              const shouldLockClass = seededClass !== "neutral";
+              // Toda cidade nova nasce neutral — o jogador decide a vocação via o seletor
+              // destacado na visão da cidade (sem auto-lock por origem).
+              const seededClass = "neutral" as const;
+              const shouldLockClass = false;
               const originKind = movement.meta.settlementOrigin ?? "wild_empty";
               const zeroLevels = getZeroBuildingLevels();
               setImperialState((current) => ({

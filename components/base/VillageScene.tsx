@@ -1266,9 +1266,17 @@ export function VillageScene({
                       <button
                         type="button"
                         onClick={() => setShowHeroPromotionOptions((current) => !current)}
-                        className="mt-3 rounded-xl border border-white/15 bg-white/8 px-3 py-2 text-[11px] font-bold text-slate-100"
+                        className={`mt-3 rounded-xl border px-3 py-2 text-[11px] font-bold ${
+                          canHireHero && !showHeroPromotionOptions
+                            ? "animate-pulse border-amber-300/70 bg-amber-400/25 text-amber-50 shadow-[0_0_12px_rgba(251,191,36,0.4)]"
+                            : "border-white/15 bg-white/8 text-slate-100"
+                        }`}
                       >
-                        {showHeroPromotionOptions ? "Fechar" : assignedHero === "none" ? "Contratar herói" : "Ver build"}
+                        {showHeroPromotionOptions
+                          ? "Fechar"
+                          : assignedHero === "none"
+                            ? canHireHero ? "Contratar herói ✦" : "Contratar herói"
+                            : "Ver build"}
                       </button>
                     </article>
                     {showHeroPromotionOptions ? (

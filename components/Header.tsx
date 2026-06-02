@@ -49,6 +49,12 @@ export function Header({
   const [draftName, setDraftName] = useState(activeVillage?.name ?? "");
   const [draftCityClass, setDraftCityClass] = useState<CityClass>(activeCityClass);
   const canEditCityClass = !(activeVillage?.cityClassLocked ?? false);
+  // Cidade madura ainda sem vocação → destaca o seletor pra forçar a decisão consciente.
+  const needsVocation =
+    canEditCityClass &&
+    !isEditing &&
+    (activeVillage?.cityClass ?? "neutral") === "neutral" &&
+    (activeVillage?.influence ?? 0) >= 35;
 
   useEffect(() => {
     setIsEditing(false);
@@ -134,12 +140,24 @@ export function Header({
                   }
                   setIsEditing(true);
                 }}
-                  className="kw-hud-medallion flex h-8 w-8 items-center justify-center rounded-full text-slate-100"
+                title={needsVocation ? "Escolha a vocação desta cidade" : undefined}
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-slate-100 ${
+                  needsVocation
+                    ? "animate-pulse border-2 border-amber-300/80 bg-amber-400/25 text-amber-50 shadow-[0_0_14px_rgba(251,191,36,0.55)]"
+                    : "kw-hud-medallion"
+                }`}
               >
                 {isEditing ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
               </button>
-              <span title="Vocacao da cidade" className="kw-hud-chip inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-cyan-100">
-                {CITY_CLASS_META[activeVillage?.cityClass ?? "neutral"].shortLabel}
+              <span
+                title="Vocacao da cidade"
+                className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  needsVocation
+                    ? "animate-pulse border border-amber-300/70 bg-amber-400/25 text-amber-50"
+                    : "kw-hud-chip text-cyan-100"
+                }`}
+              >
+                {needsVocation ? "Defina!" : CITY_CLASS_META[activeVillage?.cityClass ?? "neutral"].shortLabel}
               </span>
               <div className="kw-hud-medallion pointer-events-none flex h-8 w-8 items-center justify-center rounded-full text-slate-100">
                 <ChevronDown className="h-4 w-4" />
