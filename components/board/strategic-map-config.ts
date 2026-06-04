@@ -16,7 +16,7 @@ export const DEFAULT_WORLD_ZOOM = ZOOM_LEVEL_SCALE[4];
 export const DETAIL_ZOOM_THRESHOLD = ZOOM_LEVEL_SCALE[4];
 export const MACRO_VISION_THRESHOLD = 0.92;
 export const MICRO_VISION_THRESHOLD = 2.15;
-export const FOG_VISUAL_DISABLED = true;
+export const FOG_VISUAL_DISABLED = false;
 
 export const MAP_IMAGE_CALIBRATION = {
   x: -1,

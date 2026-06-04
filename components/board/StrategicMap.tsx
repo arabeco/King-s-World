@@ -1467,7 +1467,9 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     const keys = new Set<string>([axialKey(ZERO_AXIAL)]);
 
     for (const site of mappedSites) {
-      if (site.faction !== "neutral") {
+      // Só auto-revela o que é seu/aliado. Inimigo (NPC rival) fica na névoa
+      // até você explorar/scoutar a coord dele.
+      if (site.faction === "self" || site.faction === "ally" || site.faction === "tribe") {
         keys.add(site.coordKey);
       }
     }
