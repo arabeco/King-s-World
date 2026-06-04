@@ -43,7 +43,7 @@ begin
 
   if v_att_power <= 0 then
     update public.world_player_map_orders
-      set status='completed', result_code='no_army', resolved_at=now(), completed_at=now()
+      set status='resolved', result_code='no_army', resolved_at=now()
     where id=p_order_id;
     return;
   end if;
@@ -114,7 +114,7 @@ begin
   end if;
 
   update public.world_player_map_orders
-    set status='completed', result_code=v_winner, resolved_at=now(), completed_at=now()
+    set status='resolved', result_code=v_winner, resolved_at=now()
   where id=p_order_id;
 end;
 $$;
