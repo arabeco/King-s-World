@@ -1,11 +1,13 @@
 -- =============================================================
--- KingsWorld #2 / justiça: ALL-IN liberado, mas SEM eliminar a aldeia num golpe
+-- KingsWorld #2 / justiça: NINGUÉM é aniquilado num golpe (teto 50% DOS DOIS lados)
 -- Rodar no SQL Editor (King's World!) APÓS 39/40. create-or-replace.
--- CONCEITO (corrigido pelo dono): pode dar all-in! O problema NÃO é comprometer
--- tudo — é um único ataque ELIMINAR a aldeia inteira do defensor de uma vez.
---   * ATACANTE: SEM teto (cap 1.0) -> all-in pode perder 100%. Risco real.
---   * DEFENSOR: TETO 50% (cap 0.5) -> um ataque tira no máx metade das tropas;
---     derrubar de vez exige PRESSÃO REPETIDA (cerco) ou conquista por herói.
+-- CONCEITO (dono): all-in (mandar tudo) é uma JOGADA permitida, mas a batalha
+-- NUNCA mata/destrói tudo de um lado. Se total destruição fosse possível, isso
+-- ENCORAJARIA o "manda tudo pra apagar o outro". Com teto dos dois lados, atacar
+-- com tudo não aniquila ninguém num golpe -> exige pressão repetida (cerco) e
+-- estratégia, não all-in burro.
+--   * ATACANTE: teto 50% (cap 0.5) -> all-in NÃO perde tudo.
+--   * DEFENSOR: teto 50% (cap 0.5) -> não é zerado/destruído num golpe.
 -- Não quebra conquista (captura é por sobreviventes >= garrison, não por zerar).
 -- =============================================================
 create or replace function public.kw_resolve_attack(p_order_id uuid)
@@ -18,8 +20,8 @@ declare
   v_loot_mat bigint; v_loot_sup bigint;
   v_with_hero boolean; v_city_size int; v_survivors numeric; v_required numeric; v_def_cap uuid;
   c_garrison constant numeric := 1;
-  c_att_loss_cap constant numeric := 1.0;  -- ATACANTE: all-in liberado (pode perder tudo)
-  c_def_loss_cap constant numeric := 0.5;  -- DEFENSOR: max 50% por golpe (anti-eliminação)
+  c_att_loss_cap constant numeric := 0.5;  -- ATACANTE: all-in NÃO perde tudo (max 50%/golpe)
+  c_def_loss_cap constant numeric := 0.5;  -- DEFENSOR: não é destruído num golpe (max 50%/golpe)
 begin
   select * into v_order from public.world_player_map_orders where id=p_order_id for update;
   if not found then return; end if;
