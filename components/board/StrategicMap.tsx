@@ -2584,6 +2584,43 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         targetLabel: selectedSite?.name ?? `${selectedTile.q}:${selectedTile.r}`,
       });
 
+      // Ponte PvP / P->NPC: se o alvo é uma cidade REAL inimiga (veio do servidor,
+      // logo carrega siteId), dispara uma ORDEM REAL no servidor. O tick a resolve
+      // via kw_resolve_attack (combate + saque + conquista por herói). É aditivo:
+      // o movimento sandbox continua sendo registrado para feedback visual local.
+      let serverAttackSent = false;
+      let serverAttackError: string | null = null;
+      const isRealEnemyAttack =
+        movementDraft.action === "attack" &&
+        Boolean(selectedSite?.siteId) &&
+        (selectedSite?.relation === "Inimigo" || Boolean(selectedSite?.ownerWorldPlayerId));
+      if (isRealEnemyAttack && selectedSite?.siteId) {
+        try {
+          const withHero = Object.values(imperialState.heroByVillage).includes("marshal");
+          const res = await fetch(`/api/worlds/${worldId}/attack`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              targetSiteId: selectedSite.siteId,
+              troops: {
+                militia: troopDispatch.militia,
+                shooters: troopDispatch.shooters,
+                scouts: troopDispatch.scouts,
+                machinery: troopDispatch.machinery,
+              },
+              withHero,
+            }),
+          });
+          serverAttackSent = res.ok;
+          if (!res.ok) {
+            const data = (await res.json().catch(() => ({}))) as { error?: string };
+            serverAttackError = data?.error ?? `HTTP ${res.status}`;
+          }
+        } catch (err) {
+          serverAttackError = err instanceof Error ? err.message : "rede";
+        }
+      }
+
       if (movementDraft.action === "build") {
         setImperialState((current) => ({
           ...current,
@@ -2617,7 +2654,11 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         targetingPortal
           ? `Expedicao ${stored.id.slice(0, 8)} em marcha ao Portal. Se sua Influencia cair abaixo de ${SOVEREIGNTY_PORTAL_CUT}, a entrada falhara no destino.${stored.meta.regroupMode ? ` Mobilizacao Livre x${PHASE4_REGROUP_SPEED_MULT} ativa.` : ""}`
           : movementDraft.action === "attack"
-            ? `Operação militar registrada. ETA ${formatMinutesLabel(stored.etaMinutes)}. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}). Gasto imediato: 0 suprimentos.`
+            ? isRealEnemyAttack
+              ? serverAttackSent
+                ? `Ataque REAL enviado ao servidor contra ${selectedSite?.name ?? "alvo"}. ETA ~2 min — o tick do mundo resolve combate, saque e conquista. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}).`
+                : `Servidor recusou o ataque: ${serverAttackError ?? "erro desconhecido"}.`
+              : `Operação militar registrada. ETA ${formatMinutesLabel(stored.etaMinutes)}. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}). Gasto imediato: 0 suprimentos.`
             : movementDraft.action === "annex"
               ? `Anexacao ${stored.id.slice(0, 8)} registrada. ${selectedAnnexDiplomatToken} ficou em missao ate a consolidacao da cidade.`
               : movementDraft.action === "go"
