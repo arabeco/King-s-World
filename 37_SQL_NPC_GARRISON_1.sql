@@ -1,0 +1,2 @@
+-- 37: garrison 3 -> 1 (guerra drena tropa; conquista exige sobreviventes >= tamanho_cidade*1)
+-- So muda c_garrison em kw_resolve_attack. Rodar APOS 36.
