@@ -548,7 +548,7 @@ export function KingdomOverviewPanel({
 
   return (
     <>
-      <section className="space-y-3">
+      <section className="space-y-3 md:mx-auto md:max-w-3xl">
         <article className="kw-glass rounded-[28px] p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -692,7 +692,7 @@ export function KingdomOverviewPanel({
             </div>
             <ChevronRight className="h-5 w-5 text-slate-300" />
           </div>
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
             {villages.map((village) => {
               const development = calculateVillageDevelopment(village.buildingLevels);
               const isCapital = village.type === "Capital";

@@ -15,7 +15,8 @@ import { chromium } from "playwright";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "..");
 const outRoot = path.join(projectRoot, "store-assets", "screenshots");
-const PORT = process.env.SS_PORT ?? "3219";
+// porta aleatória por run -> evita conectar num servidor velho/fantasma de runs anteriores
+const PORT = process.env.SS_PORT ?? String(3300 + Math.floor(Math.random() * 600));
 const baseUrl = `http://localhost:${PORT}`;
 const useExternal = process.env.SMOKE_USE_EXISTING_SERVER === "1";
 
