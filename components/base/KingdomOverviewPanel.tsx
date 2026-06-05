@@ -146,6 +146,29 @@ function cityClassPanelTone(cityClass: CityClass | undefined, isCapital: boolean
   return "border-white/10 bg-white/5";
 }
 
+// Imagem de fundo + ícone por tipo de cidade (mesmo padrão dos cards de estrutura)
+const CITY_CARD_IMAGE: Record<string, string> = {
+  metropole: "/images/metropole.jpg",
+  posto_avancado: "/images/posto.jpg",
+  bastiao: "/images/bastiao.jpg",
+  celeiro: "/images/celeiro.jpg",
+  neutral: "/images/cidade.jpg",
+};
+const CITY_CARD_ICON: Record<string, string> = {
+  metropole: "/cities/metropole-icon.png",
+  posto_avancado: "/cities/postoavancado-icon.png",
+  bastiao: "/cities/bastiao-icon.png",
+  celeiro: "/cities/celeiro-icon.png",
+};
+function cityCardImage(cityClass: CityClass | undefined, isCapital: boolean) {
+  if (isCapital) return "/images/capital.jpg";
+  return CITY_CARD_IMAGE[cityClass ?? "neutral"] ?? "/images/cidade.jpg";
+}
+function cityCardIcon(cityClass: CityClass | undefined, isCapital: boolean) {
+  if (isCapital) return "/cities/capital-icon.png";
+  return CITY_CARD_ICON[cityClass ?? "neutral"] ?? "/cities/capital-icon.png";
+}
+
 export function KingdomOverviewPanel({
   villages,
   activeVillage,
@@ -702,15 +725,28 @@ export function KingdomOverviewPanel({
                   key={village.id}
                   type="button"
                   onClick={() => onOpenCityView(village.id)}
-                  className={`flex w-full items-center justify-between gap-3 rounded-[22px] border p-3 text-left transition hover:bg-white/8 ${cityClassPanelTone(cityClass, isCapital)}`}
+                  className={`relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-[22px] border p-3 text-left transition hover:bg-white/8 ${cityClassPanelTone(cityClass, isCapital)}`}
+                  style={{
+                    backgroundImage: `linear-gradient(100deg, rgba(2,6,23,0.84), rgba(15,23,42,0.55) 55%, rgba(2,6,23,0.82)), url('${cityCardImage(cityClass, isCapital)}')`,
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                  }}
                 >
-                  <div className="min-w-0">
-                    <p className={`truncate text-sm font-black ${isCapital ? "text-cyan-50" : "text-slate-100"}`}>{village.name}</p>
-                    <p className={`mt-1 text-[11px] font-semibold ${isCapital ? "text-cyan-100/90" : "text-slate-300"}`}>
-                      {isCapital ? "Capital" : "Cidade"} · {CITY_CLASS_META[cityClass].label}
-                    </p>
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/45 to-slate-950/35" />
+                  <div className="relative flex min-w-0 items-center gap-3">
+                    <img
+                      src={cityCardIcon(cityClass, isCapital)}
+                      alt=""
+                      className="h-11 w-11 shrink-0 object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.7)]"
+                    />
+                    <div className="min-w-0">
+                      <p className={`truncate text-sm font-black ${isCapital ? "text-cyan-50" : "text-slate-100"}`}>{village.name}</p>
+                      <p className={`mt-1 text-[11px] font-semibold ${isCapital ? "text-cyan-100/90" : "text-slate-300"}`}>
+                        {isCapital ? "Capital" : "Cidade"} · {CITY_CLASS_META[cityClass].label}
+                      </p>
+                    </div>
                   </div>
-                  <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full border text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ${isCapital ? "border-cyan-200/40 bg-cyan-500/16" : "border-white/12 bg-white/8"}`}>
+                  <div className={`relative flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full border text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm ${isCapital ? "border-cyan-200/40 bg-cyan-500/20" : "border-white/12 bg-slate-950/45"}`}>
                     <p className={`text-lg font-black leading-none tabular-nums ${isCapital ? "text-cyan-50" : "text-slate-100"}`}>{development}</p>
                     <p className="mt-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-slate-300">/100</p>
                   </div>
