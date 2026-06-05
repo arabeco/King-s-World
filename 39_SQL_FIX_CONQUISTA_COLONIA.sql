@@ -1,0 +1,5 @@
+-- 39: FIX do bug real da conquista.
+-- Constraint villages_one_active_capital_per_player_idx: 1 capital por jogador.
+-- A captura mantinha a cidade como capital -> atacante ficava com 2 -> EXCEPTION (rollback).
+-- Fix: cidade conquistada vira COLONIA (village_type=colony, settlement_role=Colonia, is_original_capital=false).
+-- Funcao completa kw_resolve_attack no chat / igual ao 38 garrison=1 + bloco de captura -> colonia.
