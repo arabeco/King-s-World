@@ -1,9 +1,11 @@
 -- =============================================================
--- KingsWorld #2 / justiça: TETO de 50% de perda por batalha (anti all-in)
+-- KingsWorld #2 / justiça: ALL-IN liberado, mas SEM eliminar a aldeia num golpe
 -- Rodar no SQL Editor (King's World!) APÓS 39/40. create-or-replace.
--- Regra: nenhum ataque tira mais de 50% das tropas de um lado -> ninguém é
--- zerado num golpe; derrubar alguém exige PRESSÃO REPETIDA (cerco).
--- Único diff vs versão anterior: least(1.0,...) -> least(0.5,...) nas 2 perdas.
+-- CONCEITO (corrigido pelo dono): pode dar all-in! O problema NÃO é comprometer
+-- tudo — é um único ataque ELIMINAR a aldeia inteira do defensor de uma vez.
+--   * ATACANTE: SEM teto (cap 1.0) -> all-in pode perder 100%. Risco real.
+--   * DEFENSOR: TETO 50% (cap 0.5) -> um ataque tira no máx metade das tropas;
+--     derrubar de vez exige PRESSÃO REPETIDA (cerco) ou conquista por herói.
 -- Não quebra conquista (captura é por sobreviventes >= garrison, não por zerar).
 -- =============================================================
 create or replace function public.kw_resolve_attack(p_order_id uuid)
@@ -16,7 +18,8 @@ declare
   v_loot_mat bigint; v_loot_sup bigint;
   v_with_hero boolean; v_city_size int; v_survivors numeric; v_required numeric; v_def_cap uuid;
   c_garrison constant numeric := 1;
-  c_loss_cap constant numeric := 0.5;   -- TETO: max 50% de perda por batalha
+  c_att_loss_cap constant numeric := 1.0;  -- ATACANTE: all-in liberado (pode perder tudo)
+  c_def_loss_cap constant numeric := 0.5;  -- DEFENSOR: max 50% por golpe (anti-eliminação)
 begin
   select * into v_order from public.world_player_map_orders where id=p_order_id for update;
   if not found then return; end if;
@@ -40,8 +43,8 @@ begin
                   +coalesce(v_def.scouts_count,0)*0.5+coalesce(v_def.machinery_count,0)*4)*v_def_mult*v_def_skill + 30;
   end if;
   v_winner := case when v_att_power >= v_def_power then 'attacker' else 'defender' end;
-  v_att_loss := least(c_loss_cap,(v_def_power/v_att_power)*0.5);
-  v_def_loss := least(c_loss_cap,(v_att_power/greatest(v_def_power,1))*0.5);
+  v_att_loss := least(c_att_loss_cap,(v_def_power/v_att_power)*0.5);
+  v_def_loss := least(c_def_loss_cap,(v_att_power/greatest(v_def_power,1))*0.5);
   update public.world_player_imperial_states set
     militia_count=greatest(0,militia_count-floor(v_am*v_att_loss)::bigint),
     shooters_count=greatest(0,shooters_count-floor(v_as*v_att_loss)::bigint),
