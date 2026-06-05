@@ -1,0 +1,4 @@
+-- 40: PvP passo 2 — NPC ataca JOGADOR (raide; conquista total so vs NPC ainda).
+-- kw_npc_decide_attacks: alvo = qualquer vivo (remove filtro is_ai do alvo);
+-- contra humano with_hero=false (so dano+saque, defesa automatica; nao elimina).
+-- Funcao completa no chat.
