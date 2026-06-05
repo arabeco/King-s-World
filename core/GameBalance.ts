@@ -2056,14 +2056,20 @@ export function calculateMapConstructionCost(
   const terrainTime = safeMultiplier(options.terrainTimeMultiplier);
   const logisticsDiscount = clamp(1 - logisticsLevel * 0.015, 0.72, 1);
   const targetKind = options.targetKind ?? "empty";
+  // Fundar do ZERO (terra vazia) = caminho BUDGET sem exército (custa 0 tropa).
+  // Conquistar dá infra pronta mas custa um exército; por isso fundar leva
+  // desconto p/ ser a entrada barata (calibragem #3: fundar ~ fração do esforço
+  // de conquistar uma cidade equivalente). frontier_ruins segue mais barato.
   const targetDiscount =
     targetKind === "frontier_ruins"
       ? 0.78
-      : targetKind === "hotspot"
-        ? 0.9
-        : targetKind === "abandoned_city"
-          ? 1.06
-          : 1;
+      : targetKind === "empty"
+        ? 0.85
+        : targetKind === "hotspot"
+          ? 0.9
+          : targetKind === "abandoned_city"
+            ? 1.06
+            : 1;
 
   const base =
     construction === "road"
