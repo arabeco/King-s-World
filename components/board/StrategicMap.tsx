@@ -1870,12 +1870,14 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       goReason = "Sua linhagem não possui Influência suficiente (1500 pts) para desafiar o Portal.";
     }
 
-    let attackEnabled = Boolean(marchOriginKey) && isEnemyTile && !targetingPortal;
+    // Atacar serve p/ cidade COM dono (combate/conquista) E p/ abandonada
+    // (claim por combate: vence a guarnição + ocupa, herdando a infra).
+    let attackEnabled = Boolean(marchOriginKey) && (isEnemyTile || isAbandonedTile) && !targetingPortal;
     let attackReason: string | undefined;
     if (!attackEnabled) {
       attackReason = targetingPortal
         ? "Portal Central não aceita ataque."
-        : "Atacar só aparece quando a cidade ainda possui dono.";
+        : "Atacar/ocupar só aparece em cidade com dono ou abandonada.";
     } else if (selectedTile.coordKey === marchOriginKey) {
       attackEnabled = false;
       attackReason = "Tile de origem ja selecionado.";
@@ -1926,11 +1928,11 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       { kind: "explore", label: "Explorar (sem tropas)", enabled: exploreEnabled, reason: exploreReason },
       { kind: "build", label: "Construir", enabled: buildEnabled, reason: buildReason },
       ...(targetingPortal || selectedFriendlySite ? [{ kind: "go", label: "Operação militar", enabled: goEnabled, reason: goReason ?? goLabel }] : []),
-      ...(!targetingPortal && isEnemyTile
-        ? [{ kind: "attack", label: "Operação militar", enabled: attackEnabled, reason: attackReason }]
+      ...(!targetingPortal && (isEnemyTile || isAbandonedTile)
+        ? [{ kind: "attack", label: isAbandonedTile && !isEnemyTile ? "Ocupar (tropas)" : "Operação militar", enabled: attackEnabled, reason: attackReason }]
         : []),
       ...(!targetingPortal && isAbandonedTile
-        ? [{ kind: "annex", label: "Anexar", enabled: annexEnabled, reason: annexReason }]
+        ? [{ kind: "annex", label: "Anexar (diplomata)", enabled: annexEnabled, reason: annexReason }]
         : []),
       { kind: "spy", label: "Espiar", enabled: spyEnabled, reason: spyReason },
     ] as TileActionOption[];
@@ -2590,10 +2592,15 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       // o movimento sandbox continua sendo registrado para feedback visual local.
       let serverAttackSent = false;
       let serverAttackError: string | null = null;
+      // Cidade abandonada (neutra, sem dono): claim por COMBATE — mandar tropas,
+      // vencer a guarnição e ocupar (o ramo abandonado do kw_resolve_attack cuida).
+      const isAbandonedTarget = selectedSite?.occupationKind === "abandoned_city";
       const isRealEnemyAttack =
         movementDraft.action === "attack" &&
         Boolean(selectedSite?.siteId) &&
-        (selectedSite?.relation === "Inimigo" || Boolean(selectedSite?.ownerWorldPlayerId));
+        (selectedSite?.relation === "Inimigo" ||
+          Boolean(selectedSite?.ownerWorldPlayerId) ||
+          isAbandonedTarget);
       if (isRealEnemyAttack && selectedSite?.siteId) {
         try {
           const withHero = Object.values(imperialState.heroByVillage).includes("marshal");
@@ -2656,7 +2663,9 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
           : movementDraft.action === "attack"
             ? isRealEnemyAttack
               ? serverAttackSent
-                ? `Ataque REAL enviado ao servidor contra ${selectedSite?.name ?? "alvo"}. ETA ~2 min — o tick do mundo resolve combate, saque e conquista. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}).`
+                ? isAbandonedTarget
+                  ? `Tropas enviadas para OCUPAR ${selectedSite?.name ?? "a cidade abandonada"}. ETA ~2 min — se vencer a guarnição e sobrar gente, ela vira sua colônia (com a infra que já tinha). Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}).`
+                  : `Ataque REAL enviado ao servidor contra ${selectedSite?.name ?? "alvo"}. ETA ~2 min — o tick do mundo resolve combate, saque e conquista. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}).`
                 : `Servidor recusou o ataque: ${serverAttackError ?? "erro desconhecido"}.`
               : `Operação militar registrada. ETA ${formatMinutesLabel(stored.etaMinutes)}. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}). Gasto imediato: 0 suprimentos.`
             : movementDraft.action === "annex"
