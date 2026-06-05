@@ -63,6 +63,8 @@ export type BuildingEntry = {
 };
 
 export type BoardSite = {
+  siteId?: string;
+  ownerWorldPlayerId?: string | null;
   name: string;
   owner: string;
   type: string;

@@ -1293,6 +1293,8 @@ export const getWorldPayload = cache(async function getWorldPayload(worldRouteId
             : "Neutro";
 
     return {
+      siteId: site.id,
+      ownerWorldPlayerId: ownerWorldPlayerId,
       name: village?.name ?? `${site.site_type} ${site.id.slice(0, 4)}`,
       owner: ownerName,
       type: village?.settlement_role ?? site.site_type,
