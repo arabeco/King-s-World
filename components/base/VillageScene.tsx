@@ -1011,7 +1011,7 @@ export function VillageScene({
 
   return (
     <>
-      <section className="space-y-3" data-smoke="village-scene">
+      <section className="space-y-3 md:mx-auto md:max-w-3xl" data-smoke="village-scene">
         <article
           className="relative overflow-hidden rounded-[28px] border border-white/14 px-3 py-2.5 text-slate-100 shadow-[0_20px_60px_rgba(2,6,23,0.3)]"
           style={{
@@ -1067,7 +1067,7 @@ export function VillageScene({
         ) : null}
 
         <article className="kw-glass rounded-[28px] p-3">
-          <div className="space-y-2">
+          <div className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
             {sectorCards.map((sector) => (
               <button
                 key={sector.id}
