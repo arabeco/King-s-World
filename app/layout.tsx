@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
+import { NativeAuthBridge } from "@/components/native-auth-bridge";
 import { UiToastHost } from "@/components/ui-toast-host";
 
 import "./globals.css";
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="pt-BR" suppressHydrationWarning>
       <body suppressHydrationWarning>
         {children}
+        <NativeAuthBridge />
         <UiToastHost />
       </body>
     </html>

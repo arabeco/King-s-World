@@ -6,6 +6,7 @@ import { type FormEvent, useState } from "react";
 
 import { MarketingShell } from "@/components/marketing-shell";
 import { LEGAL_LINKS } from "@/lib/legal-config";
+import { isNativeApp, startNativeGoogleSignIn } from "@/lib/native-auth";
 import { getSupabaseBrowserClient, hasPublicSupabaseEnv } from "@/lib/supabase-browser";
 
 function GoogleLogo() {
@@ -55,6 +56,15 @@ export default function LoginPage() {
     setSocialLoading(provider);
     try {
       const supabase = getSupabaseBrowserClient();
+
+      // No app (Capacitor WebView) o Google bloqueia OAuth embutido. Abrimos o
+      // Custom Tab e voltamos pelo deep link (tratado em NativeAuthBridge).
+      if (provider === "google" && isNativeApp()) {
+        await startNativeGoogleSignIn(supabase, getRedirectPath());
+        // Mantém o loading: o retorno acontece via deep link.
+        return;
+      }
+
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -67,7 +77,13 @@ export default function LoginPage() {
       }
       // Sem setSocialLoading(null) em sucesso — o redirect vai acontecer
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível entrar.");
+      setError(
+        isNativeApp() && provider === "google"
+          ? "Não foi possível abrir o login do Google. Tente novamente ou use email e senha."
+          : err instanceof Error
+            ? err.message
+            : "Não foi possível entrar.",
+      );
       setSocialLoading(null);
     }
   }
