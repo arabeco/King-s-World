@@ -21,6 +21,38 @@ export function isNativeAuthCallbackUrl(url: string): boolean {
   return typeof url === "string" && url.startsWith(NATIVE_AUTH_REDIRECT);
 }
 
+// onde guardamos o "next" durante o round-trip do OAuth nativo (o redirectTo
+// fica sem query pra casar EXATO com a allowlist do Supabase).
+const NATIVE_NEXT_KEY = "kw_native_next";
+
+// ---- Logger leve pro overlay de debug do login nativo ----
+type AuthLogListener = (lines: string[]) => void;
+const authLogLines: string[] = [];
+const authLogListeners = new Set<AuthLogListener>();
+
+export function authLog(message: string): void {
+  const stamp = new Date().toISOString().slice(11, 19);
+  authLogLines.push(`${stamp} ${message}`);
+  while (authLogLines.length > 14) {
+    authLogLines.shift();
+  }
+  authLogListeners.forEach((listener) => listener([...authLogLines]));
+  try {
+    // eslint-disable-next-line no-console
+    console.log("[native-auth]", message);
+  } catch {
+    // ignore
+  }
+}
+
+export function subscribeAuthLog(listener: AuthLogListener): () => void {
+  authLogListeners.add(listener);
+  listener([...authLogLines]);
+  return () => {
+    authLogListeners.delete(listener);
+  };
+}
+
 export type ParsedAuthCallback = {
   code: string | null;
   accessToken: string | null;
@@ -88,23 +120,45 @@ export async function startNativeGoogleSignIn(
   nextPath: string,
 ): Promise<void> {
   const safeNext = nextPath.startsWith("/") ? nextPath : "/lobby";
-  const redirectTo = `${NATIVE_AUTH_REDIRECT}?next=${encodeURIComponent(safeNext)}`;
+  try {
+    window.sessionStorage.setItem(NATIVE_NEXT_KEY, safeNext);
+  } catch {
+    // sessionStorage indisponível — cai no /lobby default no retorno.
+  }
 
+  // redirectTo SEM query: precisa casar exato com a Redirect URL do Supabase
+  // (com.kingsworld.app://auth/callback). Com query corria o risco de não casar
+  // e o Supabase cair no Site URL (web). O "code" o Supabase anexa depois.
+  authLog("click Google → pedindo URL de OAuth (PKCE)");
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo,
+      redirectTo: NATIVE_AUTH_REDIRECT,
       skipBrowserRedirect: true,
     },
   });
 
   if (error) {
+    authLog(`erro no signInWithOAuth: ${error.message}`);
     throw error;
   }
   if (!data?.url) {
+    authLog("signInWithOAuth não retornou data.url");
     throw new Error("Supabase não retornou a URL de OAuth.");
   }
 
+  authLog("abrindo Custom Tab no Google");
   const { Browser } = await import("@capacitor/browser");
   await Browser.open({ url: data.url });
+}
+
+export function takeNativeNext(): string {
+  let stored: string | null = null;
+  try {
+    stored = window.sessionStorage.getItem(NATIVE_NEXT_KEY);
+    window.sessionStorage.removeItem(NATIVE_NEXT_KEY);
+  } catch {
+    stored = null;
+  }
+  return stored && stored.startsWith("/") ? stored : "/lobby";
 }

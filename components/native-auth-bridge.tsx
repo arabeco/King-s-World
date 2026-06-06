@@ -4,7 +4,13 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
-import { isNativeApp, isNativeAuthCallbackUrl, parseAuthCallback } from "@/lib/native-auth";
+import {
+  authLog,
+  isNativeApp,
+  isNativeAuthCallbackUrl,
+  parseAuthCallback,
+  takeNativeNext,
+} from "@/lib/native-auth";
 
 /**
  * Escuta o deep link de retorno do OAuth (Google) quando o app roda como
@@ -33,12 +39,17 @@ export function NativeAuthBridge() {
 
       const supabase = getSupabaseBrowserClient();
 
+      authLog("listener appUrlOpen registrado");
+
       const handle = await App.addListener("appUrlOpen", async ({ url }) => {
+        authLog(`appUrlOpen: ${url.slice(0, 60)}`);
         if (disposed || !isNativeAuthCallbackUrl(url)) {
+          authLog("ignorado (não é callback de auth)");
           return;
         }
 
         const { code, accessToken, refreshToken, error, next } = parseAuthCallback(url);
+        authLog(`parsed code=${code ? "sim" : "não"} token=${accessToken ? "sim" : "não"} err=${error ?? "-"}`);
 
         try {
           await Browser.close();
@@ -50,6 +61,8 @@ export function NativeAuthBridge() {
           router.replace(`/login?error=${encodeURIComponent(error)}`);
           return;
         }
+
+        const dest = next ?? takeNativeNext();
 
         try {
           if (code) {
@@ -66,13 +79,16 @@ export function NativeAuthBridge() {
               throw sessionError;
             }
           } else {
+            authLog("callback sem code nem token");
             router.replace("/login?error=auth_callback");
             return;
           }
 
-          router.replace(next ?? "/lobby");
+          authLog(`sessão OK → ${dest}`);
+          router.replace(dest);
           router.refresh();
-        } catch {
+        } catch (e) {
+          authLog(`falha na troca: ${e instanceof Error ? e.message : "erro"}`);
           router.replace("/login?error=auth_callback");
         }
       });
