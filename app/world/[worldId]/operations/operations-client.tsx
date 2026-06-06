@@ -683,7 +683,7 @@ export function OperationsClient({
                   disabled={recruitedDiplomats >= unlockedDiplomatSlots}
                   className={`rounded-lg border px-2 py-1 text-[11px] font-bold ${
                     recruitedDiplomats >= unlockedDiplomatSlots
-                      ? "border-white/15 bg-white/5 text-slate-500"
+                      ? "border-white/15 bg-white/5 text-slate-500 opacity-50 cursor-not-allowed"
                       : "border-cyan-300/45 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/22"
                   }`}
                 >
@@ -708,7 +708,7 @@ export function OperationsClient({
                   disabled={recruitedTribeEnvoys >= MAX_TRIBE_ENVOYS}
                   className={`rounded-lg border px-2 py-1 text-[11px] font-bold ${
                     recruitedTribeEnvoys >= MAX_TRIBE_ENVOYS
-                      ? "border-white/15 bg-white/5 text-slate-500"
+                      ? "border-white/15 bg-white/5 text-slate-500 opacity-50 cursor-not-allowed"
                       : "border-emerald-300/45 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/22"
                   }`}
                 >
@@ -735,7 +735,7 @@ export function OperationsClient({
                   disabled={freeTribeEnvoys <= 0 || tribeEnvoysCommitted >= MAX_TRIBE_ENVOYS}
                   className={`rounded-lg border px-2 py-1 text-[11px] font-bold ${
                     freeTribeEnvoys <= 0 || tribeEnvoysCommitted >= MAX_TRIBE_ENVOYS
-                      ? "border-white/15 bg-white/5 text-slate-500"
+                      ? "border-white/15 bg-white/5 text-slate-500 opacity-50 cursor-not-allowed"
                       : "border-emerald-300/45 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/22"
                   }`}
                 >
@@ -769,7 +769,7 @@ export function OperationsClient({
                         row.assigned
                           ? "border-cyan-300/50 bg-cyan-500/16 text-cyan-100 hover:bg-cyan-500/24"
                           : !canAssign
-                            ? "border-white/15 bg-white/5 text-slate-500"
+                            ? "border-white/15 bg-white/5 text-slate-500 opacity-50 cursor-not-allowed"
                             : "border-white/20 bg-white/8 text-slate-100 hover:bg-white/14"
                       }`}
                     >
