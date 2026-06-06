@@ -81,9 +81,9 @@ const PROFILE_DEFS = Object.freeze({
     label: "Posto Avancado",
     focusWeight: 0.44,
     buildBias: 1.06,
-    expansionBias: 1.08,
+    expansionBias: 1.03,
     militaryBias: 1.08,
-    defenseBias: 0.9,
+    defenseBias: 1.0,
     logisticsBias: 1.08,
     secondOffset: 0.2,
     first100Offset: 0,
@@ -140,7 +140,7 @@ const GLORY_THRESHOLDS = Object.freeze({
 
 const GLORY_PRIORITIES = Object.freeze({
   metropole: ["saveVillage", "council", "wonder", "tribe", "military"],
-  posto: ["military", "council", "saveVillage", "wonder", "tribe"],
+  posto: ["saveVillage", "military", "council", "wonder", "tribe"],
   bastiao: ["saveVillage", "tribe", "military", "council", "wonder"],
   celeiro: ["tribe", "council", "wonder", "saveVillage", "military"],
 });
