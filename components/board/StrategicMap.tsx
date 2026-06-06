@@ -3199,8 +3199,8 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
               troopCommittedTotal > 0
                 ? "border-amber-300/35 bg-amber-950/58 text-amber-50"
                 : activeMovementRoutes.length > 0
-                  ? "border-cyan-300/35 bg-slate-950/68 text-cyan-50"
-                  : "border-emerald-300/25 bg-slate-950/60 text-emerald-50"
+                  ? "border-cyan-300/45 bg-slate-950/90 text-cyan-50"
+                  : "border-emerald-300/35 bg-slate-950/90 text-emerald-50"
             }`}
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -3344,7 +3344,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 ) : null}
 
                 <div
-                  className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40"
+                  className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/88"
                   style={{
                     backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0.08), rgba(2,6,23,0.68)), url('${selectedDetailImage}')`,
                     backgroundPosition: "center",
@@ -3510,7 +3510,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     })}
                   </div>
                 ) : (
-                  <div className="mt-1.5 rounded-lg border border-cyan-200/40 bg-slate-950/35 p-2 text-[11px] text-slate-100">
+                  <div className="mt-1.5 rounded-lg border border-cyan-200/40 bg-slate-950/88 p-2 text-[11px] text-slate-100">
                     <p className="font-semibold text-cyan-100">Acao selecionada: {selectedActionLabel}</p>
                     <p className="text-[10px] text-slate-300">Ajuste parametros e confirme a execucao da ordem. Apoio e recurso interno funcionam como doacao (sem troca).</p>
                   </div>
@@ -3570,7 +3570,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
                 {actionStep === "configure" && activeAction === "explore" ? (
                   <div
-                    className="mt-2 overflow-hidden rounded-2xl border border-cyan-200/25 bg-slate-950/35 text-[11px] text-slate-100"
+                    className="mt-2 overflow-hidden rounded-2xl border border-cyan-200/25 bg-slate-950/88 text-[11px] text-slate-100"
                     style={{
                       backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.16), rgba(2,6,23,0.82)), url('/images/military-explore.jpg')",
                       backgroundPosition: "center",
@@ -3636,7 +3636,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 ) : null}
 
                 {actionStep === "configure" && movementDraft ? (
-                  <div className="mt-2 rounded-lg border border-cyan-200/40 bg-slate-950/35 p-2 text-[11px] text-slate-100">
+                  <div className="mt-2 rounded-lg border border-cyan-200/40 bg-slate-950/88 p-2 text-[11px] text-slate-100">
                     <p className="font-semibold text-cyan-100">Painel de Marcha</p>
                     <p>Rota: {routeSummary.hexCount} hex - {routeSummary.roadSegments} estrada - {routeSummary.offroadSegments} mato</p>
                     <p>ETA total: {formatMinutesLabel(movementDraft.etaMinutes)}</p>
@@ -3705,7 +3705,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                             const pct = total > 0 ? Math.round((sent / total) * 100) : 0;
                             const step = Math.max(1, Math.ceil(total * 0.05));
                             return (
-                              <div key={troopId} className="rounded-md border border-white/15 bg-slate-950/35 p-1">
+                              <div key={troopId} className="rounded-md border border-white/15 bg-slate-950/88 p-1">
                                 <div className="flex items-center justify-between gap-1 text-[10px]">
                                   <span className="font-semibold text-slate-100">{label.short} {label.label}</span>
                                   <span className="text-slate-300">{sent.toLocaleString("pt-BR")} / {total.toLocaleString("pt-BR")}</span>
