@@ -2809,9 +2809,9 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     key={tile.coordKey}
                     points={tile.points}
                     fill={macroVisionActive ? "rgba(0,0,0,0.03)" : style.fill}
-                    stroke={FOG_VISUAL_DISABLED ? "rgba(148,163,184,0.08)" : inVision ? "rgba(34,211,238,0.24)" : visited ? "rgba(148,163,184,0.14)" : "rgba(51,65,85,0.16)"}
+                    stroke={FOG_VISUAL_DISABLED ? "rgba(148,163,184,0.08)" : inVision ? "rgba(34,211,238,0.24)" : visited ? "rgba(148,163,184,0.30)" : "rgba(51,65,85,0.14)"}
                     strokeWidth={macroVisionActive ? 0.6 : 0.35}
-                    opacity={FOG_VISUAL_DISABLED ? 0.18 : inVision ? 0.72 : visited ? 0.28 : 0.18}
+                    opacity={FOG_VISUAL_DISABLED ? 0.18 : inVision ? 0.72 : visited ? 0.46 : 0.14}
                   />
                 );
               })}
@@ -2822,7 +2822,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   points={tile.points}
                   fill={TERRAIN_VISUAL_META[tile.terrainKind].tint}
                   stroke="none"
-                  opacity={FOG_VISUAL_DISABLED ? 0.08 : currentVisionCoordKeys.has(tile.coordKey) ? 0.35 : visitedCoordKeys.has(tile.coordKey) ? 0.12 : 0}
+                  opacity={FOG_VISUAL_DISABLED ? 0.08 : currentVisionCoordKeys.has(tile.coordKey) ? 0.35 : visitedCoordKeys.has(tile.coordKey) ? 0.22 : 0}
                 />
               )) : null}
 
