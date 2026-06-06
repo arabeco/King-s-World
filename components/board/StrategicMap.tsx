@@ -294,31 +294,31 @@ function discoveryAccent(type: ExplorationDiscoveryType): {
     case "opportunity":
       return {
         chip: "border-amber-300/45 bg-amber-500/12 text-amber-100",
-        panel: "border-amber-300/25 bg-amber-500/10",
+        panel: "border-amber-300/45 bg-slate-950/88",
         glow: "rgba(251,191,36,0.26)",
       };
     case "threat":
       return {
         chip: "border-rose-300/45 bg-rose-500/12 text-rose-100",
-        panel: "border-rose-300/25 bg-rose-500/10",
+        panel: "border-rose-300/45 bg-slate-950/88",
         glow: "rgba(244,63,94,0.24)",
       };
     case "ruins":
       return {
         chip: "border-violet-300/45 bg-violet-500/12 text-violet-100",
-        panel: "border-violet-300/25 bg-violet-500/10",
+        panel: "border-violet-300/45 bg-slate-950/88",
         glow: "rgba(168,85,247,0.22)",
       };
     case "dragon":
       return {
         chip: "border-orange-300/50 bg-orange-500/14 text-orange-100",
-        panel: "border-orange-300/30 bg-orange-500/10",
+        panel: "border-orange-300/45 bg-slate-950/88",
         glow: "rgba(249,115,22,0.26)",
       };
     default:
       return {
         chip: "border-cyan-300/35 bg-cyan-500/10 text-cyan-100",
-        panel: "border-cyan-300/20 bg-cyan-500/10",
+        panel: "border-cyan-300/35 bg-slate-950/88",
         glow: "rgba(34,211,238,0.22)",
       };
   }
