@@ -11,6 +11,7 @@ type WorldRow = {
   status: string;
   day_number: number;
   join_code: string;
+  joins_closed_at: string | null;
 };
 
 export async function POST(request: Request) {
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     }
 
     const params = new URLSearchParams();
-    params.set("select", "id,slug,name,status,day_number,join_code");
+    params.set("select", "id,slug,name,status,day_number,join_code,joins_closed_at");
     params.set("join_code", `eq.${raw}`);
     params.set("limit", "1");
 
@@ -38,6 +39,10 @@ export async function POST(request: Request) {
 
     if (world.status === "finalized") {
       return NextResponse.json({ error: "Este mundo já foi finalizado." }, { status: 410 });
+    }
+
+    if (world.joins_closed_at) {
+      return NextResponse.json({ error: "A entrada deste mundo já foi encerrada — o reino começou." }, { status: 403 });
     }
 
     // Auto-fill: garante que o mundo tem NPCs ativos quando um humano entra.
