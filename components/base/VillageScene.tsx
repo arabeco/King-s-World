@@ -1024,9 +1024,6 @@ export function VillageScene({
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200">{settlementLabel}</p>
             <p className="mt-1 text-[clamp(1.1rem,3.9vw,1.5rem)] font-black leading-tight text-slate-50">{village.name}</p>
-            <p className="mt-1 text-[11px] font-semibold text-slate-300">
-              {isCapitalVillage ? "A Capital é uma categoria própria do reino." : canChooseCityClass ? "Escolha a vocação da cidade uma vez." : "Vocação fixa desta cidade."}
-            </p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {isCapitalVillage ? (
                 <span className="rounded-full border border-cyan-300/35 bg-cyan-500/14 px-3 py-1.5 text-[10px] font-black text-cyan-100">
@@ -1054,9 +1051,6 @@ export function VillageScene({
                 })
               )}
             </div>
-            <p className="mt-1.5 max-w-[85%] text-[10px] font-semibold text-slate-400">
-              {isCapitalVillage ? "Centro político do reino. Governo, heróis e pressão imperial nascem daqui." : CITY_CLASS_META[cityClass].summary}
-            </p>
           </div>
         </article>
 
