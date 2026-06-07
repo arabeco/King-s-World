@@ -29,7 +29,7 @@ function pickProfile(index: number): string {
 export async function ensureWorldFilled(
   worldId: string,
   worldSlug: string,
-  target = 50,
+  target = 25,
 ): Promise<{ before: number; created: number; after: number }> {
   const playerParams = new URLSearchParams();
   playerParams.set("select", "id,world_id,user_id");
