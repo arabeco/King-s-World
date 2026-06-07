@@ -3486,9 +3486,9 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                             onClick={() => handleActionClick(option)}
                             className={`w-full rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition ${
                               selected
-                                ? "border-cyan-300/85 bg-cyan-500/18 text-cyan-100"
-                                : "border-white/25 bg-white/8 text-slate-100"
-                            } ${option.enabled ? "hover:bg-white/20" : "cursor-not-allowed opacity-55"}`}
+                                ? "border-cyan-300/85 bg-cyan-500/22 text-cyan-100"
+                                : "border-cyan-200/35 bg-white/12 text-slate-100"
+                            } ${option.enabled ? "hover:bg-white/20 active:scale-[0.97]" : "cursor-not-allowed opacity-40 grayscale"}`}
                           >
                             <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${actionTone(option.kind)}`}>
                               {option.label}
