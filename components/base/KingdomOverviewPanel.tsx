@@ -594,10 +594,10 @@ export function KingdomOverviewPanel({
             <div className="absolute left-1/2 top-1/2 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-cyan-200/45 bg-[radial-gradient(circle_at_50%_15%,rgba(103,232,249,0.28),rgba(8,47,73,0.2)_42%,rgba(2,6,23,0.86)_100%)] p-2 text-center shadow-[0_0_34px_rgba(34,211,238,0.18),inset_0_1px_0_rgba(255,255,255,0.16)]">
               <div className="flex h-full w-full flex-col items-center justify-center rounded-full border border-white/10 bg-slate-950/35 px-3 backdrop-blur-sm">
                 <p className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-100/80">Influencia</p>
-                <p className="mt-1 text-4xl font-black leading-none text-white tabular-nums">{totalInfluence}</p>
+                <p className="mt-1 text-4xl font-black leading-none text-white tabular-nums">{Math.round(totalInfluence)}</p>
                 <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-300">de {sovereigntyScore.max}</p>
                 <p className={`mt-2 rounded-full border px-2 py-1 text-[10px] font-black ${sovereigntyScore.portalEligible ? "border-emerald-300/35 bg-emerald-500/15 text-emerald-100" : "border-amber-300/35 bg-amber-500/15 text-amber-100"}`}>
-                  {sovereigntyScore.portalEligible ? "Portal liberado" : `${Math.max(0, SOVEREIGNTY_PORTAL_CUT - totalInfluence)} faltando`}
+                  {sovereigntyScore.portalEligible ? "Portal liberado" : `${Math.max(0, SOVEREIGNTY_PORTAL_CUT - Math.round(totalInfluence))} faltando`}
                 </p>
               </div>
             </div>
@@ -628,7 +628,7 @@ export function KingdomOverviewPanel({
                   </div>
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-300">{area.label}</p>
-                    <p className="mt-0.5 text-2xl font-black leading-none text-slate-50 tabular-nums">{area.current}</p>
+                    <p className="mt-0.5 text-2xl font-black leading-none text-slate-50 tabular-nums">{Math.round(area.current)}</p>
                     <p className="mt-0.5 text-[9px] font-bold text-slate-300">/{area.max}</p>
                   </div>
                 </div>
