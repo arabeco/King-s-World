@@ -597,11 +597,25 @@ export function WorldShell({
               <p className="truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{world.name}</p>
               <p className="truncate text-sm font-black text-slate-100">Dia {world.day} · {world.phase}</p>
             </div>
-            <div title="Influência total" className="kw-hud-chip flex items-center gap-2 rounded-xl px-2 py-1.5 text-right">
-              <span className="flex h-8 w-8 items-center justify-center">
-                <img src="/icons/influencia-icon.png" alt="" className="h-9 w-9 max-w-none object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.72)]" />
-              </span>
-              <p className="text-sm font-black text-cyan-100">{compactAmount(sovereigntyScore.total)}</p>
+            <div className="flex shrink-0 items-center gap-2">
+              <div title="Influência total" className="kw-hud-chip flex items-center gap-2 rounded-xl px-2 py-1.5 text-right">
+                <span className="flex h-8 w-8 items-center justify-center">
+                  <img src="/icons/influencia-icon.png" alt="" className="h-9 w-9 max-w-none object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.72)]" />
+                </span>
+                <p className="text-sm font-black text-cyan-100">{compactAmount(sovereigntyScore.total)}</p>
+              </div>
+              <button
+                type="button"
+                aria-label="Abrir ajuda da run"
+                title="Ajuda da run"
+                onClick={() => {
+                  emitUiFeedback("open", "light");
+                  setHelpOpen(true);
+                }}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-200/35 bg-slate-950/70 text-cyan-100 shadow-lg backdrop-blur transition active:scale-95"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </button>
             </div>
           </div>
           <div className="mt-2 grid grid-cols-4 gap-1.5 text-[10px] font-semibold text-slate-100">
@@ -635,20 +649,6 @@ export function WorldShell({
           </div>
         </div>
       </header>
-      ) : null}
-      {showWorldChrome ? (
-      <button
-        type="button"
-        aria-label="Abrir ajuda da run"
-        title="Ajuda da run"
-        onClick={() => {
-          emitUiFeedback("open", "light");
-          setHelpOpen(true);
-        }}
-        className="fixed right-[calc(50%-13.5rem)] top-[calc(env(safe-area-inset-top)+10px)] z-[60] flex h-9 w-9 items-center justify-center rounded-full border border-cyan-200/35 bg-slate-950/70 text-cyan-100 shadow-[0_12px_28px_rgba(8,47,73,0.35)] backdrop-blur-xl transition active:scale-95 max-[460px]:right-5"
-      >
-        <HelpCircle className="h-5 w-5" />
-      </button>
       ) : null}
 
       {showWorldChrome ? (
