@@ -171,7 +171,7 @@ function clampZoomLevel(level: number): ZoomLevel {
 }
 
 function isMapInteractiveTarget(target: EventTarget | null): boolean {
-  return target instanceof HTMLElement && Boolean(target.closest("button, input, select, textarea, a, [data-map-hud]"));
+  return target instanceof Element && Boolean(target.closest("button, input, select, textarea, a, [data-map-hud]"));
 }
 
 function explorationSeed(worldId: string, coordKey: string): number {
