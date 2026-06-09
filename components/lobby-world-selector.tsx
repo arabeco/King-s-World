@@ -32,6 +32,8 @@ export function LobbyWorldSelector({
   const [selectedWorldId, setSelectedWorldId] = useState(firstPlayableWorld?.id ?? "");
   const [creatingWorld, setCreatingWorld] = useState(false);
   const [createWorldError, setCreateWorldError] = useState<string | null>(null);
+  const [newWorldName, setNewWorldName] = useState("");
+  const [createdWorld, setCreatedWorld] = useState<{ code: string; href: string } | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [joiningCode, setJoiningCode] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
@@ -78,6 +80,40 @@ export function LobbyWorldSelector({
     } finally {
       setCreatingWorld(false);
     }
+  };
+
+  const createWorld = async () => {
+    const name = newWorldName.trim();
+    if (name.length < 2) {
+      setCreateWorldError("Dê um nome ao mundo (mín. 2 letras).");
+      return;
+    }
+    setCreatingWorld(true);
+    setCreateWorldError(null);
+    try {
+      const response = await fetch("/api/worlds/create", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const payload = (await response.json()) as { world?: { joinCode?: string; href?: string }; error?: string };
+      if (!response.ok || !payload.world?.href) {
+        throw new Error(payload.error ?? "Não foi possível criar o mundo.");
+      }
+      setCreatedWorld({ code: payload.world.joinCode ?? "", href: payload.world.href });
+    } catch (error) {
+      setCreateWorldError(error instanceof Error ? error.message : "Não foi possível criar o mundo.");
+    } finally {
+      setCreatingWorld(false);
+    }
+  };
+
+  const enterCreatedWorld = () => {
+    if (!createdWorld) return;
+    startTransition(() => {
+      router.push(createdWorld.href);
+      router.refresh();
+    });
   };
 
   const joinByCode = async () => {
@@ -184,6 +220,54 @@ export function LobbyWorldSelector({
             </div>
           ) : null}
           {createWorldError ? <p role="alert" className="list-meta">{createWorldError}</p> : null}
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Criar mundo" eyebrow="Novo" accent="gold" className="lobby-card lobby-card--join">
+        <div className="form-stack">
+          {createdWorld ? (
+            <>
+              <p className="list-meta">Mundo criado! Compartilhe o código pra convidar:</p>
+              <div className="inline-actions" style={{ alignItems: "center" }}>
+                <input
+                  type="text"
+                  readOnly
+                  value={createdWorld.code}
+                  onFocus={(e) => e.target.select()}
+                  style={{ letterSpacing: "0.1em", fontWeight: 800, flex: 1 }}
+                />
+                <button className="primary-button" type="button" onClick={enterCreatedWorld} data-smoke="enter-created-world">
+                  Entrar no mundo
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="list-meta">Crie seu mundo — você vira o dono e começa quando quiser.</p>
+              <div className="inline-actions" style={{ alignItems: "flex-start" }}>
+                <input
+                  type="text"
+                  placeholder="Nome do mundo"
+                  value={newWorldName}
+                  maxLength={40}
+                  onChange={(e) => setNewWorldName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && createWorld()}
+                  style={{ flex: 1 }}
+                  data-smoke="create-world-name"
+                />
+                <button
+                  className="primary-button"
+                  type="button"
+                  onClick={createWorld}
+                  disabled={creatingWorld || newWorldName.trim().length < 2}
+                  data-smoke="create-world-submit"
+                >
+                  {creatingWorld ? "Criando..." : "Criar"}
+                </button>
+              </div>
+              {createWorldError ? <p role="alert" className="list-meta" style={{ color: "#fecaca" }}>{createWorldError}</p> : null}
+            </>
+          )}
         </div>
       </SectionCard>
 
