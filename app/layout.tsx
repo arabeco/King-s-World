@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { NativeAuthBridge } from "@/components/native-auth-bridge";
 import { NativeAuthDebug } from "@/components/native-auth-debug";
+import { PressHaptics } from "@/components/press-haptics";
 import { UiToastHost } from "@/components/ui-toast-host";
 
 import "./globals.css";
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="pt-BR" suppressHydrationWarning>
       <body suppressHydrationWarning>
         {children}
+        <PressHaptics />
         <NativeAuthBridge />
         <NativeAuthDebug />
         <UiToastHost />

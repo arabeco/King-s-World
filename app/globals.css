@@ -335,6 +335,22 @@ p {
     0 16px 34px rgba(0, 0, 0, 0.3);
 }
 
+.primary-button:active,
+.secondary-button:active,
+.ghost-link:active,
+.world-nav__link:active {
+  transform: translateY(1px) scale(0.97);
+  transition-duration: 45ms;
+  filter: brightness(0.93);
+}
+
+/* Afundamento instantaneo em QUALQUER botao tocavel (feedback de clique) */
+button:active:not(:disabled),
+[role="button"]:active {
+  transform: scale(0.96);
+  transition: transform 45ms ease;
+}
+
 .primary-button:disabled,
 .secondary-button:disabled,
 .primary-button[aria-disabled="true"],

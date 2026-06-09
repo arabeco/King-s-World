@@ -47,11 +47,11 @@ export function triggerHaptic(tone: HapticTone = "light") {
   }
 
   if (tone === "medium") {
-    navigator.vibrate(14);
+    navigator.vibrate(20);
     return;
   }
 
-  navigator.vibrate(8);
+  navigator.vibrate(12);
 }
 
 export function playUiTone(tone: UiTone = "tap") {
