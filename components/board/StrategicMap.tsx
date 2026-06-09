@@ -3168,11 +3168,11 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             <span className="rounded-full border border-white/14 bg-black/58 px-2 py-1 text-[10px] font-bold text-slate-100 backdrop-blur">
               Sinais {counts.all}
             </span>
-            <span className="rounded-full border border-yellow-300/35 bg-yellow-400/14 px-2 py-1 text-[10px] font-bold text-yellow-50 backdrop-blur">
+            <span className="rounded-full border border-cyan-300/40 bg-cyan-400/16 px-2 py-1 text-[10px] font-bold text-cyan-50 backdrop-blur">
               Suas {counts.self}
             </span>
-            <span className="rounded-full border border-emerald-300/35 bg-emerald-500/14 px-2 py-1 text-[10px] font-bold text-emerald-100 backdrop-blur">
-              Hostis {counts.enemy}
+            <span className="rounded-full border border-rose-300/40 bg-rose-500/16 px-2 py-1 text-[10px] font-bold text-rose-100 backdrop-blur">
+              Inimigos {counts.enemy}
             </span>
             <span className={`rounded-full border px-2 py-1 text-[10px] font-bold backdrop-blur ${portalVisual.chipClass}`}>
               Portal {portalEligible ? "ok" : `${SOVEREIGNTY_PORTAL_CUT}`}
@@ -3181,11 +3181,11 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
           <div className="pointer-events-none absolute left-3 top-11 z-20 flex flex-wrap gap-1.5">
             {[
-              { label: "Seu", tone: "border-yellow-300/60 bg-yellow-400/14 text-yellow-50" },
-              { label: "Tribo", tone: "border-rose-300/60 bg-rose-500/14 text-rose-100" },
-              { label: "Aliado", tone: "border-violet-300/60 bg-violet-500/14 text-violet-100" },
-              { label: "Hostil", tone: "border-emerald-300/60 bg-emerald-500/14 text-emerald-100" },
-              { label: "Vazia", tone: "border-amber-300/60 bg-amber-500/14 text-amber-100" },
+              { label: "Você", tone: "border-cyan-300/60 bg-cyan-400/16 text-cyan-50" },
+              { label: "Tribo", tone: "border-violet-300/60 bg-violet-500/14 text-violet-100" },
+              { label: "Aliado", tone: "border-emerald-300/60 bg-emerald-500/14 text-emerald-100" },
+              { label: "Inimigo", tone: "border-rose-300/60 bg-rose-500/16 text-rose-100" },
+              { label: "Abandonada", tone: "border-amber-300/60 bg-amber-500/14 text-amber-100" },
             ].map((entry) => (
               <span key={entry.label} className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold backdrop-blur ${entry.tone}`}>
                 {entry.label}

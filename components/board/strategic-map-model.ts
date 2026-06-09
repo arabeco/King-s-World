@@ -669,51 +669,51 @@ export function generateHotspots(worldId: string, world: BuiltWorld): Hotspot[] 
 export function markerBorderClass(faction: Faction): string {
   switch (faction) {
     case "self":
-      return "border-yellow-300/95";
+      return "border-cyan-300/95";
     case "tribe":
-      return "border-rose-300/95";
-    case "ally":
       return "border-violet-300/95";
-    case "enemy":
+    case "ally":
       return "border-emerald-300/95";
+    case "enemy":
+      return "border-rose-400/95";
     case "abandoned":
       return "border-amber-300/95";
     default:
-      return "border-sky-300/90";
+      return "border-slate-300/90";
   }
 }
 
 export function markerFillClass(faction: Faction): string {
   switch (faction) {
     case "self":
-      return "bg-yellow-300";
+      return "bg-cyan-300";
     case "tribe":
-      return "bg-rose-400";
-    case "ally":
       return "bg-violet-400";
-    case "enemy":
+    case "ally":
       return "bg-emerald-400";
+    case "enemy":
+      return "bg-rose-400";
     case "abandoned":
       return "bg-amber-400";
     default:
-      return "bg-sky-400";
+      return "bg-slate-400";
   }
 }
 
 export function labelClass(faction: Faction): string {
   switch (faction) {
     case "self":
-      return "border-yellow-300/80 bg-yellow-400/20 text-yellow-50";
+      return "border-cyan-300/80 bg-cyan-400/20 text-cyan-50";
     case "tribe":
-      return "border-rose-300/80 bg-rose-500/20 text-rose-100";
-    case "ally":
       return "border-violet-300/80 bg-violet-500/20 text-violet-100";
-    case "enemy":
+    case "ally":
       return "border-emerald-300/80 bg-emerald-500/20 text-emerald-100";
+    case "enemy":
+      return "border-rose-300/80 bg-rose-500/20 text-rose-100";
     case "abandoned":
       return "border-amber-300/80 bg-amber-500/20 text-amber-100";
     default:
-      return "border-sky-300/70 bg-sky-500/20 text-sky-100";
+      return "border-slate-300/70 bg-slate-500/20 text-slate-100";
   }
 }
 
@@ -724,16 +724,16 @@ export function markerGlowStyle(faction: Faction, selected: boolean, muted: bool
 
   const color =
     faction === "self"
-      ? `rgba(253, 224, 71, ${opacity})`
+      ? `rgba(34, 211, 238, ${opacity})`
       : faction === "tribe"
-        ? `rgba(251, 113, 133, ${opacity})`
+        ? `rgba(167, 139, 250, ${opacity})`
         : faction === "ally"
-          ? `rgba(167, 139, 250, ${opacity})`
+          ? `rgba(74, 222, 128, ${opacity})`
           : faction === "enemy"
-            ? `rgba(74, 222, 128, ${opacity})`
+            ? `rgba(251, 113, 133, ${opacity})`
             : faction === "abandoned"
               ? `rgba(251, 191, 36, ${opacity})`
-              : `rgba(56, 189, 248, ${opacity})`;
+              : `rgba(148, 163, 184, ${opacity})`;
 
   return {
     boxShadow: `0 0 ${blur}px ${spread}px ${color}`,
@@ -747,9 +747,9 @@ export function cityMicroSurfaceStyle(faction: Faction): CSSProperties {
       : faction === "enemy"
         ? "rgba(251,113,133,0.82)"
         : faction === "ally"
-          ? "rgba(167,139,250,0.82)"
+          ? "rgba(74,222,128,0.82)"
           : faction === "tribe"
-            ? "rgba(244,114,182,0.78)"
+            ? "rgba(167,139,250,0.78)"
             : faction === "abandoned"
               ? "rgba(251,191,36,0.76)"
               : "rgba(148,163,184,0.72)";
@@ -762,12 +762,12 @@ export function cityMicroSurfaceStyle(faction: Faction): CSSProperties {
 }
 
 export function factionInfluenceColor(faction: Faction, opacity: number): string {
-  if (faction === "self") return `rgba(253, 224, 71, ${opacity})`;
-  if (faction === "tribe") return `rgba(251, 113, 133, ${opacity})`;
-  if (faction === "ally") return `rgba(167, 139, 250, ${opacity})`;
-  if (faction === "enemy") return `rgba(74, 222, 128, ${opacity})`;
+  if (faction === "self") return `rgba(34, 211, 238, ${opacity})`;
+  if (faction === "tribe") return `rgba(167, 139, 250, ${opacity})`;
+  if (faction === "ally") return `rgba(74, 222, 128, ${opacity})`;
+  if (faction === "enemy") return `rgba(251, 113, 133, ${opacity})`;
   if (faction === "abandoned") return `rgba(251, 191, 36, ${opacity})`;
-  return `rgba(56, 189, 248, ${opacity})`;
+  return `rgba(148, 163, 184, ${opacity})`;
 }
 
 export function influenceRadiusForSite(site: MapSite): number {
