@@ -33,6 +33,7 @@ export function LobbyWorldSelector({
   const [creatingWorld, setCreatingWorld] = useState(false);
   const [createWorldError, setCreateWorldError] = useState<string | null>(null);
   const [newWorldName, setNewWorldName] = useState("");
+  const [worldMode, setWorldMode] = useState<"normal" | "express">("normal");
   const [createdWorld, setCreatedWorld] = useState<{ code: string; href: string } | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [joiningCode, setJoiningCode] = useState(false);
@@ -94,7 +95,7 @@ export function LobbyWorldSelector({
       const response = await fetch("/api/worlds/create", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, mode: worldMode }),
       });
       const payload = (await response.json()) as { world?: { joinCode?: string; href?: string }; error?: string };
       if (!response.ok || !payload.world?.href) {
@@ -244,6 +245,26 @@ export function LobbyWorldSelector({
           ) : (
             <>
               <p className="list-meta">Crie seu mundo — você vira o dono e começa quando quiser.</p>
+              <div className="inline-actions">
+                <button
+                  type="button"
+                  className={worldMode === "normal" ? "primary-button" : "secondary-button"}
+                  onClick={() => setWorldMode("normal")}
+                  style={{ flex: 1 }}
+                  data-smoke="create-world-normal"
+                >
+                  Normal · 120 dias
+                </button>
+                <button
+                  type="button"
+                  className={worldMode === "express" ? "primary-button" : "secondary-button"}
+                  onClick={() => setWorldMode("express")}
+                  style={{ flex: 1 }}
+                  data-smoke="create-world-express"
+                >
+                  Expresso · 30 dias · 4×
+                </button>
+              </div>
               <div className="inline-actions" style={{ alignItems: "flex-start" }}>
                 <input
                   type="text"
