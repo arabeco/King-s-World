@@ -2844,10 +2844,10 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   <polygon
                     key={`fog-${tile.coordKey}`}
                     points={tile.points}
-                    fill={visited ? "rgba(0,0,0,0.52)" : "rgba(0,0,0,0.88)"}
-                    stroke={visited ? "rgba(148,163,184,0.05)" : "rgba(0,0,0,0.55)"}
+                    fill={visited ? "rgba(0,0,0,0.26)" : "rgba(0,0,0,0.9)"}
+                    stroke={visited ? "rgba(103,232,249,0.14)" : "rgba(0,0,0,0.6)"}
                     strokeWidth={0.35}
-                    opacity={visited ? 0.78 : 0.96}
+                    opacity={visited ? 0.48 : 0.97}
                   />
                 );
               }) : null}
