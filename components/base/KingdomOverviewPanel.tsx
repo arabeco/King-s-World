@@ -660,21 +660,14 @@ export function KingdomOverviewPanel({
           </div>
         </article>
 
-        {crownState.crownRiskBand !== "safe" ? (
-          <article
-            className={`rounded-[24px] border p-3 ${
-              crownState.crownRiskBand === "danger"
-                ? "border-rose-300/25 bg-rose-500/12"
-                : "border-amber-300/25 bg-amber-500/12"
-            }`}
-          >
+        {villages.some((v) => v.underAttack) ? (
+          <article className="rounded-[24px] border border-rose-300/40 bg-rose-500/16 p-3">
             <div className="flex items-start gap-2">
-              <Castle className={`mt-0.5 h-4 w-4 ${crownState.crownRiskBand === "danger" ? "text-rose-200" : "text-amber-200"}`} />
+              <Castle className="mt-0.5 h-4 w-4 text-rose-200" />
               <div>
-                <p className="text-[11px] font-semibold text-slate-50">{crownState.headline}</p>
-                <p className="mt-1 text-[11px] text-slate-200">{crownState.detail}</p>
-                <p className="mt-1 text-[10px] text-slate-300">
-                  Bastiao {crownState.capitalDefenseScore}/100 · muralha {crownState.capitalWallLevel}/10 · palacio {crownState.capitalPalaceLevel}/10
+                <p className="text-[12px] font-black text-rose-50">⚔️ Ataque chegando na Capital</p>
+                <p className="mt-1 text-[11px] font-semibold text-slate-200">
+                  Bastião {crownState.capitalDefenseScore}/100 · muralha {crownState.capitalWallLevel}/10 · palácio {crownState.capitalPalaceLevel}/10
                 </p>
                 {capitalTransfer.active ? (
                   <p className="mt-1 text-[10px] font-semibold text-cyan-100">
