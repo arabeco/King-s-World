@@ -679,26 +679,36 @@ export function KingdomOverviewPanel({
           </article>
         ) : null}
 
-        {senateMeeting ? (
-          <article className={`rounded-[24px] border p-3 ${
-            senateMeeting.kind === "CRITICAL"
+        <button
+          type="button"
+          data-smoke="senate-button"
+          onClick={() => {
+            emitUiFeedback("open", "light");
+            setActiveSheet("government");
+          }}
+          className={`flex w-full items-center justify-between gap-2 rounded-[24px] border p-3 text-left transition ${
+            senateMeeting
               ? "animate-pulse border-amber-300/60 bg-amber-500/20 shadow-[0_0_16px_rgba(251,191,36,0.4)]"
-              : "border-amber-300/20 bg-amber-500/10"
-          }`}>
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-200" />
-              <div className="flex-1">
-                <p className="text-[11px] font-semibold text-amber-50">
-                  {senateMeeting.kind === "CRITICAL" ? "⚠ Decisão do conselho exige resposta" : "Reuniao do Imperio"}
-                </p>
-                <p className="mt-1 text-[11px] text-amber-100/90">{senateMeeting.title}</p>
-              </div>
-              <span className="shrink-0 rounded-full border border-amber-300/40 bg-amber-400/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-amber-50">
-                Decidir
-              </span>
+              : "border-white/12 bg-white/5 hover:bg-white/8"
+          }`}
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="text-lg" aria-hidden>🏛️</span>
+            <div className="min-w-0">
+              <p className={`text-sm font-black ${senateMeeting ? "text-amber-50" : "text-slate-100"}`}>Senado</p>
+              {senateMeeting ? (
+                <p className="mt-0.5 truncate text-[11px] text-amber-100/90">{senateMeeting.title}</p>
+              ) : null}
             </div>
-          </article>
-        ) : null}
+          </div>
+          {senateMeeting ? (
+            <span className="shrink-0 rounded-full border border-amber-300/40 bg-amber-400/25 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-amber-50">
+              Decidir
+            </span>
+          ) : (
+            <ChevronRight className="h-5 w-5 shrink-0 text-slate-300" />
+          )}
+        </button>
 
         <article className="kw-glass rounded-[24px] p-3">
           <div className="flex items-center justify-between gap-2">
