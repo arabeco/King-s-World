@@ -2844,10 +2844,10 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   <polygon
                     key={`fog-${tile.coordKey}`}
                     points={tile.points}
-                    fill={visited ? "rgba(0,0,0,0.26)" : "rgba(0,0,0,0.9)"}
-                    stroke={visited ? "rgba(103,232,249,0.14)" : "rgba(0,0,0,0.6)"}
-                    strokeWidth={0.35}
-                    opacity={visited ? 0.48 : 0.97}
+                    fill={visited ? "rgba(0,0,0,0.24)" : "rgba(0,0,0,0.9)"}
+                    stroke={visited ? "rgba(255,255,255,0.30)" : "rgba(0,0,0,0.6)"}
+                    strokeWidth={visited ? 0.55 : 0.35}
+                    opacity={visited ? 0.5 : 0.97}
                   />
                 );
               }) : null}
@@ -3475,40 +3475,37 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 </div>
 
                 {actionStep === "choose" ? (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {actionOptions.map((option) => {
-                      const selected = option.kind === activeAction;
+                  (() => {
+                    const possible = actionOptions.filter((option) => option.enabled);
+                    if (possible.length === 0) {
                       return (
-                        <div key={option.kind}>
-                          <button
-                            type="button"
-                            disabled={!option.enabled}
-                            onClick={() => handleActionClick(option)}
-                            className={`w-full rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition ${
-                              selected
-                                ? "border-cyan-300/85 bg-cyan-500/22 text-cyan-100"
-                                : "border-cyan-200/35 bg-white/12 text-slate-100"
-                            } ${option.enabled ? "hover:bg-white/20 active:scale-[0.97]" : "cursor-not-allowed opacity-40 grayscale"}`}
-                          >
-                            <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${actionTone(option.kind)}`}>
-                              {option.label}
-                            </span>
-                            <span className="mt-1 block text-[10px] font-medium leading-4 text-slate-300">
-                              {describeTileAction(option.kind)}
-                            </span>
-                            {!option.enabled ? (
-                              <span className="mt-1 inline-flex rounded-full border border-rose-300/30 bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-black text-rose-100">
-                                Bloqueado
-                              </span>
-                            ) : null}
-                          </button>
-                          {!option.enabled && option.reason ? (
-                            <p className="mt-0.5 px-1 text-[10px] text-rose-200/90">{option.reason}</p>
-                          ) : null}
-                        </div>
+                        <p className="mt-2 rounded-xl border border-white/10 bg-slate-950/70 px-2.5 py-3 text-center text-[11px] font-semibold text-slate-300">
+                          Nada a fazer aqui
+                        </p>
                       );
-                    })}
-                  </div>
+                    }
+                    return (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {possible.map((option) => {
+                          const selected = option.kind === activeAction;
+                          return (
+                            <button
+                              key={option.kind}
+                              type="button"
+                              onClick={() => handleActionClick(option)}
+                              className={`w-full rounded-xl border px-2.5 py-3 text-center text-sm font-black transition active:scale-[0.97] ${
+                                selected
+                                  ? "border-cyan-300/85 bg-cyan-500/25 text-cyan-50"
+                                  : `${actionTone(option.kind)} hover:brightness-110`
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()
                 ) : (
                   <div className="mt-1.5 rounded-lg border border-cyan-200/40 bg-slate-950/88 p-2 text-[11px] text-slate-100">
                     <p className="font-semibold text-cyan-100">Acao selecionada: {selectedActionLabel}</p>
