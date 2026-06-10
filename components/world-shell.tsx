@@ -11,7 +11,7 @@ import { SandboxDayDeltaModal } from "@/components/sandbox/SandboxDayDeltaModal"
 import { SandboxProgressEngine } from "@/components/sandbox/SandboxProgressEngine";
 import { WorldLoadingScreen } from "@/components/world-loading-screen";
 import { WorldAssistant } from "@/components/world-assistant";
-import { calculateDefensePower, calculateSovereigntyScore, calculateTribeProgressStage, calculateTroopPower, calculateVillageDevelopment, type EvolutionMode } from "@/core/GameBalance";
+import { calculateBuildingUpgradeCost, calculateDefensePower, calculateSovereigntyScore, calculateTribeProgressStage, calculateTroopPower, calculateVillageDevelopment, type EvolutionMode } from "@/core/GameBalance";
 import { countUnlockedMilitaryTechs } from "@/lib/empire-systems";
 import { ImperialStateProvider, mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
 import { KING_PROFILES, type KingProfileId } from "@/lib/king-profiles";
@@ -291,6 +291,46 @@ export function WorldShell({
   const showCityHeader = activeTab === "base" && !isReportRoute;
   const showGlobalCrownBanner = activeTab === "intelligence";
   const showBottomNavigation = !isReportRoute;
+  // Glow de atenção na bottom nav: senado com decisão, cidade evoluível, tropas paradas.
+  const navAttention = useMemo(() => {
+    const totalTroops =
+      imperialState.troops.militia + imperialState.troops.shooters + imperialState.troops.scouts + imperialState.troops.machinery;
+    const troopsIdle =
+      totalTroops > 0 && !imperialState.mapMovements.some((movement) => movement.status === "traveling");
+
+    let cityCanEvolve = false;
+    for (const village of mergedVillages) {
+      const entries = Object.entries(village.buildingLevels ?? {}) as Array<
+        [Parameters<typeof calculateBuildingUpgradeCost>[0], number]
+      >;
+      for (const [buildingId, level] of entries) {
+        if (typeof level !== "number" || level >= 10) continue;
+        try {
+          const cost = calculateBuildingUpgradeCost(buildingId, level + 1);
+          if (cost.materials <= imperialState.resources.materials && cost.supplies <= imperialState.resources.supplies) {
+            cityCanEvolve = true;
+            break;
+          }
+        } catch {
+          // prédio desconhecido — ignora
+        }
+      }
+      if (cityCanEvolve) break;
+    }
+
+    return {
+      empire: Boolean(imperialState.senate.activeMeeting),
+      base: cityCanEvolve,
+      board: troopsIdle,
+    };
+  }, [
+    imperialState.mapMovements,
+    imperialState.resources.materials,
+    imperialState.resources.supplies,
+    imperialState.senate.activeMeeting,
+    imperialState.troops,
+    mergedVillages,
+  ]);
   const highestDevelopment = useMemo(
     () => mergedVillages.reduce((best, village) => Math.max(best, calculateVillageDevelopment(village.buildingLevels)), 0),
     [mergedVillages],
@@ -1025,7 +1065,7 @@ export function WorldShell({
 
       {((waitingForKingState || (showWorldChrome && !bootReady)) && !bootBypass) && !needsKingSelection ? <WorldLoadingScreen progress={bootProgress} /> : null}
 
-      {showWorldChrome && showBottomNavigation ? <BottomNavigation worldId={worldId} activeTab={activeTab} villageId={activeVillage.id} evolutionMode={evolutionMode} /> : null}
+      {showWorldChrome && showBottomNavigation ? <BottomNavigation worldId={worldId} activeTab={activeTab} villageId={activeVillage.id} evolutionMode={evolutionMode} attention={navAttention} /> : null}
     </div>
     </ImperialStateProvider>
     </LiveWorldProvider>

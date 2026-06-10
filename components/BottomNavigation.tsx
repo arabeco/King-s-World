@@ -20,11 +20,13 @@ export function BottomNavigation({
   activeTab,
   villageId,
   evolutionMode,
+  attention,
 }: {
   worldId: string;
   activeTab: TabKey;
   villageId: string;
   evolutionMode?: string | null;
+  attention?: Partial<Record<TabKey, boolean>>;
 }) {
   const router = useRouter();
   const [optimisticTab, setOptimisticTab] = useState<TabKey>(activeTab);
@@ -82,6 +84,7 @@ export function BottomNavigation({
           <div className="grid grid-cols-5 items-center gap-0.5">
             {tabs.map((tab) => {
               const isActive = tab.key === optimisticTab;
+              const needsAttention = Boolean(attention?.[tab.key]) && !isActive;
 
               if (tab.center) {
                 return (
@@ -90,12 +93,13 @@ export function BottomNavigation({
                     type="button"
                     onClick={() => navigate(tab.key)}
                     aria-current={isActive ? "page" : undefined}
-                    className={`kw-hud-medallion mx-auto flex h-[54px] w-[54px] flex-col items-center justify-center rounded-full text-white transition active:scale-95 ${
+                    className={`kw-hud-medallion relative mx-auto flex h-[54px] w-[54px] flex-col items-center justify-center rounded-full text-white transition active:scale-95 ${
                       isActive ? "text-amber-50" : "text-cyan-100/90"
-                    }`}
+                    } ${needsAttention ? "world-nav__attention" : ""}`}
                   >
                     <img src={tab.iconSrc} alt="" className="h-9 w-9 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]" />
                     <span className="mt-0.5 text-[8px] font-bold tracking-[0.02em]">CMD</span>
+                    {needsAttention ? <span className="world-nav__attention-dot" aria-hidden /> : null}
                   </button>
                 );
               }
@@ -106,14 +110,15 @@ export function BottomNavigation({
                   type="button"
                   onClick={() => navigate(tab.key)}
                   aria-current={isActive ? "page" : undefined}
-                  className={`world-nav__link flex min-w-[50px] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[8px] font-semibold transition active:scale-95 ${
+                  className={`world-nav__link relative flex min-w-[50px] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[8px] font-semibold transition active:scale-95 ${
                     isActive
                       ? "world-nav__link--active"
                       : "hover:text-white"
-                  }`}
+                  } ${needsAttention ? "world-nav__attention" : ""}`}
                 >
                   <img src={tab.iconSrc} alt="" className="h-6 w-6 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]" />
                   <span className="leading-none">{tab.label}</span>
+                  {needsAttention ? <span className="world-nav__attention-dot" aria-hidden /> : null}
                 </button>
               );
             })}

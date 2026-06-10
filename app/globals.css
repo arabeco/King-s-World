@@ -335,6 +335,33 @@ p {
     0 16px 34px rgba(0, 0, 0, 0.3);
 }
 
+/* Glow de atenção na bottom nav (aba com algo pra fazer) */
+@keyframes kw-nav-attention {
+  0%, 100% {
+    box-shadow: 0 0 6px 1px rgba(251, 191, 36, 0.28);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(251, 191, 36, 0.55);
+  }
+}
+
+.world-nav__attention {
+  animation: kw-nav-attention 1.6s ease-in-out infinite;
+  border-radius: inherit;
+}
+
+.world-nav__attention-dot {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #fde68a, #d9a441 70%);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.85);
+  pointer-events: none;
+}
+
 .primary-button:active,
 .secondary-button:active,
 .ghost-link:active,
