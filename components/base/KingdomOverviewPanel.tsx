@@ -636,26 +636,26 @@ export function KingdomOverviewPanel({
             ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Portal</p>
-              <p className={`mt-1 text-sm font-black ${sovereigntyScore.portalEligible ? "text-emerald-100" : "text-amber-100"}`}>
-                {sovereigntyScore.portalEligible ? "Liberado" : "Fechado"}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Infra</p>
-              <p className="mt-1 text-sm font-black text-slate-100">
-                {influenceAreas.find((area) => area.id === "production")?.current ?? 0}/{influenceAreas.find((area) => area.id === "production")?.max ?? 1000}
-              </p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className={`flex min-h-[56px] items-center gap-2.5 rounded-2xl border p-2.5 ${sovereigntyScore.portalEligible ? "border-emerald-300/35 bg-emerald-500/12" : "border-white/10 bg-white/5"}`}>
+              <span className="text-2xl" aria-hidden>🌀</span>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">Portal</p>
+                <p className={`text-base font-black leading-tight ${sovereigntyScore.portalEligible ? "text-emerald-100" : "text-amber-100"}`}>
+                  {sovereigntyScore.portalEligible ? "Liberado" : "Fechado"}
+                </p>
+              </div>
             </div>
             <button
               type="button"
               onClick={() => onOpenCityView(activeVillage.id)}
-              className="rounded-2xl border border-white/10 bg-white/5 p-2 text-left transition hover:bg-white/8"
+              className="flex min-h-[56px] items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 p-2.5 text-left transition hover:bg-white/8"
             >
-              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Foco</p>
-              <p className="mt-1 text-sm font-black text-slate-100">{calculateVillageDevelopment(activeVillage.buildingLevels)}/100</p>
+              <span className="text-2xl" aria-hidden>🎯</span>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">Foco</p>
+                <p className="text-base font-black leading-tight text-slate-100">{calculateVillageDevelopment(activeVillage.buildingLevels)}/100</p>
+              </div>
             </button>
           </div>
         </article>

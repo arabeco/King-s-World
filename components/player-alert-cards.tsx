@@ -38,7 +38,7 @@ function kindLabel(kind: PlayerAlertCard["kind"]) {
 }
 
 function choiceClass(card: PlayerAlertCard, choice: PlayerAlertChoice) {
-  const base = "rounded-xl border px-2.5 py-2 text-left text-[10px] font-semibold transition";
+  const base = "rounded-xl border px-3 py-2.5 text-left text-[12px] font-bold transition";
   if (!choice.tab) {
     return `${base} border-white/10 bg-white/6 text-slate-200 hover:bg-white/10`;
   }
@@ -94,7 +94,7 @@ export function PlayerAlertCards({
   secondary,
   onChoice,
   title = "O que importa agora",
-  subtitle = "Prioridade, risco e proximo clique.",
+  subtitle,
   decisionInboxById,
   onIgnoreDecision,
   showChoices = true,
@@ -113,7 +113,7 @@ export function PlayerAlertCards({
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <h2 className="kw-title text-base">{title}</h2>
-          <p className="kw-subtle text-[11px]">{subtitle}</p>
+          {subtitle ? <p className="kw-subtle text-[11px]">{subtitle}</p> : null}
         </div>
         <span className="rounded-full border border-white/10 bg-white/6 px-2 py-1 text-[10px] font-semibold text-slate-300" title="Foco principal e sinais de apoio">
           {primary ? `1 + ${secondary.length}` : "0"}
@@ -123,8 +123,8 @@ export function PlayerAlertCards({
       {primary ? (
         <AlertCard card={primary} onChoice={onChoice} featured decisionState={decisionInboxById?.get(primary.id)} onIgnoreDecision={onIgnoreDecision} showChoices={showChoices} />
       ) : (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-[11px] leading-5 text-slate-300">
-          Nada exige escolha agora. Use a aba Info para leitura fina da run.
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-center text-[12px] font-semibold text-slate-300">
+          Nada exige escolha agora ✓
         </div>
       )}
 
@@ -160,33 +160,22 @@ function AlertCard({
 
   return (
     <section className={`rounded-2xl border p-2.5 ${cardTone.shell} ${featured ? "shadow-[0_18px_40px_rgba(15,23,42,0.24)]" : ""}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] ${cardTone.pill}`}>
-              {cardTone.badge}
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/6 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-200">
-              {kindLabel(card.kind)}
-            </span>
+      <div className="flex items-start gap-2.5">
+        <div className={`shrink-0 rounded-xl border p-2.5 ${cardTone.pill}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="truncate text-[14px] font-black text-slate-50">{card.title}</p>
+            {urgency ? (
+              <span className="shrink-0 rounded-full border border-amber-300/30 bg-amber-500/14 px-2 py-0.5 text-[9px] font-bold text-amber-100">
+                {urgency.expiresIn}
+              </span>
+            ) : null}
           </div>
-          <p className="mt-1 text-[13px] font-bold text-slate-50">{card.title}</p>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-white/8 p-2">
-          <Icon className="h-4 w-4" />
+          <p className="mt-0.5 text-[11px] leading-4 text-slate-200">{card.situation}</p>
         </div>
       </div>
-
-      <div className="mt-2 rounded-xl border border-white/10 bg-white/6 px-2 py-1.5 text-[11px] text-slate-100">
-        <p>{card.situation}</p>
-        <p className="mt-1 text-slate-300">{card.impact}</p>
-      </div>
-      {urgency ? (
-        <div className="mt-2 rounded-xl border border-amber-300/22 bg-amber-500/10 px-2 py-1.5 text-[10px] font-semibold text-amber-100">
-          <p>{urgency.expiresIn}</p>
-          <p className="mt-1 text-amber-50/90">{urgency.ignoreCost}</p>
-        </div>
-      ) : null}
 
       {showChoices && card.choices.length > 0 ? (
         <div className="mt-2 grid gap-1.5">
@@ -203,19 +192,18 @@ function AlertCard({
               <div className="flex items-center justify-between gap-2">
                 <span>{choice.label}</span>
                 {choice.tab ? (
-                  choice.tab === "guide" ? <Compass className="h-3.5 w-3.5" /> : <ArrowRight className="h-3.5 w-3.5" />
+                  choice.tab === "guide" ? <Compass className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />
                 ) : null}
               </div>
-              {choice.note ? <p className="mt-1 text-[10px] font-normal opacity-90">{choice.note}</p> : null}
             </button>
           ))}
           {card.kind === "decision" ? (
             <button
               type="button"
               onClick={() => onIgnoreDecision?.(card.id)}
-              className="rounded-xl border border-rose-300/30 bg-rose-500/12 px-2.5 py-2 text-left text-[10px] font-semibold text-rose-50 transition hover:bg-rose-500/20"
+              className="rounded-xl border border-rose-300/30 bg-rose-500/12 px-3 py-2.5 text-left text-[12px] font-bold text-rose-50 transition hover:bg-rose-500/20"
             >
-              Ignorar (aceitar custo)
+              Ignorar
             </button>
           ) : null}
         </div>
