@@ -35,7 +35,7 @@ export type PlayerAlertDeck = {
   secondary: PlayerAlertCard[];
 };
 
-type BuildPlayerAlertInput = {
+export type BuildPlayerAlertInput = {
   currentDay: number;
   worldPhase: string;
   activeAlerts: string[];
@@ -47,6 +47,25 @@ type BuildPlayerAlertInput = {
   highestDevelopment: number;
   questsCompleted: number;
   wondersControlled: number;
+  militaryRankingPoints?: number;
+  tribeDomeUnlocked?: boolean;
+  tribeLoyaltyStage?: number;
+  kingAlive?: boolean;
+  populationCurrent?: number;
+  populationCapacity?: number;
+  employedPopulation?: number;
+  recruitedPopulation?: number;
+};
+
+export type PlayerCommandSnapshot = {
+  influence: number;
+  portalCut: number;
+  portalGap: number;
+  portalEligible: boolean;
+  totalTroops: number;
+  attackedCities: number;
+  activeDeficits: number;
+  exploredAreas: number;
 };
 
 type StateSignals = {
@@ -163,18 +182,23 @@ function buildStateSignals(input: BuildPlayerAlertInput): StateSignals {
     villages: input.villages,
     villageDevelopments: developmentValues,
     councilHeroes: input.heroCount,
-    militaryRankingPoints: 0,
+    militaryRankingPoints: input.militaryRankingPoints ?? 0,
     eraQuestsCompleted: input.questsCompleted,
     wondersControlled: input.wondersControlled,
     currentDay: input.currentDay,
-    hasTribeDome: input.imperialState.sandboxDomeActive,
-    tribeLoyaltyStage: input.imperialState.sandboxDomeActive ? 5 : 0,
-    kingAlive: input.villages.some((village) => village.kingHere),
+    hasTribeDome: input.tribeDomeUnlocked ?? input.imperialState.sandboxDomeActive,
+    tribeLoyaltyStage: input.tribeLoyaltyStage ?? (input.imperialState.sandboxDomeActive ? 5 : 0),
+    kingAlive: input.kingAlive ?? input.villages.some((village) => village.kingHere),
+    workforce: input.imperialState.workforceByFocus,
     unlockedMilitaryTechs: countUnlockedMilitaryTechs(input.imperialState.militaryTechTree),
     dragonChoice: input.imperialState.dragonChoice,
     senateSatisfaction: input.imperialState.senate.satisfaction,
     troopPower: calculateTroopPower(input.imperialState.troops),
     defensePower: totalDefensePower(input.imperialState),
+    populationCurrent: input.populationCurrent,
+    populationCapacity: input.populationCapacity,
+    employedPopulation: input.employedPopulation,
+    recruitedPopulation: input.recruitedPopulation,
   });
   const sovereigntyScore = sovereignty.total;
   const portalGap = SOVEREIGNTY_PORTAL_CUT - sovereigntyScore;
@@ -213,7 +237,7 @@ function buildStateSignals(input: BuildPlayerAlertInput): StateSignals {
     (input.highestDevelopment >= 35 ||
       totalTroopsValue >= 240 ||
       input.imperialState.resources.materials >= 2500 ||
-      input.guide.warnings.some((warning) => /2a aldeia/i.test(warning)));
+      input.guide.warnings.some((warning) => /2a (?:aldeia|cidade)/i.test(warning)));
   const firstHundredPressure =
     input.highestDevelopment < 100 &&
     (input.villages.length >= 4 ||
@@ -275,6 +299,20 @@ function buildStateSignals(input: BuildPlayerAlertInput): StateSignals {
   };
 }
 
+export function buildPlayerCommandSnapshot(input: BuildPlayerAlertInput): PlayerCommandSnapshot {
+  const signals = buildStateSignals(input);
+  return {
+    influence: signals.sovereigntyScore,
+    portalCut: SOVEREIGNTY_PORTAL_CUT,
+    portalGap: Math.max(0, signals.portalGap),
+    portalEligible: signals.portalEligible,
+    totalTroops: signals.totalTroops,
+    attackedCities: signals.attackedVillageCount,
+    activeDeficits: signals.totalDeficits,
+    exploredAreas: signals.exploredCount,
+  };
+}
+
 function pushIfUnique(target: PlayerAlertCard[], card: PlayerAlertCard | null) {
   if (!card) return;
   if (target.some((entry) => entry.id === card.id)) return;
@@ -287,7 +325,7 @@ function buildCollapseCard(input: BuildPlayerAlertInput, signals: StateSignals):
   }
 
   const painPoints = [];
-  if (signals.attackedVillageCount > 0) painPoints.push(`${signals.attackedVillageCount} aldeia(s) sob ataque`);
+  if (signals.attackedVillageCount > 0) painPoints.push(`${signals.attackedVillageCount} cidade(s) sob ataque`);
   if (signals.totalDeficits > 0) painPoints.push(`${signals.totalDeficits} gargalo(s) ativos`);
   if (signals.totalTroops < input.villages.length * 90) painPoints.push("tropa curta para segurar a largura atual");
   if (!signals.portalEligible && signals.portalGap > 250) painPoints.push(`influencia ainda ${signals.portalGap} abaixo do corte`);
@@ -317,7 +355,7 @@ function buildCollapseCard(input: BuildPlayerAlertInput, signals: StateSignals):
       },
       {
         id: "collapse-score",
-        label: "Abandonar largura e salvar score",
+        label: "Abandonar largura e salvar Influência",
         note: "Trocar expansao por consistencia para ainda fechar a campanha.",
         tab: "base",
         query: { v: signals.focusVillageId, b: "senate", sb: "city" },
@@ -333,9 +371,9 @@ function buildPortalCard(input: BuildPlayerAlertInput, signals: StateSignals): P
   }
 
   const reasons = [];
-  if (!signals.portalEligible) reasons.push(`score soberano em ${signals.sovereigntyScore}, abaixo do corte de ${SOVEREIGNTY_PORTAL_CUT}`);
+  if (!signals.portalEligible) reasons.push(`Influência em ${signals.sovereigntyScore}, abaixo do corte de ${SOVEREIGNTY_PORTAL_CUT}`);
   if (signals.questBacklog > 0) reasons.push(`quests fechadas em ${input.questsCompleted}/3`);
-  if (input.wondersControlled === 0 && input.guide.buildId !== "posto_avancado") reasons.push("nenhuma Maravilha convertendo teto de score");
+  if (input.wondersControlled === 0 && input.guide.buildId !== "posto_avancado") reasons.push("nenhuma Maravilha ampliando o teto de Influência");
   if (!input.imperialState.sandboxMarchStarted) reasons.push("marcha final ainda nao iniciou");
   if (signals.pressureActive) reasons.push("fronteira ainda drena atencao e margem");
 
@@ -346,7 +384,7 @@ function buildPortalCard(input: BuildPlayerAlertInput, signals: StateSignals): P
     title: signals.exodusActive || input.imperialState.sandboxMarchStarted ? "Agora e hora de fechar a campanha" : "O Portal entrou no seu horizonte",
     situation: `Voce ainda pode construir mais, mas o mundo ja esta perguntando se essa run vai realmente chegar inteira.`,
     reason: reasons.join("; "),
-    impact: "Se voce demorar demais para converter o imperio em score util, a campanha fecha antes da sua margem aparecer.",
+    impact: "Se você demorar demais para converter o império em Influência, a campanha fecha antes da sua margem aparecer.",
     choices: [
       {
         id: "portal-economy",
@@ -358,7 +396,7 @@ function buildPortalCard(input: BuildPlayerAlertInput, signals: StateSignals): P
       {
         id: "portal-quest",
         label: "Fechar o que ainda falta",
-        note: "Resolver quest e converter pendencia em score de verdade.",
+        note: "Resolver quest e converter pendência em Influência.",
         tab: "board",
         query: { v: signals.capitalVillageId },
       },
@@ -411,7 +449,7 @@ function buildMarchCard(input: BuildPlayerAlertInput, signals: StateSignals): Pl
       {
         id: "march-score",
         label: "Blindar a cidade que decide a run",
-        note: "Segurar score e evitar que a reta final comece torta.",
+        note: "Segurar Influência e evitar que a reta final comece torta.",
         tab: "base",
         query: { v: signals.focusVillageId, sb: "command", lc: "drill" },
       },
@@ -429,7 +467,7 @@ function buildOpeningSprawlCard(input: BuildPlayerAlertInput, signals: StateSign
   if (signals.totalDeficits > 0) reasons.push(`${signals.totalDeficits} gargalo(s) ja apareceram cedo`);
   if (input.imperialState.resources.supplies < 1100) reasons.push("o suprimento ja esta ficando curto");
   if (input.imperialState.resources.materials < 900) reasons.push("os materiais estao sumindo antes da expansao");
-  if (signals.averageDevelopment >= 24) reasons.push("voce ja subiu coisa demais para um reino de uma aldeia so");
+  if (signals.averageDevelopment >= 24) reasons.push("você já melhorou coisas demais para um reino de uma cidade só");
 
   return {
     id: "opening-sprawl",
@@ -438,7 +476,7 @@ function buildOpeningSprawlCard(input: BuildPlayerAlertInput, signals: StateSign
     title: "Sua abertura esta se espalhando cedo demais",
     situation: "O comeco ainda devia estar simples e afiado, mas o reino ja comecou a gastar foco em direcoes demais.",
     reason: reasons.join("; "),
-    impact: "Se a abertura perder forma agora, a 2a aldeia chega tarde e todo o resto do jogo fica pesado.",
+    impact: "Se a abertura perder forma agora, a 2a cidade chega tarde e todo o resto do jogo fica pesado.",
     choices: [
       {
         id: "opening-trim",
@@ -477,7 +515,7 @@ function buildFirstHeroCard(input: BuildPlayerAlertInput, signals: StateSignals)
     severity: signals.expansionActive ? "medium" : "low",
     title: "Esta faltando um rosto para puxar a campanha",
     situation: `Voce ja abriu corpo suficiente para o reino pedir um primeiro especialista, mas ainda joga sem heroi ativo.`,
-    reason: `${input.villages.length} aldeia(s), ${signals.totalTroops.toLocaleString("pt-BR")} tropas e ${input.highestDevelopment}/100 de pico ja sao massa demais para andar sem uma especializacao clara.`,
+    reason: `${input.villages.length} cidade(s), ${signals.totalTroops.toLocaleString("pt-BR")} tropas e ${input.highestDevelopment}/100 de desenvolvimento já exigem uma especialização clara.`,
     impact: "Um heroi cedo costuma transformar uma run morna em uma run que realmente ganha ritmo.",
     choices: [
       {
@@ -507,15 +545,15 @@ function buildSecondVillageCard(input: BuildPlayerAlertInput, signals: StateSign
   return {
     id: "second-village-late",
     kind: "decision",
-    severity: input.guide.warnings.some((warning) => /2a aldeia/i.test(warning)) ? "high" : "medium",
+    severity: input.guide.warnings.some((warning) => /2a (?:aldeia|cidade)/i.test(warning)) ? "high" : "medium",
     title: "Seu reino ainda depende demais da Capital",
-    situation: `Voce ja tem recurso e corpo para sair da abertura, mas a campanha ainda gira em volta de uma aldeia so.`,
+    situation: `Você já tem recursos e tropas para sair da abertura, mas a campanha ainda gira em volta de uma cidade só.`,
     reason: `${Math.round(signals.averageDevelopment)}/100 de media estrutural, ${signals.totalTroops.toLocaleString("pt-BR")} tropas vivas e nenhuma segunda base sustentando o ritmo.`,
     impact: "Se esse segundo polo nao nascer logo, a sua expansão vira promessa e nao poder.",
     choices: [
       {
         id: "second-village-board",
-        label: "Buscar a 2a aldeia agora",
+        label: "Buscar a 2a cidade agora",
         note: "Virar largura real antes que a abertura fique velha.",
         tab: "board",
         query: { v: signals.capitalVillageId },
@@ -548,22 +586,22 @@ function buildHundredCard(input: BuildPlayerAlertInput, signals: StateSignals): 
     id: "first-hundred-late",
     kind: "decision",
     severity: input.guide.warnings.some((warning) => /100\/100/i.test(warning)) ? "high" : "medium",
-    title: "Voce espalhou bem, mas ainda nao fechou uma cidade de verdade",
-    situation: `A aldeia mais forte parou em ${input.highestDevelopment}/100 enquanto o resto do reino continua abrindo largura.`,
-    reason: `Com ${input.villages.length} aldeias e ${input.questsCompleted} quest(s), a run ja pede uma cidade que realmente carregue o score.`,
+    title: "Você se espalhou, mas ainda não consolidou uma cidade",
+    situation: `A cidade mais forte parou em ${input.highestDevelopment}/100 enquanto o resto do reino continua abrindo largura.`,
+    reason: `Com ${input.villages.length} cidades e ${input.questsCompleted} quest(s), a campanha já pede uma cidade que realmente carregue a Influência.`,
     impact: "Se ninguem assumir esse papel, o imperio cresce, mas nao impõe respeito na reta final.",
     choices: [
       {
         id: "first-hundred-focus",
         label: "Fechar a cidade que vai carregar a run",
-        note: "Concentrar clique onde o score deixa de ser teoria.",
+        note: "Concentrar avanços onde a Influência deixa de ser teoria.",
         tab: "base",
         query: { v: signals.focusVillageId, b: "housing", sb: "city" },
       },
       {
         id: "first-hundred-senate",
-        label: "Amarrar score com Senado",
-        note: "Subir estrutura e influencia no mesmo folego.",
+        label: "Amarrar Influência com Senado",
+        note: "Subir estrutura e Influência no mesmo movimento.",
         tab: "base",
         query: { v: signals.focusVillageId, b: "senate", sb: "city" },
       },
@@ -589,7 +627,7 @@ function buildFrontlineCard(signals: StateSignals): PlayerAlertCard | null {
     kind: "decision",
     severity: signals.collapseActive || signals.attackedVillageCount > 1 || signals.hordeAlertActive ? "high" : "medium",
     title: signals.hordeAlertActive ? "A Horda bateu na porta" : "A borda do seu reino ficou cara demais",
-    situation: `${signals.attackedVillageCount} aldeia(s) sob ataque, ${signals.totalTroops.toLocaleString("pt-BR")} tropas vivas e ${signals.totalDeficits} gargalo(s) ativos agora.`,
+    situation: `${signals.attackedVillageCount} cidade(s) sob ataque, ${signals.totalTroops.toLocaleString("pt-BR")} tropas vivas e ${signals.totalDeficits} gargalo(s) ativos agora.`,
     reason: signals.hordeAlertActive ? "A Horda entrou no mapa e a margem da run encolheu." : "Sua largura atual começou a cobrar defesa, reposição e atenção ao mesmo tempo.",
     impact: "Se voce responder tarde, a perda nao vai ser so territorial: ela bate no ritmo inteiro da campanha.",
     choices: [
@@ -628,7 +666,7 @@ function buildQuestCard(input: BuildPlayerAlertInput, signals: StateSignals): Pl
     id: "quest-gap",
     kind: "opportunity",
     severity: signals.portalPressure ? "high" : "medium",
-    title: "Tem score facil parado na mesa",
+    title: "Há Influência parada na mesa",
     situation: `Voce fechou ${input.questsCompleted}/3 quests e ainda deixou ${signals.questBacklog} etapa(s) sem converter.`,
     reason: "Quest parada e uma das formas mais caras de parecer forte sem realmente ficar forte.",
     impact: "Fechar isso agora costuma ser o jeito mais limpo de devolver folego para a run.",
@@ -636,7 +674,7 @@ function buildQuestCard(input: BuildPlayerAlertInput, signals: StateSignals): Pl
       {
         id: "quest-board",
         label: "Caçar a quest agora",
-        note: "Transformar pendencia em score e ritmo imediatamente.",
+        note: "Transformar pendência em Influência imediatamente.",
         tab: "board",
         query: { v: signals.capitalVillageId },
       },
@@ -712,7 +750,7 @@ function buildStableWindowCard(signals: StateSignals): PlayerAlertCard | null {
     choices: [
       {
         id: "stable-focus",
-        label: "Transformar folga em score",
+        label: "Transformar folga em Influência",
         note: "Empurrar a cidade que vai devolver mais impacto real.",
         tab: "base",
         query: { v: signals.focusVillageId, b: "housing", sb: "city" },

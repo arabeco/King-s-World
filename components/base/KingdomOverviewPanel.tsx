@@ -575,8 +575,8 @@ export function KingdomOverviewPanel({
         <article className="kw-glass rounded-[28px] p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">Imperio</p>
-              <h2 className="kw-title text-lg">Influencia viva do reino</h2>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">Império</p>
+              <h2 className="kw-title text-lg">Influência viva do reino</h2>
               <p className="mt-1 text-[11px] text-slate-300">
                 Capital {capital?.name ?? "Capital"} · tribo {tribe.name} · Dia {worldDay}
               </p>
@@ -593,9 +593,9 @@ export function KingdomOverviewPanel({
           <div className="relative mx-auto mt-4 h-[360px] max-w-[340px]">
             <div className="absolute left-1/2 top-1/2 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-cyan-200/45 bg-[radial-gradient(circle_at_50%_15%,rgba(103,232,249,0.28),rgba(8,47,73,0.2)_42%,rgba(2,6,23,0.86)_100%)] p-2 text-center shadow-[0_0_34px_rgba(34,211,238,0.18),inset_0_1px_0_rgba(255,255,255,0.16)]">
               <div className="flex h-full w-full flex-col items-center justify-center rounded-full border border-white/10 bg-slate-950/35 px-3 backdrop-blur-sm">
-                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-100/80">Influencia</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-100/80">Influência</p>
                 <p className="mt-1 text-4xl font-black leading-none text-white tabular-nums">{Math.round(totalInfluence)}</p>
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-300">de {sovereigntyScore.max}</p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-300">meta {SOVEREIGNTY_PORTAL_CUT}</p>
                 <p className={`mt-2 rounded-full border px-2 py-1 text-[10px] font-black ${sovereigntyScore.portalEligible ? "border-emerald-300/35 bg-emerald-500/15 text-emerald-100" : "border-amber-300/35 bg-amber-500/15 text-amber-100"}`}>
                   {sovereigntyScore.portalEligible ? "Portal liberado" : `${Math.max(0, SOVEREIGNTY_PORTAL_CUT - Math.round(totalInfluence))} faltando`}
                 </p>

@@ -71,7 +71,7 @@ export function ProfileClient({ initialUsername, globalScore, medals, history, w
     if (!world) return;
     const href =
       world.status === "Em Andamento"
-        ? `/world/${world.id}/base`
+        ? `/world/${world.id}/intelligence`
         : world.status === "Finalizado"
           ? `/world/${world.id}/report`
           : `/world/${world.id}/empire`;

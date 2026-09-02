@@ -1,7 +1,7 @@
 ﻿﻿"use client";
 
 import type { ChangeEvent, ReactNode } from "react";
-import { Compass, HelpCircle, Target, X } from "lucide-react";
+import { Compass, HelpCircle, Target, UserRound, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegment } from "next/navigation";
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 
@@ -10,7 +10,6 @@ import { Header } from "@/components/Header";
 import { SandboxDayDeltaModal } from "@/components/sandbox/SandboxDayDeltaModal";
 import { SandboxProgressEngine } from "@/components/sandbox/SandboxProgressEngine";
 import { WorldLoadingScreen } from "@/components/world-loading-screen";
-import { WorldAssistant } from "@/components/world-assistant";
 import { calculateBuildingUpgradeCost, calculateDefensePower, calculateSovereigntyScore, calculateTribeProgressStage, calculateTroopPower, calculateVillageDevelopment, type EvolutionMode } from "@/core/GameBalance";
 import { countUnlockedMilitaryTechs } from "@/lib/empire-systems";
 import { ImperialStateProvider, mergeImperialVillages, useImperialState } from "@/lib/imperial-state";
@@ -31,7 +30,6 @@ const WORLD_BOOT_IMAGES = [
   "/icons/nav-cities.png",
   "/icons/nav-intel.png",
   "/icons/nav-world.png",
-  "/icons/nav-profile.png",
   "/icons/influencia-icon.png",
   "/icons/producao.png",
   "/icons/recursos.png",
@@ -708,6 +706,20 @@ export function WorldShell({
               </div>
               <button
                 type="button"
+                aria-label="Abrir perfil"
+                title="Perfil"
+                onClick={() => {
+                  emitUiFeedback("open", "light");
+                  router.push(`/world/${worldId}/guide`);
+                }}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-slate-950/70 shadow-lg backdrop-blur transition active:scale-95 ${
+                  activeTab === "guide" ? "border-amber-300/60 text-amber-100" : "border-white/20 text-slate-200"
+                }`}
+              >
+                <UserRound className="h-4.5 w-4.5" />
+              </button>
+              <button
+                type="button"
                 aria-label="Abrir ajuda da run"
                 title="Ajuda da run"
                 onClick={() => {
@@ -1070,7 +1082,7 @@ export function WorldShell({
                     <span className="mt-1 block truncate text-slate-50">{imperialState.kingName || selectedKingProfile.name}</span>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/6 px-3 py-3">
-                    <span className="block text-slate-500">{worldMeta.finalScore !== null ? "Score" : "Cidades"}</span>
+                    <span className="block text-slate-500">{worldMeta.finalScore !== null ? "Influência" : "Cidades"}</span>
                     <span className="mt-1 block text-slate-50">{worldMeta.finalScore !== null ? compactAmount(worldMeta.finalScore) : mergedVillages.length}</span>
                   </div>
                 </div>

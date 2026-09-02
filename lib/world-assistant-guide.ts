@@ -44,7 +44,7 @@ export type SandboxCoachCta = {
 export const BUILD_META: Record<CoachBuildId, CoachBuildMeta> = {
   balanced: {
     label: "Balanceado",
-    identity: "Segura a economia cedo, expande sem exagero e fecha score antes do Êxodo.",
+    identity: "Segura a economia cedo, expande sem exagero e fecha Influência antes do Êxodo.",
     opening: "Produção 3 + Sociedade 3 + um eixo de identidade sem espalhar nível.",
     secondVillageTarget: 15,
     firstHundredTarget: 45,
@@ -53,7 +53,7 @@ export const BUILD_META: Record<CoachBuildId, CoachBuildMeta> = {
   },
   metropole: {
     label: "Metrópole",
-    identity: "Converte Capital forte em vila 100, conselho e Maravilhas cedo.",
+    identity: "Converte Capital forte em cidade 100, conselho e Maravilhas cedo.",
     opening: "Governo 4 + Produção 3 + Sociedade 3.",
     secondVillageTarget: 11,
     firstHundredTarget: 39,
@@ -62,7 +62,7 @@ export const BUILD_META: Record<CoachBuildId, CoachBuildMeta> = {
   },
   posto_avancado: {
     label: "Posto Avançado",
-    identity: "Transforma combate e pressão de mapa em expansão e score real.",
+    identity: "Transforma combate e pressão de mapa em expansão e Influência.",
     opening: "Quartel 4 + Produção 3 + Governo 2.",
     secondVillageTarget: 14,
     firstHundredTarget: 38,
@@ -80,7 +80,7 @@ export const BUILD_META: Record<CoachBuildId, CoachBuildMeta> = {
   },
   celeiro: {
     label: "Celeiro",
-    identity: "Acelera fluxo interno e converte economia em vila 100, quests e ETA.",
+    identity: "Acelera fluxo interno e converte economia em cidade 100, quests e chegada.",
     opening: "Produção 4 + Sociedade 4 + Governo 2.",
     secondVillageTarget: 9,
     firstHundredTarget: 37,
@@ -125,10 +125,10 @@ export function buildGuide(
   const warnings: string[] = [];
 
   if (currentDay > build.secondVillageTarget && stats.villageCount < 2) {
-    warnings.push(`Sua 2a aldeia está atrasada para a rota ${build.label}. Meta ideal: até D${build.secondVillageTarget}.`);
+    warnings.push(`Sua 2a cidade está atrasada para a rota ${build.label}. Meta ideal: até D${build.secondVillageTarget}.`);
   }
   if (currentDay > build.firstHundredTarget && stats.highestDevelopment < 100) {
-    warnings.push(`A primeira aldeia 100/100 ainda não fechou. A rota ${build.label} queria isso perto de D${build.firstHundredTarget}.`);
+    warnings.push(`A primeira cidade 100/100 ainda não fechou. A rota ${build.label} queria isso perto de D${build.firstHundredTarget}.`);
   }
   if (currentDay >= GUIDE_HERO_DEPTH_DAY && stats.heroCount <= 1) {
     warnings.push("Seu conselho parece raso para o mid/late game. O blueprint forte entra na reta final com mais especialistas.");
@@ -137,7 +137,7 @@ export function buildGuide(
     warnings.push("Você chegou ao Êxodo com poucas quests. Isso costuma travar o corte do Portal.");
   }
   if (currentDay >= FINAL_EXODUS_DAY && stats.wonders === 0 && buildId !== "posto_avancado") {
-    warnings.push("Seu teto de score está curto sem Maravilhas nesta altura da campanha.");
+    warnings.push("Seu teto de Influência está curto sem Maravilhas nesta altura da campanha.");
   }
 
   if (currentDay <= 5) {
@@ -148,16 +148,16 @@ export function buildGuide(
       windowLabel: "Janela D1-D5",
       focus: "Abrir a build sem espalhar recurso em setores demais.",
       summary: build.opening,
-      nextAction: `Feche a abertura da ${build.label} e guarde recurso para acelerar a 2a aldeia.`,
+      nextAction: `Feche a abertura da ${build.label} e guarde recurso para acelerar a 2a cidade.`,
       actions: [
         "Feche Produção/Sociedade cedo para não travar material, suprimento e população.",
         `Suba o eixo de identidade da build: ${build.opening}`,
         "Faça buscas/coletas cedo para criar folga antes da primeira expansão.",
       ],
       checkpoints: [
-        `Meta de 2a aldeia: até D${build.secondVillageTarget}.`,
+        `Meta de 2a cidade: até D${build.secondVillageTarget}.`,
         "Não espalhe upgrades em muitos setores pequenos.",
-        "Comece a desenhar qual vila vai virar a primeira 100/100.",
+        "Comece a definir qual cidade vai virar a primeira 100/100.",
       ],
       warnings,
       recommendedTab: "base",
@@ -166,7 +166,7 @@ export function buildGuide(
         ? [
             "Abra Cidades para melhorar a Capital e ver os 5 setores do reino.",
             "Abra Império para entender recursos, heróis e a força atual do seu reino.",
-            "Abra Mapa quando quiser expandir, procurar oportunidades e planejar a próxima aldeia.",
+            "Abra Mundo quando quiser expandir, procurar oportunidades e planejar a próxima cidade.",
           ]
         : [
             "Comece por Cidades e execute a melhoria sugerida no centro da tela.",
@@ -183,15 +183,15 @@ export function buildGuide(
       windowId: "expand",
       windowLabel: "Janela D6-D15",
       focus: "Expandir sem quebrar a economia inicial.",
-      summary: "Agora o jogo quer 2a aldeia, exército inicial e o primeiro herói certo para a build.",
-      nextAction: `Busque ou funda a 2a aldeia até D${build.secondVillageTarget} enquanto monta o primeiro pacote de tropas.`,
+      summary: "Agora o jogo quer 2a cidade, exército inicial e o primeiro herói certo para a estratégia.",
+      nextAction: `Explore e funde a 2a cidade até D${build.secondVillageTarget} enquanto monta o primeiro pacote de tropas.`,
       actions: [
         "Pare de abrir setores demais e concentre recurso na expansão.",
         "Monte o primeiro bloco de exército na Capital.",
         `Priorize heróis desta rota: ${build.heroFocus.slice(0, 2).join(" + ")}.`,
       ],
       checkpoints: [
-        `2a aldeia no prazo ideal: D${build.secondVillageTarget}.`,
+        `2a cidade no prazo ideal: D${build.secondVillageTarget}.`,
         "Primeira quest deve entrar na sua mira para o começo do mid game.",
         "Mapa e logística já precisam entrar na rotina, não só setor de cidade.",
       ],
@@ -200,7 +200,7 @@ export function buildGuide(
       beginnerTitle: "Como jogar esta fase",
       beginnerSteps: [
         "Olhe a ação sugerida do conselheiro antes de gastar recurso.",
-        "Abra o Mapa para buscar a 2a aldeia e enxergar espaços próximos.",
+        "Abra Mundo para buscar a 2a cidade e enxergar espaços próximos.",
         "Volte para Cidades para converter recurso em crescimento real.",
       ],
     };
@@ -212,25 +212,25 @@ export function buildGuide(
       buildId,
       windowId: "convert",
       windowLabel: "Janela D16-D45",
-      focus: "Parar de crescer largo e converter uma cidade em score real.",
+      focus: "Parar de crescer largo e converter uma cidade em Influência.",
       summary: "Este trecho decide se a run vira campanha forte ou economia bonita sem fechamento.",
-      nextAction: `Escolha agora a vila 100/100 e empurre até fechar perto de D${build.firstHundredTarget}.`,
+      nextAction: `Escolha agora a cidade 100/100 e concentre os avanços até perto de D${build.firstHundredTarget}.`,
       actions: [
         "Feche Quest 1 e tire proveito do primeiro pico de heróis.",
-        "Não tente upar todas as aldeias igual; uma precisa virar referência.",
+        "Não tente melhorar todas as cidades por igual; uma precisa virar referência.",
         "Abra economia ou pressão militar conforme a identidade da build.",
       ],
       checkpoints: [
-        `1a aldeia 100/100 ideal: perto de D${build.firstHundredTarget}.`,
-        "3-4 aldeias bem nutridas normalmente valem mais que 6 aldeias moles.",
+        `1a cidade 100/100 ideal: perto de D${build.firstHundredTarget}.`,
+        "3-4 cidades bem sustentadas normalmente valem mais que 6 cidades frágeis.",
         "Se Engenheiro faz parte da rota, ele já deve estar no radar.",
       ],
       warnings,
       recommendedTab: "empire",
       beginnerTitle: "Como ler o jogo daqui em diante",
       beginnerSteps: [
-        "Escolha uma aldeia principal e clique nela com frequência.",
-        "Priorize score real em vez de subir tudo um pouco.",
+        "Escolha uma cidade principal e concentre nela os próximos avanços.",
+        "Priorize Influência em vez de melhorar tudo um pouco.",
         "Abra Império para checar se a estrutura está virando poder de verdade.",
       ],
     };
@@ -242,24 +242,24 @@ export function buildGuide(
       buildId,
       windowId: "scale",
       windowLabel: "Janela D46-D90",
-      focus: "Escalar pilares de score sem perder timing de ETA.",
-      summary: "Seu reino precisa virar um império completo: aldeias, quests, conselho, militar e Maravilhas/logística.",
+      focus: "Escalar pilares de Influência sem perder a janela de chegada.",
+      summary: "Seu reino precisa virar um império completo: cidades, quests, conselho, militar e Maravilhas/logística.",
       nextAction: "Feche as lacunas do seu pilar principal e não deixe ETA para a última hora.",
       actions: [
-        "Leve o império para 7-10 aldeias com qualidade, não só quantidade.",
+        "Leve o império para 7-10 cidades com qualidade, não só quantidade.",
         "Feche Quest 2 e Quest 3 e traga o conselho para perto do pacote ideal.",
         `Seu alvo de D90 para esta build: ${build.day90Goal}`,
       ],
       checkpoints: [
         "Explorador deixa de ser opcional quando o spawn é longe.",
-        "Engenheiro quase sempre vira teto alto de score.",
+        "Engenheiro quase sempre aumenta o teto de Influência.",
         "Uma run boa entra no Dia 90 sabendo como vai chegar ao Centro.",
       ],
       warnings,
       recommendedTab: "intelligence",
       beginnerTitle: "Como manter o reino jogável",
       beginnerSteps: [
-        "Abra Inteligência para ler o momento da run e os cards que importam agora.",
+        "Abra Comando para ler o momento da campanha e a decisão que importa agora.",
         "Cheque Cidades quando precisar transformar sobra de recurso em eficiência.",
         "Use o Mapa para validar distâncias, fronteiras e alvos antes de agir.",
       ],
@@ -271,12 +271,12 @@ export function buildGuide(
     buildId,
     windowId: "exodus",
     windowLabel: "Janela D91-D120",
-    focus: "Agrupar, proteger score e marchar no timing certo.",
+    focus: "Agrupar, proteger Influência e marchar na hora certa.",
     summary: "No Êxodo, quem vence não é quem construiu cedo; é quem manteve setores, conselho, quests e ETA vivos até a marcha final.",
     nextAction: "Reagrupe, confira a influência e marche apenas quando a conta final continuar viva acima do corte.",
     actions: [
       "Agrupe tropas e cidades chave na Capital.",
-      "Cheque score, quest, Maravilhas e ETA antes de comprometer a marcha.",
+      "Cheque Influência, quests, Maravilhas e chegada antes de comprometer a marcha.",
       "Evite sair cedo sem logística ou tarde demais sem janela de chegada.",
     ],
     checkpoints: [
@@ -339,7 +339,7 @@ export function buildSandboxCoachCta(
   if (currentDay <= 15) {
     return {
       label: "Ir para a ação do mapa",
-      detail: "Agora a jogada certa costuma ser preparar 2a aldeia, busca ou expansão no mapa.",
+      detail: "Agora a jogada certa costuma ser preparar a 2a cidade ou explorar uma rota de expansão.",
       tab: "board",
       query: { v: focusVillageId },
     };

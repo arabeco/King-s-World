@@ -279,11 +279,11 @@ function buildPassageDiscovery(
       coordKey: tile.coordKey,
       type: "threat",
       status: "new",
-      title: "Aldeia inimiga avistada",
+      title: "Cidade inimiga avistada",
       summary: `${site.name} apareceu no caminho da exploração. O local foi marcado sem iniciar combate; agora você sabe que existe presença hostil naquela passagem.`,
       imageSrc: "/images/threat-raiders.jpg",
       riskLabel: "Contato hostil",
-      rewardLabel: "Intel militar",
+      rewardLabel: "Informação militar",
       actionLabel: "Avaliar ataque",
     };
   }
@@ -1125,8 +1125,8 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             }
 
             latestMessage = combatResult.decisivo
-              ? `Ataque venceu em ${q}:${r}. ${combatResult.battleReport.headline} +${combatResult.scoreMilitarAtacanteFinal} SM, saque ${combatResult.recursosSaqueados.materials ?? 0}M/${combatResult.recursosSaqueados.supplies ?? 0}S.`
-              : `Ataque em ${q}:${r} terminou em ${combatResult.vencedor === "defensor" ? "repulsa" : "retirada"}. ${combatResult.battleReport.summary} +${combatResult.scoreMilitarAtacanteFinal} SM por atrito.`;
+              ? `Ataque venceu em ${q}:${r}. ${combatResult.battleReport.headline} +${combatResult.scoreMilitarAtacanteFinal} força militar, saque ${combatResult.recursosSaqueados.materials ?? 0}M/${combatResult.recursosSaqueados.supplies ?? 0}S.`
+              : `Ataque em ${q}:${r} terminou em ${combatResult.vencedor === "defensor" ? "repulsa" : "retirada"}. ${combatResult.battleReport.summary} +${combatResult.scoreMilitarAtacanteFinal} força militar por atrito.`;
             return {
               ...movement,
               status: "arrived",
@@ -3954,7 +3954,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.04] p-2 text-[11px] font-semibold text-slate-300">
                   <p>
                     {selectedTileHidden
-                      ? "Conteúdo oculto. Envie exploração para revelar aldeia, risco, ruína ou oportunidade real deste hex."
+                      ? "Conteúdo oculto. Envie exploração para revelar cidade, risco, ruína ou oportunidade real deste hex."
                       : selectedSite?.faction === "enemy"
                       ? "Cidade ocupada por rival. Ação principal: atacar."
                       : selectedSite?.occupationKind === "abandoned_city"
@@ -4337,7 +4337,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     <p className="mt-1 text-rose-100/80">
                       Dano defensor {latestBattleMovement.meta.combatResult.leitura.danoDefensorPct}% ·
                       Dano atacante {latestBattleMovement.meta.combatResult.leitura.danoAtacantePct}% ·
-                      SM +{latestBattleMovement.meta.combatResult.scoreMilitarAtacanteFinal}
+                      Força militar +{latestBattleMovement.meta.combatResult.scoreMilitarAtacanteFinal}
                     </p>
                   </div>
                 ) : null}

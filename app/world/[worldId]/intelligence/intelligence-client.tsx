@@ -1,111 +1,53 @@
-﻿﻿"use client";
+"use client";
 
+import { AlertTriangle, Bell, ChevronRight, CircleCheck, Compass, MapPinned, ShieldAlert, Swords, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { AlertTriangle, Bell, Coins, Compass, ShieldAlert, Swords, Target, type LucideIcon } from "lucide-react";
 
-import { PlayerAlertCards } from "@/components/player-alert-cards";
 import { TimeOfDestinyPanel } from "@/components/sandbox/TimeOfDestinyPanel";
-import { calculateVillageDevelopment } from "@/core/GameBalance";
+import { calculateTribeProgressStage, calculateVillageDevelopment } from "@/core/GameBalance";
 import { mergeImperialVillages, useImperialStateContext } from "@/lib/imperial-state";
-import { buildPlayerAlertDeck, type PlayerAlertCard, type PlayerAlertChoice } from "@/lib/player-alerts";
+import {
+  buildPlayerAlertDeck,
+  buildPlayerCommandSnapshot,
+  type PlayerAlertCard,
+  type PlayerAlertChoice,
+} from "@/lib/player-alerts";
 import type { ProfileHealthCard } from "@/lib/season-audit-analytics";
 import { emitUiFeedback } from "@/lib/ui-feedback";
-import { buildGuide, resolveBuild } from "@/lib/world-assistant-guide";
+import { buildGuide, resolveBuild, type WorldTab } from "@/lib/world-assistant-guide";
 import { useLiveWorldContext } from "@/lib/world-runtime";
 
-type FeedKind = "combate" | "ações" | "movimento" | "economia" | "alertas";
+type ActivityTone = "danger" | "warning" | "info" | "success";
 
-type FeedEntry = {
+type ActivityEntry = {
   id: string;
-  kind: FeedKind;
   title: string;
-  summary: string;
-  time: string;
-  utility: string;
-  badge: string;
-  cardClass: string;
-  icon: LucideIcon;
+  detail: string;
+  meta: string;
+  tone: ActivityTone;
 };
 
-function pickLossPercent(details: string[]): number {
-  for (const item of details) {
-    const match = item.match(/(\d+)%/);
-    if (match) {
-      return Number.parseInt(match[1] ?? "0", 10);
-    }
-  }
-  return 0;
+function isPlayerFacingAlert(alert: string): boolean {
+  return !/supabase|tempo real|estado persistente|campanha em progresso|runtime|sincroniza|fonte [uú]nica/i.test(alert);
 }
 
-function usefulCombatRead(title: string, summary: string, loss: number): string {
-  const win = /repelido|conquistada|confirmado|vitoria/i.test(`${title} ${summary}`);
-  if (!win) {
-    return loss >= 25 ? "Segure a frente, evite novo envio e reforce a cidade alvo." : "Combate empatado. Vale medir se a próxima ofensiva fecha a tomada.";
-  }
-  if (loss <= 12) {
-    return "Janela boa para pressionar de novo ou converter em tomada.";
-  }
-  if (loss <= 24) {
-    return "Vitória cara. Reponha tropa antes de abrir outra frente.";
-  }
-  return "Você venceu, mas queimou poder demais. Priorize recomposição.";
+const tabLabels: Record<WorldTab, string> = {
+  intelligence: "Comando",
+  base: "Cidades",
+  board: "Mundo",
+  empire: "Império",
+  guide: "Perfil",
+};
+
+function activityToneClass(tone: ActivityTone): string {
+  if (tone === "danger") return "border-rose-300/30 bg-rose-500/10";
+  if (tone === "warning") return "border-amber-300/30 bg-amber-500/10";
+  if (tone === "success") return "border-emerald-300/30 bg-emerald-500/10";
+  return "border-cyan-300/25 bg-cyan-500/8";
 }
 
-function movementUtility(text: string): string {
-  const normalized = text.toLowerCase();
-  if (normalized.includes("portal")) {
-    return "Confirme score e ETA da marcha final antes de abrir mais risco.";
-  }
-  if (normalized.includes("anexa")) {
-    return "Cheque se o diplomata ficou travado e se a nova cidade precisa estabilizar.";
-  }
-  if (normalized.includes("fund") || normalized.includes("estrada")) {
-    return "Veja se a nova rota encurtou sua logística ou só abriu custo.";
-  }
-  return "Confira o ETA e o retorno real dessa ordem antes do próximo clique.";
-}
-
-function economyUtility(text: string): string {
-  const normalized = text.toLowerCase();
-  if (normalized.includes("supr")) {
-    return "Foco em ração, produção ou corte de atrito para não travar a campanha.";
-  }
-  return "Use este evento para decidir se vale obra, doação interna ou pausa de gasto.";
-}
-
-function alertUtility(text: string): string {
-  const normalized = text.toLowerCase();
-  if (normalized.includes("portal") || normalized.includes("corte")) {
-    return "Sua preocupação principal agora é score útil, não mais crescimento bonito.";
-  }
-  if (normalized.includes("horda")) {
-    return "Decida entre segurar a borda ou acelerar regroup para o centro.";
-  }
-  if (normalized.includes("marcha")) {
-      return "Cheque ETA, Explorador e se a rota está fisicamente viável.";
-  }
-  return "Alerta vivo. Ele merece decisão agora, não leitura passiva.";
-}
-
-function classifyCombat(loss: number, win: boolean): { badge: string; cardClass: string } {
-  if (!win || loss >= 28) {
-    return { badge: "Choque", cardClass: "border-rose-300/35 bg-rose-500/10 text-rose-100" };
-  }
-  if (loss >= 15) {
-    return { badge: "Atrito", cardClass: "border-amber-300/35 bg-amber-500/10 text-amber-100" };
-  }
-  return { badge: "Limpo", cardClass: "border-emerald-300/35 bg-emerald-500/10 text-emerald-100" };
-}
-
-function classifyAlert(text: string): { badge: string; cardClass: string } {
-  const normalized = text.toLowerCase();
-  if (normalized.includes("portal") || normalized.includes("horda") || normalized.includes("abaixo do corte")) {
-    return { badge: "Crítico", cardClass: "border-rose-300/35 bg-rose-500/10 text-rose-100" };
-  }
-  if (normalized.includes("marcha") || normalized.includes("ataque")) {
-    return { badge: "Pressão", cardClass: "border-amber-300/35 bg-amber-500/10 text-amber-100" };
-  }
-  return { badge: "Vigia", cardClass: "border-sky-300/35 bg-sky-500/10 text-sky-100" };
+function sumValues(record: Record<string, number>): number {
+  return Object.values(record).reduce((sum, value) => sum + value, 0);
 }
 
 export function IntelligenceClient({
@@ -119,386 +61,247 @@ export function IntelligenceClient({
   const { world } = useLiveWorldContext();
   const { imperialState } = useImperialStateContext();
   const [openedDecision, setOpenedDecision] = useState<PlayerAlertCard | null>(null);
-  const mergedVillages = useMemo(() => mergeImperialVillages(world.villages, imperialState), [imperialState, world.villages]);
+
+  const villages = useMemo(() => mergeImperialVillages(world.villages, imperialState), [imperialState, world.villages]);
   const activeVillage = useMemo(
-    () => mergedVillages.find((village) => village.id === world.activeVillageId) ?? mergedVillages[0],
-    [mergedVillages, world.activeVillageId],
+    () => villages.find((village) => village.id === world.activeVillageId) ?? villages[0],
+    [villages, world.activeVillageId],
   );
   const heroCount = useMemo(
     () => Object.values(imperialState.heroByVillage).filter((entry) => entry && entry !== "none").length,
     [imperialState.heroByVillage],
   );
   const highestDevelopment = useMemo(
-    () => mergedVillages.reduce((best, village) => Math.max(best, calculateVillageDevelopment(village.buildingLevels)), 0),
-    [mergedVillages],
+    () => villages.reduce((best, village) => Math.max(best, calculateVillageDevelopment(village.buildingLevels)), 0),
+    [villages],
   );
-  const questsCompleted = world.id === "world-test" ? imperialState.sandboxQuestsCompleted : world.sovereignty.eraQuestsCompleted;
-  const wondersControlled = world.id === "world-test" ? imperialState.sandboxWondersBuilt : world.sovereignty.wondersControlled;
-  const buildId = useMemo(() => resolveBuild(undefined, activeVillage?.cityClass), [activeVillage?.cityClass]);
+  const questsCompleted = params.worldId === "world-test" ? imperialState.sandboxQuestsCompleted : world.sovereignty.eraQuestsCompleted;
+  const wondersControlled = params.worldId === "world-test" ? imperialState.sandboxWondersBuilt : world.sovereignty.wondersControlled;
+  const tribeStage = calculateTribeProgressStage({
+    currentDay: world.day,
+    tribeEnvoysCommitted: imperialState.tribeEnvoysCommitted ?? 0,
+    kingAlive: world.sovereignty.kingAlive,
+  });
+  const population = useMemo(
+    () =>
+      villages.reduce(
+        (total, village) => {
+          const capacity = Math.min(100, Math.max(0, Math.floor((village.buildingLevels.housing ?? 0) * 10)));
+          const production = imperialState.productionWorkersByVillage[village.id] ?? { materials: 0, supplies: 0, commerce: 0, logistics: 0 };
+          const jobs = imperialState.jobsByVillage[village.id] ?? { medics: 0, crafts: 0, order: 0, scholars: 0 };
+          const recruits = imperialState.recruitsByVillage[village.id] ?? { militia: 0, shooters: 0, scouts: 0, machinery: 0 };
+          const defense = imperialState.defenseRecruitsByVillage[village.id] ?? { guards: 0, archers: 0, ballistae: 0 };
+          const employed = sumValues(production) + sumValues(jobs);
+          const recruited = sumValues(recruits);
+          const defended = sumValues(defense);
+          const current = Math.min(capacity, Math.max(employed + recruited + defended, imperialState.populationByVillage[village.id] ?? capacity));
+          return {
+            current: total.current + current,
+            capacity: total.capacity + capacity,
+            employed: total.employed + employed,
+            recruited: total.recruited + recruited,
+          };
+        },
+        { current: 0, capacity: 0, employed: 0, recruited: 0 },
+      ),
+    [
+      imperialState.defenseRecruitsByVillage,
+      imperialState.jobsByVillage,
+      imperialState.populationByVillage,
+      imperialState.productionWorkersByVillage,
+      imperialState.recruitsByVillage,
+      villages,
+    ],
+  );
+  const buildId = useMemo(() => resolveBuild(undefined, activeVillage.cityClass), [activeVillage.cityClass]);
   const guide = useMemo(
     () =>
       buildGuide(buildId, world.day, {
-        villageCount: mergedVillages.length,
+        villageCount: villages.length,
         highestDevelopment,
         heroCount,
         wonders: wondersControlled,
         quests: questsCompleted,
       }),
-    [buildId, heroCount, highestDevelopment, mergedVillages.length, questsCompleted, wondersControlled, world.day],
+    [buildId, heroCount, highestDevelopment, questsCompleted, villages.length, wondersControlled, world.day],
   );
-  const alertDeck = useMemo(
-    () =>
-      buildPlayerAlertDeck({
-        currentDay: world.day,
-        worldPhase: world.phase,
-        activeAlerts: world.activeAlerts,
-        activeVillage,
-        villages: mergedVillages,
-        imperialState,
-        guide,
-        heroCount,
-        highestDevelopment,
-        questsCompleted,
-        wondersControlled,
-      }),
-    [
+  const alertInput = useMemo(
+    () => ({
+      currentDay: world.day,
+      worldPhase: world.phase,
+      activeAlerts: world.activeAlerts,
       activeVillage,
-      guide,
-      heroCount,
-      highestDevelopment,
+      villages,
       imperialState,
-      mergedVillages,
+      guide,
+      heroCount: Math.max(world.sovereignty.councilHeroes, heroCount),
+      highestDevelopment,
       questsCompleted,
       wondersControlled,
-      world.activeAlerts,
-      world.day,
-      world.phase,
-    ],
+      militaryRankingPoints: world.sovereignty.militaryRankingPoints,
+      tribeDomeUnlocked: world.sovereignty.tribeDomeUnlocked || imperialState.sandboxDomeActive,
+      tribeLoyaltyStage: world.sovereignty.tribeLoyaltyStage ?? tribeStage,
+      kingAlive: world.sovereignty.kingAlive,
+      populationCurrent: population.current,
+      populationCapacity: population.capacity,
+      employedPopulation: population.employed,
+      recruitedPopulation: population.recruited,
+    }),
+    [activeVillage, guide, heroCount, highestDevelopment, imperialState, population, questsCompleted, tribeStage, villages, wondersControlled, world.activeAlerts, world.day, world.phase, world.sovereignty],
   );
+  const alertDeck = useMemo(() => buildPlayerAlertDeck(alertInput), [alertInput]);
+  const snapshot = useMemo(() => buildPlayerCommandSnapshot(alertInput), [alertInput]);
+  const cards = useMemo(() => [alertDeck.primary, ...alertDeck.secondary], [alertDeck]);
+  const pendingDecision = cards.find((card) => card.kind === "decision") ?? null;
+  const playerFacingAlerts = useMemo(() => world.activeAlerts.filter(isPlayerFacingAlert), [world.activeAlerts]);
+  const urgentAlert = imperialState.resources.supplies <= 0
+    ? "Suprimentos zerados: tropas e rotas podem parar."
+    : snapshot.attackedCities > 0
+      ? `${snapshot.attackedCities} cidade(s) sob ataque.`
+      : snapshot.activeDeficits > 0
+        ? `${snapshot.activeDeficits} cidade(s) com produção em déficit.`
+        : playerFacingAlerts[0] ?? (alertDeck.primary.severity !== "low" ? alertDeck.primary.title : null);
+  const nextActionTab: WorldTab = guide.recommendedTab === "intelligence" ? "empire" : guide.recommendedTab;
+  const influenceProgress = Math.max(0, Math.min(100, Math.round((snapshot.influence / snapshot.portalCut) * 100)));
 
-  const handleAlertChoice = (choice: PlayerAlertChoice) => {
-    if (!choice.tab) {
-      emitUiFeedback("tap", "light");
-      return;
-    }
+  const activities = useMemo<ActivityEntry[]>(() => {
+    const alerts: ActivityEntry[] = playerFacingAlerts.slice(0, 2).map((alert, index) => ({
+      id: `alert-${index}`,
+      title: "Alerta do reino",
+      detail: alert,
+      meta: `Dia ${world.day}`,
+      tone: /horda|ataque|portal|corte/i.test(alert) ? "danger" : "warning",
+    }));
+    const actions: ActivityEntry[] = imperialState.logs.slice(0, 3).map((log, index) => ({
+      id: `action-${index}`,
+      title: "Ação computada",
+      detail: log,
+      meta: "Registro do reino",
+      tone: "info",
+    }));
+    const reports: ActivityEntry[] = world.reports.slice(0, 3).map((report) => ({
+      id: report.id,
+      title: report.title,
+      detail: report.summary,
+      meta: report.time,
+      tone: report.category === "combate" ? "warning" : report.category === "economia" ? "success" : "info",
+    }));
+    return [...alerts, ...actions, ...reports].slice(0, 6);
+  }, [imperialState.logs, playerFacingAlerts, world.day, world.reports]);
 
-    const paramsQuery = new URLSearchParams();
-    Object.entries(choice.query ?? {}).forEach(([key, value]) => paramsQuery.set(key, value));
-    window.location.assign(`/world/${params.worldId}/${choice.tab}${paramsQuery.toString() ? `?${paramsQuery.toString()}` : ""}`);
-  };
-
-  const alertEntries = useMemo<FeedEntry[]>(
-    () =>
-      world.activeAlerts.map((alert, index) => {
-        const tone = classifyAlert(alert);
-        return {
-          id: `alert-${index + 1}`,
-          kind: "alertas",
-          title: "Alerta vital",
-          summary: alert,
-          time: `Dia ${world.day}`,
-          utility: alertUtility(alert),
-          badge: tone.badge,
-          cardClass: tone.cardClass,
-          icon: AlertTriangle,
-        };
-      }),
-    [world.activeAlerts, world.day],
-  );
-
-  const reportEntries = useMemo<FeedEntry[]>(() => {
-    return world.reports.map((report) => {
-      if (report.category === "combate") {
-        const loss = pickLossPercent(report.details);
-        const win = /repelido|conquistada|confirmado|vitoria/i.test(`${report.title} ${report.summary}`);
-        const tone = classifyCombat(loss, win);
-        return {
-          id: report.id,
-          kind: "combate",
-          title: report.title,
-          summary: `${win ? "Vitória" : "Conflito"} · perdas ${loss}%`,
-          time: report.time,
-          utility: usefulCombatRead(report.title, report.summary, loss),
-          badge: tone.badge,
-          cardClass: tone.cardClass,
-          icon: Swords,
-        } satisfies FeedEntry;
-      }
-
-      if (report.category === "economia") {
-        return {
-          id: report.id,
-          kind: "economia",
-          title: report.title,
-          summary: report.summary,
-          time: report.time,
-          utility: economyUtility(`${report.title} ${report.summary} ${report.details.join(" ")}`),
-          badge: "Economia",
-          cardClass: "border-emerald-300/35 bg-emerald-500/10 text-emerald-100",
-          icon: Coins,
-        } satisfies FeedEntry;
-      }
-
-      return {
-        id: report.id,
-        kind: "movimento",
-        title: report.title,
-        summary: report.summary,
-        time: report.time,
-        utility: movementUtility(`${report.title} ${report.summary} ${report.details.join(" ")}`),
-        badge: report.category === "espionagem" ? "Espia" : "Movimento",
-        cardClass: "border-sky-300/35 bg-sky-500/10 text-sky-100",
-        icon: Bell,
-      } satisfies FeedEntry;
-    });
-  }, [world.reports]);
-
-  const actionEntries = useMemo<FeedEntry[]>(
-    () =>
-      imperialState.logs.map((log, index) => ({
-        id: `action-${index + 1}`,
-        kind: "ações",
-        title: "Ação do reino",
-        summary: log,
-        time: "agora",
-        utility: movementUtility(log),
-        badge: "Ação",
-        cardClass: "border-cyan-300/35 bg-cyan-500/10 text-cyan-100",
-        icon: Bell,
-      })),
-    [imperialState.logs],
-  );
-
-  const feed = useMemo(
-    () => [...alertEntries, ...actionEntries, ...reportEntries],
-    [actionEntries, alertEntries, reportEntries],
-  );
-
-  const criticalAlerts = alertEntries.filter((entry) => entry.badge === "Crítico").length;
-  const combatEntries = reportEntries.filter((entry) => entry.kind === "combate");
-  const harshCombats = combatEntries.filter((entry) => entry.badge === "Choque").length;
-  const unreadCombat = world.reports.filter((entry) => entry.category === "combate" && entry.unread).length;
-  const pendingActions = actionEntries.length;
-  const primaryChoice = alertDeck.primary.choices.find((choice) => choice.tab) ?? alertDeck.primary.choices[0] ?? null;
-  const riskLabel = criticalAlerts > 0 ? "Crítico" : harshCombats > 0 ? "Atenção" : "Controlado";
-  const riskClass = criticalAlerts > 0
-    ? "border-rose-300/35 bg-rose-500/12 text-rose-50"
-    : harshCombats > 0
-      ? "border-amber-300/35 bg-amber-500/12 text-amber-50"
-      : "border-emerald-300/35 bg-emerald-500/10 text-emerald-50";
-
-  const jumpTo = (tab: string, query?: Record<string, string>) => {
-    const paramsQuery = new URLSearchParams();
-    paramsQuery.set("v", activeVillage.id);
-    Object.entries(query ?? {}).forEach(([key, value]) => paramsQuery.set(key, value));
+  const navigate = (tab: WorldTab, query?: Record<string, string>) => {
+    const next = new URLSearchParams();
+    next.set("v", activeVillage.id);
+    Object.entries(query ?? {}).forEach(([key, value]) => next.set(key, value));
     emitUiFeedback("open", "medium");
-    window.location.assign(`/world/${params.worldId}/${tab}${paramsQuery.toString() ? `?${paramsQuery.toString()}` : ""}`);
+    window.location.assign(`/world/${params.worldId}/${tab}?${next.toString()}`);
   };
 
-  const decisionsTop = [alertDeck.primary, ...alertDeck.secondary].slice(0, 3);
-  const senateMeeting = imperialState.senate.activeMeeting;
-  const hasSenateMeeting = Boolean(senateMeeting);
+  const handleChoice = (choice: PlayerAlertChoice) => {
+    if (choice.tab) navigate(choice.tab, choice.query);
+  };
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-3 pb-4" data-smoke="command-center">
       {params.worldId === "world-test" ? (
-        <TimeOfDestinyPanel
-          currentDay={world.day}
-          villages={mergedVillages}
-          imperialState={imperialState}
-          activeAlerts={world.activeAlerts}
-        />
+        <TimeOfDestinyPanel currentDay={world.day} villages={villages} imperialState={imperialState} activeAlerts={world.activeAlerts} />
       ) : null}
 
-      <article
-        className="relative overflow-hidden rounded-[30px] border border-white/14 p-3 text-slate-100 shadow-[0_20px_60px_rgba(2,6,23,0.28)]"
-        style={{
-          backgroundImage:
-            "linear-gradient(145deg, rgba(2,6,23,0.42), rgba(2,6,23,0.92)), url('/images/card-opportunity.jpg')",
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-        }}
-      >
-        <div className="relative z-10 flex items-start justify-between gap-3">
+      <section className="overflow-hidden rounded-[24px] border border-cyan-200/20 bg-slate-950/74 shadow-[0_18px_52px_rgba(2,6,23,0.34)]">
+        <div className="flex items-center justify-between gap-3 px-4 pt-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/80">Hoje no Reino</p>
-            <h2 className="mt-1 text-xl font-black leading-tight text-slate-50">Dia {world.day}: ordem da Coroa</h2>
-            <p className="mt-1 text-[12px] leading-5 text-slate-200">{guide.nextAction}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-200">Comando</p>
+            <h1 className="mt-0.5 text-lg font-black text-slate-50">Chegue vivo ao Portal</h1>
           </div>
-          <span className={`shrink-0 rounded-2xl border px-2.5 py-2 text-center text-[10px] font-black uppercase tracking-[0.12em] ${riskClass}`}>
-            {riskLabel}
-          </span>
+          <span className="shrink-0 text-right text-[11px] font-bold text-slate-300">Dia {world.day}/{world.durationDays}</span>
         </div>
-
-        <div className="relative z-10 mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-2xl border border-white/10 bg-slate-950/42 p-2 backdrop-blur-md">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">O que mudou</p>
-            <p className="mt-1 text-[12px] font-bold leading-5 text-slate-100">{guide.checkpoints[0]}</p>
+        <div className="px-4 pb-4 pt-3">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Influência</p>
+              <p className="mt-0.5 text-2xl font-black text-cyan-100">{snapshot.influence.toLocaleString("pt-BR")} <span className="text-sm text-slate-400">/ {snapshot.portalCut}</span></p>
+            </div>
+            <p className="text-right text-[11px] font-semibold text-slate-300">{snapshot.portalEligible ? "Portal liberado" : `Faltam ${snapshot.portalGap.toLocaleString("pt-BR")}`}</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-950/42 p-2 backdrop-blur-md">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Plano atual</p>
-            <p className="mt-1 text-base font-black text-emerald-100">{guide.build.label}</p>
-            <p className="text-[10px] text-slate-300">{mergedVillages.length} cidades · {heroCount}/10 heróis</p>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Progresso de Influência para o Portal" aria-valuenow={snapshot.influence} aria-valuemin={0} aria-valuemax={snapshot.portalCut}>
+            <div className="h-full rounded-full bg-cyan-300" style={{ width: `${influenceProgress}%` }} />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-semibold text-slate-300">
+            <span>{villages.length} cidades</span>
+            <span>{snapshot.totalTroops.toLocaleString("pt-BR")} tropas</span>
+            <span>{snapshot.exploredAreas} áreas exploradas</span>
           </div>
         </div>
+      </section>
 
-        <div className="relative z-10 mt-3 grid grid-cols-2 gap-2">
-          {primaryChoice?.tab ? (
-            <button
-              type="button"
-              onClick={() => handleAlertChoice(primaryChoice)}
-              className="inline-flex items-center justify-center gap-1 rounded-2xl border border-amber-300/35 bg-amber-500/16 px-3 py-3 text-[11px] font-black text-amber-50"
-            >
-              <Target className="h-4 w-4" />
-              Executar ordem
-            </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => jumpTo(guide.recommendedTab)}
-            className="inline-flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/35 bg-cyan-500/16 px-3 py-3 text-[11px] font-black text-cyan-50"
-          >
-            <Compass className="h-4 w-4" />
-            Abrir {guide.recommendedTab === "base" ? "Cidades" : guide.recommendedTab === "board" ? "Mundo" : guide.recommendedTab === "empire" ? "Império" : "Intel"}
-          </button>
+      <section className={`rounded-[22px] border px-3.5 py-3 ${urgentAlert ? "border-rose-300/30 bg-rose-500/10" : "border-emerald-300/25 bg-emerald-500/8"}`}>
+        <div className="flex items-start gap-3">
+          {urgentAlert ? <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-rose-200" /> : <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-200" />}
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-300">Risco agora</p>
+            <p className="mt-1 text-[13px] font-bold leading-5 text-slate-50">{urgentAlert ?? "Nenhuma ameaça imediata"}</p>
+          </div>
         </div>
-      </article>
+      </section>
 
-      <article className="kw-glass rounded-3xl p-3">
+      <section className="rounded-[24px] border border-amber-300/30 bg-amber-500/10 p-3.5">
+        <div className="flex items-center gap-2 text-amber-100">
+          <Compass className="h-4 w-4" />
+          <p className="text-[10px] font-black uppercase tracking-[0.14em]">Melhor jogada</p>
+        </div>
+        <p className="mt-2 text-[15px] font-black leading-5 text-slate-50">{guide.nextAction}</p>
+        <button type="button" onClick={() => navigate(nextActionTab)} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300 px-3 py-2.5 text-[12px] font-black text-slate-950 active:scale-[0.98]">
+          Ir para {tabLabels[nextActionTab]}
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </section>
+
+      <section className="border-y border-white/10 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Decisão pendente</p>
+            <p className="mt-1 text-[13px] font-bold text-slate-100">{pendingDecision?.title ?? "Nenhuma decisão esperando resposta"}</p>
+          </div>
+          {pendingDecision ? <button type="button" onClick={() => setOpenedDecision(pendingDecision)} className="shrink-0 rounded-xl border border-cyan-300/35 bg-cyan-500/12 px-3 py-2 text-[11px] font-black text-cyan-100">Decidir</button> : null}
+        </div>
+      </section>
+
+      <section className="pt-1">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="kw-title text-base">Riscos e decisões</h2>
-          <span className="kw-subtle text-[11px]">{hasSenateMeeting ? "Senado ativo" : "Run ativa"}</span>
+          <div className="flex items-center gap-2"><Bell className="h-4 w-4 text-cyan-200" /><h2 className="text-sm font-black text-slate-100">Atividade recente</h2></div>
+          <span className="text-[10px] font-semibold text-slate-400">{activities.length} registros</span>
         </div>
-
-        {hasSenateMeeting ? (
-          <button
-            type="button"
-            onClick={() => jumpTo("empire", { s: "meeting" })}
-            className="mb-2 w-full rounded-2xl border border-amber-300/35 bg-amber-500/14 p-2 text-left"
-          >
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-100">Reunião do Senado</p>
-            <p className="mt-1 text-[13px] font-bold text-amber-50">{senateMeeting?.title}</p>
-            <p className="mt-1 text-[11px] text-amber-100/90">Atalho no Império para decidir agora.</p>
-          </button>
-        ) : null}
-
-        <div className="grid grid-cols-3 gap-2">
-          {decisionsTop.map((card) => (
-            <button
-              key={card.id}
-              type="button"
-              onClick={() => {
-                emitUiFeedback("open", "light");
-                setOpenedDecision(card);
-              }}
-              className="rounded-2xl border border-white/12 bg-white/7 p-2 text-left"
-            >
-              <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-300">{card.severity}</p>
-              <p className="mt-1 text-[12px] font-bold leading-4 text-slate-50">{card.title}</p>
-              <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-300">{card.reason}</p>
-            </button>
-          ))}
-        </div>
-      </article>
-
-      <article className="kw-glass rounded-3xl p-3">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="kw-title text-base">Eventos recentes</h2>
-          <span className="kw-subtle text-[11px]">{feed.length} sinais</span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          <div className={`rounded-2xl border p-2 ${criticalAlerts > 0 ? "border-rose-300/35 bg-rose-500/12" : "border-white/10 bg-white/5"}`}>
-            <ShieldAlert className="h-4 w-4 text-rose-200" />
-            <p className="mt-1 text-lg font-black text-slate-50">{criticalAlerts}</p>
-            <p className="text-[10px] text-slate-300">urgente</p>
+        {activities.length > 0 ? (
+          <div className="space-y-1.5">
+            {activities.map((entry) => (
+              <article key={entry.id} className={`flex items-start gap-2.5 rounded-xl border px-3 py-2 ${activityToneClass(entry.tone)}`}>
+                {entry.tone === "danger" ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-200" /> : entry.tone === "warning" ? <Swords className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" /> : <MapPinned className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" />}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-2"><p className="truncate text-[11px] font-black text-slate-100">{entry.title}</p><span className="shrink-0 text-[9px] text-slate-400">{entry.meta}</span></div>
+                  <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-slate-300">{entry.detail}</p>
+                </div>
+              </article>
+            ))}
           </div>
-          <div className={`rounded-2xl border p-2 ${harshCombats > 0 ? "border-amber-300/35 bg-amber-500/12" : "border-white/10 bg-white/5"}`}>
-            <Swords className="h-4 w-4 text-amber-200" />
-            <p className="mt-1 text-lg font-black text-slate-50">{harshCombats}</p>
-            <p className="text-[10px] text-slate-300">combate caro</p>
-          </div>
-          <div className={`rounded-2xl border p-2 ${pendingActions > 0 ? "border-cyan-300/35 bg-cyan-500/12" : "border-white/10 bg-white/5"}`}>
-            <Bell className="h-4 w-4 text-cyan-200" />
-            <p className="mt-1 text-lg font-black text-slate-50">{pendingActions}</p>
-            <p className="text-[10px] text-slate-300">ações</p>
-          </div>
-        </div>
-
-        <div className="mt-2 rounded-2xl border border-white/10 bg-white/5 p-3">
-          <p className="text-[11px] font-bold text-slate-100">
-            {criticalAlerts > 0
-              ? "Prioridade: resolver alerta antes de gastar."
-              : unreadCombat > 0
-                ? "Prioridade: ler combate antes de atacar de novo."
-                : "Prioridade: ajustar cidade/build e confirmar se salvou."}
-          </p>
-        </div>
-
-        <div className="mt-3 -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">
-          {feed.slice(0, 16).map((entry) => (
-            <article
-              key={entry.id}
-              className={`min-w-[220px] snap-start rounded-2xl border p-2 ${entry.cardClass}`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em]">{entry.badge}</p>
-                <entry.icon className="h-3.5 w-3.5" />
-              </div>
-              <p className="mt-1 text-[12px] font-bold text-slate-50">{entry.title}</p>
-              <p className="mt-1 text-[10px] leading-4 text-slate-200">{entry.summary}</p>
-              <p className="mt-1 text-[10px] leading-4 text-slate-300">{entry.utility}</p>
-            </article>
-          ))}
-        </div>
-      </article>
+        ) : <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-center text-[11px] text-slate-400">O reino está quieto. Sua próxima ação aparecerá aqui.</div>}
+      </section>
 
       {openedDecision ? (
         <div className="fixed inset-0 z-[90]">
-          <button
-            type="button"
-            aria-label="Fechar decisão"
-            onClick={() => setOpenedDecision(null)}
-            className="absolute inset-0 bg-slate-950/76 backdrop-blur-sm"
-          />
-          <div className="absolute inset-x-4 top-[calc(env(safe-area-inset-top)+72px)] bottom-[calc(env(safe-area-inset-bottom)+16px)] mx-auto flex w-full max-w-md">
-            <article
-              className="relative w-full overflow-hidden rounded-[28px] border border-white/15 p-3 text-slate-100"
-              style={{
-                backgroundImage:
-                  "linear-gradient(160deg, rgba(2,6,23,0.2), rgba(2,6,23,0.82)), url('/images/card-opportunity.jpg')",
-                backgroundPosition: "center",
-                backgroundSize: "cover",
-              }}
-            >
+          <button type="button" aria-label="Fechar decisão" onClick={() => setOpenedDecision(null)} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
+          <div className="absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+16px)] top-[calc(env(safe-area-inset-top)+72px)] mx-auto flex w-full max-w-md items-end">
+            <article className="w-full rounded-[24px] border border-white/15 bg-slate-950 p-4 text-slate-100 shadow-2xl">
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-300">{openedDecision.severity}</p>
-                  <h3 className="mt-1 text-xl font-black text-slate-50">{openedDecision.title}</h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setOpenedDecision(null)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/20 text-slate-50"
-                >
-                  ×
-                </button>
+                <div><p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-200">Decisão do reino</p><h3 className="mt-1 text-lg font-black text-slate-50">{openedDecision.title}</h3></div>
+                <button type="button" aria-label="Fechar" onClick={() => setOpenedDecision(null)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 text-slate-200"><X className="h-4 w-4" /></button>
               </div>
-              <p className="mt-2 text-[12px] leading-5 text-slate-100">{openedDecision.situation}</p>
-              <p className="mt-2 text-[11px] leading-5 text-slate-200">{openedDecision.impact}</p>
-              <div className="mt-3 grid gap-2">
+              <p className="mt-3 text-[12px] leading-5 text-slate-200">{openedDecision.situation}</p>
+              <p className="mt-2 text-[11px] leading-5 text-slate-400">{openedDecision.impact}</p>
+              <div className="mt-4 space-y-2">
                 {openedDecision.choices.map((choice) => (
-                  <button
-                    key={choice.id}
-                    type="button"
-                    onClick={() => {
-                      handleAlertChoice(choice);
-                      setOpenedDecision(null);
-                    }}
-                    className="rounded-xl border border-cyan-300/35 bg-cyan-500/16 px-2.5 py-2 text-left text-[11px] font-semibold text-cyan-50"
-                  >
-                    {choice.label}
-                    {choice.note ? <p className="mt-1 text-[10px] font-normal text-cyan-100/85">{choice.note}</p> : null}
+                  <button key={choice.id} type="button" onClick={() => handleChoice(choice)} className="w-full rounded-xl border border-cyan-300/30 bg-cyan-500/10 px-3 py-2.5 text-left">
+                    <span className="text-[12px] font-black text-cyan-50">{choice.label}</span>
+                    {choice.note ? <span className="mt-1 block text-[10px] leading-4 text-cyan-100/80">{choice.note}</span> : null}
                   </button>
                 ))}
               </div>

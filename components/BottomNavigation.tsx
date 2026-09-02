@@ -6,14 +6,14 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import { emitUiFeedback } from "@/lib/ui-feedback";
 
 const tabs = [
-  { key: "empire", label: "Império", iconSrc: "/icons/nav-empire.png", center: false },
   { key: "base", label: "Cidades", iconSrc: "/icons/nav-cities.png", center: false },
   { key: "intelligence", label: "Comando", iconSrc: "/icons/nav-intel.png", center: true },
   { key: "board", label: "Mundo", iconSrc: "/icons/nav-world.png", center: false },
-  { key: "guide", label: "Perfil", iconSrc: "/icons/nav-profile.png", center: false },
+  { key: "empire", label: "Império", iconSrc: "/icons/nav-empire.png", center: false },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
+type ActiveWorldTab = TabKey | "guide";
 
 export function BottomNavigation({
   worldId,
@@ -23,13 +23,13 @@ export function BottomNavigation({
   attention,
 }: {
   worldId: string;
-  activeTab: TabKey;
+  activeTab: ActiveWorldTab;
   villageId: string;
   evolutionMode?: string | null;
   attention?: Partial<Record<TabKey, boolean>>;
 }) {
   const router = useRouter();
-  const [optimisticTab, setOptimisticTab] = useState<TabKey>(activeTab);
+  const [optimisticTab, setOptimisticTab] = useState<ActiveWorldTab>(activeTab);
 
   useEffect(() => {
     setOptimisticTab(activeTab);
@@ -81,7 +81,7 @@ export function BottomNavigation({
     >
       <div className="mx-auto w-full max-w-md">
         <div className="kw-hud-panel relative rounded-[22px] px-1.5 py-1">
-          <div className="grid grid-cols-5 items-center gap-0.5">
+          <div className="grid grid-cols-4 items-center gap-1">
             {tabs.map((tab) => {
               const isActive = tab.key === optimisticTab;
               const needsAttention = Boolean(attention?.[tab.key]) && !isActive;
@@ -98,7 +98,7 @@ export function BottomNavigation({
                     } ${needsAttention ? "world-nav__attention" : ""}`}
                   >
                     <img src={tab.iconSrc} alt="" className="h-9 w-9 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]" />
-                    <span className="mt-0.5 text-[8px] font-bold tracking-[0.02em]">CMD</span>
+                    <span className="mt-0.5 text-[7px] font-bold tracking-[0.02em]">Comando</span>
                     {needsAttention ? <span className="world-nav__attention-dot" aria-hidden /> : null}
                   </button>
                 );
