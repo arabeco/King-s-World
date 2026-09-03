@@ -584,7 +584,7 @@ async function registerMapMovement(
   return stored;
 }
 
-export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: initialDay, sovereigntyScore: initialSovereigntyScore, readOnly = false, worldStarted = true }: StrategicMapProps) {
+export function StrategicMap({ worldId, worldRouteId = worldId, tribeName, sites, villages, currentDay: initialDay, sovereigntyScore: initialSovereigntyScore, readOnly = false, worldStarted = true }: StrategicMapProps) {
   const { world: liveWorld } = useLiveWorldContext();
   const currentDay = liveWorld.day ?? initialDay;
   const { imperialState, setImperialState } = useImperialStateContext();
@@ -694,8 +694,8 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   const zoomNavigationLockUntilRef = useRef(0);
   const initialViewAppliedRef = useRef(false);
 
-  const [zoom, setZoom] = useState(DEFAULT_WORLD_ZOOM);
-  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(4);
+  const [zoom, setZoom] = useState(ZOOM_LEVEL_SCALE[3]);
+  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(3);
   const [zoomCinematic, setZoomCinematic] = useState(false);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 });
@@ -2000,6 +2000,9 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   }, [marchOrigin, world.centerByKey, world.centerPoint.x, world.centerPoint.y]);
 
   const selectedStrategicNode = selectedCoordKey ? (strategicNodeByKey.get(selectedCoordKey) ?? null) : null;
+  const selectedManagedVillage = selectedSite?.faction === "self"
+    ? playerCities.find((village) => village.name === selectedSite.name) ?? null
+    : null;
 
   const buildCost = useMemo(() => {
     const targetKind =
@@ -2274,10 +2277,11 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     initialViewAppliedRef.current = true;
 
     if (ownCapitalSite) {
-      setZoomLevel(4);
-      setZoom(DEFAULT_WORLD_ZOOM);
-      setOffset(centerOn(ownCapitalSite, DEFAULT_WORLD_ZOOM));
-      setSelectedCoordKey(ownCapitalSite.coordKey);
+      const initialZoom = ZOOM_LEVEL_SCALE[3];
+      setZoomLevel(3);
+      setZoom(initialZoom);
+      setOffset(centerOn(ownCapitalSite, initialZoom));
+      setSelectedCoordKey(null);
       setInspectedCoordKey(ownCapitalSite.coordKey);
       setDetailOpen(false);
       return;
@@ -2345,21 +2349,11 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   };
 
   const swallowHudPointer: React.PointerEventHandler<HTMLElement> = (event) => {
-    event.preventDefault();
     event.stopPropagation();
-    suppressViewportTapRef.current = true;
-    window.setTimeout(() => {
-      suppressViewportTapRef.current = false;
-    }, 360);
   };
 
   const swallowHudClick: React.MouseEventHandler<HTMLElement> = (event) => {
-    event.preventDefault();
     event.stopPropagation();
-    suppressViewportTapRef.current = true;
-    window.setTimeout(() => {
-      suppressViewportTapRef.current = false;
-    }, 360);
   };
 
   const focusWorldView = () => {
@@ -2443,6 +2437,24 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     setInspectedCoordKey(coordKey);
     setDetailOpen(sameTarget);
     setOffset(centerOnPoint(tile.center, zoom));
+  };
+
+  const handleStrategicNodeInteraction = (coordKey: string) => {
+    const tile = tileByCoordKey.get(coordKey);
+    if (!tile) return;
+
+    emitUiFeedback("tap", "light");
+    if (zoomLevel < 4) {
+      setSelectedCoordKey(coordKey);
+      setInspectedCoordKey(coordKey);
+      setDetailOpen(true);
+      setMovementDraft(null);
+      setMovementMessage(null);
+      applyZoomLevel(4, tile.center);
+      return;
+    }
+
+    handleCoordInteraction(coordKey);
   };
 
   const handlePointerDown: React.PointerEventHandler<HTMLDivElement> = (event) => {
@@ -3060,15 +3072,18 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         chipClass: "border-rose-300/75 bg-rose-500/25 text-rose-100",
         label: "Portal Central Bloqueado",
       };
+  const selectedActiveRoute = selectedTile
+    ? activeMovementRoutes.find((route) => route.routeKeys.includes(selectedTile.coordKey)) ?? null
+    : null;
   const selectedMapStatus = submittingExploration
     ? "EXPLORANDO"
-    : selectedDiscovery || (selectedTile && visitedCoordKeys.has(selectedTile.coordKey))
-      ? "RETORNANDO"
+    : selectedActiveRoute
+      ? selectedActiveRoute.commandAction === "explore" ? "EXPLORANDO" : "EM MARCHA"
       : "PARADO";
   const selectedMapStatusClass =
     selectedMapStatus === "EXPLORANDO"
       ? "border-cyan-300/70 bg-cyan-500/22 text-cyan-50"
-      : selectedMapStatus === "RETORNANDO"
+      : selectedMapStatus === "EM MARCHA"
         ? "border-amber-300/70 bg-amber-500/20 text-amber-100"
         : "border-slate-300/35 bg-slate-500/12 text-slate-200";
   const selectedTileHidden = Boolean(selectedTile && !selectedCoordKnown && !selectedTile.isCentralThrone);
@@ -3125,7 +3140,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         >
           <div
             ref={mapLayerRef}
-            className="absolute left-0 top-0"
+            className="absolute left-0 top-0 z-[4]"
             style={{
               width: world.width,
               height: world.height,
@@ -3420,33 +3435,13 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 <button
                   key={`node-${node.coordKey}`}
                   type="button"
-                  onPointerDown={
-                    zoomLevel === 4
-                      ? (event) => {
-                          suppressViewportTapRef.current = true;
-                          event.stopPropagation();
-                        }
-                      : undefined
-                  }
-                  onPointerUp={
-                    zoomLevel === 4
-                      ? (event) => {
-                          suppressViewportTapRef.current = true;
-                          event.stopPropagation();
-                        }
-                      : undefined
-                  }
-                  onClick={
-                    zoomLevel === 4
-                      ? (event) => {
-                          event.stopPropagation();
-                          suppressViewportTapRef.current = true;
-                          emitUiFeedback("tap", "light");
-                          handleCoordInteraction(node.coordKey);
-                        }
-                      : undefined
-                  }
-                  className={`absolute transition-all duration-200 ${zoomLevel === 4 ? "" : "pointer-events-none"}`}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onPointerUp={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleStrategicNodeInteraction(node.coordKey);
+                  }}
+                  className="absolute transition-all duration-200"
                   style={{
                     left: node.center.x,
                     top: node.center.y,
@@ -3456,6 +3451,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     zIndex: node.isSelected ? 12 : node.isPressured ? 10 : node.isOwned || node.isEnemy ? 9 : 6,
                   }}
                   title={`${node.label} · ${node.caption}`}
+                  aria-label={`${node.label} · ${node.caption}`}
                 >
                   {node.isPressured || node.hasRouteActivity ? (
                     <span
@@ -3789,7 +3785,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
           <aside
             data-smoke="map-detail-sheet"
-            className={`absolute inset-x-3 z-30 max-h-[54vh] overflow-y-auto rounded-2xl border border-cyan-300/24 bg-black/82 p-3 text-slate-100 shadow-[0_0_42px_rgba(34,211,238,0.14)] backdrop-blur-xl transition-all duration-300 ${
+            className={`absolute inset-x-3 z-30 max-h-[54vh] overflow-x-hidden overflow-y-auto rounded-2xl border border-cyan-300/24 bg-black/82 p-3 text-slate-100 shadow-[0_0_42px_rgba(34,211,238,0.14)] backdrop-blur-xl transition-all duration-300 ${
               selectedTile && detailOpen && zoomLevel === 4 ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[110%] opacity-0"
             }`}
             style={{ bottom: "calc(env(safe-area-inset-bottom) + 58px)" }}
@@ -3839,6 +3835,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     className="rounded-full border border-white/30 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-100 hover:bg-white/20"
                     onClick={() => {
                       setSelectedCoordKey(null);
+                      setDetailOpen(false);
                       setMovementDraft(null);
                       setMovementMessage(null);
                     }}
@@ -3920,34 +3917,24 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   </div>
                 ) : null}
 
-                <div className="mt-3 grid grid-cols-4 gap-1.5 text-center text-[10px] font-bold">
+                <div className="mt-3 grid grid-cols-3 gap-1.5 text-center text-[10px] font-bold">
                   <div className="rounded-xl border border-white/10 bg-white/[0.045] p-2">
-                    <span className="block text-slate-500">ETA</span>
+                    <span className="block text-slate-500">TEMPO</span>
                     <span className="mt-1 block text-slate-100">{formatMinutesLabel(routeSummary.totalMinutes)}</span>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/[0.045] p-2">
-                    <span className="block text-slate-500">DIST</span>
+                    <span className="block text-slate-500">DISTÂNCIA</span>
                     <span className="mt-1 block text-slate-100">{routeSummary.hexCount}</span>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/[0.045] p-2">
-                    <span className="block text-slate-500">TIPO</span>
-                    <span className="mt-1 block truncate text-slate-100">
+                    <span className="block text-slate-500">TERRENO</span>
+                    <span className="mt-1 flex min-h-6 items-center justify-center text-[9px] leading-3 text-slate-100">
                       {selectedTileHidden
                         ? "Oculto"
-                        : selectedDiscovery
-                        ? discoveryTypeLabel(selectedDiscovery.type)
-                        : selectedSite?.occupationKind === "abandoned_city"
-                          ? "Vazia"
-                          : selectedSite?.faction === "enemy"
-                            ? "Hostil"
-                            : selectedTile.isCentralThrone
-                              ? "Portal"
-                              : "Livre"}
+                        : selectedTile.isCentralThrone
+                          ? "Portal"
+                          : selectedSite?.terrainLabel ?? TERRAIN_META[selectedTile.terrainKind].label}
                     </span>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.045] p-2">
-                    <span className="block text-slate-500">STATUS</span>
-                    <span className="mt-1 block truncate text-slate-100">{selectedMapStatus}</span>
                   </div>
                 </div>
 
@@ -3955,6 +3942,10 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   <p>
                     {selectedTileHidden
                       ? "Conteúdo oculto. Envie exploração para revelar cidade, risco, ruína ou oportunidade real deste hex."
+                      : selectedSite?.faction === "self"
+                        ? "Cidade sob seu controle. Abra a administração para cuidar das construções, produção e defesa."
+                      : selectedFriendlySite
+                        ? "Cidade aliada. Você pode acompanhar a região, mas não emitir ordens locais."
                       : selectedSite?.faction === "enemy"
                       ? "Cidade ocupada por rival. Ação principal: atacar."
                       : selectedSite?.occupationKind === "abandoned_city"
@@ -3977,7 +3968,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 <div className="mt-2 rounded-lg border border-white/20 bg-white/8 p-1.5 text-[10px] text-slate-200">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold uppercase tracking-[0.16em]">
-                      {actionStep === "choose" ? "Toque numa ordem" : "Confirme a ordem"}
+                      {actionStep === "choose" ? "Ordens disponíveis" : "Confirme a ordem"}
                     </p>
                     {actionStep === "configure" ? (
                       <button
@@ -4000,9 +3991,19 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   (() => {
                     const possible = actionOptions.filter((option) => option.enabled);
                     if (possible.length === 0) {
+                      if (selectedManagedVillage) {
+                        return (
+                          <a
+                            href={`/world/${worldRouteId}/base?v=${encodeURIComponent(selectedManagedVillage.id)}`}
+                            className="mt-2 block w-full rounded-xl border border-cyan-300/55 bg-cyan-500/18 px-3 py-3 text-center text-xs font-black text-cyan-50 transition hover:bg-cyan-500/28"
+                          >
+                            Administrar cidade
+                          </a>
+                        );
+                      }
                       return (
                         <p className="mt-2 rounded-xl border border-white/10 bg-slate-950/70 px-2.5 py-3 text-center text-[11px] font-semibold text-slate-300">
-                          Nada a fazer aqui
+                          {selectedFriendlySite ? "Cidade aliada: nenhuma ordem local disponível" : "Nenhuma ordem disponível neste território"}
                         </p>
                       );
                     }
@@ -4115,7 +4116,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                           <span className="mt-1 block text-white">{exploreCost.toLocaleString("pt-BR")}</span>
                         </div>
                         <div className="rounded-xl border border-white/15 bg-black/30 px-2 py-2">
-                          <span className="block text-slate-400">ETA</span>
+                          <span className="block text-slate-400">TEMPO</span>
                           <span className="mt-1 block text-white">{formatMinutesLabel(Math.max(5, Math.round(routeSummary.totalMinutes * 0.45)))}</span>
                         </div>
                       </div>

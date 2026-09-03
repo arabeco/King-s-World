@@ -1,7 +1,7 @@
 ﻿﻿"use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FlaskConical, Minus, Plus, Swords, X } from "lucide-react";
+import { ChevronRight, FlaskConical, Minus, Plus, Swords, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -1067,6 +1067,7 @@ export function VillageScene({
                 key={sector.id}
                 type="button"
                 data-smoke={`city-sector-${sector.id}`}
+                aria-label={`Abrir ${sector.label}, nível ${sector.level}, ${totalSkillDots(sector.skillDots)} de 10 melhorias`}
                 onClick={() => {
                   emitUiFeedback("open", "light");
                   syncSectorQuery(sector.id);
@@ -1095,7 +1096,8 @@ export function VillageScene({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-base font-black text-slate-100">{sector.label}</p>
-                    <p className="mt-1 text-[10px] font-semibold text-slate-300">{totalSkillDots(sector.skillDots)}/10 pontos na build</p>
+                    <p className="mt-1 text-[10px] font-semibold text-slate-300">{totalSkillDots(sector.skillDots)}/10 melhorias</p>
+                    <span className="mt-1 inline-flex items-center gap-0.5 text-[9px] font-black uppercase text-cyan-100">Abrir <ChevronRight className="h-3 w-3" /></span>
                   </div>
                   <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-full border border-white/18 bg-slate-950/36 text-center backdrop-blur-md">
                     <LevelMedallion level={sector.level} className="text-2xl font-black leading-none text-slate-50" iconClassName="h-12 w-12" />
@@ -1151,6 +1153,7 @@ export function VillageScene({
                             emitUiFeedback("close", "light");
                             syncSectorQuery(null);
                           }}
+                          aria-label="Fechar setor"
                           className="absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/14 bg-white/8 text-slate-200 backdrop-blur-md"
                         >
                           <X className="h-4 w-4" />
@@ -1218,27 +1221,19 @@ export function VillageScene({
                                   />
                                 ))}
                               </div>
-                              <div className="relative mt-1.5 grid grid-cols-2 gap-1">
-                                <button
-                                  type="button"
-                                  disabled
-                                  data-smoke={`skill-down-${selectedSector.id}-${option.id}`}
-                                  className="rounded-xl border border-white/10 bg-slate-950/16 px-2 py-1 text-[10px] font-black text-slate-500"
-                                >
-                                  -Nv
-                                </button>
+                              <div className="relative mt-1.5">
                                 <button
                                   type="button"
                                   onClick={() => openSkillUpgrade(buildingId, selectedSector.id, option)}
                                   disabled={disabled}
                                   data-smoke={`skill-up-${selectedSector.id}-${option.id}`}
-                                  className={`rounded-xl border px-2 py-1 text-[10px] font-black transition ${
+                                  className={`w-full rounded-xl border px-2 py-1.5 text-[10px] font-black transition ${
                                     disabled
                                       ? "border-white/10 bg-slate-950/16 text-slate-500"
                                       : "border-cyan-300/30 bg-cyan-500/10 text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.1)]"
                                   }`}
                                 >
-                                  +Nv
+                                  {atMax || points >= 3 ? "Máximo" : "Melhorar"}
                                 </button>
                               </div>
                             </article>
@@ -1256,7 +1251,9 @@ export function VillageScene({
                         {assignedHero !== "none" ? HERO_PROMOTION_META[assignedHero as HeroSpecialistId].label : "Sem herói contratado"}
                       </p>
                       <p className="mt-1">Custo {formatCompact(HERO_HIRE_COST.materials)} M · {formatCompact(HERO_HIRE_COST.supplies)} S</p>
-                      <p className="mt-1">Nv 4+ · {hiredHeroCount}/{HERO_PROMOTION_LIMIT} · +50 influência</p>
+                      <p className="mt-1">
+                        Requer Governo nível 4 · {hiredHeroCount}/{HERO_PROMOTION_LIMIT} heróis · +50 Influência
+                      </p>
                       <button
                         type="button"
                         onClick={() => setShowHeroPromotionOptions((current) => !current)}

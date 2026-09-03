@@ -141,34 +141,34 @@ export const DEFENSE_RECRUIT_IDS: CityDefenseRecruitId[] = ["guards", "archers",
 export const BUILDING_SKILL_SLOT_IDS: BuildingSkillSlotId[] = ["a", "b", "c", "d"];
 export const BUILDING_SKILL_META: Record<SectorId, BuildingSkillMeta[]> = {
   crown: [
-    { id: "a", label: "Coroa", impact: "clima político", bonus: "+2 gov" },
-    { id: "b", label: "Conselho", impact: "senado e leis", bonus: "+2 sat" },
+    { id: "a", label: "Coroa", impact: "clima político", bonus: "+2 Governo" },
+    { id: "b", label: "Conselho", impact: "senado e leis", bonus: "+2 Satisfação" },
     { id: "c", label: "Heróis", impact: "contratação", bonus: "-2% custo" },
-    { id: "d", label: "Capital", impact: "ordem imperial", bonus: "+1 cap" },
+    { id: "d", label: "Capital", impact: "ordem imperial", bonus: "+1 Capacidade" },
   ],
   economy: [
-    { id: "a", label: "Materiais", impact: "obra e caixa", bonus: "+3% M/d" },
-    { id: "b", label: "Mantimentos", impact: "folego", bonus: "+3% S/d" },
-    { id: "c", label: "Comercio", impact: "giro", bonus: "+1 log" },
+    { id: "a", label: "Materiais", impact: "obra e caixa", bonus: "+3% Materiais/dia" },
+    { id: "b", label: "Mantimentos", impact: "folego", bonus: "+3% Mantimentos/dia" },
+    { id: "c", label: "Comercio", impact: "giro", bonus: "+1 Logística" },
     { id: "d", label: "Logística", impact: "rotas", bonus: "-2% custo" },
   ],
   society: [
-    { id: "a", label: "Moradia", impact: "cap. populacao", bonus: "+2 pop" },
-    { id: "b", label: "Oficios", impact: "empregos", bonus: "+2% prod" },
-    { id: "c", label: "Saude", impact: "pressao social", bonus: "+2 sat" },
-    { id: "d", label: "Estudos", impact: "leitura", bonus: "+1 estudo" },
+    { id: "a", label: "Moradia", impact: "cap. populacao", bonus: "+2 População" },
+    { id: "b", label: "Oficios", impact: "empregos", bonus: "+2% Produção" },
+    { id: "c", label: "Saude", impact: "pressao social", bonus: "+2 Satisfação" },
+    { id: "d", label: "Estudos", impact: "leitura", bonus: "+1 Estudo" },
   ],
   recruitment: [
-    { id: "a", label: "Milicia", impact: "massa", bonus: "+2% pwr" },
-    { id: "b", label: "Atiradores", impact: "linha", bonus: "+2% pwr" },
-    { id: "c", label: "Batedores", impact: "visao", bonus: "+1 vis" },
-    { id: "d", label: "Cerco", impact: "ruptura", bonus: "+1 cerco" },
+    { id: "a", label: "Milicia", impact: "massa", bonus: "+2% Força" },
+    { id: "b", label: "Atiradores", impact: "linha", bonus: "+2% Força" },
+    { id: "c", label: "Batedores", impact: "visao", bonus: "+1 Visão" },
+    { id: "d", label: "Cerco", impact: "ruptura", bonus: "+1 Cerco" },
   ],
   defense: [
-    { id: "a", label: "Guardas", impact: "base local", bonus: "+2% def" },
-    { id: "b", label: "Arqueiros", impact: "resposta", bonus: "+2% def" },
-    { id: "c", label: "Balistas", impact: "peso", bonus: "+1 def" },
-    { id: "d", label: "Alarme", impact: "tempo", bonus: "+1 tempo" },
+    { id: "a", label: "Guardas", impact: "base local", bonus: "+2% Defesa" },
+    { id: "b", label: "Arqueiros", impact: "resposta", bonus: "+2% Defesa" },
+    { id: "c", label: "Balistas", impact: "peso", bonus: "+1 Defesa" },
+    { id: "d", label: "Alarme", impact: "tempo", bonus: "+1 Tempo" },
   ],
 };
 
@@ -418,7 +418,7 @@ export function CostChip({
     return (
       <span className={`inline-flex items-center justify-center gap-1 rounded-full border px-1.5 py-1 ${baseTone}`}>
         <img src="/icons/recursos.png" alt="" className="h-5 w-5 object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.55)]" />
-        {value}
+        <span><span className="text-[8px] text-slate-300">S</span> {value}</span>
       </span>
     );
   }
@@ -427,7 +427,7 @@ export function CostChip({
     return (
       <span className="inline-flex items-center justify-center gap-1 rounded-full border border-cyan-300/20 bg-cyan-500/10 px-1.5 py-1 text-cyan-100">
         <img src="/icons/influence-infrastructure.png" alt="" className="h-5 w-5 object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.55)]" />
-        {value}
+        <span><span className="text-[8px] text-slate-300">INF</span> {value}</span>
       </span>
     );
   }
@@ -435,7 +435,7 @@ export function CostChip({
   return (
     <span className={`inline-flex items-center justify-center gap-1 rounded-full border px-1.5 py-1 ${baseTone}`}>
       <img src="/icons/producao.png" alt="" className="h-5 w-5 object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.55)]" />
-      {value}
+      <span><span className="text-[8px] text-slate-300">M</span> {value}</span>
     </span>
   );
 }

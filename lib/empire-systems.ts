@@ -414,7 +414,7 @@ export function buildInfluenceAreas(input: {
     },
     {
       id: "military",
-      label: "Rating militar",
+      label: "Força militar",
       tone: "rose",
       current: areaScore("military"),
       max: areaMax("military"),

@@ -307,7 +307,7 @@ export function buildSandboxCoachCta(
     if (strategy === "metropole") {
       return {
         label: "Abrir Governo",
-        detail: "Vá direto para o setor de Governo da Capital e clique no +Nv de uma skill.",
+        detail: "Vá ao Governo da Capital e escolha uma melhoria.",
         tab: "base",
         query: { v: capitalVillageId, s: "crown", sb: "city" },
       };

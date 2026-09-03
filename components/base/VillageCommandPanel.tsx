@@ -453,7 +453,7 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
         <div className="grid grid-cols-3 gap-2 text-slate-100">
           <div className="kw-glass-soft kw-status-card">
             <div className="kw-icon-core"><Swords className="h-5 w-5 text-rose-300" /></div>
-            <p className="kw-card-title mt-2">Rating militar</p>
+            <p className="kw-card-title mt-2">Força militar</p>
             <p className="kw-card-meta">{formatCompact(militaryRating)} poder</p>
           </div>
           <div className="kw-glass-soft kw-status-card">
@@ -471,7 +471,7 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
               <div className="flex items-center gap-2">
                 <div className="kw-icon-core !h-10 !w-10"><TrendingUp className="h-4 w-4 text-emerald-300" /></div>
                 <div>
-                  <p className="kw-card-title">Forca disponivel: {formatCompact(totalTroops)} tropas</p>
+                  <p className="kw-card-title">Força disponível: {formatCompact(totalTroops)} tropas</p>
                   <p className="kw-card-meta">{LOCAL_COMMAND_META[localCommand].label}: {LOCAL_COMMAND_META[localCommand].summary}</p>
                 </div>
               </div>

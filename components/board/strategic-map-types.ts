@@ -113,6 +113,7 @@ export type BuiltWorld = {
 
 export type StrategicMapProps = {
   worldId: string;
+  worldRouteId?: string;
   tribeName: string;
   sites: BoardSite[];
   villages: Pick<VillageSummary, "id" | "name" | "type" | "materials" | "supplies" | "influence" | "buildingLevels">[];
