@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#151618">
+ <title>King’s World</title>
+ <style>
+  *{box-sizing:border-box}html{color-scheme:dark;background:#151618;color:#f4e7c9;font-family:Georgia,serif}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:32px;background:radial-gradient(ellipse at 50% 30%,#3a30204f,transparent 60%),linear-gradient(135deg,#222527,#101113)}main{max-width:360px;width:100%;text-align:center}svg{width:88px;height:88px;color:#e4b75a;filter:drop-shadow(0 4px 12px #d4a43c22)}h1{font-size:30px;margin:24px 0 12px}p{font:16px/1.6 system-ui,sans-serif;color:#c4bda9;margin:0 0 32px}button{width:100%;min-height:52px;border:1px solid #eacf8a;border-radius:9px;background:linear-gradient(#f9e3a6,#e3b746 55%,#bd8527);box-shadow:inset 0 1px #fff3d0,0 4px 16px #0005;color:#211806;font:700 17px Georgia,serif;padding:12px 20px}button:focus-visible{outline:3px solid #fff;outline-offset:4px}button:disabled{opacity:.65}small{display:block;font:13px system-ui,sans-serif;color:#aaa18a;margin-top:20px}
+ </style>
+</head>
+<body>
+ <main>
+  <svg viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3"><circle cx="50" cy="50" r="45"/><path d="m23 36 10 35h34l10-35-17 12-10-25-10 25z"/><path d="M33 77h34M34 63h32"/></svg>
+  <h1>Seu reino aguarda</h1>
+  <p>Não foi possível conectar.<br>Confira sua conexão e tente novamente.</p>
+  <button id="retry" type="button">Tentar novamente</button>
+  <small>King’s World</small>
+ </main>
+ <script>
+  document.getElementById('retry').addEventListener('click',function(){
+   const fallback='https://king-s-world-three.vercel.app';
+   let destination=fallback;
+   try{const url=new URL(new URLSearchParams(location.search).get('retry')||fallback);if(url.protocol==='https:'||(url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)))destination=url.href;}catch{}
+   this.disabled=true;this.textContent='Conectando…';location.assign(destination);
+  });
+ </script>
+</body>
+</html>

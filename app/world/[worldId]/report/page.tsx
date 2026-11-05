@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { calculateSovereigntyScore, calculateVillageDevelopment } from "@/core/GameBalance";
 import { getWorldPayload } from "@/lib/world-data";
+import { isCozyWorld } from "@/lib/cozy/server";
 
 function resultLabel(result: "victorious" | "survived" | "defeated" | "eliminated" | null) {
   if (result === "victorious") return "Vitória Suprema";
@@ -20,6 +21,7 @@ function areaLabel(areaId: "production" | "government" | "military" | "society" 
 }
 
 export default async function FinalReportPage({ params }: { params: { worldId: string } }) {
+  if (await isCozyWorld(params.worldId)) return null;
   const payload = await getWorldPayload(params.worldId);
   const { world, worldMeta } = payload;
   const campaignFinished = Boolean(worldMeta.result || worldMeta.finalReason);

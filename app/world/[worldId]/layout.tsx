@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
-import { WorldShell } from "@/components/world-shell";
-import { getWorldPayload } from "@/lib/world-data";
+import { isCozyWorld } from "@/lib/cozy/server";
 
 export default async function WorldLayout({
   children,
@@ -10,7 +9,15 @@ export default async function WorldLayout({
   children: ReactNode;
   params: { worldId: string };
 }) {
+  if (await isCozyWorld(params.worldId)) {
+    const { CozyWorldClient } = await import("@/components/cozy/CozyWorldClient");
+    return <CozyWorldClient worldId={params.worldId} />;
+  }
+  const [{ default: LegacyWorldEntry }, { getWorldPayload }] = await Promise.all([
+    import("@/components/legacy-world-entry"),
+    import("@/lib/world-data"),
+  ]);
   const initialPayload = await getWorldPayload(params.worldId);
 
-  return <WorldShell worldId={params.worldId} initialPayload={initialPayload}>{children}</WorldShell>;
+  return <LegacyWorldEntry worldId={params.worldId} initialPayload={initialPayload}>{children}</LegacyWorldEntry>;
 }

@@ -1,0 +1,1050 @@
+.root.root {
+  position: fixed;
+  inset: 0;
+  min-height: 0;
+  height: 100dvh;
+  padding: 0;
+  overflow: hidden;
+  background: #101b1b;
+  background-image: radial-gradient(ellipse at 50% 30%, #34453b, #0b1518 75%);
+  -webkit-tap-highlight-color: transparent;
+}
+.frame {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #12272a;
+  box-shadow: 0 0 100px #0009;
+}
+.hud {
+  flex: none;
+  position: relative;
+  z-index: 3;
+  padding: max(8px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right)) 10px
+    max(12px, env(safe-area-inset-left));
+  color: #faf0d8;
+  background: linear-gradient(130deg, #1c3637, #102327);
+  border-bottom: 1px solid #b4945066;
+  box-shadow: 0 4px 18px #0005;
+}
+.realmBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.realmBadge {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  text-align: left;
+  color: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+  min-height: 48px;
+}
+.realmBadge > span:last-child {
+  min-width: 0;
+}
+.realmBadge strong {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: 17px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+.realmBadge small {
+  display: block;
+  font-size: 10px;
+  color: #b3c4b8;
+  margin-top: 2px;
+}
+.crownSeal {
+  display: grid;
+  place-items: center;
+  flex: none;
+  height: 43px;
+  width: 40px;
+  color: #f0cd81;
+  border-radius: 11px 11px 17px 17px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  filter: drop-shadow(0 2px 3px #0006);
+}
+.influenceBadge {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0 6px;
+  align-items: center;
+  padding: 3px 7px;
+  border: 0;
+  border-left: 1px solid #baa16b40;
+  background: transparent;
+  color: #eacb83;
+  min-height: 48px;
+  flex: none;
+}
+.influenceBadge strong {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+.influenceBadge span {
+  grid-column: 1 / -1;
+  font-size: 9px;
+  color: #c7c9b4;
+}
+.resources {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  border: 1px solid #d0b57933;
+  border-radius: 8px;
+  background: #0a1c21b3;
+  box-shadow: inset 0 2px 5px #0005;
+  color: #f4e4be;
+  padding: 0;
+  min-height: 48px;
+}
+.resources > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 4px 6px;
+  min-width: 0;
+}
+.resources > span + span {
+  border-left: 1px solid #c4ad7833;
+}
+.resources svg {
+  color: #dbb866;
+  filter: drop-shadow(0 1px 2px #000);
+}
+.resources > span:nth-child(2) svg {
+  color: #c7bb9c;
+}
+.resources > span:nth-child(3) svg {
+  color: #bbca89;
+}
+.resources small {
+  display: block;
+  text-align: left;
+  font-size: 9px;
+  color: #bac5b8;
+  line-height: 1.2;
+}
+.resources strong {
+  display: block;
+  font-size: 15px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+.playfield {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+.kingdom {
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  isolation: isolate;
+  background: #132e2e;
+}
+.sceneTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 12px;
+  border-top: 1px solid #9dba9240;
+  background: #112c2dbf;
+}
+.sceneTop .eventButton {
+  flex: 1;
+  max-width: none;
+  min-height: 44px;
+  padding: 6px 10px;
+  box-shadow: none;
+}
+.sceneTop .eventButton small {
+  margin-top: 2px;
+}
+.cityDock {
+  flex: none;
+  padding: 3px 12px 12px;
+  color: #f5e5c0;
+}
+.cityDock .questPrompt {
+  min-height: 50px;
+  padding: 7px 11px;
+}
+.cityDock .questPrompt strong {
+  font-size: 14px;
+}
+.crownCommands {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 11px;
+}
+.crownCommands > button {
+  --command-fill: #245d52;
+  --command-line: #75bda5;
+  --command-light: #bfead2;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 82px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--command-line);
+  border-radius: 12px;
+  background: linear-gradient(
+    125deg,
+    var(--command-fill),
+    color-mix(in srgb, var(--command-fill), #101e28 35%)
+  );
+  color: #fff2da;
+  text-align: left;
+  box-shadow:
+    inset 0 1px #ffffff20,
+    0 3px 5px #081d2459;
+}
+.crownCommands > button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse at 0 0, #ffffff16, transparent 70%);
+}
+.crownCommands > button[data-command="military"] {
+  --command-fill: #7b443e;
+  --command-line: #d28c78;
+  --command-light: #ffd2bd;
+}
+.crownCommands > button[data-command="government"] {
+  --command-fill: #2c557d;
+  --command-line: #79abd5;
+  --command-light: #c0e1fb;
+}
+.crownCommands > button[data-command="council"] {
+  --command-fill: #634a7c;
+  --command-line: #b297d3;
+  --command-light: #e7ceff;
+}
+.crownCommands > button[data-command="achievements"] {
+  --command-fill: #775f2e;
+  --command-line: #d3b168;
+  --command-light: #ffe3a2;
+  grid-column: 1 / -1;
+}
+.commandArt {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--command-light);
+  width: 50px;
+  height: 50px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  filter: drop-shadow(0 3px 3px #061e2266);
+}
+.commandArt img {
+  position: static;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 1;
+  border-radius: 0;
+}
+.commandArt svg {
+  position: relative;
+  filter: drop-shadow(0 2px 2px #0007);
+}
+.commandArt i {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 11px;
+  height: 11px;
+  background: #ffe09b;
+  border: 2px solid var(--command-fill);
+  border-radius: 50%;
+}
+.commandText {
+  flex: 1;
+  min-width: 0;
+}
+.commandText strong {
+  display: block;
+  white-space: nowrap;
+  font:
+    15px Georgia,
+    serif;
+}
+.commandText small {
+  display: block;
+  font-size: 10px;
+  color: var(--command-light);
+  margin-top: 5px;
+  line-height: 1.3;
+}
+.commandArrow {
+  display: none;
+  color: var(--command-light);
+}
+.crownCommands > button:last-child .commandArrow {
+  display: block;
+}
+.cityBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 5px;
+  margin: -8px 0 14px;
+  color: #416b59;
+  border: 0;
+  background: none;
+  font-size: 13px;
+}
+.sectorsTitle {
+  padding: 5px 0 15px;
+  font-size: 21px;
+}
+.eventButton {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 48px;
+  max-width: 48%;
+  padding: 8px 10px;
+  border: 1px solid #c3b18070;
+  border-radius: 9px;
+  background: linear-gradient(125deg, #183336ef, #142829bd);
+  color: #edd7a6;
+  box-shadow: 0 3px 9px #0005;
+  text-align: left;
+}
+.eventButton strong {
+  display: block;
+  font:
+    600 11px var(--font-body),
+    sans-serif;
+  white-space: nowrap;
+}
+.eventButton small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: #c5cfbd;
+}
+.hordeEvent {
+  border-color: #d5b06d8c;
+  background: linear-gradient(120deg, #513d2be6, #2c2e29e8);
+}
+.questPrompt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 59px;
+  border: 1px solid #a88c5480;
+  border-radius: 9px;
+  text-align: left;
+  padding: 9px 12px;
+  color: #efd8a4;
+  background: linear-gradient(110deg, #3b4f40e8, #1b3333e8);
+  box-shadow:
+    0 3px 10px #05171ca6,
+    inset 0 1px #ecdb9526;
+}
+.questPrompt > span {
+  flex: 1;
+  min-width: 0;
+}
+.questPrompt small {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.13em;
+  color: #c7b882;
+}
+.questPrompt strong {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: 16px;
+  font-weight: 400;
+  margin-top: 2px;
+}
+.seasonPrompt {
+  background: #132c2be8;
+  border: 1px solid #b8a16c88;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+}
+.navigation {
+  flex: none;
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 5px max(10px, env(safe-area-inset-right))
+    max(7px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  color: #98afa7;
+  background: linear-gradient(#193334, #0e252b);
+  border-top: 1px solid #a7905e6b;
+  box-shadow: 0 -4px 20px #0a202666;
+}
+.navigation button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 54px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  border-radius: 9px;
+  font-size: 10px;
+  gap: 2px;
+  padding: 3px 6px;
+}
+.navigation button[aria-current] {
+  color: #f5d78d;
+  background: linear-gradient(#dbbc6b15, #d6bd7807);
+  text-shadow: 0 1px 8px #c6a14e4d;
+}
+.navigation button[aria-current]::before {
+  position: absolute;
+  top: -6px;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  content: "";
+  background: #e7c579;
+  box-shadow: 0 1px 10px #e7c579;
+}
+.navigation small {
+  position: absolute;
+  top: 3px;
+  right: calc(50% - 24px);
+  min-width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d8c28e;
+  border-radius: 6px;
+  background: #ab633b;
+  color: #fff2dc;
+  font-size: 9px;
+}
+.syncState {
+  position: absolute;
+  bottom: 7px;
+  right: 4px;
+  color: #c8d5c0;
+}
+.navigation button img {
+  opacity: 0.7;
+  transition:
+    opacity 140ms ease,
+    filter 140ms ease;
+}
+.navigation button[aria-current] img {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px #e9c77a55);
+}
+.confirmation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px 10px 12px;
+  color: #f0e9cc;
+  background: linear-gradient(120deg, #254638, #172f29);
+  border: 1px solid #b8b17a99;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px #12372920;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.confirmation > span {
+  flex: 1;
+}
+.confirmation > button {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: #e3d3a7;
+}
+.frame:has(dialog[open]) .feedback {
+  display: none;
+}
+.recruitHint {
+  font-size: 11px !important;
+  line-height: 1.5;
+}
+.researchLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  background: #e1e9d7;
+  color: #345946;
+  border: 1px solid #b8c8ac;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.feedback {
+  position: absolute;
+  z-index: 6;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  max-height: 65%;
+  overflow-y: auto;
+  color: var(--ink);
+  box-shadow: 0 8px 25px #0004;
+}
+.sheet {
+  color: var(--ink);
+  border: 1px solid #b1a076;
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: #f5f1e5;
+  width: min(100%, 520px);
+  max-width: 100%;
+  max-height: min(86dvh, 900px);
+  margin: auto auto 0;
+  padding: 0;
+  box-shadow: 0 -10px 60px #0006;
+  overflow: hidden;
+}
+.sheet[open] {
+  display: flex;
+  flex-direction: column;
+  animation: revealSheet 180ms ease-out;
+}
+.sheet::backdrop {
+  background: #06191bb8;
+  backdrop-filter: blur(3px);
+}
+.sheetHeader {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 10px 7px 18px;
+  color: #ecd5a0;
+  background: linear-gradient(100deg, #25413d, #143032);
+  border-bottom: 1px solid #b09b64;
+}
+.sheetHeader > .sheetHelp { margin-left:auto; display:flex; gap:6px; }
+.sheetHelp:empty { display:none; }
+.sheetHeader > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font:
+    18px Georgia,
+    serif;
+}
+.sheetHeader button {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #b3a17040;
+  color: #f1dfb4;
+  border-radius: 50%;
+  background: #10282750;
+}
+.sheetBody {
+  padding: 20px 18px max(24px, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+}
+.sheetFeedback {
+  position: sticky;
+  top: -20px;
+  z-index: 4;
+  max-height: 45dvh;
+  overflow-y: auto;
+  background: #f5f1e5;
+  box-shadow: 0 8px 15px #f5f1e5;
+}
+.fullPanel {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 16px;
+  background: #f5f1e5;
+}
+.citySurface,
+.citySheet {
+  --ink: #f2e5c6;
+  --muted: #adbaa7;
+  --paper: #1c352e;
+  --line: #9c855344;
+  color: #f2e5c6;
+  background:
+    radial-gradient(ellipse at 20% 0, #30463366, transparent 65%), #142b28;
+}
+.citySurface .cityBack {
+  color: #bfcca9;
+}
+.citySheet .sheetFeedback {
+  background: #142b28;
+  box-shadow: 0 8px 15px #142b28;
+}
+.crownSheet {
+  height: min(86dvh, 900px);
+  --crown-surface: #142b28;
+  --crown-glow: #49663f33;
+  --ink: #f1e5c8;
+  --muted: #b4bbad;
+  --paper: #1d342d;
+  --line: #b29a6144;
+  color: #f1e5c8;
+  background:
+    radial-gradient(ellipse at 0 0, var(--crown-glow), transparent 65%),
+    var(--crown-surface);
+}
+.crownSheet[data-crown-tone="military"] {
+  --crown-surface: #251f1b;
+  --crown-glow: #a65c3533;
+}
+.crownSheet[data-crown-tone="government"] {
+  --crown-surface: #142934;
+  --crown-glow: #567a9833;
+}
+.crownSheet[data-crown-tone="council"] {
+  --crown-surface: #231f30;
+  --crown-glow: #8d699d33;
+}
+.crownSheet[data-crown-tone="achievements"] {
+  --crown-surface: #1c251f;
+  --crown-glow: #9c814533;
+}
+.crownSheet .sheetHeader {
+  background:
+    linear-gradient(110deg, var(--crown-glow), #0001), var(--crown-surface);
+  border-bottom-color: #bda36566;
+}
+.crownSheet .sheetHeader > span {
+  font:
+    650 17px var(--font-display),
+    sans-serif;
+}
+.crownSheet .sheetHeader button {
+  background: #0002;
+}
+.crownSheet .sheetFeedback {
+  background: var(--crown-surface);
+  box-shadow: 0 8px 15px var(--crown-surface);
+}
+.influenceList {
+  display: grid;
+  gap: 22px;
+  margin: 24px 0 28px;
+}
+.influenceList > button > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.influenceList span {
+  font-size: 13px;
+}
+.influenceList strong {
+  font-size: 12px;
+}
+.treasuryList {
+  display: grid;
+  gap: 22px;
+}
+.treasuryList > div {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #cdd2bd;
+}
+.treasuryList svg {
+  color: #92783c;
+}
+.treasuryList p {
+  margin-top: 5px;
+  font-size: 13px;
+  color: #627266;
+}
+.menuActions {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 28px;
+}
+.guideList {
+  display: grid;
+  gap: 16px;
+  margin: 20px 0 0;
+  padding-left: 22px;
+  font-size: 13px;
+}
+.guideList strong {
+  display: block;
+}
+.loading {
+  height: 100%;
+  max-width: 420px;
+  margin: auto;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 22px;
+  color: #efdcaa;
+}
+.loading h1 {
+  font-size: 28px;
+  letter-spacing: 0.1em;
+}
+.loading p {
+  font-size: 14px;
+}
+.root button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+@keyframes revealSheet {
+  from {
+    transform: translateY(25px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@media (max-width: 380px) {
+  .realmBadge strong {
+    max-width: 190px;
+    font-size: 15px;
+  }
+  .realmBadge small {
+    font-size: 9px;
+  }
+  .resources > span {
+    gap: 6px;
+  }
+  .resources strong {
+    font-size: 14px;
+  }
+}
+@media (max-height: 720px) {
+  .hud {
+    padding-top: max(4px, env(safe-area-inset-top));
+    padding-bottom: 6px;
+  }
+  .realmBar {
+    margin-bottom: 4px;
+  }
+  .eventButton {
+    padding: 6px 8px;
+  }
+  .questPrompt {
+    min-height: 52px;
+    padding: 7px 10px;
+  }
+  .questPrompt strong {
+    font-size: 14px;
+  }
+  .navigation {
+    padding-top: 3px;
+  }
+  .navigation button {
+    min-height: 48px;
+  }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .frame {
+    max-width: 920px;
+  }
+  .hud {
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .realmBar {
+    width: 45%;
+    margin: 0;
+  }
+  .resources {
+    flex: 1;
+  }
+  .questPrompt {
+    min-height: 44px;
+  }
+  .navigation button {
+    min-height: 40px;
+    flex-direction: row;
+  }
+  .sheet {
+    width: min(100%, 680px);
+    max-height: 95dvh;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet[open] {
+    animation: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .crownCommands > button {
+    padding: 9px;
+    gap: 7px;
+  }
+  .commandArt {
+    width: 36px;
+    height: 40px;
+  }
+  .commandText strong {
+    font-size: 14px;
+  }
+  .commandText small {
+    font-size: 9px;
+  }
+}
+@media (max-height: 720px) {
+  .sceneTop {
+    padding: 4px 10px;
+  }
+  .sceneTop .eventButton {
+    min-height: 44px;
+    padding: 4px 8px;
+  }
+  .cityDock {
+    padding: 2px 10px 7px;
+  }
+  .cityDock .questPrompt {
+    min-height: 44px;
+    padding: 5px 9px;
+  }
+  .cityDock .questPrompt strong {
+    font-size: 13px;
+  }
+  .crownCommands {
+    padding-top: 8px;
+    gap: 7px;
+  }
+  .crownCommands > button {
+    min-height: 64px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .commandText small {
+    margin-top: 3px;
+  }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .kingdom {
+    padding-left: 44%;
+  }
+  .kingdom > section:first-child {
+    position: absolute;
+    inset: 0 56% 0 0;
+    min-height: 0;
+  }
+  .sceneTop {
+    padding: 3px 9px;
+  }
+  .cityDock {
+    padding: 0 9px 5px;
+  }
+  .cityDock .questPrompt {
+    display: none;
+  }
+  .crownCommands {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-top: 3px;
+    gap: 5px;
+  }
+  .crownCommands > button {
+    min-height: 63px;
+    padding: 6px;
+    gap: 5px;
+  }
+  .crownCommands > button[data-command="achievements"] {
+    grid-column: span 2;
+  }
+  .commandArt {
+    width: 30px;
+    height: 34px;
+  }
+  .commandText strong {
+    font-size: 12px;
+  }
+  .commandText small {
+    font-size: 8px;
+  }
+}
+
+.realmBadge strong,
+.commandText strong,
+.questPrompt strong {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 720;
+  letter-spacing: -0.02em;
+}
+
+.sceneTop .eventButton{min-width:0}.sceneTop .eventButton>span{min-width:0}.sceneTop .eventButton strong{overflow:hidden;text-overflow:ellipsis}
+.allianceAlert{position:relative;flex:none;display:grid;place-items:center;width:44px;min-height:44px;border:1px solid #dbc180aa;border-radius:10px;background:#4b6239;color:#f4dfaa;cursor:pointer}.allianceAlert>span{position:absolute;top:-4px;right:-3px;display:grid;place-items:center;width:17px;height:17px;background:#bb7048;border:1px solid #efd494;border-radius:50%;font-size:11px;font-weight:700}.allianceAlert:focus-visible{outline:2px solid #f2d69c;outline-offset:3px}
+
+.allianceFeedbackInline{margin:0 0 12px;color:#eee5ce}.allianceFeedbackInline .confirmation{margin:0;font-size:12px}
+
+.influenceArea { display:grid; gap:8px; width:100%; min-width:0; padding:12px; border:1px solid #a8b17a44; border-radius:12px; background:#16382c; color:#f0dec1; text-align:left; font-family:inherit; cursor:pointer; }
+.influenceArea small { display:flex; justify-content:space-between; align-items:center; gap:8px; color:#c5c8b0; font-size:11px; }
+.influenceArea:focus-visible { outline:2px solid #e5c88d;outline-offset:3px; }
+
+.crownSheet[data-crown-tone="military"]{--crown-surface:#201b22;--crown-glow:#792d3944}
+
+/* Five royal seals above the realm's total influence. */
+.kingdom { overflow-y: auto; }
+.kingdom > section:first-child { flex: 1 0 120px; }
+.cityDock { padding: 4px 10px 6px; }
+.seals { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 2px; margin-top: 8px; }
+.seals button { border: 0; background: none; color: #f8eace; font: inherit; cursor: pointer; }
+.seals button[data-command] { position: relative; display: grid; justify-items: center; align-content: start; gap: 2px; min-width: 0; padding: 2px 0; }
+.seals button[data-command] img { width: 40px; height: 40px; padding: 3px; border-radius: 50%; border: 2px solid var(--seal,#9caf82); background: radial-gradient(at 50% 10%,#514c3d,#171817 74%); box-shadow: inset 0 0 0 2px #1e1c19,0 2px 4px #0008; }
+.seals [data-command="military"] { --seal: #b27567; }
+.seals [data-command="government"] { --seal: #7095ae; }
+.seals [data-command="council"] { --seal: #9b80ad; }
+.seals [data-command="achievements"] { --seal: #c5a554; }
+.seals button[data-command] span { display: grid; gap: 1px; }
+.seals button[data-command] strong { font-size: clamp(9px,2.65vw,12px); }
+.seals button[data-command] b { color: #efce85; font-size: 12px; }
+.seals button[data-command] small { color: #b6ac99; font-size: 9px; }
+.seals i { position: absolute; left: calc(50% + 13px); top: 2px; width: 8px; height: 8px; border-radius: 50%; background: #ffd679; }
+.seals .influenceTrack { grid-column: 1/-1; display: flex; align-items: center; gap: 9px; min-height: 44px; color: #ead4a1; font-size: 12px; }
+.influenceTrack progress { flex: 1; width: 0; height: 6px; accent-color: #d6ab57; }
+.cityDock .questPrompt { width: fit-content; max-width: 100%; min-height: 44px; margin: 0 auto; }
+.frame .navigation { order: 2; }
+.frame .sheet[data-crown-tone][open] { position: relative; inset: auto; order: 1; flex: 1; min-height: 0; width: 100%; max-width: none; height: auto; max-height: none; margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+.frame .sheet[data-crown-tone] .sheetBody { padding: 12px 12px max(14px,env(safe-area-inset-bottom)); }
+@media (max-height: 660px) { .kingdom > section:first-child { flex-basis: 76px; } }
+/* Dark metal and warm gold, based on the visual reference for the game. */
+.frame{background:#17191a}
+.hud{background:linear-gradient(130deg,#29292a,#16191a 70%);border-bottom-color:#b99a5a88}
+.resources{background:linear-gradient(#101315,#1b1a19);border-color:#bfa36d44}
+.resources small,.realmBadge small{color:#c7bda8}
+.kingdom{background:radial-gradient(ellipse at 50% 0,#3b372a,#171819 80%)}
+.sceneTop{background:#17191af2;border-top-color:#b59b624d}
+.sceneTop .eventButton{background:linear-gradient(145deg,#32302d,#1a1b1b);border-color:#b79b6255}
+.sceneTop .hordeEvent{background:linear-gradient(145deg,#44352b,#211d1c);border-color:#b99b6088}
+.cityDock .questPrompt{background:var(--kw-action-gold);border-color:var(--kw-action-border);color:#271707;box-shadow:var(--kw-action-shadow)}
+.cityDock .questPrompt strong{color:#271707;text-shadow:0 1px #fff0b888}
+.navigation{background:linear-gradient(#292624,#121414);border-top-color:#be9b6077;color:#cabda5}
+.navigation button[aria-current]{background:linear-gradient(#d0a74a1c,#d0a74a05);color:#ffdd88}
+.citySurface,.citySheet{background:radial-gradient(ellipse at 25% 0,#53504444,transparent 65%),#191c1c}
+.crownSheet{--crown-surface:#1b1c1c;--crown-glow:#8a754522}
+.crownSheet[data-crown-tone="military"]{--crown-surface:#211b1c;--crown-glow:#823f392b}
+.crownSheet[data-crown-tone="government"]{--crown-surface:#191e21;--crown-glow:#42688433}
+.crownSheet[data-crown-tone="council"]{--crown-surface:#201c22;--crown-glow:#72537433}
+.crownSheet[data-crown-tone="achievements"]{--crown-surface:#211e19;--crown-glow:#886b302e}
+
+.hud { padding-top: max(2px,env(safe-area-inset-top)); padding-bottom: 1px; }
+.realmBar { margin-bottom: 0; }
+.resources { border-radius: 0; border-inline: 0; min-height: 44px; }
+.resources small { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.resources strong { font-size: 15px; }
+.navigation button { min-height: 44px; }
+
+.hud .kingPortrait { width: 36px; height: 36px; object-fit: cover; object-position: 50% 20%; border-radius: 50%; border: 1px solid #c4a56c; }
+.frame .sheet[data-crown-tone][open] { animation: none; }
+
+.frame { --metal-reflection: linear-gradient(125deg,#ffffff09,transparent 48%); }
+.sheet[data-crown-tone="infrastructure"], .seals [data-command="infrastructure"] { --seal: #89aa86; }
+.sheet[data-crown-tone="military"], .seals [data-command="military"] { --seal: #bf8175; }
+.sheet[data-crown-tone="government"], .seals [data-command="government"] { --seal: #7aa5c5; }
+.sheet[data-crown-tone="council"], .seals [data-command="council"] { --seal: #ae91bc; }
+.sheet[data-crown-tone="achievements"], .seals [data-command="achievements"] { --seal: #d1af65; }
+.frame .sheet[data-crown-tone] { background: var(--metal-reflection),linear-gradient(165deg,color-mix(in srgb,var(--seal) 10%,#1e2021),#171819 72%); }
+.frame .sheet[data-crown-tone] .sheetHeader { background: var(--metal-reflection),#1c1e20; border-bottom: 1px solid color-mix(in srgb,var(--seal) 58%,#292b2c); }
+.sheetHeader .panelScore { margin-left: auto; color: #ecd6a5; font-size: 17px; font-variant-numeric: tabular-nums; }
+.panelScore small { color: #b9b1a5; font-size: 10px; }
+.sheetHeader .panelScore + .sheetHelp { margin-left: 8px; }
+
+.confirmation { border-radius: 5px; padding: 5px 8px; gap: 7px; font-size: 12px; background: linear-gradient(115deg,#2b3930,#202522); box-shadow: 0 3px 10px #0004; }
+.confirmation > img { width: 23px; height: 23px; }
+.confirmation > button { min-width: 44px; min-height: 44px; }
+
+.areaInfluence {display:block;appearance:none;width:100%;height:5px;flex:0 0 5px;border:0;background:#383a3b;color:var(--seal,#e1c078);margin:0;}
+.areaInfluence::-webkit-progress-bar {background:#383a3b;}
+.areaInfluence::-webkit-progress-value {background:linear-gradient(90deg,var(--seal,#cfae67),#ffde90);}
+.areaInfluence::-moz-progress-bar {background:var(--seal,#e1c078);}
+
+.hud .realmBadge,.hud .influenceBadge {min-height:44px;}
+.hud .realmBar {margin:0;}
+.hud .resources {min-height:35px;box-shadow:none;background:linear-gradient(#24221e,#171817);}
+.hud .resources > span {padding-block:0;}
+.frame .sheet[data-crown-tone] .sheetHeader {padding:0 5px 0 10px;gap:2px;background:linear-gradient(110deg,color-mix(in srgb,var(--seal) 32%,#16181b),#191b1e 82%);}
+.areaHeading {display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.areaMeter {flex:1;min-width:0;}
+.areaMeter > div {display:flex;justify-content:space-between;align-items:baseline;gap:3px;color:#f7e8c9;}
+.areaMeter strong {font:700 clamp(14px,4vw,18px)/1.1 Georgia,serif;}
+.areaMeter b {font-size:13px;font-variant-numeric:tabular-nums;}
+.areaMeter small {font-size:11px;color:#d5c9ae;}
+.areaMeter .areaInfluence {height:8px;margin-top:3px;overflow:hidden;border-radius:5px;border:1px solid var(--seal);background:#141617;}
+.areaMeter .areaInfluence::-webkit-progress-bar {background:linear-gradient(#111315,#393b3d);}
+.areaMeter .areaInfluence::-webkit-progress-value {background:linear-gradient(to bottom,color-mix(in srgb,var(--seal) 55%,white),var(--seal) 45%,color-mix(in srgb,var(--seal) 70%,#25201c));}
+.frame .sheet[data-crown-tone] .sheetHeader button {border:0;background:none;box-shadow:none;border-radius:3px;min-height:44px;}
+.sourcesToggle svg {transform:rotate(90deg);}
+.sourcesToggle[aria-expanded=true] svg {transform:rotate(-90deg);}
+.areaSources {flex:none;margin:0;padding:5px 15px;max-height:25dvh;overflow:auto;background:color-mix(in srgb,var(--seal) 12%,#191b1e);}
+.areaSources > div {display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:13px;}
+.areaSources dd {margin:0;font-weight:700;color:#f4dcab;}
+
+.victoryTrack{position:relative;flex:1;min-width:0;display:flex;align-items:center}.victoryTrack progress{width:100%}.victoryTrack i{position:absolute;left:60%;transform:translateX(-50%);color:#ffe09a;font-style:normal;font-size:13px;text-shadow:0 1px 3px #000}
+.citySurface>section{position:relative}.citySurface .cityBack{position:absolute;z-index:3;top:8px;left:2px;width:44px;height:44px;min-width:0;margin:0;padding:0;justify-content:center}.backCaption{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+
+.hudHelp{display:flex;align-items:center;margin-left:auto}.hudHelp:empty{display:none}.hudHelp button{background:transparent;border:0;color:#dfcdab;min-width:40px;min-height:40px}
+.accountPortrait{padding:0;border:0;background:transparent;display:grid;place-items:center;min-width:44px;min-height:44px}.hud .realmBar{gap:6px}.hud .resources{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(42px,.65fr)}
+.defeatSummary{position:relative;display:grid;justify-items:center;gap:14px;margin:18px 12px 24px;padding:26px 18px;border:1px solid #b58f5355;border-radius:10px;background:radial-gradient(ellipse at top,#70504430,transparent 75%),linear-gradient(135deg,#29292d,#15171a);color:#f1dfbc;text-align:center}
+.defeatSummary h2{margin:0;font-size:23px;font-family:var(--font-display),serif}.defeatSummary p{margin:0;max-width:29ch;line-height:1.5;color:#cebea5;font-size:13px}.defeatSummary button,.defeatSummary a{display:flex;align-items:center;justify-content:center;min-height:44px;width:100%;font:inherit;font-size:14px;border-radius:6px;text-decoration:none}.defeatSummary button:not(:global(.primary-button)),.defeatSummary a{border:1px solid #b59a6255;background:linear-gradient(#313136,#222328);color:#ead4a3}
+.incomingAttacks{display:grid;gap:8px;margin:12px 0}.incomingAttacks button{display:flex;align-items:center;gap:9px;width:100%;min-height:58px;padding:10px;border:1px solid #c4836766;border-radius:6px;background:linear-gradient(120deg,#4c292b,#252027);color:#f1dfbf;text-align:left;font:inherit;cursor:pointer}.incomingAttacks button>span{display:grid;gap:5px;flex:1;min-width:0}.incomingAttacks strong{font-size:15px}.incomingAttacks small{font-size:12px;color:#e4bfa5}.incomingAttacks button:focus-visible{outline:2px solid #efc97b;outline-offset:3px}

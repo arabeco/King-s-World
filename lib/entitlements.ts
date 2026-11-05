@@ -1,4 +1,6 @@
 import "server-only";
+import {premiumIsActive} from "./cozy/premium-policy";
+import {PLAY_PREMIUM_PRODUCT_ID} from "./premium-config";
 
 export type EntitlementStatus =
   | "active"
@@ -30,17 +32,14 @@ export type UserEntitlementRecord = {
 };
 
 export function entitlementIsPremium(status: EntitlementStatus, expiresAt?: string | null): boolean {
-  if (status !== "active" && status !== "grace_period") {
-    return false;
-  }
-  if (!expiresAt) {
-    return true;
-  }
-  return Date.parse(expiresAt) > Date.now();
+  return premiumIsActive(status,expiresAt);
 }
+
+export type PublicPremiumEntitlement=Pick<UserEntitlementRecord,'product_id'|'status'|'expires_at'|'auto_renewing'|'will_renew'|'store_environment'>;
 
 export function pickBestPremiumEntitlement(entitlements: UserEntitlementRecord[]): UserEntitlementRecord | null {
   return [...entitlements]
+    .filter(entry=>entry.provider==='google_play'&&entry.product_id===PLAY_PREMIUM_PRODUCT_ID)
     .sort((left, right) => Date.parse(right.expires_at ?? right.last_verified_at) - Date.parse(left.expires_at ?? left.last_verified_at))
     .find((entry) => entitlementIsPremium(entry.status, entry.expires_at)) ?? null;
 }

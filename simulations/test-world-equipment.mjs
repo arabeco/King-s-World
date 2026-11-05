@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {loadCozyEngine} from './lib/load-cozy-engine.mjs';
+const E=loadCozyEngine(),B=loadCozyEngine('equipment'),at=1800000000000;
+const world={id:'gear-test',name:'Gear',mode:'normal',status:'running',startsAt:at};
+const base=E.settleCozyState(E.createCozyState(world,'p','King',at),E.createCozyShared(world),world,at);
+base.state.king={profileId:'builder',nickname:'King',alive:true,generation:1,history:[],attributes:{administration:5,command:5,exploration:5},equipment:[]};
+base.state.cities[0].sectors.defense=10;base.state.army.militia=1000;
+const withGear=structuredClone(base);withGear.state.king.equipment=['item-craft-ledger','item-guard-crest','item-travel-compass'];
+const a=E.getCozyComputed(base.state,base.shared,world,at),b=E.getCozyComputed(withGear.state,withGear.shared,world,at);
+assert.ok(Math.abs(b.productionPerDay.materials/a.productionPerDay.materials-1.01)<1e-6);assert.equal(b.productionPerDay.supplies,a.productionPerDay.supplies);assert.ok(b.defensePower>a.defensePower);
+const ta=E.getCozyTiles(base.state,base.shared,world),tb=E.getCozyTiles(withGear.state,withGear.shared,world);const target=ta.find(t=>t.distance>=2);assert.equal(tb.find(t=>t.id===target.id).travelMs,Math.round(target.travelMs*.99));
+const cloned=structuredClone(withGear);withGear.state.king.equipment=[];assert.equal(B.equipmentBonus(cloned.state,'materials'),.01);
+cloned.state.king.alive=false;assert.equal(B.equipmentBonus(cloned.state,'materials'),0);
+console.log('PASS world gear effects: materials, unchanged supplies, defense, travel, isolated world snapshots and dead king');

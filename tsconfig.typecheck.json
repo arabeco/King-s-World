@@ -10,6 +10,8 @@
     ".next",
     ".next-dev",
     ".next-build",
-    "supabase/functions"
+    ".next-cozy-test",
+    "supabase/functions",
+    ".next-memory-*/**"
   ]
 }

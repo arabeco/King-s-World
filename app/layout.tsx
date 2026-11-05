@@ -10,7 +10,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "KingsWorld",
-  description: "Jogo persistente de estrategia, Coroa, Cidadelas e Apocalipse.",
+  description: "Cuide do seu reino, explore o mundo e atravesse o Portal. Estratégia cooperativa, uma pequena jornada por dia.",
 };
 
 export const viewport: Viewport = {

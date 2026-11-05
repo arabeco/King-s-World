@@ -34,10 +34,22 @@
     "**/*.ts",
     "**/*.tsx",
     ".next-build/types/**/*.ts",
-    ".next-dev/types/**/*.ts"
+    ".next-dev/types/**/*.ts",
+    ".next-cozy-test/types/**/*.ts",
+    ".next-cozy-android/types/**/*.ts",
+    ".next-mobile-review/types/**/*.ts",
+    ".next-late-test/types/**/*.ts",
+    ".next-ux-preview/types/**/*.ts",
+    ".next-reference-preview/types/**/*.ts",
+    ".next-royal-preview/types/**/*.ts",
+    ".next-tilt-preview/types/**/*.ts",
+    ".next-map-fog-preview/types/**/*.ts",
+    ".next-collection-test/types/**/*.ts",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "supabase/functions"
+    "supabase/functions",
+    ".next-memory-*/**"
   ]
 }

@@ -10,3 +10,15 @@ coverage
 .next-dev
 reports
 supabase/.temp
+.next-cozy-test
+
+.android-qa/
+.next-cozy-android
+android/app/src/debug/assets/capacitor.config.json
+
+.next-mobile-review
+
+.next-memory-*/
+
+.next-collection-test/
+.next-mvp-validation/

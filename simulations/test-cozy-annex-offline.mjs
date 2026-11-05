@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {loadCozyEngine} from './lib/load-cozy-engine.mjs';
+const E=loadCozyEngine(),START=1800000000000,DAY=86400000;
+for(const mode of ['classic','express']) {
+ const world={id:'annex-regression',name:'Regression',mode,influenceVersion:2,status:'running',startsAt:START};
+ const day=DAY/(mode==='express'?4:1);
+ let save=E.settleCozyState(E.createCozyState(world,'p','p',START),E.createCozyShared(world),world,START);
+ save.state.explored=E.getCozyTiles(save.state,save.shared,world).map(t=>`${t.q},${t.r}`);
+ const tile=E.getCozyTiles(save.state,save.shared,world).find(t=>t.kind==='abandoned'&&!t.ownerId);
+ assert(tile);
+ save.state.explored.push(`${tile.q},${tile.r}`);
+ save.state.army.militia=100000;
+ save.state.resources.supplies=100000;
+ save.state.resources.gold=100000;
+ save=E.applyCozyAction(save.state,save.shared,world,{type:'hire',role:'general'},START);
+ const hero=save.state.heroes[0];
+ save=E.applyCozyAction(save.state,save.shared,world,{type:'annex',q:tile.q,r:tile.r,heroId:hero.id},START);
+ const arrival=save.state.orders.find(o=>o.kind==='attack').arrivesAt;
+ const before=structuredClone(save);
+ const atArrival=E.settleCozyState(save.state,save.shared,world,arrival);
+ const city=atArrival.state.cities.find(c=>!c.capital);
+ assert(city?.life);assert.equal(city.life.lastSocialDay,E.getCozyDay(world,arrival));
+ const later=Math.max(arrival+3*day,START+8*day);
+ const once=E.settleCozyState(save.state,save.shared,world,later);
+ const staged=E.settleCozyState(atArrival.state,atArrival.shared,world,later);
+ assert.deepEqual(once,staged);
+ assert.deepEqual(save,before);
+ assert.deepEqual(E.settleCozyState(once.state,once.shared,world,later),once);
+ console.log('PASS',mode,'annexation, offline social events, staged equivalence, immutability and idempotence');
+}

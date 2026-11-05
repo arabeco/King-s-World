@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import {loadCozyEngine} from './lib/load-cozy-engine.mjs';
+const E=loadCozyEngine(),P=loadCozyEngine('progression'),START=1800000000000;
+const w={id:'sources',name:'Sources',mode:'express',economyVersion:2,status:'running',startsAt:START,influenceVersion:2};
+const fresh=()=>E.settleCozyState(E.createCozyState(w,'p','p',START),E.createCozyShared(w),w,START).state;
+const s=fresh();assert.equal(P.zeroInfluence(s,s.progression.militaryBaseline,0).total,0);
+for(let i=0;i<100;i++)P.councilCredit(s,`decree:${i}`,8);
+assert.equal(s.progression.council.merit,160,'Decrees alone cannot complete Council');
+P.councilCredit(s,'decree:0',8);assert.equal(s.progression.council.merit,160);
+for(let i=0;i<100;i++)P.councilCredit(s,`local:a:${i}`,6);
+assert.equal(s.progression.council.merit,300);
+for(let i=0;i<100;i++)P.councilCredit(s,`stable:a:${i}`,4);
+assert.deepEqual(s.progression.council.sources,{decree:160,local:140,stable:200});assert.equal(s.progression.council.merit,500);
+s.cities[0].life.contentment=35;assert.equal(P.zeroInfluence(s,s.progression.militaryBaseline,0).society,0,'Crisis still affects current recognition');
+assert.equal(s.progression.council.merit,500,'History survives crisis');
+const care=fresh(),city=care.cities[0];P.recordStableAdministration(care,city,30);assert.equal(care.progression.council.merit,0,'No passive credit before care');
+P.recordCityCare(care,city,1,-8,false);P.recordCityCare(care,city,2,8,false);P.recordStableAdministration(care,city,30);assert.equal(care.progression.council.merit,0,'Self-harm and exact repair cannot farm credit');
+P.recordCityCare(care,city,3,1,true);P.recordStableAdministration(care,city,8);assert.equal(care.progression.council.sources.stable,0);P.recordStableAdministration(care,city,9);assert.equal(care.progression.council.sources.stable,32);P.recordStableAdministration(care,city,9);assert.equal(care.progression.council.sources.stable,32);
+const old=fresh();delete old.progression.balance.councilSourceCaps;delete old.progression.balance.councilMerit;for(let i=0;i<16;i++)P.councilCredit(old,`decree:${i}`,8);assert.equal(old.progression.council.merit,500,'Earlier economic profiles retain their contract');
+const shared=E.createCozyShared(w),pinned=P.bindWorldBalance(shared,[old],true);assert.equal(pinned.councilSourceCaps,undefined,'Existing world cannot acquire new caps');
+const current=P.bindWorldBalance(E.createCozyShared(w),[],true);current.councilSourceCaps.decree=1;assert.equal(fresh().progression.balance.councilSourceCaps.decree,160,'Profiles do not share mutable caps');
+console.log('PASS Council sources: separate caps, duplicate protection, crisis, delayed care, self-harm and historical world snapshots');
+
+const full=fresh();full.satisfaction=100;full.cities.forEach(c=>c.life.contentment=100);
+const sharedFull=E.createCozyShared(w);const fullDecree=E.getCozyComputed(full,sharedFull,w,START).decree;
+const noNeed=E.applyCozyAction(full,sharedFull,w,{type:'decree',decreeId:fullDecree.id,optionId:'care'},START);
+assert.equal(noNeed.state.progression.council.merit,0,'A decree at full confidence is not new public merit');assert(noNeed.state.resources.materials>full.resources.materials,'Material effect is still delivered');
+const recovery=fresh();recovery.cities[0].life.contentment=70;const cityDebt=recovery.cities[0];const recoveryShared=E.createCozyShared(w);let d=E.getCozyComputed(recovery,recoveryShared,w,START).decree;
+const delta=d.options.find(o=>o.id==='care').effects.localSatisfaction[cityDebt.id];recovery.progression.council.selfHarm[`${cityDebt.q},${cityDebt.r}`]=delta;
+const repaired=E.applyCozyAction(recovery,recoveryShared,w,{type:'decree',decreeId:d.id,optionId:'care'},START);assert.equal(repaired.state.progression.council.merit,0,'Royal repair of self-inflicted harm cannot bypass the care debt');
+const ordinary=fresh();const ordinaryShared=E.createCozyShared(w);d=E.getCozyComputed(ordinary,ordinaryShared,w,START).decree;
+const actual=E.applyCozyAction(ordinary,ordinaryShared,w,{type:'decree',decreeId:d.id,optionId:'care'},START);assert.equal(actual.state.progression.council.sources.decree,16);
+const historicalFull=structuredClone(full);delete historicalFull.progression.balance.councilMeaningfulDecrees;delete historicalFull.progression.balance.councilMerit;historicalFull.progression.balance.councilSourceCaps={decree:260,local:160,stable:80};
+const historicalResult=E.applyCozyAction(historicalFull,E.createCozyShared(w),w,{type:'decree',decreeId:fullDecree.id,optionId:'care'},START);assert.equal(historicalResult.state.progression.council.sources.decree,32,'Historical profile retains its old decree contract');
+console.log('PASS meaningful decrees: actual gain, full trust, self-harm, material payout and old profile compatibility');
+
+const continuous=fresh(),cc=continuous.cities[0];P.recordCityCare(continuous,cc,1,1,true);cc.life.contentment=50;P.recordStableAdministration(continuous,cc,4);assert.equal(continuous.progression.council.careSince[`${cc.q},${cc.r}`],undefined);cc.life.contentment=70;P.recordStableAdministration(continuous,cc,7);assert.equal(continuous.progression.council.sources.stable,0,'A last-minute recovery is not six continuous healthy days');P.recordCityCare(continuous,cc,7,1,true);P.recordStableAdministration(continuous,cc,12);assert.equal(continuous.progression.council.sources.stable,0);P.recordStableAdministration(continuous,cc,13);assert.equal(continuous.progression.council.sources.stable,32);
+P.recordCityCare(continuous,cc,14,-5,false);P.recordCityCare(continuous,cc,14,5,false);assert.equal(continuous.progression.council.careSince[`${cc.q},${cc.r}`],undefined,'Self-harm also interrupts the continuous-care clock');
+const previousContinuity=fresh(),pc=previousContinuity.cities[0];delete previousContinuity.progression.balance.councilContinuity;P.recordCityCare(previousContinuity,pc,1,1,true);pc.life.contentment=50;P.recordStableAdministration(previousContinuity,pc,4);pc.life.contentment=70;P.recordStableAdministration(previousContinuity,pc,7);assert.equal(previousContinuity.progression.council.sources.stable,32,'Historical stability snapshot is preserved');
+console.log('PASS stable administration: consecutive healthy period, new-care restart, self-harm interruption and historical behavior');
+
+const steady=fresh(),sc=steady.cities[0];steady.satisfaction=100;sc.life.contentment=100;steady.progression.council.careSince[`${sc.q},${sc.r}`]=1;
+assert.equal(P.decreeCareRecognized(steady,6,{[sc.id]:0},0),false);assert.equal(P.decreeCareRecognized(steady,7,{[sc.id]:0},0),true,'A healthy realm earns legitimacy after real sustained care without manufacturing a crisis');
+steady.progression.council.selfHarm[`${sc.q},${sc.r}`]=5;assert.equal(P.decreeCareRecognized(steady,7,{[sc.id]:5},0),false,'Steady administration cannot bypass an unpaid self-harm debt');
+console.log('PASS healthy administration: no need to manufacture crises, six-day requirement and debt protection');
+
+const peaceful=fresh(),capital=peaceful.cities[0];peaceful.satisfaction=100;capital.life.contentment=100;peaceful.progression.council.careSince[`${capital.q},${capital.r}`]=1;peaceful.hordesResolved=[5];
+const peacefulSave=E.settleCozyState(peaceful,E.createCozyShared(w),w,START+6*86400000);const peacefulDecree=E.getCozyComputed(peacefulSave.state,peacefulSave.shared,w,START+6*86400000).decree;assert.equal(peacefulDecree.options.find(o=>o.id==='care').effects.localSatisfaction[capital.id],0);
+const peacefulResult=E.applyCozyAction(peacefulSave.state,peacefulSave.shared,w,{type:'decree',decreeId:peacefulDecree.id,optionId:'care'},START+6*86400000);assert.equal(peacefulResult.state.progression.council.sources.decree,16,'Engine recognizes mature peaceful administration through the actual decree action');
+console.log('PASS actual decree action recognizes mature peaceful administration');

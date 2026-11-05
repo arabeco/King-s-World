@@ -14,6 +14,7 @@ export type WorldSummary = {
   seasonMode?: "classic" | "express";
   speedMultiplier?: number;
   durationDays?: number;
+  rulesVersion?: number;
 };
 
 export type VillageBuildingLevels = Partial<Record<BuildingId, number>>;

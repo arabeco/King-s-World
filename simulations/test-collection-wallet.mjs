@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {createCozyDatabase} from './lib/cozy-fixture.mjs';
+const db=await createCozyDatabase();
+try{
+ for(const name of ['67_SQL_ACCOUNT_APPEARANCE.sql','68_SQL_COLLECTION_WALLET.sql'])await db.exec(await readFile(new URL('../'+name,import.meta.url),'utf8'));
+ const user=(await db.query("insert into users(username,email) values('wallet_test','wallet@test.invalid') returning id")).rows[0].id;
+ const other=(await db.query("insert into users(username,email) values('wallet_other','wallet-other@test.invalid') returning id")).rows[0].id;
+ const read=async u=>(await db.query('select kw_collection_read($1) value',[u])).rows[0].value;
+ const buy=async(id,req)=>(await db.query('select kw_collection_buy($1,$2,$3) value',[user,id,req])).rows[0].value;
+ let state=await read(user);assert.equal(state.gems,0);assert.equal(state.inventory.filter(i=>i.id.startsWith('sovereign-')).length,4);assert.equal(state.inventory.length,27);
+ await read(user);assert.equal((await read(user)).inventory.length,27);
+ await assert.rejects(()=>buy('sovereign-09','purchase0001'),/INSUFFICIENT_GEMS/);
+ await assert.rejects(()=>buy('item-journey-crown','purchase0002'),/NOT_FOR_SALE/);
+ await db.query('update kw_player_wallet set gems=100 where user_id=$1',[user]);
+ state=await buy('sovereign-09','purchase0003');assert.equal(state.gems,50);assert.ok(state.inventory.some(i=>i.id==='sovereign-09'));
+ assert.equal((await buy('sovereign-09','purchase0003')).gems,50);
+ await assert.rejects(()=>buy('sovereign-10','purchase0003'),/REQUEST_REUSED/);
+ await assert.rejects(()=>buy('sovereign-09','purchase0004'),/ALREADY_OWNED/);
+ await db.query('select kw_account_appearance_save($1,$2,$3)',[user,'sovereign-09',0]);assert.equal((await read(user)).selectedId,'sovereign-09');
+ const race=await Promise.allSettled([buy('sovereign-10','purchase0005'),buy('sovereign-11','purchase0006')]);assert.equal(race.filter(r=>r.status==='fulfilled').length,1);assert.equal((await read(user)).gems,0);
+ assert.equal((await read(other)).gems,0);assert.equal((await read(other)).inventory.length,27);
+ const world=(await db.query("insert into worlds(slug,name,created_by_user_id,rules_version) values('xp-test','XP Test',$1,2) returning id",[user])).rows[0].id;
+ const player=(await db.query('insert into world_players(world_id,user_id) values($1,$2) returning id',[world,user])).rows[0].id;
+ await db.query('insert into kw_cozy_player_states(world_player_id,world_id,user_id,state_json) values($1,$2,$3,$4)',[player,world,user,JSON.stringify({king:{sovereignId:'sovereign-09'}})]);
+ await db.query("insert into kw_cozy_rewards(world_id,user_id,world_player_id,world_name,player_name,finished,xp) values($1,$2,$3,'XP Test','Tester',true,250)",[world,user,player]);
+ assert.equal((await read(user)).inventory.find(i=>i.id==='sovereign-09').xp,0);assert.equal((await read(user)).inventory.find(i=>i.id==='sovereign-01').xp,0);
+ await db.query('update kw_cozy_rewards set finished=true,xp=250 where world_id=$1',[world]);assert.equal((await read(user)).inventory.find(i=>i.id==='sovereign-09').xp,0);
+ await db.exec(await readFile(new URL('../68_SQL_COLLECTION_WALLET.sql',import.meta.url),'utf8'));assert.equal((await read(user)).inventory.find(i=>i.id==='sovereign-09').xp,0);
+ await db.exec('set role authenticated');await assert.rejects(()=>db.query('select * from kw_player_wallet'),/permission denied/);await assert.rejects(()=>read(user),/permission denied/);await db.exec('reset role');
+ console.log('PASS collection: starters, wallet, insufficient funds, atomic ownership, idempotency, request conflict, duplicate denial, concurrent buys, owned selection, account isolation, no season-end XP grant, repeated rewards, migration replay and permissions');
+}finally{await db.close();}

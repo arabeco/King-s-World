@@ -3,7 +3,7 @@ import type { User } from "@supabase/supabase-js";
 export const DEV_AUTH_COOKIE = "kw_dev_auth";
 
 export function isDevAuthEnabled(): boolean {
-  return process.env.NODE_ENV !== "production" || process.env.KW_SMOKE === "1";
+  return process.env.NODE_ENV !== "production";
 }
 
 export function normalizeDevAuthKey(value: unknown): string {

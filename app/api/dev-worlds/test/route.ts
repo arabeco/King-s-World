@@ -8,7 +8,7 @@ type TestWorldRow = {
 };
 
 function isDevWorldEnabled(): boolean {
-  return process.env.NODE_ENV !== "production" || process.env.KW_SMOKE === "1";
+  return process.env.NODE_ENV !== "production";
 }
 
 export async function POST() {

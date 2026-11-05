@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
+import { isCozyWorld } from "@/lib/cozy/server";
 import { supabaseInsertReturning, supabaseSelect } from "@/lib/supabase-rest";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,9 @@ type TroopSel = { militia?: number; shooters?: number; scouts?: number; machiner
 export async function POST(request: Request, { params }: { params: { worldId: string } }) {
   try {
     const appUser = await requireAuthenticatedAppUser();
+    if (await isCozyWorld(params.worldId)) {
+      return NextResponse.json({ error: "Esta temporada usa o exército da Coroa. Use as ações do mundo cooperativo." }, { status: 409 });
+    }
     const worldId = params.worldId;
     const body = (await request.json()) as { targetSiteId?: string; troops?: TroopSel; withHero?: boolean };
     const targetSiteId = String(body.targetSiteId ?? "").trim();

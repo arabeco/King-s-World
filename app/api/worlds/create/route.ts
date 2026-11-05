@@ -1,93 +1,61 @@
+import { hashLobbyPassword } from "@/lib/cozy/lobby-password";
 import { NextResponse } from "next/server";
-
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
-import { supabaseInsertReturning, supabaseRpc } from "@/lib/supabase-rest";
-import { DEFAULT_WORLD_PLAYER_CAP } from "@/lib/world-rules";
-
-type SeasonMode = "normal" | "express";
-
-function normalizeMode(value: unknown): SeasonMode {
-  return value === "express" ? "express" : "normal";
-}
-
-function slugify(name: string): string {
-  const base = name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 28);
-  return base || "mundo";
-}
-
-type CreatedWorld = { id: string; slug: string; join_code: string };
+import { supabaseRpc } from "@/lib/supabase-rest";
+import { cozyErrorResponse } from "@/lib/cozy/server";
 
 export async function POST(request: Request) {
   try {
+    const origin=request.headers.get('origin');if(origin){let valid=false;try{const parsed=new URL(origin);valid=['http:','https:'].includes(parsed.protocol)&&parsed.host===(request.headers.get('host')??new URL(request.url).host);}catch{}if(!valid)return NextResponse.json({error:'Origem inválida.'},{status:403});}
     const user = await requireAuthenticatedAppUser();
-
-    const body = (await request.json().catch(() => ({}))) as { name?: unknown; mode?: unknown };
-    const name = typeof body.name === "string" ? body.name.trim().slice(0, 40) : "";
-    if (name.length < 2) {
-      return NextResponse.json({ error: "Dê um nome ao mundo (mín. 2 letras)." }, { status: 400 });
-    }
-    const mode = normalizeMode(body.mode);
-    const durationDays = mode === "express" ? 30 : 120;
-    const speedMultiplier = mode === "express" ? 4 : 1;
-
-    const joinCode = await supabaseRpc<string>("generate_world_join_code", {});
-    const suffix = Math.random().toString(36).slice(2, 6);
-    const slug = `${slugify(name)}-${suffix}`;
-    const now = Date.now();
-    const day = 86_400_000;
-    const iso = (days: number) => new Date(now + days * day).toISOString();
-
-    const base: Record<string, unknown> = {
-      slug,
-      name,
-      status: "open",
-      registration_opens_at: new Date(now).toISOString(),
-      starts_at: iso(1),
-      phase_2_starts_at: iso(1 + Math.ceil(durationDays / 6)),
-      ends_at: iso(1 + durationDays),
-      player_cap: DEFAULT_WORLD_PLAYER_CAP,
-      map_width: 81,
-      map_height: 81,
-      base_move_time_minutes: Math.max(1, Math.round(45 / speedMultiplier)),
-      road_move_time_minutes: Math.max(1, Math.round(15 / speedMultiplier)),
-      runtime_started: false,
-      runtime_real_time_enabled: false,
-      runtime_anchor_day: 0,
-      join_code: joinCode,
-      created_by_user_id: user.id,
+    const body = (await request.json().catch(() => ({}))) as {
+      name?: unknown;
+      mode?: unknown;
+      password?: unknown;
+      combatMode?:unknown;
     };
-
-    // Tenta com as colunas de modo; se elas não existirem (SQL não rodado), cai no básico.
-    let rows: CreatedWorld[];
-    try {
-      rows = await supabaseInsertReturning<Record<string, unknown>, CreatedWorld>(
-        "worlds",
-        { ...base, season_mode: mode, speed_multiplier: speedMultiplier },
-        "slug",
+    const name =
+      typeof body.name === "string" ? body.name.trim().slice(0, 40) : "";
+    if (name.length < 2)
+      return NextResponse.json(
+        { error: "Dê um nome ao mundo (mín. 2 letras)." },
+        { status: 400 },
       );
-    } catch {
-      rows = await supabaseInsertReturning<Record<string, unknown>, CreatedWorld>("worlds", base, "slug");
+    const password = typeof body.password === "string" ? body.password : "";
+    if (password.length > 64 || (password.length > 0 && password.length < 4))
+      return NextResponse.json({error:"A senha deve ter de 4 a 64 caracteres."},{status:400});
+    if(body.combatMode!==undefined&&(typeof body.combatMode!=='string'||!['cozy','competitive'].includes(body.combatMode)))return NextResponse.json({error:'Escolha Cozy ou competitivo.'},{status:400});
+    const combatMode=body.combatMode==='competitive'?'competitive':'cozy';
+    const mode = body.mode === "express" ? "express" : "normal";
+    type CreatedWorld = {
+      id: string;
+      slug: string;
+      join_code: string;
+    };
+    const params={
+      p_user_id: user.id,
+      p_name: name,
+      p_mode: mode,
+    };
+    let world:CreatedWorld;
+    try {world=await supabaseRpc<CreatedWorld>(combatMode==='competitive'?'kw_cozy_create_with_rules':'kw_cozy_create_lobby',{...params,...(combatMode==='competitive'?{p_combat_mode:combatMode}:{}),p_password_hash:password ? hashLobbyPassword(password) : null});}
+    catch(error){
+      const message=error instanceof Error?error.message:'';
+      if(combatMode==='competitive'||password || !(/Could not find the function public\.kw_cozy_create_lobby|function (?:public\.)?kw_cozy_create_lobby[^\n]*does not exist/i.test(message)))throw error;
+      try {world=await supabaseRpc<CreatedWorld>(mode==='express'?'kw_cozy_create_economic':'kw_cozy_create',params);}
+      catch(e){if(mode!=='express'||!(/kw_cozy_create_economic/.test(String(e))&&/does not exist|Could not find/.test(String(e))))throw e;world=await supabaseRpc<CreatedWorld>('kw_cozy_create',params);}
     }
-
-    const world = rows[0];
-    if (!world) {
-      return NextResponse.json({ error: "Falha ao criar mundo." }, { status: 500 });
-    }
-
-    // O onboarding do criador (capital + recursos) roda quando ele acessa o mundo.
     return NextResponse.json({
       ok: true,
-      world: { slug: world.slug, joinCode: world.join_code, href: `/world/${world.slug}/intelligence` },
+      world: {
+        combatMode,
+        slug: world.slug,
+        joinCode: world.join_code,
+        href: `/world/${world.slug}/intelligence`,
+      },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Falha ao criar mundo.";
-    const status = message === "Unauthorized" ? 401 : 500;
-    return NextResponse.json({ error: message }, { status });
+    const result = cozyErrorResponse(error);
+    return NextResponse.json(result.body, { status: result.status });
   }
 }

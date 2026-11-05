@@ -1,0 +1,301 @@
+{
+  "capital": {
+    "src": "/cities/royal-capital-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      0,
+      29,
+      1253,
+      1254
+    ]
+  },
+  "city": {
+    "src": "/cities/metropole-icon.png",
+    "width": 196,
+    "height": 184,
+    "bounds": [
+      4,
+      0,
+      189,
+      171
+    ]
+  },
+  "abandoned": {
+    "src": "/cities/neutra-icon.png",
+    "width": 190,
+    "height": 186,
+    "bounds": [
+      9,
+      16,
+      185,
+      167
+    ]
+  },
+  "outpost": {
+    "src": "/cities/postoavancado-icon.png",
+    "width": 182,
+    "height": 173,
+    "bounds": [
+      10,
+      13,
+      168,
+      161
+    ]
+  },
+  "mine": {
+    "src": "/buildings/minas.png",
+    "width": 354,
+    "height": 354,
+    "bounds": [
+      60,
+      59,
+      293,
+      319
+    ]
+  },
+  "materials": {
+    "src": "/icons/resource-materials.png",
+    "width": 500,
+    "height": 500,
+    "bounds": [
+      11,
+      11,
+      492,
+      485
+    ]
+  },
+  "npc": {
+    "src": "/icons/action-attack.png",
+    "width": 500,
+    "height": 500,
+    "bounds": [
+      15,
+      8,
+      490,
+      487
+    ]
+  },
+  "ruin": {
+    "src": "/icons/action-explore.png",
+    "width": 500,
+    "height": 500,
+    "bounds": [
+      12,
+      9,
+      487,
+      488
+    ]
+  },
+  "landmark": {
+    "src": "/icons/influence-legacy.png",
+    "width": 500,
+    "height": 500,
+    "bounds": [
+      12,
+      7,
+      490,
+      497
+    ]
+  },
+  "supplies": {
+    "src": "/icons/resource-supplies.png",
+    "width": 500,
+    "height": 500,
+    "bounds": [
+      16,
+      14,
+      491,
+      483
+    ]
+  },
+  "construction": {
+    "src": "/buildings/construction-site-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      93,
+      216,
+      1222,
+      1068
+    ],
+    "alphaThreshold": 8
+  },
+  "cityConstruction": {
+    "src": "/cities/city-construction-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      11,
+      19,
+      1242,
+      1216
+    ],
+    "alphaThreshold": 8
+  },
+  "cityConstructionStage1": {
+    "src": "/cities/city-construction-stage-1-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      0,
+      116,
+      1254,
+      1231
+    ],
+    "contentBounds": [
+      7,
+      139,
+      1246,
+      1221
+    ],
+    "alphaThreshold": 8
+  },
+  "cityConstructionStage2": {
+    "src": "/cities/city-construction-stage-2-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      0,
+      116,
+      1254,
+      1231
+    ],
+    "contentBounds": [
+      4,
+      135,
+      1252,
+      1225
+    ],
+    "alphaThreshold": 8
+  },
+  "cityConstructionStage3": {
+    "src": "/cities/city-construction-stage-3-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      0,
+      116,
+      1254,
+      1231
+    ],
+    "contentBounds": [
+      3,
+      131,
+      1252,
+      1226
+    ],
+    "alphaThreshold": 8
+  },
+  "cityCompleted": {
+    "src": "/cities/city-completed-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      0,
+      116,
+      1254,
+      1231
+    ],
+    "contentBounds": [
+      0,
+      116,
+      1254,
+      1231
+    ],
+    "alphaThreshold": 8
+  },
+  "gold": {
+    "src": "/icons/resource-gold-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      95,
+      163,
+      1215,
+      1098
+    ],
+    "alphaThreshold": 8
+  },
+  "time": {
+    "src": "/icons/status-time-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      298,
+      128,
+      956,
+      1132
+    ],
+    "alphaThreshold": 8
+  },
+  "alliance": {
+    "src": "/icons/alliance-crest-v1.png",
+    "width": 1254,
+    "height": 1254,
+    "bounds": [
+      68,
+      32,
+      1185,
+      1194
+    ],
+    "alphaThreshold": 8
+  },
+  "uiMaterials": {
+    "src": "/icons/producao.png",
+    "width": 500,
+    "height": 500,
+    "bounds": [
+      40,
+      41,
+      487,
+      466
+    ],
+    "alphaThreshold": 8
+  },
+  "uiSupplies": {
+    "src": "/icons/recursos.png",
+    "width": 500,
+    "height": 500,
+    "bounds": [
+      38,
+      10,
+      444,
+      481
+    ],
+    "alphaThreshold": 8
+  },
+  "settlementSmall": {
+    "src": "/cities/settlement-small-v1.webp",
+    "width": 480,
+    "height": 320,
+    "bounds": [
+      0,
+      0,
+      480,
+      320
+    ]
+  },
+  "settlementMedium": {
+    "src": "/cities/settlement-medium-v1.webp",
+    "width": 480,
+    "height": 323,
+    "bounds": [
+      0,
+      0,
+      480,
+      323
+    ]
+  },
+  "settlementLarge": {
+    "src": "/cities/settlement-large-v1.webp",
+    "width": 480,
+    "height": 319,
+    "bounds": [
+      0,
+      0,
+      480,
+      319
+    ]
+  }
+}

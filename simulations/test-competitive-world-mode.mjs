@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {createCozyDatabase} from './lib/cozy-fixture.mjs';const db=await createCozyDatabase();
+try{for(const f of ['63_SQL_COZY_EXPRESS_ECONOMY.sql','65_SQL_COZY_LOBBY.sql','74_SQL_COMPETITIVE_WORLD_MODE.sql'])await db.exec(await readFile(new URL('../'+f,import.meta.url),'utf8'));
+ const user=(await db.query("insert into users(username,email) values('pvp-mode','pvp-mode@test.invalid') returning id")).rows[0].id;
+ const create=async mode=>(await db.query("select kw_cozy_create_with_rules($1,'Competitive rules','express',$2,null) v",[user,mode])).rows[0].v;
+ const cozy=await create('cozy'),pvp=await create('competitive');assert.equal((await db.query('select combat_mode from worlds where id=$1',[cozy.id])).rows[0].combat_mode,'cozy');assert.equal((await db.query('select combat_mode from worlds where id=$1',[pvp.id])).rows[0].combat_mode,'competitive');
+ const count=(await db.query('select count(*) n from worlds')).rows[0].n;await assert.rejects(()=>create('oops'),/INVALID_COMBAT_MODE/);assert.equal((await db.query('select count(*) n from worlds')).rows[0].n,count);
+ await db.query('select kw_cozy_start($1,$2)',[pvp.id,user]);await assert.rejects(()=>db.query("update worlds set combat_mode='cozy' where id=$1",[pvp.id]),/COMBAT_MODE_LOCKED/);
+ const player=(await db.query('select id from world_players where world_id=$1',[cozy.id])).rows[0].id;await db.query("insert into kw_cozy_player_states(world_player_id,world_id,user_id,state_json,influence,revision) values($1,$2,$3,'{}',0,1)",[player,cozy.id,user]);await assert.rejects(()=>db.query("update worlds set combat_mode='competitive' where id=$1",[cozy.id]),/COMBAT_MODE_LOCKED/);
+ await db.exec(await readFile(new URL('../74_SQL_COMPETITIVE_WORLD_MODE.sql',import.meta.url),'utf8'));assert.equal((await db.query('select combat_mode from worlds where id=$1',[pvp.id])).rows[0].combat_mode,'competitive');
+ await db.exec('set role authenticated');await assert.rejects(()=>create('competitive'),/permission denied/);await db.exec('reset role');console.log('PASS persisted world rules: Cozy default, explicit competitive creation, invalid rollback, frozen after state/start, replay and private RPC');
+}catch(e){console.error(e.message,e.where??'');process.exitCode=1;}finally{await db.close();}

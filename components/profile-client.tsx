@@ -1,25 +1,21 @@
 "use client";
 
+import {CozyAccountPanel} from "./cozy/CozyAccountPanel";
+import pageStyles from "./sovereign-page.module.css";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Trash2, X } from "lucide-react";
 
+import {collectionRequest} from "@/lib/collection-client";
 import { AuthSignOutButton } from "@/components/auth-signout-button";
-import { SectionCard, StatusBadge } from "@/components/ui";
-import type { WorldSummary } from "@/lib/mock-data";
+import { SectionCard } from "@/components/ui";
+
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type ProfileClientProps = {
   initialUsername: string;
-  globalScore: number;
-  medals: string[];
-  history: {
-    world: string;
-    rank: number;
-    tribe: string;
-  }[];
-  worlds: WorldSummary[];
+
 };
 
 type ProfileApiResponse = {
@@ -31,7 +27,7 @@ type ProfileApiResponse = {
   error?: string;
 };
 
-export function ProfileClient({ initialUsername, globalScore, medals, history, worlds }: ProfileClientProps) {
+export function ProfileClient({ initialUsername }: ProfileClientProps) {
   const router = useRouter();
   const [username, setUsername] = useState(initialUsername);
   const [draftUsername, setDraftUsername] = useState(initialUsername);
@@ -42,62 +38,25 @@ export function ProfileClient({ initialUsername, globalScore, medals, history, w
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadProfile() {
-      try {
-        const response = await fetch("/api/me/profile", { cache: "no-store" });
-        if (!response.ok) return;
-        const payload = (await response.json()) as ProfileApiResponse;
-        if (active && payload.profile?.username) {
-          setUsername(payload.profile.username);
-          setDraftUsername(payload.profile.username);
-        }
-      } catch {
-        // Mantém o perfil do servidor se a API estiver indisponível.
-      }
-    }
-
-    void loadProfile();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const handleWorldChange = (worldId: string) => {
-    if (!worldId) return;
-    const world = worlds.find((entry) => entry.id === worldId);
-    if (!world) return;
-    const href =
-      world.status === "Em Andamento"
-        ? `/world/${world.id}/intelligence`
-        : world.status === "Finalizado"
-          ? `/world/${world.id}/report`
-          : `/world/${world.id}/empire`;
-    router.push(href);
-  };
 
   const saveName = async () => {
     const next = draftUsername.trim();
+    setError(null);setMessage(null);
     if (next.length < 3) {
-      setMessage("O nick precisa ter pelo menos 3 caracteres.");
+      setError("O nick precisa ter pelo menos 3 caracteres.");
       return;
     }
 
+    if(next.length>24||!/^[a-zA-Z0-9_]+$/.test(next)){setError("Use de 3 a 24 letras, números ou underline.");return;}
     try {
       setBusy("profile");
       setError(null);
       setMessage(null);
-      const response = await fetch("/api/me/profile", {
+      const payload = await collectionRequest<ProfileApiResponse>("/api/me/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: next }),
       });
-      const payload = (await response.json()) as ProfileApiResponse;
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Não foi possível salvar o nick.");
-      }
 
       setUsername(payload.profile?.username ?? next);
       setDraftUsername(payload.profile?.username ?? next);
@@ -134,40 +93,43 @@ export function ProfileClient({ initialUsername, globalScore, medals, history, w
   };
 
   return (
-    <main className="marketing-shell marketing-shell--profile" style={{ padding: "2rem 0 3rem" }}>
-      <div className="marketing-brand-mark" aria-hidden="true" />
+    <main className={pageStyles.page}>
+      <div className={pageStyles.stage}>
+        <button type="button" className={pageStyles.back} aria-label="Voltar" onClick={()=>document.referrer.startsWith(location.origin+"/")?router.back():router.push("/lobby")}>‹</button>
+        <CozyAccountPanel username={username}/>
+      </div><details style={{maxWidth:540,margin:"20px auto"}}><summary>Configurações da conta</summary>
       <div className="dashboard-grid">
         <SectionCard title={username} eyebrow="Perfil global">
-          <div className="metric-grid">
-            <div>
-              <span>Score global</span>
-              <strong>{globalScore.toLocaleString("pt-BR")}</strong>
-            </div>
-            <div>
-              <span>Medalhas</span>
-              <strong>{medals.length}</strong>
-            </div>
-          </div>
-
           <div className="form-stack" style={{ marginTop: "1rem" }}>
             {editingName ? (
               <>
                 <input
                   type="text"
                   value={draftUsername}
+                  aria-label="Nickname da conta"
+                  aria-describedby="nickname-rules"
+                  aria-invalid={Boolean(error)}
                   minLength={3}
+                  maxLength={24}
+                  disabled={busy==='profile'}
+                  autoComplete="nickname"
+                  pattern="[a-zA-Z0-9_]+"
                   onChange={(event) => setDraftUsername(event.target.value)}
                   placeholder="Seu nick"
                 />
+                <small id="nickname-rules">3–24 caracteres · letras, números e _</small>
+                {error&&<p role="alert" style={{color:"#fecaca"}}>{error}</p>}
                 <div className="inline-actions">
                   <button className="primary-button" type="button" onClick={saveName} disabled={busy === "profile"}>
                     {busy === "profile" ? "Salvando..." : "Salvar nick"}
                   </button>
                   <button
+                    disabled={busy==='profile'}
                     className="secondary-button"
                     type="button"
                     onClick={() => {
                       setDraftUsername(username);
+                      setError(null);setMessage(null);
                       setEditingName(false);
                     }}
                   >
@@ -181,47 +143,14 @@ export function ProfileClient({ initialUsername, globalScore, medals, history, w
               </button>
             )}
 
-            <label className="list-meta" htmlFor="world-picker">
-              Trocar de mundo
-            </label>
-            <select id="world-picker" defaultValue="" onChange={(event) => handleWorldChange(event.target.value)}>
-              <option value="" disabled>
-                Escolha um mundo
-              </option>
-              {worlds.map((world) => (
-                <option key={world.id} value={world.id}>
-                  {world.name} - {world.status}
-                </option>
-              ))}
-            </select>
+
           </div>
         </SectionCard>
 
-        <SectionCard title="Legado" eyebrow="Marcas permanentes">
-          <div className="list-stack">
-            {medals.length > 0
-              ? medals.map((medal) => <StatusBadge key={medal} label={medal} tone="warning" />)
-              : <p className="list-meta">Sem medalhas ainda.</p>}
-          </div>
-        </SectionCard>
       </div>
-
-      <SectionCard title="Histórico de mundos" eyebrow="Campanhas encerradas">
-        <div className="list-stack">
-          {history.length > 0 ? (
-            history.map((entry) => (
-              <div key={entry.world} className="world-card">
-                <strong>{entry.world}</strong>
-                <span className="list-meta">Rank final #{entry.rank} · Tribo {entry.tribe}</span>
-              </div>
-            ))
-          ) : (
-            <p className="list-meta">Quando uma temporada terminar, o resultado aparece aqui.</p>
-          )}
-        </div>
-
+      <SectionCard title="Acesso à conta" eyebrow="Conta">
         {message ? <p style={{ marginTop: "1rem", color: "#86efac" }}>{message}</p> : null}
-        {error ? <p role="alert" style={{ marginTop: "1rem", color: "#fecaca" }}>{error}</p> : null}
+        {error&&!editingName ? <p role="alert" style={{ marginTop: "1rem", color: "#fecaca" }}>{error}</p> : null}
 
         <div className="inline-actions" style={{ marginTop: "1rem" }}>
           <Link className="secondary-button" href="/lobby">
@@ -234,6 +163,7 @@ export function ProfileClient({ initialUsername, globalScore, medals, history, w
         </div>
       </SectionCard>
 
+      </details>
       {/* Zona de risco — discreta, separada dos botões principais */}
       <div style={{ marginTop: "2rem", textAlign: "center" }}>
         <button

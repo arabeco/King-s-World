@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
   return (
     <MarketingShell
       title="Recupere o acesso"
-      subtitle="Fluxo simples de redefinição para manter a conta global viva entre temporadas."
+      compact
     >
       <form className="form-stack" onSubmit={handleSubmit}>
         <input

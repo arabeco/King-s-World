@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
+import { isCozyWorld } from "@/lib/cozy/server";
 import { ensureWorldFilled } from "@/lib/npc-fill";
 import { looksLikeUuid, supabaseSelect } from "@/lib/supabase-rest";
 import { normalizeWorldPlayerCap } from "@/lib/world-rules";
@@ -27,6 +28,7 @@ export async function POST(
 ) {
   try {
     await requireAuthenticatedAppUser();
+    if (await isCozyWorld(params.worldId)) return NextResponse.json({ error: "As ameaças desta temporada são as hordas e aldeias do mapa." }, { status: 409 });
     const world = await fetchWorld(params.worldId);
     if (!world) {
       return NextResponse.json({ error: "Mundo nao encontrado." }, { status: 404 });

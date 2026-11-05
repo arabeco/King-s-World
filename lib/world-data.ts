@@ -29,6 +29,7 @@ const STRUCTURE_IDS = ["crown", "economy", "society", "recruitment", "defense"] 
 type SeasonMode = "classic" | "express";
 const WORLD_SELECT_BASE = "id,slug,name,status,phase,day_number,starts_at,runtime_started,runtime_real_time_enabled,runtime_anchor_day,runtime_anchor_started_at,sandbox_enabled,player_cap";
 const WORLD_SELECT_WITH_MODE = `${WORLD_SELECT_BASE},season_mode,speed_multiplier`;
+const WORLD_SELECT_WITH_RULES = `${WORLD_SELECT_WITH_MODE},rules_version`;
 
 type CityStructureId = (typeof STRUCTURE_IDS)[number];
 type StructureDots = Record<"a" | "b" | "c" | "d", number>;
@@ -51,6 +52,7 @@ type DbWorld = {
   season_mode?: SeasonMode | null;
   speed_multiplier?: number | null;
   player_cap?: number | null;
+  rules_version?: number;
 };
 
 type DbWorldPlayer = {
@@ -254,6 +256,15 @@ function clampDay(day: number, durationDays = WORLD_DURATION_DAYS): number {
 }
 
 function computeRuntime(world: DbWorld) {
+  if (world.rules_version === 2) {
+    const seasonMode = normalizeSeasonMode(world.season_mode);
+    const speedMultiplier = seasonMode === "express" ? 4 : 1;
+    const started = world.status !== "open";
+    const anchorStartedAtMs = world.runtime_anchor_started_at ? Date.parse(world.runtime_anchor_started_at) : world.starts_at ? Date.parse(world.starts_at) : null;
+    const day = !started || anchorStartedAtMs === null ? 0 : Math.min(120, Math.max(1, 1 + Math.floor((Date.now() - anchorStartedAtMs) / (REAL_DAY_MS / speedMultiplier))));
+    return { currentDay: day, seasonMode, speedMultiplier, durationDays: 120, portalStartDay: 91,
+      runtimeState: { started, realTimeEnabled: started, anchorDay: 1, anchorStartedAtMs, seasonMode, speedMultiplier, durationDays: 120 } };
+  }
   const seasonMode = normalizeSeasonMode(world.season_mode);
   const durationDays = worldDurationDays(world);
   const speedMultiplier = worldSpeedMultiplier(world);
@@ -624,7 +635,7 @@ function seedStructureRows(
 
 async function fetchWorldRecord(worldId: string): Promise<DbWorld> {
   const params = new URLSearchParams();
-  params.set("select", WORLD_SELECT_WITH_MODE);
+  params.set("select", WORLD_SELECT_WITH_RULES);
   params.set("slug", `eq.${worldId}`);
   let bySlug: DbWorld[];
   try {
@@ -642,7 +653,7 @@ async function fetchWorldRecord(worldId: string): Promise<DbWorld> {
   }
 
   const byIdParams = new URLSearchParams();
-  byIdParams.set("select", WORLD_SELECT_WITH_MODE);
+  byIdParams.set("select", WORLD_SELECT_WITH_RULES);
   byIdParams.set("id", `eq.${worldId}`);
   let byId: DbWorld[];
   try {
@@ -1091,7 +1102,7 @@ async function fetchHeroAssignments(worldPlayerId: string | null): Promise<numbe
   return rows.filter((entry) => Boolean(entry.hero_slot)).length;
 }
 
-export async function listWorldSummaries(): Promise<WorldSummary[]> {
+export async function listWorldSummaries(userId?: string): Promise<WorldSummary[]> {
   noStore();
 
   if (!isSupabaseConfigured()) {
@@ -1100,7 +1111,7 @@ export async function listWorldSummaries(): Promise<WorldSummary[]> {
 
   try {
     const params = new URLSearchParams();
-    params.set("select", WORLD_SELECT_WITH_MODE);
+    params.set("select", WORLD_SELECT_WITH_RULES);
     let worlds: DbWorld[];
     try {
       worlds = await supabaseSelect<DbWorld>("worlds", params);
@@ -1108,17 +1119,18 @@ export async function listWorldSummaries(): Promise<WorldSummary[]> {
       if (shouldUseLocalSupabaseFallback(error)) {
         throw error;
       }
-      params.set("select", WORLD_SELECT_BASE);
+      params.set("select", WORLD_SELECT_WITH_MODE);
       worlds = await supabaseSelect<DbWorld>("worlds", params);
     }
 
-    const worldPlayers = await supabaseSelect<Pick<DbWorldPlayer, "world_id">>("world_players", new URLSearchParams([["select", "world_id"]]));
+    const worldPlayers = await supabaseSelect<Pick<DbWorldPlayer, "world_id" | "user_id">>("world_players", new URLSearchParams([["select", "world_id,user_id"]]));
+    const memberships = new Set(worldPlayers.filter(player=>player.user_id===userId).map(player=>player.world_id));
     const counts = new Map<string, number>();
     for (const row of worldPlayers) {
       counts.set(row.world_id, (counts.get(row.world_id) ?? 0) + 1);
     }
 
-    return worlds.map((world) => {
+    return worlds.filter(world => !userId || memberships.has(world.id)).map((world) => {
       const runtime = computeRuntime(world);
       return {
         id: world.slug,
@@ -1131,6 +1143,7 @@ export async function listWorldSummaries(): Promise<WorldSummary[]> {
         seasonMode: runtime.seasonMode,
         speedMultiplier: runtime.speedMultiplier,
         durationDays: runtime.durationDays,
+        rulesVersion: world.rules_version ?? 1,
       };
     });
   } catch (error) {
@@ -1178,6 +1191,7 @@ export const getWorldPayload = cache(async function getWorldPayload(worldRouteId
 
   try {
   const worldRecord = await fetchWorldRecord(worldRouteId);
+  if (worldRecord.rules_version === 2) throw new Error("Esta temporada usa o motor cooperativo da Coroa.");
   const runtime = computeRuntime(worldRecord);
   const authUser = await getAuthenticatedUser();
   let appUserId: string | null = null;

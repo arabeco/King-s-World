@@ -1,15 +1,14 @@
 import Link from "next/link";
 
 import { LobbyWorldSelector } from "@/components/lobby-world-selector";
+import { CozyAccountPanel } from "@/components/cozy/CozyAccountPanel";
 import { SectionCard } from "@/components/ui";
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
 import { listWorldSummaries } from "@/lib/world-data";
 
 export default async function LobbyPage() {
-  const [worlds, appUser] = await Promise.all([
-    listWorldSummaries(),
-    requireAuthenticatedAppUser(),
-  ]);
+  const appUser = await requireAuthenticatedAppUser();
+  const worlds = await listWorldSummaries(appUser.id);
 
   return (
     <main className="marketing-shell marketing-shell--lobby" style={{ padding: "2rem 0 3rem" }}>
@@ -19,20 +18,10 @@ export default async function LobbyPage() {
         <h1>
           Escolha seu <span className="kw-gold-text">mundo</span>
         </h1>
-        <p>
-          Sua conta vive fora da campanha. O rei, a capital e o destino comecam depois que voce entra no mundo.
-        </p>
       </section>
 
-      {worlds.length > 0 ? (
-        <LobbyWorldSelector username={appUser.username} worlds={worlds} />
-      ) : (
-        <SectionCard title="Nenhuma campanha ativa" eyebrow="Aguardando mundo">
-          <p style={{ color: "rgba(248,250,252,0.75)", lineHeight: 1.6 }}>
-            Nenhuma campanha está disponível no momento. Se você é beta tester, aguarde o criador ativar um mundo — você receberá acesso em breve.
-          </p>
-        </SectionCard>
-      )}
+      <LobbyWorldSelector username={appUser.username} worlds={worlds} />
+      <CozyAccountPanel />
 
       <SectionCard title="Gerenciar conta" eyebrow="Global" accent="cyan">
         <div className="inline-actions" style={{ marginTop: "1rem" }}>

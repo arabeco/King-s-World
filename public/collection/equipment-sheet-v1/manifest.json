@@ -1,0 +1,256 @@
+{
+  "source": "sheet.png",
+  "sheetSize": [
+    1254,
+    1254
+  ],
+  "grid": [
+    3,
+    3
+  ],
+  "items": [
+    {
+      "id": "seed-sack",
+      "name": "Saco de Sementes",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        418,
+        418
+      ],
+      "size": [
+        418,
+        418
+      ],
+      "alphaBBox": [
+        0,
+        9,
+        418,
+        418
+      ],
+      "image": "seed-sack.png",
+      "ui": "seed-sack-96.png",
+      "status": "sample"
+    },
+    {
+      "id": "master-hammer",
+      "name": "Martelo do Mestre",
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        418,
+        0,
+        836,
+        418
+      ],
+      "size": [
+        418,
+        418
+      ],
+      "alphaBBox": [
+        0,
+        19,
+        418,
+        418
+      ],
+      "image": "master-hammer.png",
+      "ui": "master-hammer-96.png",
+      "status": "sample"
+    },
+    {
+      "id": "watch-standard",
+      "name": "Estandarte da Vigília",
+      "cell": [
+        2,
+        0
+      ],
+      "crop": [
+        836,
+        0,
+        1254,
+        418
+      ],
+      "size": [
+        418,
+        418
+      ],
+      "alphaBBox": [
+        1,
+        19,
+        404,
+        418
+      ],
+      "image": "watch-standard.png",
+      "ui": "watch-standard-96.png",
+      "status": "sample"
+    },
+    {
+      "id": "road-map",
+      "name": "Mapa de Estradas",
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        0,
+        418,
+        418,
+        836
+      ],
+      "size": [
+        418,
+        418
+      ],
+      "alphaBBox": [
+        0,
+        0,
+        418,
+        418
+      ],
+      "image": "road-map.png",
+      "ui": "road-map-96.png",
+      "status": "sample"
+    },
+    {
+      "id": "granary-seal",
+      "name": "Selo dos Armazéns",
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        418,
+        418,
+        836,
+        836
+      ],
+      "size": [
+        418,
+        418
+      ],
+      "alphaBBox": [
+        0,
+        0,
+        418,
+        418
+      ],
+      "image": "granary-seal.png",
+      "ui": "granary-seal-96.png",
+      "status": "sample"
+    },
+    {
+      "id": "steward-ledger",
+      "name": "Registro do Intendente",
+      "cell": [
+        2,
+        1
+      ],
+      "crop": [
+        836,
+        418,
+        1254,
+        836
+      ],
+      "size": [
+        418,
+        418
+      ],
+      "alphaBBox": [
+        0,
+        0,
+        390,
+        418
+      ],
+      "image": "steward-ledger.png",
+      "ui": "steward-ledger-96.png",
+      "status": "sample"
+    },
+    {
+      "id": "cartographer-divider",
+      "name": "Compasso do Cartógrafo",
+      "cell": [
+        0,
+        2
+      ],
+      "crop": [
+        0,
+        836,
+        418,
+        1254
+      ],
+      "size": [
+        418,
+        418
+      ],
+      "alphaBBox": [
+        0,
+        0,
+        416,
+        418
+      ],
+      "image": "cartographer-divider.png",
+      "ui": "cartographer-divider-96.png",
+      "status": "sample"
+    },
+    {
+      "id": "builder-tools",
+      "name": "Ferramentas do Construtor",
+      "cell": [
+        1,
+        2
+      ],
+      "crop": [
+        418,
+        836,
+        836,
+        1254
+      ],
+      "size": [
+        418,
+        418
+      ],
+      "alphaBBox": [
+        1,
+        0,
+        418,
+        400
+      ],
+      "image": "builder-tools.png",
+      "ui": "builder-tools-96.png",
+      "status": "sample"
+    },
+    {
+      "id": "harvest-coffer",
+      "name": "Cofre da Colheita",
+      "cell": [
+        2,
+        2
+      ],
+      "crop": [
+        836,
+        836,
+        1254,
+        1254
+      ],
+      "size": [
+        418,
+        418
+      ],
+      "alphaBBox": [
+        0,
+        0,
+        406,
+        418
+      ],
+      "image": "harvest-coffer.png",
+      "ui": "harvest-coffer-96.png",
+      "status": "sample"
+    }
+  ]
+}

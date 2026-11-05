@@ -1,0 +1,922 @@
+[
+  {
+    "id": "empire-crest-04",
+    "category": "crests",
+    "image": "empire-crest-04.png",
+    "ui": "empire-crest-04-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-a.png",
+    "crop": [
+      0,
+      0,
+      418,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-05",
+    "category": "crests",
+    "image": "empire-crest-05.png",
+    "ui": "empire-crest-05-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-a.png",
+    "crop": [
+      418,
+      0,
+      836,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-06",
+    "category": "crests",
+    "image": "empire-crest-06.png",
+    "ui": "empire-crest-06-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-a.png",
+    "crop": [
+      836,
+      0,
+      1254,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-07",
+    "category": "crests",
+    "image": "empire-crest-07.png",
+    "ui": "empire-crest-07-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-a.png",
+    "crop": [
+      0,
+      418,
+      418,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-08",
+    "category": "crests",
+    "image": "empire-crest-08.png",
+    "ui": "empire-crest-08-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-a.png",
+    "crop": [
+      418,
+      418,
+      836,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-09",
+    "category": "crests",
+    "image": "empire-crest-09.png",
+    "ui": "empire-crest-09-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-a.png",
+    "crop": [
+      836,
+      418,
+      1254,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-10",
+    "category": "crests",
+    "image": "empire-crest-10.png",
+    "ui": "empire-crest-10-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-a.png",
+    "crop": [
+      0,
+      836,
+      418,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-11",
+    "category": "crests",
+    "image": "empire-crest-11.png",
+    "ui": "empire-crest-11-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-a.png",
+    "crop": [
+      418,
+      836,
+      836,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-12",
+    "category": "crests",
+    "image": "empire-crest-12.png",
+    "ui": "empire-crest-12-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-a.png",
+    "crop": [
+      836,
+      836,
+      1254,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-13",
+    "category": "crests",
+    "image": "empire-crest-13.png",
+    "ui": "empire-crest-13-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-b.png",
+    "crop": [
+      0,
+      0,
+      418,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-14",
+    "category": "crests",
+    "image": "empire-crest-14.png",
+    "ui": "empire-crest-14-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-b.png",
+    "crop": [
+      418,
+      0,
+      836,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-15",
+    "category": "crests",
+    "image": "empire-crest-15.png",
+    "ui": "empire-crest-15-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-b.png",
+    "crop": [
+      836,
+      0,
+      1254,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-16",
+    "category": "crests",
+    "image": "empire-crest-16.png",
+    "ui": "empire-crest-16-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-b.png",
+    "crop": [
+      0,
+      418,
+      418,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-17",
+    "category": "crests",
+    "image": "empire-crest-17.png",
+    "ui": "empire-crest-17-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-b.png",
+    "crop": [
+      418,
+      418,
+      836,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-18",
+    "category": "crests",
+    "image": "empire-crest-18.png",
+    "ui": "empire-crest-18-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-b.png",
+    "crop": [
+      836,
+      418,
+      1254,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-19",
+    "category": "crests",
+    "image": "empire-crest-19.png",
+    "ui": "empire-crest-19-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-b.png",
+    "crop": [
+      0,
+      836,
+      418,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-20",
+    "category": "crests",
+    "image": "empire-crest-20.png",
+    "ui": "empire-crest-20-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-free-b.png",
+    "crop": [
+      418,
+      836,
+      836,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "premium-griffin",
+    "category": "crests",
+    "image": "premium-griffin.png",
+    "ui": "premium-griffin-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-extra.png",
+    "crop": [
+      0,
+      0,
+      418,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "extra-dragon",
+    "category": "crests",
+    "image": "extra-dragon.png",
+    "ui": "extra-dragon-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-extra.png",
+    "crop": [
+      418,
+      0,
+      836,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "premium-phoenix",
+    "category": "crests",
+    "image": "premium-phoenix.png",
+    "ui": "premium-phoenix-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-extra.png",
+    "crop": [
+      836,
+      0,
+      1254,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "extra-hippocampus",
+    "category": "crests",
+    "image": "extra-hippocampus.png",
+    "ui": "extra-hippocampus-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-extra.png",
+    "crop": [
+      0,
+      418,
+      418,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "extra-crowned-serpent",
+    "category": "crests",
+    "image": "extra-crowned-serpent.png",
+    "ui": "extra-crowned-serpent-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-extra.png",
+    "crop": [
+      418,
+      418,
+      836,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "extra-winged-lion",
+    "category": "crests",
+    "image": "extra-winged-lion.png",
+    "ui": "extra-winged-lion-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/crests-extra.png",
+    "crop": [
+      836,
+      418,
+      1254,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "avatar-free-01",
+    "category": "avatars",
+    "image": "avatar-free-01.png",
+    "ui": "avatar-free-01-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/avatars.png",
+    "crop": [
+      0,
+      0,
+      418,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "avatar-free-02",
+    "category": "avatars",
+    "image": "avatar-free-02.png",
+    "ui": "avatar-free-02-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/avatars.png",
+    "crop": [
+      418,
+      0,
+      836,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "avatar-free-03",
+    "category": "avatars",
+    "image": "avatar-free-03.png",
+    "ui": "avatar-free-03-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/avatars.png",
+    "crop": [
+      836,
+      0,
+      1254,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "avatar-free-04",
+    "category": "avatars",
+    "image": "avatar-free-04.png",
+    "ui": "avatar-free-04-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/avatars.png",
+    "crop": [
+      0,
+      418,
+      418,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "avatar-premium-veteran",
+    "category": "avatars",
+    "image": "avatar-premium-veteran.png",
+    "ui": "avatar-premium-veteran-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/avatars.png",
+    "crop": [
+      418,
+      418,
+      836,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "avatar-premium-strategist",
+    "category": "avatars",
+    "image": "avatar-premium-strategist.png",
+    "ui": "avatar-premium-strategist-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/avatars.png",
+    "crop": [
+      836,
+      418,
+      1254,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "avatar-premium-scholar",
+    "category": "avatars",
+    "image": "avatar-premium-scholar.png",
+    "ui": "avatar-premium-scholar-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/avatars.png",
+    "crop": [
+      0,
+      836,
+      418,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "avatar-premium-warden",
+    "category": "avatars",
+    "image": "avatar-premium-warden.png",
+    "ui": "avatar-premium-warden-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "sheets/avatars.png",
+    "crop": [
+      418,
+      836,
+      836,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-guard-crest",
+    "category": "equipment",
+    "image": "item-guard-crest.png",
+    "ui": "item-guard-crest-96.png",
+    "size": [
+      627,
+      627
+    ],
+    "source": "sheets/last-equipment-frame.png",
+    "crop": [
+      0,
+      0,
+      627,
+      627
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-travel-compass",
+    "category": "equipment",
+    "image": "item-travel-compass.png",
+    "ui": "item-travel-compass-96.png",
+    "size": [
+      627,
+      627
+    ],
+    "source": "sheets/last-equipment-frame.png",
+    "crop": [
+      627,
+      0,
+      1254,
+      627
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-journey-crown",
+    "category": "equipment",
+    "image": "item-journey-crown.png",
+    "ui": "item-journey-crown-96.png",
+    "size": [
+      627,
+      627
+    ],
+    "source": "sheets/last-equipment-frame.png",
+    "crop": [
+      0,
+      627,
+      627,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "premium-avatar-frame",
+    "category": "frames",
+    "image": "premium-avatar-frame.png",
+    "ui": "premium-avatar-frame-96.png",
+    "size": [
+      627,
+      627
+    ],
+    "source": "sheets/last-equipment-frame.png",
+    "crop": [
+      627,
+      627,
+      1254,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-01",
+    "category": "crests",
+    "image": "empire-crest-01.png",
+    "ui": "empire-crest-01-96.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "source": "../samples-v1/empire-crest-01.png",
+    "crop": null,
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-02",
+    "category": "crests",
+    "image": "empire-crest-02.png",
+    "ui": "empire-crest-02-96.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "source": "../samples-v1/empire-crest-02.png",
+    "crop": null,
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "empire-crest-03",
+    "category": "crests",
+    "image": "empire-crest-03.png",
+    "ui": "empire-crest-03-96.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "source": "../samples-v1/empire-crest-03.png",
+    "crop": null,
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-craft-ledger",
+    "category": "equipment",
+    "image": "item-craft-ledger.png",
+    "ui": "item-craft-ledger-96.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "source": "../samples-v1/item-craft-ledger.png",
+    "crop": null,
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-frontier-shield",
+    "category": "equipment",
+    "image": "item-frontier-shield.png",
+    "ui": "item-frontier-shield-96.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "source": "../samples-v1/item-frontier-shield.png",
+    "crop": null,
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-patrol-horn",
+    "category": "equipment",
+    "image": "item-patrol-horn.png",
+    "ui": "item-patrol-horn-96.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "source": "../samples-v1/item-patrol-horn.png",
+    "crop": null,
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-seed-sack",
+    "category": "equipment",
+    "image": "item-seed-sack.png",
+    "ui": "item-seed-sack-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "../equipment-sheet-v1/seed-sack.png",
+    "crop": [
+      0,
+      0,
+      418,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-master-hammer",
+    "category": "equipment",
+    "image": "item-master-hammer.png",
+    "ui": "item-master-hammer-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "../equipment-sheet-v1/master-hammer.png",
+    "crop": [
+      418,
+      0,
+      836,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-watch-standard",
+    "category": "equipment",
+    "image": "item-watch-standard.png",
+    "ui": "item-watch-standard-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "../equipment-sheet-v1/watch-standard.png",
+    "crop": [
+      836,
+      0,
+      1254,
+      418
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-road-map",
+    "category": "equipment",
+    "image": "item-road-map.png",
+    "ui": "item-road-map-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "../equipment-sheet-v1/road-map.png",
+    "crop": [
+      0,
+      418,
+      418,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-granary-seal",
+    "category": "equipment",
+    "image": "item-granary-seal.png",
+    "ui": "item-granary-seal-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "../equipment-sheet-v1/granary-seal.png",
+    "crop": [
+      418,
+      418,
+      836,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-steward-ledger",
+    "category": "equipment",
+    "image": "item-steward-ledger.png",
+    "ui": "item-steward-ledger-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "../equipment-sheet-v1/steward-ledger.png",
+    "crop": [
+      836,
+      418,
+      1254,
+      836
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-cartographer-divider",
+    "category": "equipment",
+    "image": "item-cartographer-divider.png",
+    "ui": "item-cartographer-divider-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "../equipment-sheet-v1/cartographer-divider.png",
+    "crop": [
+      0,
+      836,
+      418,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-builder-tools",
+    "category": "equipment",
+    "image": "item-builder-tools.png",
+    "ui": "item-builder-tools-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "../equipment-sheet-v1/builder-tools.png",
+    "crop": [
+      418,
+      836,
+      836,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  },
+  {
+    "id": "item-harvest-coffer",
+    "category": "equipment",
+    "image": "item-harvest-coffer.png",
+    "ui": "item-harvest-coffer-96.png",
+    "size": [
+      418,
+      418
+    ],
+    "source": "../equipment-sheet-v1/harvest-coffer.png",
+    "crop": [
+      836,
+      836,
+      1254,
+      1254
+    ],
+    "status": "generated-review",
+    "alpha": true
+  }
+]

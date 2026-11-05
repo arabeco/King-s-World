@@ -1,0 +1,502 @@
+[
+  {
+    "id": "sovereign-01",
+    "initialAvailable": true,
+    "artStatus": "generated",
+    "avatar": "/collection/sovereigns-v2/sovereign-01-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-01-body.png",
+    "appearanceLabel": "Manto de Linho",
+    "npcIdentity": {
+      "name": "Elian",
+      "title": "O Próximo",
+      "description": "Escuta os moradores antes de decidir e prefere construir confiança com presença e pequenas melhorias. Seu entusiasmo abre portas, mas às vezes o faz prometer mais do que pode cumprir."
+    },
+    "playerIdentity": "account_nickname",
+    "baseStats": {
+      "administration": 5,
+      "command": 5,
+      "exploration": 5
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-02",
+    "initialAvailable": true,
+    "artStatus": "generated",
+    "avatar": "/collection/sovereigns-v2/sovereign-02-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-02-body.png",
+    "appearanceLabel": "Vestes de Jade",
+    "npcIdentity": {
+      "name": "Meilin",
+      "title": "A Resoluta",
+      "description": "Governa com objetivos claros, acompanha as obras de perto e cobra o que foi combinado. Aceita bons argumentos, mas tem pouca paciência com decisões adiadas."
+    },
+    "playerIdentity": "account_nickname",
+    "baseStats": {
+      "administration": 8,
+      "command": 4,
+      "exploration": 3
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-03",
+    "initialAvailable": true,
+    "artStatus": "generated",
+    "avatar": "/collection/sovereigns-v2/sovereign-03-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-03-body.png",
+    "appearanceLabel": "Manto de Rubi",
+    "npcIdentity": {
+      "name": "Aldren",
+      "title": "O Prudente",
+      "description": "Conhece o peso de uma escolha ruim e costuma preservar reservas para tempos difíceis. Procura acordos duradouros, embora sua cautela possa atrasar oportunidades."
+    },
+    "playerIdentity": "account_nickname",
+    "baseStats": {
+      "administration": 3,
+      "command": 8,
+      "exploration": 4
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-04",
+    "initialAvailable": true,
+    "artStatus": "generated",
+    "avatar": "/collection/sovereigns-v2/sovereign-04-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-04-body.png",
+    "appearanceLabel": "Vestes de Safira",
+    "npcIdentity": {
+      "name": "Amara",
+      "title": "A Voz da Praça",
+      "description": "Conversa, negocia e reúne pessoas em torno de uma causa. Enfrenta crises explicando suas escolhas, mas precisa cuidar para não governar apenas pelo aplauso."
+    },
+    "playerIdentity": "account_nickname",
+    "baseStats": {
+      "administration": 4,
+      "command": 3,
+      "exploration": 8
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-05",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "avatar": "/collection/sovereigns-v2/sovereign-05-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-05-body.png",
+    "appearanceLabel": "Manto do Norte",
+    "npcIdentity": {
+      "name": "Darian",
+      "title": "O Veterano",
+      "description": "Prepara o reino antes que o perigo chegue e não exige dos outros sacrifícios que ele próprio evitaria. É leal e disciplinado, mas demora a confiar em desconhecidos."
+    },
+    "playerIdentity": "account_nickname",
+    "baseStats": {
+      "administration": 3,
+      "command": 8,
+      "exploration": 4
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-06",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "avatar": "/collection/sovereigns-v2/sovereign-06-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-06-body.png",
+    "appearanceLabel": "Traje da Corte",
+    "npcIdentity": {
+      "name": "Zahra",
+      "title": "A Estrategista",
+      "description": "Enxerga caminhos alternativos, distribui responsabilidades e raramente age sem uma segunda opção. Seu planejamento é firme, embora possa parecer distante de quem espera respostas imediatas."
+    },
+    "playerIdentity": "account_nickname",
+    "baseStats": {
+      "administration": 5,
+      "command": 7,
+      "exploration": 3
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-07",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "avatar": "/collection/sovereigns-v2/sovereign-07-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-07-body.png",
+    "appearanceLabel": "Vestes de Estudo",
+    "npcIdentity": {
+      "name": "Serena",
+      "title": "A Erudita",
+      "description": "Compara relatos, consulta quem conhece o assunto e prefere entender um problema antes de impor uma solução. Aprende com os erros, mas pode investigar por tempo demais."
+    },
+    "playerIdentity": "account_nickname",
+    "baseStats": {
+      "administration": 8,
+      "command": 3,
+      "exploration": 4
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-08",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "avatar": "/collection/sovereigns-v2/sovereign-08-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-08-body.png",
+    "appearanceLabel": "Traje da Fronteira",
+    "npcIdentity": {
+      "name": "Kaien",
+      "title": "O Vigilante",
+      "description": "Observa as fronteiras, conhece os caminhos e dá atenção aos sinais que outros ignoram. Protege sem alarde, embora sua desconfiança possa dificultar novas alianças."
+    },
+    "playerIdentity": "account_nickname",
+    "baseStats": {
+      "administration": 3,
+      "command": 4,
+      "exploration": 8
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-09",
+    "rarity": "Incomum",
+    "appearance": "Mulher robusta de meia-idade, pele clara com sardas, trança ruiva, túnica ocre de boa lã e manto verde curto, diadema de bronze simples.",
+    "pose": "Manga dobrada; uma mão segurando um esquadro de madeira, outra apoiada no cinto; peso firme em uma perna.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Traje de Obras",
+    "npcIdentity": {
+      "name": "Bruna",
+      "title": "A Construtora",
+      "description": "Transforma planos em obras úteis e gosta de acompanhar o trabalho de perto. Precisa lembrar que as necessidades de um reino nem sempre cabem numa lista de tarefas."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-09-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-09-body.png",
+    "baseStats": {
+      "administration": 8,
+      "command": 4,
+      "exploration": 3
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-10",
+    "rarity": "Incomum",
+    "appearance": "Homem maduro de pele castanha, barba curta encaracolada, cabelo escuro, casaco azul-petróleo e faixa de seda ferrugem, pequeno anel-sinete.",
+    "pose": "Inclinado ligeiramente para a frente, pesando uma pequena moeda nos dedos e oferecendo um sorriso de negociação.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Traje das Feiras",
+    "npcIdentity": {
+      "name": "Ilyas",
+      "title": "O Mercador",
+      "description": "Busca acordos que deixem os dois lados dispostos a voltar à mesa. Mede bem os custos, mas às vezes tenta negociar aquilo que exige uma posição firme."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-10-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-10-body.png",
+    "baseStats": {
+      "administration": 7,
+      "command": 3,
+      "exploration": 5
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-11",
+    "rarity": "Incomum",
+    "appearance": "Mulher jovem de pele morena, cabelos castanhos curtos, capa vinho de viagem sobre roupa de corte simples, botas gastas e circlet de prata discreto.",
+    "pose": "Passo interrompido, corpo de lado, abrindo um pequeno estojo de mensagens preso ao cinto.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Manto de Viagem",
+    "npcIdentity": {
+      "name": "Tessa",
+      "title": "A Mensageira",
+      "description": "Faz a informação circular e prefere resolver tensões antes que virem crises. Sua pressa em responder pode fazê-la agir com notícias incompletas."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-11-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-11-body.png",
+    "baseStats": {
+      "administration": 4,
+      "command": 3,
+      "exploration": 8
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-12",
+    "rarity": "Incomum",
+    "appearance": "Homem idoso de pele escura, barba grisalha aparada, manto de lã verde-musgo e marfim, bordado de folhas e coroa baixa de bronze.",
+    "pose": "Segura com cuidado um pequeno ramo de oliveira, olhar sereno voltado para ele; postura ligeiramente curvada pela idade.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Vestes do Pomar",
+    "npcIdentity": {
+      "name": "Oswin",
+      "title": "O Jardineiro",
+      "description": "Cuida da prosperidade como quem cuida de um pomar: sem abandonar o que leva tempo. Sua paciência fortalece o reino, mas pode tolerar problemas que já pedem intervenção."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-12-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-12-body.png",
+    "baseStats": {
+      "administration": 7,
+      "command": 4,
+      "exploration": 4
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-13",
+    "rarity": "Raro",
+    "appearance": "Mulher de meia-idade, pele clara, cabelo preto liso preso baixo, traje grafite e marfim com linhas verticais, corrente de ofício e coroa estreita de prata.",
+    "pose": "Sentada de lado num banco simples parcialmente visível, selo de julgamento na mão, olhar direto; pés e corpo inteiros visíveis.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Traje do Tribunal",
+    "npcIdentity": {
+      "name": "Valeska",
+      "title": "A Juíza",
+      "description": "Aplica regras que possam ser explicadas e exige ser ouvida antes de condenar. Sua coerência inspira respeito, mas a lei nem sempre oferece uma resposta humana."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-13-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-13-body.png",
+    "baseStats": {
+      "administration": 5,
+      "command": 6,
+      "exploration": 4
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-14",
+    "rarity": "Raro",
+    "appearance": "Homem maduro de pele castanha, barba sal e pimenta, manto azul-marinho com forro de cobre, fechos em nó náutico e coroa baixa sem joias grandes.",
+    "pose": "Tronco voltado para o horizonte, segurando uma luneta de latão fechada apontada para baixo; outra mão atrás das costas.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Manto dos Portos",
+    "npcIdentity": {
+      "name": "Rashid",
+      "title": "O Navegador",
+      "description": "Vê nas rotas e nas alianças oportunidades de prosperidade. Aceita riscos calculados, mas pode se encantar com uma promessa distante e esquecer o porto de origem."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-14-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-14-body.png",
+    "baseStats": {
+      "administration": 4,
+      "command": 4,
+      "exploration": 7
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-15",
+    "rarity": "Raro",
+    "appearance": "Mulher madura de pele negra, cabelo natural em coque alto, vestido terracota com bordado marfim e capa curta azul-profundo, joias pequenas de âmbar.",
+    "pose": "Entrega um ramo de louro à altura da cintura com a mão aberta; cabeça levemente inclinada em sinal de respeito.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Vestes de Âmbar",
+    "npcIdentity": {
+      "name": "Inara",
+      "title": "A Diplomata",
+      "description": "Procura compreender o que cada lado teme perder. Faz pontes entre rivais, embora a busca pelo acordo possa prolongar conflitos que exigem uma decisão."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-15-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-15-body.png",
+    "baseStats": {
+      "administration": 6,
+      "command": 4,
+      "exploration": 5
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-16",
+    "rarity": "Raro",
+    "appearance": "Homem mais velho de pele clara, cabeça raspada e bigode grisalho, cota de malha sob sobrecasaca verde-escura, pequeno brasão de serviço e faixa dourada discreta.",
+    "pose": "Agachado sobre um joelho para examinar um mapa pequeno apoiado na coxa, rosto levantado para dar uma ordem; corpo e pés visíveis.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Traje de Campanha",
+    "npcIdentity": {
+      "name": "Bastian",
+      "title": "O Marechal",
+      "description": "Organiza pessoas e recursos com precisão e prefere vencer uma crise pela preparação. Sua exigência mantém o reino pronto, mas pode cansar quem precisa de descanso."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-16-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-16-body.png",
+    "baseStats": {
+      "administration": 4,
+      "command": 8,
+      "exploration": 3
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-17",
+    "rarity": "Raro",
+    "appearance": "Mulher madura de traços do leste asiático, cabelo prateado curto, casaco ameixa de seda fosca, faixa marfim e broche de jade pequeno, circlet aberto de prata.",
+    "pose": "Observa uma pequena peça mecânica medieval de madeira e bronze nas duas mãos, expressão curiosa, ombros em ângulo.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Vestes da Oficina",
+    "npcIdentity": {
+      "name": "Yuna",
+      "title": "A Artesã",
+      "description": "Dá espaço a quem sabe fazer e testa melhorias antes de espalhá-las pelo reino. Seu gosto pelo aperfeiçoamento pode atrasar uma solução que já seria suficiente."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-17-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-17-body.png",
+    "baseStats": {
+      "administration": 8,
+      "command": 3,
+      "exploration": 4
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-18",
+    "rarity": "Raro",
+    "appearance": "Homem jovem adulto de pele oliva, cabelos castanhos ondulados até o queixo, manto creme com forro azul e bordado de tinta, coroa fina de bronze envelhecido.",
+    "pose": "Escreve com pena em uma pequena tabuinha de cera apoiada no antebraço; olhar lateral atento ao que ouve.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Traje dos Anais",
+    "npcIdentity": {
+      "name": "Leandro",
+      "title": "O Cronista",
+      "description": "Governa atento ao que ficará registrado e valoriza compromissos públicos. Aprende com a história, mas corre o risco de cuidar demais de como será lembrado."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-18-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-18-body.png",
+    "baseStats": {
+      "administration": 6,
+      "command": 4,
+      "exploration": 5
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-19",
+    "rarity": "Épico",
+    "appearance": "Mulher idosa de pele clara, cabelo branco longo trançado, manto cinza-azulado com gola de pele curta e prata trabalhada, pequeno cristal leitoso na coroa; sem magia ou espinhos.",
+    "pose": "Em pé contra um vento apenas sugerido pelo tecido, uma mão fechando o manto no ombro e outra apoiada num cetro curto de madeira e prata.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Manto do Inverno",
+    "npcIdentity": {
+      "name": "Isolde",
+      "title": "A Coroa do Inverno",
+      "description": "Mantém a calma quando faltam recursos e oferece abrigo antes de pedir lealdade. Sua resistência protege o reino, mas a acostumou a suportar dificuldades que já poderiam ser aliviadas."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-19-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-19-body.png",
+    "baseStats": {
+      "administration": 5,
+      "command": 6,
+      "exploration": 4
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-20",
+    "rarity": "Épico",
+    "appearance": "Homem de meia-idade de pele castanha escura, cabelo preto crespo curto e barba bem cuidada, manto índigo com bordados de caminhos em ouro fosco, coroa baixa com uma única pedra turquesa.",
+    "pose": "Desenrola um mapa estreito entre as mãos, cabeça erguida para quem chega; postura ampla e relaxada, sem gesto de apontar.",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "appearanceLabel": "Vestes das Rotas",
+    "npcIdentity": {
+      "name": "Azeem",
+      "title": "O Rei das Rotas",
+      "description": "Une regiões distantes por trocas, pactos e caminhos seguros. Sua ambição dá novas possibilidades ao reino, mas expandir relações demais pode enfraquecer seus compromissos."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-20-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-20-body.png",
+    "baseStats": {
+      "administration": 4,
+      "command": 4,
+      "exploration": 7
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-21",
+    "rarity": "Épico",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "acquisitionOptions": [
+      "progression",
+      "purchase"
+    ],
+    "appearanceLabel": "Traje Imperial",
+    "npcIdentity": {
+      "name": "Lucien",
+      "title": "O Altivo",
+      "description": "Governa com ambição e presença, cobrando de si e da corte um padrão elevado. Inspira confiança ao assumir a frente das crises, mas precisa aprender a ouvir quem não se deixa impressionar pela coroa."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-21-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-21-body.png",
+    "baseStats": {
+      "administration": 6,
+      "command": 6,
+      "exploration": 3
+    },
+    "statsStatus": "proposed"
+  },
+  {
+    "id": "sovereign-22",
+    "rarity": "Épico",
+    "initialAvailable": false,
+    "artStatus": "generated",
+    "unlockCondition": null,
+    "acquisitionOptions": [
+      "progression",
+      "purchase"
+    ],
+    "appearanceLabel": "Vestes da Imperatriz",
+    "npcIdentity": {
+      "name": "Aurelia",
+      "title": "A Soberana",
+      "description": "Sustenta suas decisões com firmeza e recebe aliados em pé de igualdade. Prefere compromissos claros a promessas grandiosas, embora sua segurança possa tornar difícil admitir que precisa de ajuda."
+    },
+    "playerIdentity": "account_nickname",
+    "avatar": "/collection/sovereigns-v2/sovereign-22-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-22-body.png",
+    "baseStats": {
+      "administration": 6,
+      "command": 3,
+      "exploration": 6
+    },
+    "statsStatus": "proposed"
+  }
+]

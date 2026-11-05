@@ -400,7 +400,7 @@ export function WorldShell({
   const sandboxCoachCta = isSandboxWorld
     ? buildSandboxCoachCta(world.day, imperialState.sandboxStrategyId, capitalVillageId, focusVillageId)
     : null;
-  const waitingForKingState = !isImperialStateReady && !worldMeta.readOnly;
+  const waitingForKingState = (!isImperialStateReady || !isImperialStateHydrated) && !worldMeta.readOnly;
   const needsKingSelection = isImperialStateReady && isImperialStateHydrated && !imperialState.kingProfileId && !localKingSelection && !worldMeta.readOnly;
   const showWorldChrome = !waitingForKingState && !needsKingSelection;
   const campaignEnded = worldMeta.readOnly || crownState.gameOver;
@@ -1146,7 +1146,7 @@ export function WorldShell({
         </div>
       ) : null}
 
-      {(waitingForKingState && !showWorldChrome && !bootBypass) && !needsKingSelection ? <WorldLoadingScreen progress={bootProgress} /> : null}
+      {waitingForKingState && !showWorldChrome && !needsKingSelection ? (bootBypass ? <div role="alert" className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-slate-950 p-6 text-center text-white"><p>Não foi possível carregar o reino.</p><button className="primary-button" onClick={()=>window.location.reload()}>Tentar novamente</button></div> : <WorldLoadingScreen progress={bootProgress} />) : null}
 
       {showWorldChrome && showBottomNavigation ? <BottomNavigation worldId={worldId} activeTab={activeTab} villageId={activeVillage.id} evolutionMode={evolutionMode} attention={navAttention} /> : null}
     </div>

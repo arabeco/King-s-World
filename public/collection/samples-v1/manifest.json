@@ -1,0 +1,86 @@
+[
+  {
+    "id": "empire-crest-01",
+    "path": "/collection/samples-v1/empire-crest-01.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "status": "sample",
+    "source": "C:\\Users\\Afonso\\.codex\\generated_images\\01a1852c-d7bd-76a0-b08a-fbeb12a2a2aa\\exec-c56b7572-31fb-44af-b8aa-3d4178731307.png"
+  },
+  {
+    "id": "empire-crest-02",
+    "path": "/collection/samples-v1/empire-crest-02.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "status": "sample",
+    "source": "C:\\Users\\Afonso\\.codex\\generated_images\\01a1852c-d7bd-76a0-b08a-fbeb12a2a2aa\\exec-b051c50d-4248-4aa0-ad4d-add4f778b5b7.png"
+  },
+  {
+    "id": "empire-crest-03",
+    "path": "/collection/samples-v1/empire-crest-03.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "status": "sample",
+    "source": "C:\\Users\\Afonso\\.codex\\generated_images\\01a1852c-d7bd-76a0-b08a-fbeb12a2a2aa\\exec-51066c1b-2a88-4cc7-a795-84afe754f773.png"
+  },
+  {
+    "id": "item-craft-ledger",
+    "path": "/collection/samples-v1/item-craft-ledger.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "status": "sample",
+    "source": "C:\\Users\\Afonso\\.codex\\generated_images\\01a1852c-d7bd-76a0-b08a-fbeb12a2a2aa\\exec-6997f782-c2b0-4501-b8e5-877026cbb1ad.png"
+  },
+  {
+    "id": "item-patrol-horn",
+    "path": "/collection/samples-v1/item-patrol-horn.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "status": "sample",
+    "source": "C:\\Users\\Afonso\\.codex\\generated_images\\01a1852c-d7bd-76a0-b08a-fbeb12a2a2aa\\exec-95c66cda-4d15-4ecf-af3c-b329ea808052.png"
+  },
+  {
+    "id": "item-frontier-shield",
+    "path": "/collection/samples-v1/item-frontier-shield.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "status": "sample",
+    "source": "C:\\Users\\Afonso\\.codex\\generated_images\\01a1852c-d7bd-76a0-b08a-fbeb12a2a2aa\\exec-ad34822c-807e-4485-914a-b08339bf3865.png"
+  }
+]

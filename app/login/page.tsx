@@ -135,8 +135,8 @@ export default function LoginPage() {
 
   return (
     <MarketingShell
-      title="Entre no tabuleiro"
-      subtitle="KingsWorld já está estruturado para guerra, logística e fim de mundo. Agora a campanha começa de verdade."
+      title="Entre no reino"
+      compact
     >
       {/* Botões sociais */}
       <div className="form-stack">

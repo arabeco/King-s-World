@@ -1,0 +1,22 @@
+{
+  "label": "Traje Imperial",
+  "status": "catalogued",
+  "replaces": null,
+  "body": "body.png",
+  "avatar": "avatar.png",
+  "avatarCrop": [
+    328,
+    0,
+    737,
+    410
+  ],
+  "size": [
+    1024,
+    1536
+  ],
+  "alphaRange": [
+    0,
+    254
+  ],
+  "catalogId": "sovereign-21"
+}

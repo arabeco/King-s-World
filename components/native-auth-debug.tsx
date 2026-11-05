@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 
 import { isNativeApp, subscribeAuthLog } from "@/lib/native-auth";
 
-// Overlay TEMPORÁRIO de diagnóstico do login nativo. Mostra cada passo do fluxo
-// OAuth na tela, só quando roda como app (Capacitor). Remover quando o Google
-// estiver confirmado funcionando no device.
-const ENABLED = true;
+// Explicit opt-in for native login diagnostics; never cover the game navigation by default.
+const ENABLED = process.env.NEXT_PUBLIC_NATIVE_AUTH_DEBUG === "1";
 
 export function NativeAuthDebug() {
   const [lines, setLines] = useState<string[]>([]);

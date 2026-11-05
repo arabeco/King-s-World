@@ -1,0 +1,2769 @@
+.root {
+  --ink: #243c32;
+  --muted: #657468;
+  --paper: #fcfaf4;
+  --line: #dce1d5;
+  --green: #315d48;
+  --gold: #b48943;
+  min-height: 100vh;
+  background: #f3f3eb;
+  color: var(--ink);
+  font-family: var(--font-body), sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  padding-bottom: 24px;
+}
+.root * {
+  box-sizing: border-box;
+}
+.root h1,
+.root h2,
+.root h3,
+.root h4 {
+  color: inherit;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+.root h2 {
+  font-size: 27px;
+}
+.root h3 {
+  font-size: 21px;
+}
+.root h4 {
+  font-size: 17px;
+}
+.root button {
+  cursor: pointer;
+}
+.root button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.root button,
+.root a,
+.root input,
+.root select {
+  outline-offset: 4px;
+}
+.root :focus-visible {
+  outline: 3px solid #ad782f;
+}
+.root input,
+.root select {
+  min-width: 0;
+  min-height: 43px;
+  border: 1px solid #c9d1c4;
+  border-radius: 9px;
+  background: #fffef9;
+  color: var(--ink);
+  padding: 9px 12px;
+  font: inherit;
+}
+.root small {
+  font-size: 11px;
+}
+.root p {
+  line-height: 1.65;
+}
+.root img {
+  max-width: 100%;
+  object-fit: cover;
+}
+.root svg {
+  flex-shrink: 0;
+}
+.topbar {
+  max-width: 1440px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 23px 40px;
+  gap: 20px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  font-size: 14px;
+}
+.brand > svg {
+  color: #9c783d;
+}
+.brand small {
+  display: block;
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+.topbarActions,
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.row {
+  justify-content: space-between;
+}
+.iconButton {
+  position: relative;
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: #ffffff70;
+  border-radius: 50%;
+  color: var(--ink);
+  padding: 8px;
+}
+.lobbyLink {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  margin-left: 10px;
+}
+.notificationDot,
+.smallDot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  background: #bb8b3d;
+  border-radius: 50%;
+  border: 2px solid var(--paper);
+}
+.resourceBar {
+  background: #e8ebdf;
+  border-top: 1px solid #dce1d5;
+  border-bottom: 1px solid #dce1d5;
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  padding: 12px 30px;
+}
+.resourceBar > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.resourceBar small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.resourceBar strong {
+  font-size: 17px;
+  line-height: 1.1;
+  font-family: inherit;
+}
+.resourceBar em {
+  font-size: 10px;
+  color: var(--muted);
+  font-style: normal;
+  margin-left: 9px;
+}
+.resourceIcon,
+.resourceIconGold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5a7257;
+}
+.resourceIconGold {
+  color: #a27933;
+}
+.main {
+  max-width: 1360px;
+  margin: auto;
+  padding: 26px 40px;
+}
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 285px;
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(24, 49, 36, 0.95),
+      rgba(30, 55, 40, 0.7) 58%,
+      rgba(30, 55, 40, 0.15)
+    ),
+    url("/images/capital.jpg") center 48% / cover;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 35px 42px;
+  color: #f8f6e9;
+  box-shadow: 0 8px 30px #263b2614;
+  gap: 24px;
+}
+.heroContent {
+  max-width: 620px;
+}
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+  font-size: 10px;
+  color: #e3e7d8;
+}
+.heroMeta > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.heroContent > .eyebrow {
+  color: #c5d0b9;
+  margin-bottom: 8px;
+}
+.hero h1 {
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 400;
+  line-height: 1.12;
+  max-width: 510px;
+}
+.heroContent > p:not(.eyebrow) {
+  color: #d5dfcc;
+  margin-top: 16px;
+  font-size: 12px;
+}
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #d4d2a633;
+  border-radius: 30px;
+  padding: 7px 12px;
+  color: #eddfb1;
+  font-size: 10px;
+  margin-top: 18px;
+  background: #243b2d55;
+}
+.heroCrest {
+  width: 155px;
+  height: 180px;
+  flex-shrink: 0;
+  border: 1px solid #e8d5a154;
+  border-radius: 80px 80px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #1f3c3099;
+  backdrop-filter: blur(5px);
+  color: #e3cc93;
+}
+.heroCrest strong {
+  font:
+    42px Georgia,
+    serif;
+  color: #fff3d0;
+}
+.heroCrest span {
+  font-size: 8px;
+  letter-spacing: 0.22em;
+}
+.heroCrest small {
+  color: #c5cdb9;
+}
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 7px;
+}
+.influenceRibbon {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
+  margin: 24px 0 29px;
+}
+.influenceRibbon > div > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+.influenceRibbon strong {
+  font-family: inherit;
+  font-size: 11px;
+}
+.influenceRibbon strong small {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.progress {
+  height: 4px;
+  border-radius: 10px;
+  background: #dfe5d8;
+  overflow: hidden;
+}
+.progress > span {
+  display: block;
+  height: 100%;
+  background: #608565;
+  border-radius: inherit;
+  transition: width 0.3s;
+}
+.progressGold {
+  background: #dfd6ba;
+}
+.progressGold > span {
+  background: #b08a44;
+}
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 25px;
+}
+.navigation > button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  min-height: 49px;
+  padding: 10px 8px;
+  font-size: 12px;
+}
+.navigation > .navActive {
+  color: var(--green);
+  border-bottom-color: var(--green);
+  font-weight: 700;
+}
+.navigation small {
+  font-size: 9px;
+  border-radius: 20px;
+  background: #e1e6d8;
+  padding: 1px 5px;
+}
+.crownCards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 30px;
+}
+.crownCard {
+  position: relative;
+  height: 164px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  overflow: hidden;
+  text-align: left;
+  color: #fff6e6;
+  padding: 0;
+  background: #263d30;
+  isolation: isolate;
+  box-shadow: 0 3px 10px #243c3210;
+  transition: transform 0.2s;
+}
+.crownCard:hover {
+  transform: translateY(-3px);
+}
+.crownCard > img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  z-index: -2;
+}
+.crownCardShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #1b2e1710, #172d21e8);
+  z-index: -1;
+}
+.crownCardActive {
+  outline: 2px solid #b19053;
+  outline-offset: 3px;
+}
+.crownCardIcon {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: #223a2780;
+  border: 1px solid #ffffff40;
+  border-radius: 50%;
+  display: flex;
+  padding: 8px;
+}
+.crownCardText {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  right: 12px;
+}
+.crownCardText strong {
+  font:
+    18px Georgia,
+    serif;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.crownCardText small {
+  font-size: 9px;
+  opacity: 0.8;
+  display: block;
+  margin-top: 5px;
+}
+.crownCardText i {
+  width: 6px;
+  height: 6px;
+  background: #e6bf68;
+  border-radius: 50%;
+}
+.cardArrow {
+  position: absolute;
+  top: 24px;
+  right: 15px;
+  opacity: 0.7;
+}
+.contentGrid,
+.allianceLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
+}
+.panel,
+.reportsPanel,
+.ranking,
+.atlasList,
+.mapPanel,
+.mapDetails,
+.guide {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 15px;
+  padding: 25px;
+  min-width: 0;
+}
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 23px;
+}
+.sectionHeading h2 {
+  font-size: 25px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #dce2d2;
+  background: #eef1e6;
+  color: #596a4e;
+  font-size: 10px;
+  padding: 5px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+.asideCard,
+.hordeCard {
+  padding: 22px;
+  background: #e9ede2;
+  border: 1px solid #d8dfcf;
+  border-radius: 13px;
+}
+.asideCard h3,
+.hordeCard h3 {
+  font-size: 20px;
+}
+.asideCard p,
+.hordeCard p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 10px;
+}
+.asideCard > .button,
+.asideCard > .secondaryButton {
+  margin-top: 18px;
+  width: 100%;
+}
+.asideCard .textButton {
+  margin-top: 14px;
+}
+.lastReportTitle {
+  font-weight: 700;
+}
+.hordeCard {
+  background: linear-gradient(130deg, #e4e9d9, #f3f2e8);
+}
+.hordeTime {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin: 16px 0;
+  color: #536a44;
+  font-size: 13px;
+}
+.hordeStats,
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 17px 0;
+}
+.hordeStats > div,
+.metrics > div {
+  background: #ffffff65;
+  border-radius: 9px;
+  padding: 12px;
+}
+.hordeStats strong,
+.metrics strong {
+  display: block;
+  font-size: 24px;
+  font-family: Georgia, serif;
+}
+.hordeStats small,
+.metrics small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.hordeCard .secondaryButton {
+  width: 100%;
+  margin-top: 16px;
+}
+.button,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--green);
+  color: #fffced;
+  background: var(--green);
+  font-size: 11px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.button:hover:not(:disabled) {
+  background: #254d38;
+}
+.secondaryButton {
+  background: transparent;
+  color: var(--green);
+  border-color: #bdcbb7;
+}
+.secondaryButton:hover:not(:disabled) {
+  background: #e8eddf;
+}
+.textButton,
+.textLink {
+  border: 0;
+  background: none;
+  color: var(--green);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  min-height: 32px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.cost {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 11px;
+  color: inherit;
+  white-space: nowrap;
+}
+.cityTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 12px;
+  margin-bottom: 15px;
+}
+.cityTabs button {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 12px;
+  min-height: 39px;
+  background: #f0f1e8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  white-space: nowrap;
+  font-size: 11px;
+}
+.cityTabs .cityTabActive {
+  background: #e2e9d8;
+  color: #34513a;
+  border-color: #95aa85;
+}
+.cityTabs small {
+  margin-left: 5px;
+}
+.cityOverview {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 10px;
+  margin-bottom: 20px;
+  background: linear-gradient(90deg, #eef0e6, #fbf9f1);
+  border-radius: 10px;
+}
+.cityOverview > img {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+}
+.cityOverview > div {
+  flex: 1;
+  min-width: 0;
+}
+.cityOverview p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 6px 0 12px;
+}
+.cityOverview small {
+  font-size: 10px;
+  color: var(--muted);
+  display: block;
+  margin-top: 7px;
+}
+.cityOverview .row {
+  flex-wrap: wrap;
+}
+.sectorRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  padding: 19px 0;
+}
+.sectorIcon {
+  display: flex;
+  padding: 12px;
+  border: 1px solid #e1e4d7;
+  border-radius: 10px;
+  background: #f0f1e8;
+  color: #667d53;
+}
+.sectorInfo {
+  flex: 1;
+  min-width: 0;
+}
+.sectorInfo .row {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sectorInfo .row > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.sectorInfo p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 5px 0 8px;
+}
+.sectorInfo small {
+  font-size: 9px;
+  margin-left: 3px;
+}
+.levelDots {
+  display: flex;
+  gap: 4px;
+}
+.levelDots i {
+  width: 11px;
+  height: 4px;
+  border-radius: 3px;
+  background: #e0e5d8;
+}
+.levelDots .dotFilled {
+  background: #73936c;
+}
+.sectorAction {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 93px;
+}
+.complete {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #567844;
+  font-size: 11px;
+}
+.footnote {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 17px !important;
+  line-height: 1.7;
+}
+.intro {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 18px !important;
+}
+.subheading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 26px 0 17px;
+}
+.subheading h3 {
+  font-size: 21px;
+}
+.subheading span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.metrics {
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0 0 22px;
+}
+.metrics > div {
+  background: #edf0e5;
+}
+.troopGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.troopCard {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f7f6ee;
+}
+.troopCard > img {
+  width: 100%;
+  height: 125px;
+  object-position: center 30%;
+}
+.troopContent {
+  padding: 15px;
+}
+.troopContent p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 8px 0;
+}
+.troopContent > .row {
+  margin-bottom: 12px;
+}
+.recruitButtons {
+  display: flex;
+  gap: 6px;
+}
+.recruitButtons > button {
+  flex: 1;
+  font-size: 10px;
+  padding: 8px;
+}
+.segmented {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  background: #edf0e6;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.segmented button {
+  flex: 1;
+  min-height: 37px;
+  padding: 7px 12px;
+  border: 0;
+  background: none;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 2px 6px #243c3210;
+}
+.heroRoster {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.heroRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+}
+.heroRow > img {
+  width: 47px;
+  height: 52px;
+  border-radius: 7px;
+}
+.heroRow > div {
+  flex: 1;
+}
+.heroRow strong,
+.heroRow small {
+  display: block;
+}
+.heroRow strong {
+  font-size: 13px;
+}
+.heroRow small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.assignment {
+  max-width: 155px;
+}
+.assignment select {
+  width: 100%;
+  font-size: 11px;
+}
+.hireGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.hireGrid article {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 12px;
+}
+.hireGrid img {
+  height: 66px;
+  width: 52px;
+  border-radius: 7px;
+}
+.hireGrid p {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.hireGrid button {
+  grid-column: 1/-1;
+}
+.researchList > div,
+.researchList > article {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  padding: 20px 0;
+}
+.researchList p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 7px 0;
+}
+.researchIcon {
+  padding: 12px;
+  border-radius: 10px;
+  background: #edf0e5;
+  color: #6f7c52;
+  display: flex;
+}
+.researchList > div > div:nth-child(2),
+.researchList > article > div:nth-child(2) {
+  flex: 1;
+}
+.researchAction {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 6px;
+}
+.counselorGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.counselorGrid > article,
+.counselorGrid > div {
+  border: 1px solid var(--line);
+  background: #f1f1e7;
+  border-radius: 12px;
+  padding: 18px;
+}
+.counselorGrid select {
+  width: 100%;
+  margin: 12px 0;
+}
+.counselorGrid p {
+  font-size: 11px;
+  color: var(--muted);
+}
+.counselorGrid h3 {
+  font-size: 22px;
+}
+.counselorSeal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #e0e5d2;
+  border: 1px solid #b3bf9a;
+  color: #6d7954;
+  margin-bottom: 13px;
+}
+.decree {
+  position: relative;
+  background: #f3eddb;
+  border: 1px solid #ded3b4;
+  border-radius: 12px;
+  margin-top: 24px;
+  padding: 26px;
+  box-shadow: inset 0 0 40px #e2c99420;
+}
+.decreeTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.decreeAuthor {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #82704c;
+  font-size: 11px;
+}
+.decree > p {
+  color: #726b55;
+  font-size: 12px;
+  margin: 12px 0 20px;
+}
+.decreeOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.decreeOptions > button {
+  border: 1px solid #d1c298;
+  background: #fffdf650;
+  padding: 17px;
+  text-align: left;
+  border-radius: 9px;
+  color: #5c5137;
+  min-height: 110px;
+}
+.decreeOptions > button:hover {
+  background: #fffdf6;
+}
+.decreeOptions strong {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+.decreeOptions p,
+.decreeOptions small {
+  font-size: 11px;
+  color: #887b5f;
+}
+.sign {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #907744;
+  font-size: 10px;
+  margin-top: 12px;
+}
+.questList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.questList > article,
+.questList > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.questList > article > div:nth-child(2),
+.questList > div > div:nth-child(2) {
+  flex: 1;
+}
+.questList p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 6px 0 10px;
+}
+.questIcon {
+  width: 40px;
+  height: 40px;
+  background: #e9ecd9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #87804f;
+  flex-shrink: 0;
+}
+.questClaimed {
+  opacity: 0.65;
+}
+.portalCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #283e31;
+  color: #fff7dd;
+  isolation: isolate;
+  padding: 28px;
+  margin-bottom: 28px;
+}
+.portalCard > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+}
+.portalCard:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #1d372be8, #1d372bb0);
+  z-index: -1;
+}
+.portalCard > div {
+  max-width: 450px;
+}
+.portalCard .eyebrow {
+  color: #d2bf8e;
+}
+.portalCard h3 {
+  font-size: 29px;
+}
+.portalCard p {
+  color: #dbe0c9;
+  font-size: 12px;
+  margin: 12px 0 20px;
+}
+.portalCard .row {
+  margin-top: 6px;
+  color: #cecbb1;
+}
+.portalCard .button {
+  margin-top: 18px;
+  background: #d6bd7e;
+  color: #273d2c;
+  border-color: #d6bd7e;
+}
+.wonder {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 12px;
+  background: #f1e9cd;
+  border: 1px solid #e1d4aa;
+  margin-top: 17px;
+  color: #79663a;
+  flex-wrap: wrap;
+}
+.wonder > div {
+  flex: 1;
+  min-width: 180px;
+}
+.wonder p {
+  font-size: 11px;
+  margin-top: 5px;
+}
+.orders {
+  margin-top: 16px;
+}
+.orders > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid #d3dccb;
+  font-size: 11px;
+}
+.orders strong,
+.orders small {
+  display: block;
+}
+.orders small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.orders time {
+  white-space: nowrap;
+  color: #70805f;
+  font-size: 10px;
+}
+.notice,
+.inlineNotice,
+.error {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: space-between;
+  background: #e9eddd;
+  border: 1px solid #d3ddc1;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin: 17px 0;
+  color: #50633e;
+}
+.notice p {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.inlineNotice {
+  justify-content: flex-start;
+  font-size: 11px;
+  padding: 12px 15px;
+}
+.error {
+  background: #fbebe3;
+  border-color: #e4c7b6;
+  color: #873f2b;
+  font-size: 12px;
+}
+.inlineForm {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+.inlineForm input {
+  flex: 1;
+}
+.guide {
+  margin-bottom: 20px;
+  background: #f9f7ed;
+}
+.guideSteps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+.guideSteps p {
+  color: var(--muted);
+  font-size: 11px;
+}
+.guideSteps strong {
+  display: block;
+  color: var(--ink);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.empty {
+  text-align: center;
+  padding: 35px 20px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.empty > svg {
+  color: #8b9d78;
+}
+.empty h3 {
+  font-size: 22px;
+}
+.empty p {
+  font-size: 12px;
+  max-width: 420px;
+}
+.mutedCard {
+  background: #f0f2e7;
+  padding: 18px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.divider {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 22px 0;
+}
+.ranking {
+  margin-top: 25px;
+}
+.rankList > div {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 13px 15px;
+  border-top: 1px solid var(--line);
+}
+.rankList > div > div {
+  flex: 1;
+}
+.rankList strong {
+  font-size: 13px;
+}
+.rankList small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+}
+.rankList strong small {
+  display: inline;
+  color: #a08347;
+}
+.rankList > div > span:last-child {
+  text-align: right;
+  font:
+    20px Georgia,
+    serif;
+}
+.rankNumber {
+  width: 25px;
+  color: #9d8c58;
+  font-size: 13px;
+}
+.rankSelf {
+  background: #edf0e3;
+  border-radius: 7px;
+}
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: center;
+  margin-top: 36px;
+  font-size: 10px;
+  color: #7a8976;
+  flex-wrap: wrap;
+}
+.footer span,
+.footer a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.loading {
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 22px;
+  text-align: center;
+  max-width: 500px;
+  margin: auto;
+  padding: 25px;
+}
+.loading > svg {
+  color: #9e8b52;
+}
+.loading p {
+  color: var(--muted);
+}
+.spin {
+  animation: rotate 1.5s linear infinite;
+}
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.srOnly,
+.skipLink:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.skipLink:focus {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--paper);
+  z-index: 100;
+  padding: 15px;
+}
+.mapLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.mapPanel {
+  padding: 0;
+  overflow: hidden;
+  background: #e2e8d7;
+}
+.mapToolbar {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f5f5ea;
+}
+.mapToolbar strong {
+  font:
+    17px Georgia,
+    serif;
+}
+.mapToolbar .secondaryButton {
+  min-height: 35px;
+  padding: 6px 9px;
+}
+.hexViewport {
+  overflow: auto;
+  min-height: 385px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 10px;
+  background: radial-gradient(ellipse, #d6dfc6, #e4e9d9);
+}
+.hexMap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 490px;
+  padding: 15px;
+}
+.hexRow {
+  display: flex;
+  margin-top: -7px;
+  gap: 3px;
+}
+.hexRow:nth-child(even) {
+  transform: translateX(26px);
+}
+.hex {
+  width: 49px;
+  height: 54px;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  border: 0;
+  background: #b9c5aa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  color: #566449;
+  padding: 5px;
+  transition: filter 0.15s;
+}
+.hex small {
+  font-size: 7px;
+}
+.hex > svg {
+  width: 17px;
+  height: 17px;
+}
+.hex_fog {
+  background: #b7c2ad;
+  color: #76836b;
+}
+.hex_neutral {
+  background: #d5dfc0;
+  color: #536b44;
+}
+.hex_yellow {
+  background: #d1b775;
+  color: #6d5429;
+}
+.hex_green {
+  background: #76976b;
+  color: #e7f2de;
+}
+.hex_ally {
+  background: #88a5a1;
+  color: #264c48;
+}
+.hexDistant {
+  background: #d8dfcb !important;
+}
+.hexSelected {
+  background: #f7efd2;
+  filter: drop-shadow(0 0 4px #b49846);
+  color: #294c35;
+}
+.hex:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+.hex:focus-visible {
+  outline: none;
+  background: #f6e6aa;
+}
+.fogSymbol {
+  font:
+    22px Georgia,
+    serif;
+}
+.mapControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px;
+  border-top: 1px solid #cfdbc2;
+}
+.mapControls form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mapControls input {
+  width: 80px;
+  font-size: 11px;
+  min-height: 36px;
+}
+.mapControls .iconButton {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 6px;
+}
+.mapLegend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 12px 15px;
+  flex-wrap: wrap;
+  font-size: 9px;
+  color: #66765b;
+}
+.mapLegend > span {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.mapLegend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.legendFog {
+  background: #87977a;
+}
+.legendYellow {
+  background: #c4a555;
+}
+.legendGreen {
+  background: #68905b;
+}
+.legendAlly {
+  background: #739694;
+}
+.mapDetails {
+  padding: 0;
+  overflow: hidden;
+}
+.selectedTileArt {
+  height: 155px;
+  position: relative;
+  overflow: hidden;
+  background: #344b38;
+}
+.selectedTileArt > img {
+  width: 100%;
+  height: 100%;
+  opacity: 0.85;
+}
+.selectedTileArt > span,
+.selectedTileArt > div {
+  position: absolute;
+  bottom: 14px;
+  left: 18px;
+  color: #fff6df;
+}
+.selectedTileBody {
+  padding: 22px;
+}
+.selectedTileBody h3 {
+  font-size: 24px;
+}
+.selectedTileBody > p {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 10px 0 18px;
+}
+.mapActionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 17px;
+  margin-top: 15px;
+}
+.mapActionBlock p {
+  font-size: 11px;
+  color: var(--muted);
+}
+.mapActionBlock select {
+  width: 100%;
+  font-size: 12px;
+}
+.atlasList {
+  margin-top: 24px;
+}
+.atlasList .segmented {
+  margin: 0;
+}
+.discoveryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.discoveryGrid > button {
+  border: 1px solid var(--line);
+  background: #f3f4e9;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  color: var(--ink);
+  padding: 13px;
+  min-width: 0;
+}
+.discoveryGrid > button[aria-pressed="true"] {
+  border-color: #9d8a4e;
+  background: #eee9d2;
+}
+.discoveryGrid > button > span {
+  flex: 1;
+  min-width: 0;
+}
+.discoveryGrid strong {
+  display: block;
+  font-size: 11px;
+}
+.discoveryGrid small {
+  font-size: 9px;
+  display: block;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.allianceBanner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 10px;
+  background: #eaf0df;
+  margin-bottom: 24px;
+}
+.allianceBanner h3 {
+  font-size: 25px;
+}
+.allianceBanner p {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.allianceBanner > div {
+  flex: 1;
+}
+.members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.members > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  flex: 1;
+  min-width: 170px;
+}
+.memberAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dde6cf;
+  width: 37px;
+  height: 37px;
+  border-radius: 50%;
+  font:
+    20px Georgia,
+    serif;
+  color: #637b4d;
+}
+.members strong,
+.members small {
+  display: block;
+}
+.members strong {
+  font-size: 12px;
+}
+.members small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.supportList > div,
+.supportList > article,
+.allianceList > div,
+.allianceList > article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.supportList p,
+.allianceList p {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.createAlliance {
+  margin-top: 25px;
+}
+.createAlliance form {
+  display: flex;
+  gap: 9px;
+  margin-top: 13px;
+}
+.createAlliance input {
+  flex: 1;
+}
+.createAlliance > small {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.allianceList h3 {
+  font-size: 20px;
+}
+.report {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 23px 16px;
+  border-top: 1px solid var(--line);
+}
+.report > div {
+  flex: 1;
+  min-width: 0;
+}
+.report h3 {
+  font-size: 20px;
+}
+.report p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 9px 0;
+}
+.report time {
+  font-size: 10px;
+  color: #8a9580;
+}
+.reportIcon,
+.reportIconWarning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border-radius: 50%;
+  background: #e8eede;
+  color: #6b8656;
+}
+.reportIconWarning {
+  background: #eee3cb;
+  color: #9a7839;
+}
+.reportUnread {
+  background: #f1f4e8;
+  border-radius: 9px;
+}
+.reportsPanel .sectionHeading {
+  margin-bottom: 25px;
+}
+@media (min-width: 1500px) {
+  .main {
+    padding-top: 35px;
+  }
+  .hero {
+    min-height: 320px;
+  }
+  .crownCard {
+    height: 180px;
+  }
+}
+@media (max-width: 1050px) {
+  .contentGrid,
+  .allianceLayout {
+    grid-template-columns: minmax(0, 1fr) 235px;
+    gap: 18px;
+  }
+  .main {
+    padding: 23px;
+  }
+  .topbar {
+    padding: 20px 24px;
+  }
+  .hero {
+    padding: 30px;
+  }
+  .hero h1 {
+    font-size: 36px;
+  }
+  .crownCardText strong {
+    font-size: 16px;
+  }
+  .crownCardText small {
+    display: none;
+  }
+  .panel {
+    padding: 20px;
+  }
+  .crownCard {
+    height: 142px;
+  }
+  .crownCardIcon {
+    padding: 6px;
+  }
+  .influenceRibbon {
+    gap: 15px;
+  }
+  .sectionHeading {
+    align-items: flex-start;
+  }
+  .sectionHeading h2 {
+    font-size: 23px;
+  }
+  .sectionHeading .chip {
+    display: none;
+  }
+  .mapLayout {
+    grid-template-columns: 1.25fr 1fr;
+  }
+  .hexViewport {
+    justify-content: flex-start;
+  }
+  .discoveryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .main {
+    padding: 17px 16px 85px;
+  }
+  .topbar {
+    padding: 17px 18px;
+  }
+  .brand {
+    font-size: 12px;
+    gap: 8px;
+  }
+  .brand small {
+    font-size: 8px;
+  }
+  .topbarActions {
+    gap: 6px;
+  }
+  .topbarActions .iconButton {
+    min-width: 34px;
+    min-height: 34px;
+    padding: 6px;
+  }
+  .lobbyLink {
+    display: none;
+  }
+  .resourceBar {
+    gap: 20px;
+    padding: 12px 16px;
+    justify-content: space-between;
+  }
+  .resourceBar > div {
+    gap: 7px;
+  }
+  .resourceBar strong {
+    font-size: 15px;
+  }
+  .resourceBar em {
+    display: none;
+  }
+  .resourceBar small {
+    font-size: 9px;
+  }
+  .resourceIcon svg,
+  .resourceIconGold svg {
+    width: 18px;
+  }
+  .hero {
+    min-height: 290px;
+    padding: 25px;
+    align-items: flex-start;
+    border-radius: 15px;
+    gap: 0;
+  }
+  .heroContent {
+    max-width: 100%;
+  }
+  .hero h1 {
+    font-size: 34px;
+    max-width: 310px;
+    padding-right: 20px;
+  }
+  .heroMeta {
+    font-size: 8px;
+    margin-bottom: 20px;
+    gap: 10px;
+  }
+  .heroCrest {
+    position: absolute;
+    right: 20px;
+    bottom: 22px;
+    width: 78px;
+    height: 92px;
+    border-radius: 40px 40px 9px 9px;
+    gap: 2px;
+  }
+  .heroCrest > svg {
+    width: 18px;
+    height: 18px;
+  }
+  .heroCrest strong {
+    font-size: 25px;
+  }
+  .heroCrest span {
+    font-size: 6px;
+  }
+  .heroCrest small {
+    font-size: 8px;
+  }
+  .heroBadge {
+    max-width: calc(100% - 65px);
+    font-size: 8px;
+    padding: 6px 9px;
+    line-height: 1.5;
+  }
+  .heroContent > p:not(.eyebrow) {
+    font-size: 11px;
+  }
+  .influenceRibbon {
+    gap: 11px;
+    grid-template-columns: repeat(5, 1fr);
+    margin: 20px 0 26px;
+  }
+  .influenceRibbon > div > div:first-child {
+    display: block;
+    font-size: 8px;
+    margin-bottom: 5px;
+  }
+  .influenceRibbon strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+  }
+  .influenceRibbon strong small {
+    font-size: 7px;
+  }
+  .progress {
+    height: 3px;
+  }
+  .navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: #fbfaf2f2;
+    backdrop-filter: blur(18px);
+    display: flex;
+    justify-content: space-around;
+    gap: 0;
+    border-top: 1px solid var(--line);
+    margin: 0;
+    padding: 5px 10px max(7px, env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 25px #243c3208;
+  }
+  .navigation > button {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 10px;
+    min-width: 68px;
+    padding: 5px;
+    border: 0;
+  }
+  .navigation > .navActive {
+    color: #345c39;
+    background: #e9edde;
+    border-radius: 12px;
+  }
+  .navigation small {
+    position: absolute;
+    top: 1px;
+    right: 6px;
+  }
+  .crownCards {
+    grid-template-columns: repeat(5, minmax(96px, 1fr));
+    overflow-x: auto;
+    gap: 10px;
+    padding: 5px 4px 10px;
+    margin: 0 -4px 20px;
+    scroll-snap-type: x mandatory;
+  }
+  .crownCard {
+    height: 124px;
+    scroll-snap-align: start;
+  }
+  .crownCardIcon {
+    left: 10px;
+    top: 10px;
+    padding: 5px;
+  }
+  .crownCardIcon svg {
+    width: 17px;
+  }
+  .crownCardText {
+    left: 10px;
+    bottom: 12px;
+  }
+  .crownCardText strong {
+    font-size: 13px;
+  }
+  .cardArrow {
+    display: none;
+  }
+  .contentGrid,
+  .allianceLayout {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .sidebar > div {
+    min-width: 0;
+  }
+  .sidebar h3 {
+    font-size: 18px;
+  }
+  .asideCard,
+  .hordeCard {
+    padding: 17px;
+  }
+  .sidebar p {
+    font-size: 10px;
+  }
+  .hordeStats {
+    gap: 7px;
+  }
+  .hordeStats > div {
+    padding: 8px;
+  }
+  .hordeStats strong {
+    font-size: 20px;
+  }
+  .panel,
+  .reportsPanel,
+  .ranking,
+  .atlasList,
+  .guide {
+    padding: 19px;
+    border-radius: 12px;
+  }
+  .sectionHeading {
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .sectionHeading h2 {
+    font-size: 24px;
+  }
+  .eyebrow {
+    font-size: 8px;
+  }
+  .cityOverview {
+    gap: 10px;
+    padding: 15px 6px;
+  }
+  .cityOverview > img {
+    width: 80px;
+    height: 90px;
+  }
+  .cityOverview h3 {
+    font-size: 22px;
+  }
+  .cityOverview p {
+    font-size: 10px;
+  }
+  .cityOverview small {
+    font-size: 9px;
+  }
+  .sectorRow {
+    gap: 10px;
+    padding: 18px 0;
+    align-items: flex-start;
+  }
+  .sectorIcon {
+    padding: 8px;
+    border-radius: 9px;
+    margin-top: 2px;
+  }
+  .sectorIcon > svg {
+    width: 19px;
+    height: 19px;
+  }
+  .sectorInfo h4 {
+    font-size: 16px;
+  }
+  .sectorInfo p {
+    font-size: 10px;
+  }
+  .sectorInfo .row > span {
+    font-size: 10px;
+  }
+  .sectorInfo .row {
+    display: block;
+  }
+  .sectorAction {
+    min-width: 75px;
+  }
+  .sectorAction .secondaryButton {
+    font-size: 10px;
+    padding: 7px 9px;
+    min-height: 36px;
+  }
+  .levelDots {
+    gap: 3px;
+  }
+  .levelDots i {
+    width: 8px;
+  }
+  .button,
+  .secondaryButton {
+    min-height: 42px;
+  }
+  .troopGrid {
+    gap: 10px;
+  }
+  .troopCard > img {
+    height: 100px;
+  }
+  .troopContent {
+    padding: 11px;
+  }
+  .troopContent h3 {
+    font-size: 20px;
+  }
+  .recruitButtons {
+    flex-wrap: wrap;
+  }
+  .recruitButtons > button {
+    min-height: 38px;
+  }
+  .metrics {
+    gap: 8px;
+  }
+  .metrics > div {
+    padding: 10px;
+  }
+  .metrics strong {
+    font-size: 21px;
+  }
+  .hireGrid {
+    grid-template-columns: 1fr;
+  }
+  .hireGrid article {
+    grid-template-columns: 52px 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .hireGrid button {
+    grid-column: auto;
+    padding: 7px 10px;
+    font-size: 10px;
+  }
+  .hireGrid h4 {
+    font-size: 16px;
+  }
+  .heroRow {
+    gap: 9px;
+  }
+  .heroRow strong {
+    font-size: 12px;
+  }
+  .assignment {
+    max-width: 125px;
+  }
+  .assignment select {
+    font-size: 10px;
+    padding: 7px;
+  }
+  .researchList > article,
+  .researchList > div {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .researchIcon {
+    padding: 9px;
+  }
+  .researchAction {
+    margin-left: auto;
+    flex-direction: row;
+    align-items: center;
+  }
+  .counselorGrid {
+    gap: 10px;
+  }
+  .counselorGrid > div,
+  .counselorGrid > article {
+    padding: 14px;
+  }
+  .counselorGrid select {
+    font-size: 11px;
+    padding: 7px;
+  }
+  .counselorGrid h3 {
+    font-size: 21px;
+  }
+  .decree {
+    padding: 20px;
+  }
+  .decreeOptions {
+    grid-template-columns: 1fr;
+  }
+  .decreeOptions > button {
+    min-height: 90px;
+  }
+  .portalCard {
+    padding: 23px;
+  }
+  .portalCard h3 {
+    font-size: 27px;
+  }
+  .questList > article,
+  .questList > div {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .questList .secondaryButton {
+    margin-left: auto;
+  }
+  .questIcon {
+    width: 33px;
+    height: 33px;
+  }
+  .questList h3 {
+    font-size: 18px;
+  }
+  .questList > article > div:nth-child(2) {
+    min-width: 180px;
+  }
+  .guideSteps {
+    grid-template-columns: 1fr 1fr;
+  }
+  .notice {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 15px;
+  }
+  .notice .button {
+    align-self: flex-end;
+  }
+  .mapLayout {
+    grid-template-columns: 1fr;
+  }
+  .mapPanel {
+    order: 0;
+  }
+  .mapDetails {
+    order: 1;
+  }
+  .hexViewport {
+    min-height: 350px;
+  }
+  .hexMap {
+    min-width: 435px;
+    padding: 12px 8px;
+  }
+  .hex {
+    width: 44px;
+    height: 48px;
+  }
+  .hexRow {
+    margin-top: -6px;
+  }
+  .hexRow:nth-child(even) {
+    transform: translateX(23px);
+  }
+  .mapToolbar {
+    padding: 15px;
+  }
+  .mapToolbar .row {
+    gap: 5px;
+  }
+  .mapToolbar .secondaryButton {
+    font-size: 10px;
+  }
+  .selectedTileArt {
+    height: 135px;
+  }
+  .selectedTileBody {
+    padding: 20px;
+  }
+  .discoveryGrid {
+    grid-template-columns: 1fr;
+  }
+  .discoveryGrid > button {
+    min-height: 65px;
+  }
+  .atlasList .sectionHeading {
+    display: block;
+  }
+  .atlasList .segmented {
+    margin-top: 15px;
+  }
+  .allianceBanner {
+    flex-wrap: wrap;
+    padding: 17px;
+  }
+  .allianceBanner .textButton {
+    margin-left: auto;
+  }
+  .report {
+    gap: 12px;
+    padding: 19px 10px;
+  }
+  .reportIcon,
+  .reportIconWarning {
+    padding: 9px;
+  }
+  .report h3 {
+    font-size: 18px;
+  }
+  .report p {
+    font-size: 11px;
+  }
+  .report .row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .rankList > div {
+    gap: 10px;
+    padding: 12px 8px;
+  }
+  .rankList strong {
+    font-size: 12px;
+  }
+  .footer {
+    font-size: 9px;
+    justify-content: center;
+    text-align: center;
+  }
+  .footer > span:nth-child(2) {
+    display: none;
+  }
+}
+@media (max-width: 390px) {
+  .hero {
+    padding: 22px;
+  }
+  .hero h1 {
+    font-size: 30px;
+  }
+  .heroMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .brand > svg {
+    width: 23px;
+  }
+  .brand {
+    font-size: 11px;
+  }
+  .main {
+    padding: 15px 12px 85px;
+  }
+  .resourceBar {
+    gap: 10px;
+  }
+  .influenceRibbon {
+    gap: 7px;
+  }
+  .influenceRibbon > div > div:first-child {
+    font-size: 7px;
+  }
+  .sidebar {
+    grid-template-columns: 1fr;
+  }
+  .hireGrid article {
+    grid-template-columns: 42px 1fr;
+  }
+  .hireGrid button {
+    grid-column: 1/-1;
+  }
+  .sectorInfo p {
+    font-size: 9px;
+  }
+  .sectorIcon {
+    display: none;
+  }
+  .counselorGrid {
+    grid-template-columns: 1fr;
+  }
+  .heroRow {
+    flex-wrap: wrap;
+  }
+  .assignment {
+    max-width: none;
+    width: 100%;
+  }
+}
+.sectorList,
+.reportList {
+  display: flex;
+  flex-direction: column;
+}
+
+/* These panels live inside the portrait game viewport, also on desktop. */
+.companion {
+  --ink: #f1e5c8;
+  --muted: #b5c1ad;
+  --paper: #20382f;
+  --line: #ac935044;
+  color: var(--ink);
+  font-family: var(--font-display), sans-serif;
+}
+.companion h2,
+.companion h3,
+.companion h4 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 720;
+  letter-spacing: -0.03em;
+}
+.companion .panel,
+.companion .ranking {
+  background: #1b322b;
+  border-color: var(--line);
+}
+.companion .allianceBanner {
+  background: linear-gradient(120deg, #334c39, #243c31);
+  padding: 16px;
+  border: 1px solid var(--line);
+}
+.companion .supportHint {
+  padding: 10px 12px;
+  margin: 10px 0 18px;
+  border: 1px solid #b5a36d55;
+  border-radius: 10px;
+  background: #152c25;
+  color: #d7d2af;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.companion .leaveAlliance {
+  margin-top: 20px;
+  border-top: 1px solid #b5a36d44;
+  color: #ddbd99;
+  font-size: 12px;
+}
+.companion .leaveAlliance summary {
+  min-height: 44px;
+  padding: 14px 4px;
+  cursor: pointer;
+}
+.companion .leaveAlliance p { line-height: 1.65; color: #c8c4af; }
+.companion .allianceBanner > svg {
+  color: #d4bd83;
+  flex: none;
+}
+.companion .chip,
+.companion .memberAvatar {
+  background: #344d38;
+  color: #e1d2a5;
+  border-color: var(--line);
+}
+.companion .asideCard,
+.companion .hordeCard,
+.companion .mutedCard {
+  background: #263d31;
+  border-color: var(--line);
+}
+.companion .rankSelf {
+  background: #425137;
+  border-color: #c1a66580;
+}
+.companion .rankNumber {
+  color: #d2bd80;
+}
+.companion .button {
+  background: linear-gradient(#e4ca8c, #bba061);
+  border-color: #dfc589;
+  color: #233022;
+}
+.companion .secondaryButton {
+  background: #2f4938;
+  border-color: #b49d5e66;
+  color: #ead9aa;
+}
+.companion .textButton {
+  color: #dfca94;
+}
+.companion input {
+  background: #11291f;
+  color: #f0e2bd;
+  border-color: #b19a5855;
+}
+.companion .empty {
+  padding: 24px 12px;
+}
+.companion .empty h3 {
+  font-size: 19px;
+}
+.companion button:focus-visible,
+.companion input:focus-visible {
+  outline: 2px solid #e1c78b;
+  outline-offset: 3px;
+}
+.gamePanel {
+  min-width: 0;
+}
+.gamePanel .sectionHeading {
+  margin-bottom: 18px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.gamePanel .sectionHeading h2 {
+  font-size: 25px;
+}
+.gamePanel .sectionHeading .chip {
+  display: inline-flex;
+}
+.gamePanel .eyebrow {
+  font-size: 9px;
+}
+.gamePanel .button,
+.gamePanel .secondaryButton,
+.gamePanel .iconButton,
+.gamePanel .textButton,
+.gamePanel .segmented button,
+.gamePanel .cityTabs button {
+  min-height: 44px;
+}
+.gamePanel .button,
+.gamePanel .secondaryButton {
+  font-size: 12px;
+}
+.gamePanel .textButton {
+  padding: 7px 0;
+}
+.gamePanel .cityOverview {
+  padding: 12px;
+  gap: 12px;
+}
+.gamePanel .cityOverview > img {
+  width: 72px;
+  height: 85px;
+}
+.gamePanel .cityOverview h3 {
+  font-size: 23px;
+}
+.gamePanel .cityOverview p,
+.gamePanel .sectorInfo p,
+.gamePanel .hireGrid p,
+.gamePanel .troopContent p,
+.gamePanel .report p,
+.gamePanel .researchList p {
+  font-size: 12px;
+}
+.gamePanel .sectorRow {
+  gap: 10px;
+  padding: 17px 0;
+  align-items: flex-start;
+}
+.gamePanel .sectorIcon {
+  display: none;
+}
+.gamePanel .sectorAction {
+  min-width: 80px;
+}
+.gamePanel .sectorAction .secondaryButton {
+  font-size: 11px;
+  padding: 8px 10px;
+}
+.gamePanel .levelDots {
+  gap: 3px;
+}
+.gamePanel .levelDots i {
+  width: 9px;
+}
+.gamePanel .troopGrid {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.gamePanel .troopCard {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+.gamePanel .troopCard > img {
+  height: 100%;
+  min-height: 160px;
+}
+.gamePanel .troopContent {
+  padding: 13px;
+}
+.gamePanel .troopContent h3 {
+  font-size: 21px;
+}
+.gamePanel .recruitButtons {
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.gamePanel .recruitButtons > button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: #e5edd9;
+  border: 1px solid #9fb78d;
+  border-radius: 8px;
+  color: #30533b;
+  box-shadow: inset 0 1px #ffffffa0;
+}
+.gamePanel .recruitButtons > button:hover:not(:disabled) {
+  background: #d6e5c8;
+  border-color: #73995c;
+}
+.gamePanel .recruitButtons > button:active:not(:disabled) {
+  background: #c9dcba;
+}
+.gamePanel .recruitButtons > button > strong {
+  font:
+    600 12px var(--font-body),
+    sans-serif;
+}
+.gamePanel .recruitButtons > button > span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: #596f50;
+}
+.gamePanel .metrics {
+  gap: 6px;
+}
+.gamePanel .metrics > div {
+  padding: 10px 7px;
+}
+.gamePanel .metrics strong {
+  font-size: 24px;
+}
+.gamePanel .hireGrid {
+  grid-template-columns: 1fr;
+}
+.gamePanel .hireGrid article {
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+}
+.gamePanel .hireGrid button {
+  grid-column: 1 / -1;
+}
+.gamePanel .heroRow {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.gamePanel .assignment {
+  width: 100%;
+  max-width: none;
+}
+.gamePanel .assignment select {
+  font-size: 13px;
+  min-height: 44px;
+}
+.gamePanel .counselorGrid {
+  grid-template-columns: 1fr;
+}
+.gamePanel .counselorGrid select {
+  font-size: 14px;
+  min-height: 44px;
+}
+.gamePanel .decree {
+  padding: 18px;
+}
+.gamePanel .decreeOptions {
+  grid-template-columns: 1fr;
+}
+.gamePanel .researchList > article {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.gamePanel .researchAction {
+  margin-left: auto;
+  flex-direction: row;
+  align-items: center;
+}
+.gamePanel .questList > article {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.gamePanel .questList .secondaryButton {
+  margin-left: auto;
+}
+.gamePanel .questList > article > div:nth-child(2) {
+  min-width: 160px;
+}
+.gamePanel .allianceLayout {
+  grid-template-columns: 1fr;
+}
+.gamePanel .sidebar {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.gamePanel .panel,
+.gamePanel .reportsPanel,
+.gamePanel .ranking {
+  padding: 16px 12px;
+}
+.gamePanel .reportsPanel {
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.gamePanel .notice {
+  flex-direction: column;
+  align-items: stretch;
+}
+.gamePanel .notice p {
+  font-size: 13px;
+}
+.gamePanel .report .row {
+  flex-wrap: wrap;
+}
+.gamePanel .inlineForm {
+  flex-wrap: wrap;
+}
+.gamePanel .inlineForm input {
+  min-width: 0;
+  width: 100%;
+}
+.gamePanel .footnote {
+  font-size: 11px;
+}
+@media (max-width: 760px) {
+  .sectorInfo p,
+  .hireGrid p,
+  .sidebar p,
+  .cityOverview p {
+    font-size: 12px;
+  }
+  .footnote {
+    font-size: 11px;
+  }
+  .resourceBar small {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .root * {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.companion .hordeStats > div {
+  background: #11291f;
+}
+.companion .hordeStats strong {
+  font-family: var(--font-display), sans-serif;
+  color: #ecd8a4;
+}
+.companion .hordeTag {
+  color: #d1be85;
+}
+.companion .notice,
+.companion .inlineNotice {
+  background: #2b4232;
+  color: #dfd5b0;
+  border-color: #ad985650;
+}
+
+.syncError { flex-wrap:wrap; }
+.syncError > span { flex:1 1 180px; }
+.syncRetry { min-height:44px; padding:8px 12px; border:1px solid #c7a76e88; border-radius:9px; background:#3c4c35; color:#f2e0bc; font:inherit; font-size:12px; }
+
+/* Ações principais têm um único acabamento reconhecível no jogo. */
+.button:not(:disabled), .companion .button:not(:disabled) {
+  background: var(--kw-action-gold);
+  border: 1px solid var(--kw-action-border);
+  color: var(--kw-action-ink);
+  font-weight: 750;
+  text-shadow: none;
+  box-shadow: var(--kw-action-shadow);
+}
+.button:hover:not(:disabled), .companion .button:hover:not(:disabled) {background:var(--kw-action-gold);filter:brightness(1.08)}
+.button:active:not(:disabled) {transform:translateY(2px);box-shadow:inset 0 1px #fff5cc,0 1px 0 #51300e}
+
+.secondaryButton:not(:disabled), .companion .secondaryButton:not(:disabled) {
+  background: var(--kw-action-secondary);
+  color: var(--kw-action-secondary-ink);
+  border-color: #a79772;
+  text-shadow: none;
+}

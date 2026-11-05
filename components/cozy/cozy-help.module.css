@@ -1,0 +1,11 @@
+.trigger{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:7px 12px;background:#20392c;border:1px solid #b39a5f55;border-radius:9px;color:#dfcca1;font:inherit;font-size:12px}
+.dialog{box-sizing:border-box;width:min(360px,calc(100vw - 32px));max-height:calc(100dvh - 40px);padding:0;border:1px solid #c7ab6c;border-radius:20px;background:#1c3429;color:#f1dfb8;box-shadow:0 15px 70px #0008;overflow:hidden}
+.dialog[open]{display:flex;flex-direction:column}.dialog::backdrop{background:#081e1ac9;backdrop-filter:blur(4px)}
+.dialog header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 12px 12px 18px;border-bottom:1px solid #b79d5d44;font-size:13px;color:#d9cca6}.dialog header button{display:grid;place-items:center;min-width:44px;min-height:44px;background:transparent;border:0;color:#e9d6a8;border-radius:10px}
+.body{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 24px 16px;overflow-y:auto;min-height:0}.body h3{font-size:24px;margin:12px 0 8px}.body p{font-size:14px;line-height:1.5;margin:0;color:#ced2b8}.dots{display:flex;gap:7px;margin-top:20px}.dots span{width:7px;height:7px;background:#526244;border-radius:50%}.dots [data-current=true]{background:#e0c784}
+.dialog footer{display:flex;gap:8px;padding:12px 18px 18px;flex-shrink:0}.dialog footer button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:10px;font:inherit;font-size:13px}.next{flex:1;background:linear-gradient(#e4cd90,#b89b5e);border:1px solid #d7bb77;color:#233022;font-weight:700}.skip{padding:8px 16px;background:transparent;border:1px solid #ab965a55;color:#c9c7a9}.dialog button:focus-visible,.trigger:focus-visible{outline:2px solid #ead6a1;outline-offset:2px}
+
+.trigger[data-compact]{padding:0;min-width:44px;width:44px;flex-shrink:0;justify-content:center}
+
+.next:not(:disabled) {background:var(--kw-action-gold); color:var(--kw-action-ink); border-color:var(--kw-action-border); text-shadow:none; box-shadow:var(--kw-action-shadow);}
+.skip:not(:disabled) {background:var(--kw-action-secondary); color:var(--kw-action-secondary-ink); border-color:#a79772;}

@@ -8,7 +8,8 @@ const serverUrl =
 const config: CapacitorConfig = {
   appId,
   appName,
-  webDir: "public",
+  // The game runs on server.url; package only the connection recovery page.
+  webDir: "native-shell",
   android: {
     path: "android",
   },
@@ -16,6 +17,7 @@ const config: CapacitorConfig = {
     ? {
         url: serverUrl,
         cleartext: serverUrl.startsWith("http://"),
+        errorPath: `index.html?retry=${encodeURIComponent(serverUrl)}`,
       }
     : undefined,
 };

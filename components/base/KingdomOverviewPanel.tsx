@@ -1,5 +1,7 @@
 "use client";
 
+import CozyArt from "../cozy/CozyArt";
+
 import { AlertTriangle, Castle, ChevronRight, Flame, Shield, Snowflake, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -638,7 +640,7 @@ export function KingdomOverviewPanel({
 
           <div className="grid grid-cols-2 gap-2">
             <div className={`flex min-h-[56px] items-center gap-2.5 rounded-2xl border p-2.5 ${sovereigntyScore.portalEligible ? "border-emerald-300/35 bg-emerald-500/12" : "border-white/10 bg-white/5"}`}>
-              <span className="text-2xl" aria-hidden>🌀</span>
+              <CozyArt src="/icons/action-enter-world.png" size={30}/>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">Portal</p>
                 <p className={`text-base font-black leading-tight ${sovereigntyScore.portalEligible ? "text-emerald-100" : "text-amber-100"}`}>
@@ -651,7 +653,7 @@ export function KingdomOverviewPanel({
               onClick={() => onOpenCityView(activeVillage.id)}
               className="flex min-h-[56px] items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 p-2.5 text-left transition hover:bg-white/8"
             >
-              <span className="text-2xl" aria-hidden>🎯</span>
+              <CozyArt src="/icons/action-upgrade.png" size={30}/>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">Foco</p>
                 <p className="text-base font-black leading-tight text-slate-100">{calculateVillageDevelopment(activeVillage.buildingLevels)}/100</p>
@@ -665,7 +667,7 @@ export function KingdomOverviewPanel({
             <div className="flex items-start gap-2">
               <Castle className="mt-0.5 h-4 w-4 text-rose-200" />
               <div>
-                <p className="text-[12px] font-black text-rose-50">⚔️ Ataque chegando na Capital</p>
+                <p className="text-[12px] font-black text-rose-50"><span className="inline-flex items-center gap-1"><CozyArt src="/icons/action-attack.png" size={18}/>Ataque chegando na Capital</span></p>
                 <p className="mt-1 text-[11px] font-semibold text-slate-200">
                   Bastião {crownState.capitalDefenseScore}/100 · muralha {crownState.capitalWallLevel}/10 · palácio {crownState.capitalPalaceLevel}/10
                 </p>
@@ -693,7 +695,7 @@ export function KingdomOverviewPanel({
           }`}
         >
           <div className="flex min-w-0 items-center gap-2">
-            <span className="text-lg" aria-hidden>🏛️</span>
+            <CozyArt src="/buildings/senado.png" size={28}/>
             <div className="min-w-0">
               <p className={`text-sm font-black ${senateMeeting ? "text-amber-50" : "text-slate-100"}`}>Senado</p>
               {senateMeeting ? (

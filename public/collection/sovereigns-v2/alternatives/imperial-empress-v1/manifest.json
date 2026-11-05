@@ -1,0 +1,22 @@
+{
+  "label": "Vestes da Imperatriz",
+  "status": "catalogued",
+  "replaces": null,
+  "body": "body.png",
+  "avatar": "avatar.png",
+  "avatarCrop": [
+    307,
+    0,
+    717,
+    410
+  ],
+  "size": [
+    1024,
+    1536
+  ],
+  "alphaRange": [
+    0,
+    254
+  ],
+  "catalogId": "sovereign-22"
+}

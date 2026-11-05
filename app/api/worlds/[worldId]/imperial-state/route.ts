@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isCozyWorld } from "@/lib/cozy/server";
 
 import { calculateCityDailyProduction } from "@/core/GameBalance";
 import { normalizeImperialVillageIds, stripDedicatedImperialClientState } from "@/lib/imperial-persistence";
@@ -770,6 +771,7 @@ export async function GET(
   { params }: { params: { worldId: string } },
 ) {
   try {
+    if (await isCozyWorld(params.worldId)) return NextResponse.json({ error: "O progresso desta temporada é controlado pela Coroa." }, { status: 409 });
     const payload = await getWorldPayload(params.worldId);
     if (!payload.worldPlayerId) {
       return NextResponse.json({ imperialState: null });
@@ -864,6 +866,7 @@ export async function PUT(
   { params }: { params: { worldId: string } },
 ) {
   try {
+    if (await isCozyWorld(params.worldId)) return NextResponse.json({ error: "O progresso desta temporada é controlado pela Coroa." }, { status: 409 });
     const payload = await getWorldPayload(params.worldId);
     if (!payload.worldPlayerId) {
       // Local/sandbox flows can still use the in-memory imperial state even without a persisted world player row.

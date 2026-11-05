@@ -1,0 +1,176 @@
+.panel {
+  --crown-muted: #b2bbae;
+  --crown-line: #aa92574f;
+  --crown-accent: #ddbd76;
+  min-width: 0;
+  color: #f1e5c8;
+  font-family: var(--font-display), sans-serif;
+}
+.panel[data-crown-panel="military"] {
+  --crown-muted: #c4b5a7;
+  --crown-line: #b98c6b66;
+  --crown-accent: #e4b578;
+}
+.panel[data-crown-panel="government"] {
+  --crown-muted: #aabcc7;
+  --crown-line: #8faec15c;
+  --crown-accent: #b4d5df;
+}
+.panel[data-crown-panel="council"] {
+  --crown-muted: #bfb3c5;
+  --crown-line: #aa91b05e;
+  --crown-accent: #d6b9de;
+}
+.panel[data-crown-panel="achievements"] {
+  --crown-muted: #bdb69a;
+  --crown-line: #baa16360;
+  --crown-accent: #e7cc81;
+}
+.panel h2,
+.panel h3,
+.panel h4 {
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.03em;
+}
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 19px;
+}
+.heading > div {
+  min-width: 0;
+}
+.panel .heading h2 {
+  font-size: 24px;
+  font-weight: 750;
+  line-height: 1.15;
+}
+.heading > div > span {
+  display: block;
+  color: var(--crown-muted);
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.button,
+.quietButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 9px;
+  font:
+    650 12px var(--font-display),
+    sans-serif;
+}
+.button {
+  border: 1px solid #ebd297;
+  background: linear-gradient(#e4c98a, #c0a060);
+  color: #202b22;
+  box-shadow:
+    inset 0 1px #fff4,
+    0 3px 8px #0002;
+}
+.quietButton {
+  border: 1px solid var(--crown-line);
+  background: #ffffff07;
+  color: #e7d9b8;
+}
+.button:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+.quietButton:hover:not(:disabled) {
+  background: #ffffff10;
+}
+.button:disabled,
+.quietButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.panel button:focus-visible,
+.panel select:focus-visible,
+.panel summary:focus-visible {
+  outline: 2px solid var(--crown-accent);
+  outline-offset: 3px;
+}
+.cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #e9d095;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cost svg {
+  color: #d7b66a;
+}
+/* A cost on an action must follow that button's foreground, not the panel gold. */
+:global(button) .cost,
+:global(button) .cost svg {
+  color: inherit;
+}
+.progress {
+  height: 5px;
+  border-radius: 4px;
+  background: #ffffff14;
+  overflow: hidden;
+}
+.progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9f8245, #ead594);
+}
+.panel input,
+.panel select {
+  background: #0b1b1ed9;
+  color: #f1e4c4;
+  border-color: var(--crown-line);
+  font-size: 12px;
+  min-height: 44px;
+}
+.panel summary {
+  cursor: pointer;
+  min-height: 44px;
+}
+.panel p {
+  color: var(--crown-muted);
+}
+@media (max-width: 370px) {
+  .panel .heading h2 {
+    font-size: 22px;
+  }
+}
+
+.button:not(:disabled) {background:var(--kw-action-gold);border-color:var(--kw-action-border);color:var(--kw-action-ink);text-shadow:none;box-shadow:var(--kw-action-shadow);font-weight:750}
+.button:active:not(:disabled){transform:translateY(2px);box-shadow:inset 0 1px #fff5cc,0 1px 0 #51300e}
+
+/* Shared dimensions keep each area familiar while its tint identifies it. */
+.panel [role="tablist"] {
+  display: flex; gap: 4px; padding: 3px; margin: 6px 0 12px;
+  border: 0; border-bottom: 1px solid var(--crown-line);
+  border-radius: 4px; background: linear-gradient(#ffffff08,#00000020);
+}
+.panel [role="tablist"] button {
+  flex: 1; min-height: 44px; padding: 6px; border: 0;
+  border-radius: 3px; background: transparent; box-shadow: none;
+  font-size: 12px; color: var(--crown-muted);
+}
+.panel [role="tablist"] button[aria-selected="true"] {
+  background: linear-gradient(#ffffff15,#ffffff04);
+  box-shadow: inset 0 -2px var(--crown-accent); color: #f5e7cb;
+}
+
+.quietButton:not(:disabled) {
+  color: var(--kw-action-secondary-ink);
+  background: var(--kw-action-secondary);
+  border-color: #a79772;
+}
+
+.button:not(:disabled){background:var(--kw-action-gold);color:var(--kw-action-ink);border:1px solid var(--kw-action-border);box-shadow:var(--kw-action-shadow);text-shadow:none;min-height:44px;border-radius:6px;font-weight:700}

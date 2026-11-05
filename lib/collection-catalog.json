@@ -1,0 +1,716 @@
+[
+  {
+    "id": "sovereign-01",
+    "kind": "king",
+    "name": "Manto de Linho",
+    "image": "/collection/sovereigns-v2/sovereign-01-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-01-body.png",
+    "baseStats": {
+      "administration": 5,
+      "command": 5,
+      "exploration": 5
+    },
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "sovereign-02",
+    "kind": "king",
+    "name": "Vestes de Jade",
+    "image": "/collection/sovereigns-v2/sovereign-02-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-02-body.png",
+    "baseStats": {
+      "administration": 8,
+      "command": 4,
+      "exploration": 3
+    },
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "sovereign-03",
+    "kind": "king",
+    "name": "Manto de Rubi",
+    "image": "/collection/sovereigns-v2/sovereign-03-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-03-body.png",
+    "baseStats": {
+      "administration": 3,
+      "command": 8,
+      "exploration": 4
+    },
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "sovereign-04",
+    "kind": "king",
+    "name": "Vestes de Safira",
+    "image": "/collection/sovereigns-v2/sovereign-04-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-04-body.png",
+    "baseStats": {
+      "administration": 4,
+      "command": 3,
+      "exploration": 8
+    },
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "sovereign-05",
+    "kind": "king",
+    "name": "Manto do Norte",
+    "image": "/collection/sovereigns-v2/sovereign-05-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-05-body.png",
+    "baseStats": {
+      "administration": 3,
+      "command": 8,
+      "exploration": 4
+    },
+    "price": 50,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-06",
+    "kind": "king",
+    "name": "Traje da Corte",
+    "image": "/collection/sovereigns-v2/sovereign-06-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-06-body.png",
+    "baseStats": {
+      "administration": 5,
+      "command": 7,
+      "exploration": 3
+    },
+    "price": 50,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-07",
+    "kind": "king",
+    "name": "Vestes de Estudo",
+    "image": "/collection/sovereigns-v2/sovereign-07-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-07-body.png",
+    "baseStats": {
+      "administration": 8,
+      "command": 3,
+      "exploration": 4
+    },
+    "price": 50,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-08",
+    "kind": "king",
+    "name": "Traje da Fronteira",
+    "image": "/collection/sovereigns-v2/sovereign-08-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-08-body.png",
+    "baseStats": {
+      "administration": 3,
+      "command": 4,
+      "exploration": 8
+    },
+    "price": 50,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-09",
+    "kind": "king",
+    "name": "Traje de Obras",
+    "image": "/collection/sovereigns-v2/sovereign-09-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-09-body.png",
+    "baseStats": {
+      "administration": 8,
+      "command": 4,
+      "exploration": 3
+    },
+    "price": 50,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-10",
+    "kind": "king",
+    "name": "Traje das Feiras",
+    "image": "/collection/sovereigns-v2/sovereign-10-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-10-body.png",
+    "baseStats": {
+      "administration": 7,
+      "command": 3,
+      "exploration": 5
+    },
+    "price": 50,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-11",
+    "kind": "king",
+    "name": "Manto de Viagem",
+    "image": "/collection/sovereigns-v2/sovereign-11-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-11-body.png",
+    "baseStats": {
+      "administration": 4,
+      "command": 3,
+      "exploration": 8
+    },
+    "price": 50,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-12",
+    "kind": "king",
+    "name": "Vestes do Pomar",
+    "image": "/collection/sovereigns-v2/sovereign-12-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-12-body.png",
+    "baseStats": {
+      "administration": 7,
+      "command": 4,
+      "exploration": 4
+    },
+    "price": 50,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-13",
+    "kind": "king",
+    "name": "Traje do Tribunal",
+    "image": "/collection/sovereigns-v2/sovereign-13-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-13-body.png",
+    "baseStats": {
+      "administration": 5,
+      "command": 6,
+      "exploration": 4
+    },
+    "price": 100,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-14",
+    "kind": "king",
+    "name": "Manto dos Portos",
+    "image": "/collection/sovereigns-v2/sovereign-14-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-14-body.png",
+    "baseStats": {
+      "administration": 4,
+      "command": 4,
+      "exploration": 7
+    },
+    "price": 100,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-15",
+    "kind": "king",
+    "name": "Vestes de Âmbar",
+    "image": "/collection/sovereigns-v2/sovereign-15-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-15-body.png",
+    "baseStats": {
+      "administration": 6,
+      "command": 4,
+      "exploration": 5
+    },
+    "price": 100,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-16",
+    "kind": "king",
+    "name": "Traje de Campanha",
+    "image": "/collection/sovereigns-v2/sovereign-16-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-16-body.png",
+    "baseStats": {
+      "administration": 4,
+      "command": 8,
+      "exploration": 3
+    },
+    "price": 100,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-17",
+    "kind": "king",
+    "name": "Vestes da Oficina",
+    "image": "/collection/sovereigns-v2/sovereign-17-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-17-body.png",
+    "baseStats": {
+      "administration": 8,
+      "command": 3,
+      "exploration": 4
+    },
+    "price": 100,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-18",
+    "kind": "king",
+    "name": "Traje dos Anais",
+    "image": "/collection/sovereigns-v2/sovereign-18-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-18-body.png",
+    "baseStats": {
+      "administration": 6,
+      "command": 4,
+      "exploration": 5
+    },
+    "price": 100,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-19",
+    "kind": "king",
+    "name": "Manto do Inverno",
+    "image": "/collection/sovereigns-v2/sovereign-19-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-19-body.png",
+    "baseStats": {
+      "administration": 5,
+      "command": 6,
+      "exploration": 4
+    },
+    "price": 200,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-20",
+    "kind": "king",
+    "name": "Vestes das Rotas",
+    "image": "/collection/sovereigns-v2/sovereign-20-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-20-body.png",
+    "baseStats": {
+      "administration": 4,
+      "command": 4,
+      "exploration": 7
+    },
+    "price": 200,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-21",
+    "kind": "king",
+    "name": "Traje Imperial",
+    "image": "/collection/sovereigns-v2/sovereign-21-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-21-body.png",
+    "baseStats": {
+      "administration": 6,
+      "command": 6,
+      "exploration": 3
+    },
+    "price": 250,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "sovereign-22",
+    "kind": "king",
+    "name": "Vestes da Imperatriz",
+    "image": "/collection/sovereigns-v2/sovereign-22-avatar.png",
+    "body": "/collection/sovereigns-v2/sovereign-22-body.png",
+    "baseStats": {
+      "administration": 6,
+      "command": 3,
+      "exploration": 6
+    },
+    "price": 250,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "empire-crest-01",
+    "kind": "crest",
+    "name": "Brasão 01",
+    "image": "/collection/catalog-v1/empire-crest-01.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-02",
+    "kind": "crest",
+    "name": "Brasão 02",
+    "image": "/collection/catalog-v1/empire-crest-02.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-03",
+    "kind": "crest",
+    "name": "Brasão 03",
+    "image": "/collection/catalog-v1/empire-crest-03.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-04",
+    "kind": "crest",
+    "name": "Brasão 04",
+    "image": "/collection/catalog-v1/empire-crest-04.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-05",
+    "kind": "crest",
+    "name": "Brasão 05",
+    "image": "/collection/catalog-v1/empire-crest-05.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-06",
+    "kind": "crest",
+    "name": "Brasão 06",
+    "image": "/collection/catalog-v1/empire-crest-06.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-07",
+    "kind": "crest",
+    "name": "Brasão 07",
+    "image": "/collection/catalog-v1/empire-crest-07.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-08",
+    "kind": "crest",
+    "name": "Brasão 08",
+    "image": "/collection/catalog-v1/empire-crest-08.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-09",
+    "kind": "crest",
+    "name": "Brasão 09",
+    "image": "/collection/catalog-v1/empire-crest-09.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-10",
+    "kind": "crest",
+    "name": "Brasão 10",
+    "image": "/collection/catalog-v1/empire-crest-10.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-11",
+    "kind": "crest",
+    "name": "Brasão 11",
+    "image": "/collection/catalog-v1/empire-crest-11.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-12",
+    "kind": "crest",
+    "name": "Brasão 12",
+    "image": "/collection/catalog-v1/empire-crest-12.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-13",
+    "kind": "crest",
+    "name": "Brasão 13",
+    "image": "/collection/catalog-v1/empire-crest-13.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-14",
+    "kind": "crest",
+    "name": "Brasão 14",
+    "image": "/collection/catalog-v1/empire-crest-14.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-15",
+    "kind": "crest",
+    "name": "Brasão 15",
+    "image": "/collection/catalog-v1/empire-crest-15.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-16",
+    "kind": "crest",
+    "name": "Brasão 16",
+    "image": "/collection/catalog-v1/empire-crest-16.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-17",
+    "kind": "crest",
+    "name": "Brasão 17",
+    "image": "/collection/catalog-v1/empire-crest-17.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-18",
+    "kind": "crest",
+    "name": "Brasão 18",
+    "image": "/collection/catalog-v1/empire-crest-18.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-19",
+    "kind": "crest",
+    "name": "Brasão 19",
+    "image": "/collection/catalog-v1/empire-crest-19.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "empire-crest-20",
+    "kind": "crest",
+    "name": "Brasão 20",
+    "image": "/collection/catalog-v1/empire-crest-20.png",
+    "price": 0,
+    "starter": true,
+    "sale": false
+  },
+  {
+    "id": "premium-griffin",
+    "kind": "crest",
+    "name": "Grifo",
+    "image": "/collection/catalog-v1/premium-griffin.png",
+    "price": 75,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "extra-dragon",
+    "kind": "crest",
+    "name": "Dragão",
+    "image": "/collection/catalog-v1/extra-dragon.png",
+    "price": 75,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "premium-phoenix",
+    "kind": "crest",
+    "name": "Fênix",
+    "image": "/collection/catalog-v1/premium-phoenix.png",
+    "price": 75,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "extra-hippocampus",
+    "kind": "crest",
+    "name": "Hipocampo",
+    "image": "/collection/catalog-v1/extra-hippocampus.png",
+    "price": 75,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "extra-crowned-serpent",
+    "kind": "crest",
+    "name": "Serpente Coroada",
+    "image": "/collection/catalog-v1/extra-crowned-serpent.png",
+    "price": 75,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "extra-winged-lion",
+    "kind": "crest",
+    "name": "Leão Alado",
+    "image": "/collection/catalog-v1/extra-winged-lion.png",
+    "price": 75,
+    "starter": false,
+    "sale": true
+  },
+  {
+    "id": "item-craft-ledger",
+    "kind": "equipment",
+    "name": "Livro de Ofícios",
+    "image": "/collection/catalog-v1/item-craft-ledger.png",
+    "price": 0,
+    "starter": true,
+    "sale": false,
+    "rarity": "common"
+  },
+  {
+    "id": "item-guard-crest",
+    "kind": "equipment",
+    "name": "Brasão da Guarda",
+    "image": "/collection/catalog-v1/item-guard-crest.png",
+    "price": 0,
+    "starter": true,
+    "sale": false,
+    "rarity": "common"
+  },
+  {
+    "id": "item-travel-compass",
+    "kind": "equipment",
+    "name": "Bússola de Viagem",
+    "image": "/collection/catalog-v1/item-travel-compass.png",
+    "price": 0,
+    "starter": true,
+    "sale": false,
+    "rarity": "common"
+  },
+  {
+    "id": "item-seed-sack",
+    "kind": "equipment",
+    "name": "Saco de Sementes",
+    "image": "/collection/catalog-v1/item-seed-sack.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "common"
+  },
+  {
+    "id": "item-master-hammer",
+    "kind": "equipment",
+    "name": "Martelo do Mestre",
+    "image": "/collection/catalog-v1/item-master-hammer.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "common"
+  },
+  {
+    "id": "item-watch-standard",
+    "kind": "equipment",
+    "name": "Estandarte da Vigília",
+    "image": "/collection/catalog-v1/item-watch-standard.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "uncommon"
+  },
+  {
+    "id": "item-road-map",
+    "kind": "equipment",
+    "name": "Mapa de Estradas",
+    "image": "/collection/catalog-v1/item-road-map.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "uncommon"
+  },
+  {
+    "id": "item-granary-seal",
+    "kind": "equipment",
+    "name": "Selo dos Armazéns",
+    "image": "/collection/catalog-v1/item-granary-seal.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "uncommon"
+  },
+  {
+    "id": "item-patrol-horn",
+    "kind": "equipment",
+    "name": "Chifre da Patrulha",
+    "image": "/collection/catalog-v1/item-patrol-horn.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "uncommon"
+  },
+  {
+    "id": "item-steward-ledger",
+    "kind": "equipment",
+    "name": "Registro do Intendente",
+    "image": "/collection/catalog-v1/item-steward-ledger.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "uncommon"
+  },
+  {
+    "id": "item-cartographer-divider",
+    "kind": "equipment",
+    "name": "Compasso do Cartógrafo",
+    "image": "/collection/catalog-v1/item-cartographer-divider.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "rare"
+  },
+  {
+    "id": "item-frontier-shield",
+    "kind": "equipment",
+    "name": "Escudo das Fronteiras",
+    "image": "/collection/catalog-v1/item-frontier-shield.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "rare"
+  },
+  {
+    "id": "item-builder-tools",
+    "kind": "equipment",
+    "name": "Ferramentas do Construtor",
+    "image": "/collection/catalog-v1/item-builder-tools.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "rare"
+  },
+  {
+    "id": "item-harvest-coffer",
+    "kind": "equipment",
+    "name": "Cofre da Colheita",
+    "image": "/collection/catalog-v1/item-harvest-coffer.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "rare"
+  },
+  {
+    "id": "item-journey-crown",
+    "kind": "equipment",
+    "name": "Coroa das Jornadas",
+    "image": "/collection/catalog-v1/item-journey-crown.png",
+    "price": 0,
+    "starter": false,
+    "sale": false,
+    "rarity": "epic"
+  }
+]

@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {loadCozyEngine} from './lib/load-cozy-engine.mjs';
+const E=loadCozyEngine(),at=1800000000000,world={id:'occupation-boundary',name:'Boundary',status:'running',mode:'classic',startsAt:at};
+let save=E.settleCozyState(E.createCozyState(world,'p','King',at),E.createCozyShared(world),world,at);
+save.state.resources={gold:10000,materials:10000,supplies:10000};
+save.state.explored=E.getCozyTiles(save.state,save.shared,world).map(t=>t.id);
+save=E.applyCozyAction(save.state,save.shared,world,{type:'hire',role:'administrator'},at);
+const target=E.getCozyTiles(save.state,save.shared,world).find(t=>t.kind==='npc'&&t.combat?.occupationRequired&&!t.ownerId);
+assert(target,'A real NPC target must exist');save.state.army={militia:target.combat.occupationRequired,shooters:0,scouts:0,machinery:0};
+const before=save.state.cities.length;
+save=E.applyCozyAction(save.state,save.shared,world,{type:'attack',q:target.q,r:target.r,conquest:true,heroId:save.state.heroes[0].id},at);
+const order=save.state.orders.find(o=>o.kind==='attack');assert(order);
+save=E.settleCozyState(save.state,save.shared,world,order.arrivesAt);
+assert.equal(save.state.cities.length,before+1,'Occupation must honor the quoted +25% arrival margin before combat casualties');
+assert(save.state.army.militia<target.combat.occupationRequired,'The successful attack still incurs real casualties');
+console.log('PASS real NPC conquest at the displayed occupation threshold, with casualties preserved');

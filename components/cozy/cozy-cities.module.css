@@ -1,0 +1,295 @@
+.collection {
+  min-width: 0;
+  color: #f2e5c6;
+}
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.collection .heading h2 {
+  margin: 0;
+  font:
+    700 23px/1.2 var(--font-display),
+    sans-serif;
+  letter-spacing: -0.035em;
+}
+.count {
+  color: #dcc492;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.count small {
+  font-size: 11px;
+  color: #9dad99;
+}
+.influence {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  color: #e6ca8e;
+}
+.influence > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+.influence strong {
+  font-size: 18px;
+  line-height: 1.1;
+}
+.influence small {
+  color: #a6b29a;
+  font-size: 10px;
+}
+.cityList {
+  display: grid;
+  gap: 15px;
+}
+.cityCard {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 13px 14px 0;
+  border: 1px solid #9c82514a;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #29463c, #1c342f);
+  color: inherit;
+  text-align: left;
+  box-shadow:
+    0 5px 15px #07181630,
+    inset 0 1px #e7c37b0a;
+}
+.cityCard:hover {
+  border-color: #ae945b;
+}
+.cityCard:active {
+  background: #2a483d;
+}
+.cityCard:focus-visible {
+  outline: 3px solid #a78545;
+  outline-offset: 3px;
+}
+.cityTop {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+.cityArt {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 76px;
+  flex: none;
+  background: radial-gradient(ellipse, #9f9e5e26, transparent 72%);
+}
+.cityArt img {
+  width: 72px;
+  height: 76px;
+  filter: drop-shadow(0 5px 4px #03171080);
+}
+.cityIdentity {
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+.cityKind {
+  display: block;
+  color: #b7c1a7;
+  font-size: 10px;
+}
+.cityKind > span {
+  color: #839c8e;
+  white-space: nowrap;
+}
+.cityIdentity > strong {
+  display: block;
+  margin-top: 6px;
+  font:
+    700 22px/1.15 var(--font-display),
+    sans-serif;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+.chevron {
+  flex: none;
+  color: #b89f67;
+}
+.sectorStrip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 12px;
+}
+.sector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 2px 6px;
+  border: 1px solid #b9a66b16;
+  border-radius: 9px;
+  background: #112b2680;
+}
+.sector[data-upgrading] {
+  border-color: #b69a56a0;
+  background: #45503770;
+}
+.sector > img {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 4px;
+}
+.sector > img.levelMedallion {
+  width: 32px;
+  height: 32px;
+  margin: 5px 0 0;
+  filter: drop-shadow(0 2px 3px #0007);
+}
+.sectorLabel {
+  font-size: 9px;
+  color: #bdc8ad;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  min-height: 37px;
+  color: #9cae95;
+  font-size: 10px;
+}
+.enter,
+.work {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.enter {
+  flex: none;
+  color: #d4be89;
+}
+.work {
+  min-width: 0;
+  color: #c7b987;
+  flex-wrap: wrap;
+  padding: 6px 0;
+}
+.production {
+  margin-top: 23px;
+  border-top: 1px solid #a28a5838;
+}
+.production summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  gap: 10px;
+  color: #c3c7ab;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+}
+.production summary::-webkit-details-marker {
+  display: none;
+}
+.production[open] summary > svg {
+  transform: rotate(180deg);
+}
+.productionValues {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 5px 0;
+}
+.productionValues > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #a6b69c;
+}
+.productionValues strong {
+  display: block;
+  color: #e0cc94;
+  font-size: 17px;
+}
+.collection .production p {
+  font-size: 10px;
+  color: #9fb098;
+  margin: 10px 0 4px;
+}
+.empty {
+  font-size: 13px;
+  padding: 24px 10px;
+  color: #b8c4a9;
+  text-align: center;
+}
+@media (max-width: 370px) {
+  .cityCard {
+    padding: 11px 11px 0;
+  }
+  .cityArt,
+  .cityArt img {
+    width: 64px;
+    height: 68px;
+  }
+  .cityIdentity > strong {
+    font-size: 20px;
+  }
+  .sectorStrip {
+    gap: 4px;
+  }
+}
+
+.cityAlert{display:block;color:#e5b681;font-size:11px;margin-top:5px}
+
+
+/* A city occupies one register, with its five sector levels underneath. */
+.collection .cityList { gap: 0; }
+.collection .cityCard { padding: 7px 4px; border: 0; border-bottom: 1px solid #ad97633d; border-radius: 0; box-shadow: none; background: linear-gradient(100deg,#39473b33,transparent); }
+.collection .sectorStrip { gap: 0; margin: 5px 0; }
+.collection .sector { display: grid; grid-template-columns: auto auto; justify-content: center; gap: 2px; padding: 4px 0; background: none; border: 0; border-radius: 0; }
+.collection .sector + .sector { border-left: 1px solid #ae9e6b28; }
+.collection .sector img { width: 23px; height: 23px; margin: 0; }
+.collection .sectorLabel { grid-row: 2; grid-column: 1/-1; }
+.collection .cardFoot { border: 0; margin-top: 3px; }
+
+/* Compact roster: one identity line and one strip of five readable levels. */
+.collection .heading {margin-bottom:12px;}
+.collection .cityCard {padding:6px 3px;}
+.collection .cityTop {gap:10px;}
+.collection .cityArt {width:50px;height:50px;background:none;}
+.collection .cityArt > svg {width:50px;height:50px;}
+.collection .cityIdentity > strong {font-size:18px;margin-top:3px;}
+.collection .cityKind {font-size:11px;}
+.collection .cityKind > span {color:#acb8af;}
+.collection .sectorStrip {margin:2px 0 0;}
+.collection .sector {gap:5px;padding:2px 0;align-items:center;}
+.collection .sector img {width:25px;height:25px;}
+.collection .levelNumber {font-size:16px;font-variant-numeric:tabular-nums;color:#f8e6bd;}
+.collection .cardFoot {min-height:24px;font-size:12px;}
+
+.cityCredit {display:inline-flex;align-items:center;gap:4px;flex:none;color:#e7d5a4;font-weight:700;font-variant-numeric:tabular-nums;}
+
+.collection .cityTop {gap:6px;}
+.collection .cityArt,.collection .cityArt > svg {width:36px;height:36px;}
+.cityHeading {display:flex;align-items:baseline;gap:6px;min-width:0;}
+.cityHeading strong {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 16px/1.25 var(--font-display),sans-serif;color:#f5e6c5;}
+.cityHeading .cityKind {flex:none;white-space:nowrap;font-size:10px;color:#bcc5ba;font-variant-numeric:tabular-nums;}
+.collection .cityCredit {font-size:13px;gap:2px;}
+.collection .cityAlert {margin-top:2px;}
+
+.collection .cityCard[data-city-class]{background:linear-gradient(105deg,var(--village-tint,#485059),#1b2020 76%);border-inline-start:2px solid var(--village-tint,#485059)}
+.cityCard[data-city-class="metropole"]{--village-tint:#483856}
+.cityCard[data-city-class="posto_avancado"]{--village-tint:#62402a}
+.cityCard[data-city-class="bastiao"]{--village-tint:#304762}
+.cityCard[data-city-class="celeiro"]{--village-tint:#354e30}
+.cityCard[data-city-class="capital"]{--village-tint:#58482e}

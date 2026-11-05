@@ -8,15 +8,16 @@ type ProfilePatchPayload = {
 };
 
 function normalizeUsername(input: unknown): string {
-  const raw = String(input ?? "").trim();
+  if(typeof input!=="string")throw new Error("Informe seu nick.");
+  const raw = input.trim();
   if (raw.length < 3) {
     throw new Error("O nick precisa ter pelo menos 3 caracteres.");
   }
   if (raw.length > 24) {
-    throw new Error("O nick pode ter no maximo 24 caracteres.");
+    throw new Error("O nick pode ter no máximo 24 caracteres.");
   }
   if (!/^[a-zA-Z0-9_]+$/.test(raw)) {
-    throw new Error("Use apenas letras, numeros e underline no nick.");
+    throw new Error("Use apenas letras, números e underline no nick.");
   }
   return raw;
 }
@@ -33,6 +34,8 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
+    const origin=request.headers.get('origin');
+    if(origin){let valid=false;try{const parsed=new URL(origin);valid=['http:','https:'].includes(parsed.protocol)&&parsed.host===(request.headers.get('host')??new URL(request.url).host);}catch{}if(!valid)return NextResponse.json({error:'Origem inválida.'},{status:403});}
     const appUser = await requireAuthenticatedAppUser();
     const body = (await request.json()) as ProfilePatchPayload;
     const username = normalizeUsername(body.username);
@@ -44,6 +47,6 @@ export async function PATCH(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update profile.";
     const duplicate = /duplicate key|unique/i.test(message);
-    return NextResponse.json({ error: duplicate ? "Esse nick ja esta em uso." : message }, { status: message === "Unauthorized" ? 401 : duplicate ? 409 : 400 });
+    return NextResponse.json({ error: duplicate ? "Esse nick já está em uso." : message }, { status: message === "Unauthorized" ? 401 : duplicate ? 409 : 400 });
   }
 }

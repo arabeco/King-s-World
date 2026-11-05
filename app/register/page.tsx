@@ -52,7 +52,7 @@ export default function RegisterPage() {
   return (
     <MarketingShell
       title="Crie sua Coroa"
-      subtitle="Conta global, legado permanente e acesso a novos mundos."
+      compact
       scene="register"
     >
       <form className="form-stack" onSubmit={handleSubmit}>

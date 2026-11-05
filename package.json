@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:cozy": "node simulations/test-cozy-engine.mjs && node simulations/test-cozy-feedback.mjs && node simulations/test-cozy-progression.mjs && node simulations/test-cozy-area-linkage.mjs && node simulations/test-cozy-council-context.mjs && node simulations/test-cozy-alliances.mjs && node simulations/test-cozy-sanctuaries.mjs && node simulations/test-cozy-sanctuary-pacts.mjs && node simulations/test-cozy-guardians.mjs && node simulations/test-cozy-sanctuary-raids.mjs && node simulations/test-app-user-concurrency.mjs && node simulations/test-cozy-legacy-hardening.mjs && node simulations/test-cozy-database.mjs && node simulations/test-cozy-sync.mjs && node simulations/test-cozy-balanced-weights.mjs && node simulations/test-cozy-planned-orders.mjs && node simulations/test-cozy-economic-calendar.mjs && node simulations/test-cozy-economic-sql.mjs && node simulations/test-cozy-economic-tower.mjs && node simulations/test-cozy-world-balance.mjs && node simulations/test-cozy-infrastructure-quality.mjs && node simulations/test-cozy-council-sources.mjs && node simulations/test-cozy-order-presentation.mjs && node simulations/test-cozy-route-isolation.mjs && node simulations/test-native-local-redirects.mjs && node simulations/test-account-appearance.mjs && node simulations/test-collection-wallet.mjs && node simulations/test-king-gameplay-progression.mjs && node simulations/test-world-equipment.mjs && node simulations/test-collection-season-rewards.mjs && node simulations/test-season-position-rewards.mjs && node simulations/test-cozy-premium-benefits.mjs && node simulations/test-play-verification.mjs && node simulations/test-play-gem-purchases.mjs && node simulations/test-native-gem-checkout.mjs && node simulations/test-city-name-ownership.mjs && node simulations/test-city-territory.mjs && node simulations/test-city-structural-damage.mjs && node simulations/test-city-conquest.mjs && node simulations/test-player-combat.mjs && node simulations/test-multi-player-combat.mjs && node simulations/test-expedition-roundtrip.mjs && node simulations/test-single-army-combat.mjs && node simulations/test-expedition-city-loss.mjs && node simulations/test-pvp-distance-cost.mjs && node simulations/test-exploration-route.mjs && node simulations/test-competitive-world-mode.mjs && node simulations/test-cozy-recruit-quantity.mjs",
+    "test:cozy:integration": "node simulations/test-cozy-integration.mjs",
     "dev": "set NEXT_DIST_DIR=.next-dev&& next dev",
-    "build": "set NEXT_DIST_DIR=.next-build&& next build",
-    "start": "set NEXT_DIST_DIR=.next-build&& next start",
+    "build": "next build",
+    "start": "next start",
     "android:add": "cap add android",
     "android:sync": "cap sync android",
     "android:sync:prod": "set CAPACITOR_SERVER_URL=https://king-s-world-three.vercel.app&& cap sync android",
@@ -24,7 +26,20 @@
     "smoke:season": "node simulations/smoke-season.mjs",
     "smoke:campaign:code": "node simulations/smoke-campaign-code.mjs",
     "smoke:campaign": "node simulations/smoke-campaign-ui.mjs",
-    "typecheck": "tsc --noEmit --project tsconfig.typecheck.json"
+    "typecheck": "tsc --noEmit --project tsconfig.typecheck.json",
+    "test:appearance": "node simulations/test-account-appearance.mjs",
+    "test:collection": "node simulations/test-collection-wallet.mjs",
+    "test:king-progression": "node simulations/test-king-gameplay-progression.mjs && node simulations/test-world-equipment.mjs",
+    "test:collection:ui": "node simulations/test-collection-ui.mjs",
+    "test:collection:rewards": "node simulations/test-collection-season-rewards.mjs",
+    "test:premium": "node simulations/test-cozy-premium-benefits.mjs && node simulations/test-play-verification.mjs && node simulations/test-play-gem-purchases.mjs && node simulations/test-native-gem-checkout.mjs",
+    "test:collection:position": "node simulations/test-season-position-rewards.mjs",
+    "test:territory": "node simulations/test-city-territory.mjs && node simulations/test-cozy-annex-offline.mjs",
+    "test:damage": "node simulations/test-city-structural-damage.mjs",
+    "test:conquest": "node simulations/test-city-conquest.mjs",
+    "test:pvp": "node simulations/test-city-conquest.mjs && node simulations/test-player-combat.mjs && node simulations/test-multi-player-combat.mjs && node simulations/test-expedition-roundtrip.mjs && node simulations/test-single-army-combat.mjs && node simulations/test-expedition-city-loss.mjs && node simulations/test-pvp-distance-cost.mjs && node simulations/test-competitive-world-mode.mjs",
+    "android:bundle": "npm run android:sync && node scripts/check-android-release.mjs && cd android && gradlew.bat bundleRelease",
+    "test:android-shell": "node simulations/test-native-shell-release.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
@@ -42,6 +57,7 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.13",
     "@types/node": "20.17.24",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",

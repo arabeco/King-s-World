@@ -1,5 +1,13 @@
 # KingsWorld
 
+## Referências atuais
+
+- [Regras e progressão das cinco áreas da Coroa](docs/REGRAS_DO_JOGO.md): referência principal de design; distingue decisões, comportamento atual e propostas.
+- [Implementação Cozy/v2](docs/IMPLEMENTACAO_COZY.md) e [próximos passos](docs/PROXIMOS_PASSOS.md).
+- [Histórico das regras](docs/historico/README.md): versões anteriores preservadas.
+
+O scaffold e os simuladores legados descritos abaixo não substituem as regras atuais. O foco do momento é fechar os desafios de progressão antes da calibração numérica.
+
 Scaffold inicial do app em `Next.js + TypeScript` com rotas base do produto e dados mockados.
 
 ## O que ja existe

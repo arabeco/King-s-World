@@ -23,13 +23,20 @@ function isAuthPath(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  const devAuthEnabled = process.env.NODE_ENV !== "production" || process.env.KW_SMOKE === "1";
+  const devAuthEnabled = process.env.NODE_ENV !== "production";
   const smokeHeader = devAuthEnabled && request.headers.get("x-kw-smoke") === "1";
   const devUser = devAuthEnabled && (request.cookies.get(DEV_AUTH_COOKIE)?.value === "1" || smokeHeader);
   const pathname = request.nextUrl.pathname;
+  const redirectBase = new URL(request.nextUrl.toString());
+  const requestHost = request.headers.get("host") ?? "";
+  // Next can normalize loopback URLs in either build mode. Keep native local
+  // WebViews on their original host even when the user needs to sign in again.
+  if (/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestHost)) {
+    redirectBase.host = requestHost;
+  }
 
   if (devUser && isAuthPath(pathname)) {
-    const redirectUrl = request.nextUrl.clone();
+    const redirectUrl = new URL(redirectBase.toString());
     redirectUrl.pathname = "/lobby";
     redirectUrl.searchParams.delete("next");
     return NextResponse.redirect(redirectUrl);
@@ -73,14 +80,20 @@ export async function middleware(request: NextRequest) {
   const { data } = await supabase.auth.getUser();
   const user = data.user;
   if (isProtectedPath(pathname) && !user) {
-    const redirectUrl = request.nextUrl.clone();
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { error: "Entre na sua conta para continuar.", code: "UNAUTHORIZED" },
+        { status: 401, headers: { "Cache-Control": "private, no-store" } },
+      );
+    }
+    const redirectUrl = new URL(redirectBase.toString());
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
   if (isAuthPath(pathname) && user) {
-    const redirectUrl = request.nextUrl.clone();
+    const redirectUrl = new URL(redirectBase.toString());
     redirectUrl.pathname = "/lobby";
     redirectUrl.searchParams.delete("next");
     return NextResponse.redirect(redirectUrl);

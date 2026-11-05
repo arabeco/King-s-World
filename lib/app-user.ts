@@ -73,8 +73,10 @@ export async function fetchOrCreateAppUser(authUser: {
       : typeof authUser.user_metadata?.name === "string"
         ? authUser.user_metadata.name
         : email.split("@")[0] ?? "player";
-  const username = `${normalizeUsername(rawUsername)}_${authUser.id.slice(0, 6)}`;
-  const created = await supabaseInsertReturning<
+  const username = `${normalizeUsername(rawUsername).slice(0,17)}_${authUser.id.slice(0, 6)}`;
+  let created: AppUserRecord[];
+  try {
+    created = await supabaseInsertReturning<
     { auth_user_id: string; username: string; email: string },
     AppUserRecord
   >("users", {
@@ -82,6 +84,27 @@ export async function fetchOrCreateAppUser(authUser: {
     username,
     email,
   });
+
+  } catch (error) {
+    // A fresh signal bypasses Next/React GET memoization of the earlier empty lookup.
+    // Concurrent first requests (or a lost insert response) may already have created this exact identity.
+    try {
+      const winner = await supabaseSelect<AppUserRecord>("users", byAuthParams, {signal: AbortSignal.timeout(10_000)});
+      if (winner[0]?.auth_user_id === authUser.id) return winner[0];
+    } catch { /* Preserve the original insert error if the authoritative reread also fails. */ }
+    if(String(error).includes('users_username_key')){
+      // Display-name collisions must not prevent a different Auth identity from joining.
+      // The full identity suffix avoids repeating the original six-character collision.
+      try{
+        created=await supabaseInsertReturning<{auth_user_id:string;username:string;email:string},AppUserRecord>('users',{
+          auth_user_id:authUser.id,username:`${normalizeUsername(rawUsername).slice(0,11)}_${authUser.id.replace(/-/g,'').slice(-12)}`,email,
+        });
+      }catch(retryError){
+        try{const winner=await supabaseSelect<AppUserRecord>('users',byAuthParams,{signal:AbortSignal.timeout(10_000)});if(winner[0]?.auth_user_id===authUser.id)return winner[0];}catch{}
+        throw retryError;
+      }
+    }else throw error;
+  }
 
   if (!created[0]) {
     throw new Error("Failed to create app user profile in Supabase.");

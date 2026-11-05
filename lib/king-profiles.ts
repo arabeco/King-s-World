@@ -96,7 +96,7 @@ export const KING_PROFILES: KingProfile[] = [
   {
     id: "aurelian",
     title: "Rei",
-    name: "Aurelian Voss",
+    name: "Disciplinado",
     imageSrc: "/images/king-aurelian.jpg",
     summary: "Soberano de comando frio, corte disciplinada e ambicao imperial.",
     traits: [
@@ -107,7 +107,7 @@ export const KING_PROFILES: KingProfile[] = [
   {
     id: "serenna",
     title: "Rainha",
-    name: "Serenna Vale",
+    name: "Diplomática",
     imageSrc: "/images/queen-serenna.jpg",
     summary: "Rainha de leitura politica, estabilidade e paciencia de longo prazo.",
     traits: [
@@ -118,7 +118,7 @@ export const KING_PROFILES: KingProfile[] = [
   {
     id: "magnor",
     title: "Rei",
-    name: "Magnor Ferroalto",
+    name: "Fortificado",
     imageSrc: "/images/king-magnor.jpg",
     summary: "Veterano de fronteira, construtor de reinos duros e muralhas vivas.",
     traits: [
@@ -129,7 +129,7 @@ export const KING_PROFILES: KingProfile[] = [
   {
     id: "valerius",
     title: "Rei",
-    name: "Valerius Kael",
+    name: "Expansionista",
     imageSrc: "/images/king-valerius.jpg",
     summary: "Nobre agressivo, veloz na expansao e perigoso quando ganha ritmo.",
     traits: [
@@ -140,7 +140,7 @@ export const KING_PROFILES: KingProfile[] = [
   {
     id: "isolde",
     title: "Rainha",
-    name: "Isolde Gray",
+    name: "Resiliente",
     imageSrc: "/images/queen-isolde.jpg",
     summary: "Rainha austera, excelente em segurar crise sem perder a coroa.",
     traits: [
@@ -151,7 +151,7 @@ export const KING_PROFILES: KingProfile[] = [
   {
     id: "orian",
     title: "Rei",
-    name: "Orian Mastro",
+    name: "Estrategista",
     imageSrc: "/images/king-orian.jpg",
     summary: "Mente de rede e logistica, forte em fluxo, rotas e folego de campanha.",
     traits: [
@@ -162,7 +162,7 @@ export const KING_PROFILES: KingProfile[] = [
   {
     id: "maelis",
     title: "Rainha",
-    name: "Maelis Verdan",
+    name: "Cultivadora",
     imageSrc: "/images/queen-maelis.jpg",
     summary: "Rainha de cultura e memoria, sobe legado sem perder leitura do reino.",
     traits: [
@@ -173,7 +173,7 @@ export const KING_PROFILES: KingProfile[] = [
   {
     id: "corven",
     title: "Rei",
-    name: "Corven Nalto",
+    name: "Explorador",
     imageSrc: "/images/king-corven.jpg",
     summary: "Explorador coroado, vive de mapa aberto, visao e risco calculado.",
     traits: [
@@ -184,7 +184,7 @@ export const KING_PROFILES: KingProfile[] = [
   {
     id: "nyra",
     title: "Rainha",
-    name: "Nyra Ashen",
+    name: "Implacável",
     imageSrc: "/images/queen-nyra.jpg",
     summary: "Rainha sombria, forte em pressao, fim de mundo e escolhas duras.",
     traits: [
