@@ -32,3 +32,5 @@
 .root .awards summary>.awardArt{margin:0;padding:0;border-radius:0;background:none}.awards summary::-webkit-details-marker{display:none}
 
 .root[data-profile]{background:none;border:0;box-shadow:none;padding:0;margin:0}
+
+.root{border-color:#b19a6044;border-radius:6px;background:linear-gradient(120deg,#2c2f30,#171d20);box-shadow:none}.root:has([data-mode=profile]){padding:0;border:0;background:none}.root .awards{border-block:1px solid #ac915044;padding:12px 0}.root .legacyTitle{font:700 23px Georgia}

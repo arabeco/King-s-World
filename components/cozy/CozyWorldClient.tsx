@@ -1,9 +1,10 @@
 "use client";
 
-import {orderSummary} from '@/lib/cozy/order-presentation';
 import {AccountAppearance} from "../profile/AccountAppearance";
 import {activeRoyalProfile} from "@/lib/cozy/royal-profiles";
 import CozySymbol from "./CozySymbol";
+import CozyRealmUpdates from "./CozyRealmUpdates";
+import {WorldLoadingScreen} from "../world-loading-screen";
 import CozyAlliance from "./CozyAlliance";
 import {WorldEquipmentSlots} from "./WorldEquipmentSlots";
 import CozyRoyalProfile from "./CozyRoyalProfile";
@@ -309,7 +310,7 @@ function GameSheet({
       <header className={game.sheetHeader}>
         {crownTone && score!==undefined ? <div className={game.areaHeading}>
           {art&&<CozyArt src={art} size={28}/>}
-          <div className={game.areaMeter}><div><strong>{title}</strong><b>{score}<small>/500</small></b></div>
+          <div className={game.areaMeter}><div><strong>{title}</strong><b key={score}>{score}<small>/500</small></b></div>
             <progress className={game.areaInfluence} value={score} max={500} aria-label={`Influência de ${title}`}/>
           </div>
           <button type="button" className={game.sourcesToggle} aria-label="Fontes de influência" aria-expanded={sourcesOpen} aria-controls="area-sources" onClick={()=>setSourcesOpen(!sourcesOpen)}><ChevronRight size={17}/></button>
@@ -421,13 +422,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
           <Crown size={40} />
           <h1>KING’S WORLD</h1>
           {loading ? (
-            <>
-              <LoaderCircle
-                className={styles.spin}
-                aria-label="Carregando reino"
-              />
-              <p>Abrindo os portões…</p>
-            </>
+<WorldLoadingScreen />
           ) : (
             <>
               <p role="alert">
@@ -460,10 +455,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
   const city =
     state.cities.find((entry) => entry.id === cityId) || state.cities[0];
   const canStart = (data as CozyPayload & { canStart?: boolean }).canStart;
-  const nextOrder = [...state.orders].sort(
-    (a, b) => a.arrivesAt - b.arrivesAt,
-  )[0];
-  const incomingAttack=[...(computed.playerThreats??[])].sort((a,b)=>a.arrivesAt-b.arrivesAt)[0];
+
   const wonderReady = state.cities.some(
     (entry) => getCityDevelopment(entry) >= 100 && !entry.wonder,
   );
@@ -669,50 +661,8 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
               {state.defeat&&<section className={game.defeatSummary} aria-label="Fim do império"><CozyArt src="/icons/action-defend.png" size={50}/><h2>Seu império foi derrotado</h2><p>{state.finalizedAt!==null?'O resultado da temporada está registrado.':'O mundo continua. Seu resultado será fechado no fim da temporada.'}</p><button type="button" className="primary-button" onClick={()=>navigate('reports')}>Ver relatos</button><button type="button" onClick={()=>setPanel('achievements')}>Ver ranking</button><Link href="/lobby">Voltar ao lobby</Link></section>}
               {!state.defeat&&state.capitalSelectionPending&&<button type="button" className="primary-button" onClick={()=>navigate('cities')}>Escolher nova capital</button>}
               {!state.defeat&&<CozyRealmPanorama cities={state.cities} tiles={data.tiles} owner={state.playerId} royal={<CozyRoyalProfile key={`${state.playerId}:${state.king?.generation??0}:${state.king?.alive??false}`} data={data} act={act} locked={pending||Boolean(uncertain)||computed.readOnly} feedback={feedback} />} />}
-              {!state.defeat&&<div className={game.sceneTop}>
-                
-                <button
-                  type="button"
-                  className={game.eventButton}
-                  aria-label={`Ordens do reino: ${orderSummary(state.orders).label}`}
-                  onClick={() => setPanel("orders")}
-                >
-                  <CozySymbol name="time" size={19}/>
-                  <span>
-                    <strong>
-                      {state.orders.length
-                        ? orderSummary(state.orders).label
-                        : "Sem ordens"}
-                    </strong>
-                    <small>
-                      {nextOrder
-                        ? remaining(nextOrder.arrivesAt, clock)
-                        : ""}
-                    </small>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className={`${game.eventButton} ${game.hordeEvent}`}
-                  onClick={() => setPanel("defense")}
-                  aria-label={incomingAttack?`Ataque a caminho de ${incomingAttack.cityName}`:undefined}
-                >
-                  <CozyArt src="/icons/action-defend.png" size={27} />
-                  <span>
-                    <strong>
-                      {incomingAttack?`Ataque · ${incomingAttack.cityName}`:computed.nextHorde
-                        ? `Horda · dia ${computed.nextHorde.day}`
-                        : "Fronteiras"}
-                    </strong>
-                    <small>
-                      {incomingAttack?remaining(incomingAttack.arrivesAt,clock):computed.nextHorde
-                        ? remaining(computed.nextHorde.arrivesAt, clock)
-                        : "Em paz"}
-                    </small>
-                  </span>
-                </button>
-                {allianceNotice&&<button type="button" className={game.allianceAlert} aria-label={`Aliança: ${allianceNotice}`} title={allianceNotice} onClick={()=>navigate("alliance")}><CozySymbol name="alliance" size={22}/><span aria-hidden="true">!</span></button>}
-              </div>}
+              {!state.defeat&&<CozyRealmUpdates data={data} now={clock} allianceNotice={allianceNotice} onOrders={()=>setPanel("orders")} onDefense={()=>setPanel("defense")} onReports={()=>navigate("reports")} onCouncil={()=>setPanel("council")} onAlliance={()=>navigate("alliance")} onCity={id=>openCity(id,"decisions")}/>}
+
 
               <div className={game.cityDock}>
                 {!state.defeat&&<>
@@ -792,7 +742,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                     const score = computed.influence[scoreKey];
                     return <button type="button" key={id} data-command={id} aria-label={title} aria-haspopup="dialog" onClick={()=>{if(id==="government")setGovernmentTab("heroes");setPanel(id);}}>
                       <CozyArt src={image} size={36} priority/>
-                      <span><strong>{title}</strong><b>{score}<small>/500</small></b></span>
+                      <span><strong>{title}</strong><b key={score}>{score}<small>/500</small></b></span>
                       {((id==="infrastructure"&&wonderReady)||(id==="council"&&computed.decree)||(id==="achievements"&&!!computed.sanctuaryThreats?.length))&&<i aria-label="Atenção"/>}
                     </button>;
                   })}
@@ -983,7 +933,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
               />
             )}
             {panel === "defense" && (
-              <><CozyScreenHelp screen="military" playerId={state.playerId}/><HordeCard {...props} onCity={id=>openCity(id,'decisions')} onAlliance={() => navigate("alliance")} /></>
+              <><CozyScreenHelp screen="military" playerId={state.playerId}/><HordeCard {...props} onMilitary={()=>setPanel("military")} onCity={id=>openCity(id,'decisions')} onAlliance={() => navigate("alliance")} /></>
             )}
             {panel === "orders" && (
               <CozyOrders
@@ -1104,9 +1054,12 @@ function HordeCard({
   now,
   onAlliance,
   onCity,
-}: PanelProps & { onAlliance: () => void;onCity:(id:string)=>void }) {
+  onMilitary,
+}: PanelProps & { onAlliance: () => void;onCity:(id:string)=>void;onMilitary:()=>void }) {
   const horde = data.computed.nextHorde;
   const attacks=data.computed.playerThreats??[];
+  const defense=data.computed.defensePower+(horde?.supportPower??0);
+  const vulnerable=[...data.state.cities.filter(c=>!c.capital),...data.state.cities.filter(c=>c.capital)].sort((a,b)=>Number(a.capital)-Number(b.capital)||(a.integrity??100)-(b.integrity??100)||b.sectors.economy-a.sectors.economy||a.id.localeCompare(b.id))[0];
   return (
     <div className={`${styles.asideCard} ${styles.hordeCard}`}>
       <div className={styles.row}>
@@ -1139,6 +1092,9 @@ function HordeCard({
               </strong>
             </span>
           </div>
+
+          <div className={game.threatForecast} data-ready={defense>=horde.power} aria-label="Previsão com a defesa atual"><strong>{defense>=horde.power?"Defesa suficiente hoje":`Faltam ${number(horde.power-defense)} de defesa`}</strong><progress aria-label="Preparo para a horda" value={Math.min(defense,horde.power)} max={horde.power}/>{defense<horde.power&&vulnerable&&<button type="button" onClick={()=>onCity(vulnerable.id)}><CozyArt src="/icons/building-wall.png" size={24}/><span>{vulnerable.name}<small>Estruturas em risco · {vulnerable.integrity??100}% íntegras</small></span><ArrowRight size={16}/></button>}<small>Bônus e cidades podem mudar até a chegada.</small></div>
+          <ActionButton onClick={onMilitary}>Reforçar exército <ArrowRight size={16}/></ActionButton>
           {horde.supportPower > 0 && (
             <p>
               <CozySymbol name="alliance" size={18}/> Aliados enviaram +

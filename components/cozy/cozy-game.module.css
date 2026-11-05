@@ -1051,3 +1051,5 @@
 
 .cityDock .questPrompt:disabled {background:#252923;color:#ddd1aa;box-shadow:none;cursor:default}
 .cityDock .questPrompt:disabled strong {color:inherit;text-shadow:none}
+
+.threatForecast{display:grid;gap:10px;margin:12px 0;color:#f2c1a0}.threatForecast[data-ready=true]{color:#cee7ab}.threatForecast progress{width:100%;height:9px;accent-color:#d6b566}.threatForecast>small{font-size:11px;color:#c8bca5}.threatForecast button{display:flex;align-items:center;gap:9px;padding:10px;min-height:54px;border:1px solid #c38c5b55;background:linear-gradient(130deg,#483328,#211d1c);color:#eddbb6;text-align:left}.threatForecast button>span{display:grid;gap:4px;flex:1}.threatForecast button small{font-size:11px;color:#dfbd9d}@media(prefers-reduced-motion:no-preference){.seals b{animation:scoreArrive .28s ease-out}@keyframes scoreArrive{from{opacity:.6;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}}

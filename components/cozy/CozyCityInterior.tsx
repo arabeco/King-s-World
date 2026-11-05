@@ -4,6 +4,7 @@
 
 import {cityTerritoryCells} from "@/lib/cozy/city-territory";
 import CozySymbol from "./CozySymbol";
+import {cityUpgradePreview} from "@/lib/cozy/upgrade-preview";
 import CozyPlans from './CozyPlans';
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -178,6 +179,7 @@ export default function CozyCityInterior({
         : "";
   const sector = SECTORS.find((entry) => entry.id === selected);
   const level = selected ? city.sectors[selected] : 0;
+  const preview=selected?cityUpgradePreview(data,cityId,selected):null;
   const cost = selected ? (computed.upgradeCosts[city.id]?.[selected] ?? 0) : 0;
   const duration = selected
     ? getCozyUpgradeDurationMs(state, city, selected, computed.dayMs)
@@ -553,6 +555,11 @@ export default function CozyCityInterior({
           <span className={styles.detailCity}>{city.name}</span>
           <h3 className={styles.detailTitle}>{sector.name}</h3>
           <details className={styles.detailMore}><summary>Função do setor</summary><p>{sector.description}</p></details>
+          {preview&&<section className={styles.upgradePreview} aria-label="Prévia da evolução" title="Estimativa ao concluir, nas condições atuais do reino.">
+            {preview.metrics.map(metric=><div key={metric.key}><CozyArt src={metric.icon} size={26}/><span><small>{metric.label}</small><b>{number(metric.before)}{metric.percent?"%":""} <ArrowRight size={14}/> <strong>{number(metric.after)}{metric.percent?"%":""}</strong></b></span></div>)}
+            <div><CozyArt src="/icons/influence-infrastructure.png" size={26}/><span><small>Influência total ao concluir</small><b>{number(preview.influenceBefore)} <ArrowRight size={14}/> <strong>{number(preview.influenceAfter)}</strong></b></span><em>+{number(preview.influenceAfter-preview.influenceBefore)}</em></div>
+          </section>}
+
           {level < 10 && (
             <div className={styles.upgradeSummary}>
               <span>

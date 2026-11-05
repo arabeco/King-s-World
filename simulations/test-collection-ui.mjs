@@ -159,7 +159,17 @@ try{
  await db.query("insert into user_entitlements(user_id,provider,product_id,purchase_token,status,expires_at) values($1,'google_play','premium_monthly','private-fixture-token','canceled',now()+interval '10 days')",[me.id]);
  const paidAccess=await (await page.request.get(base+'/api/me/entitlements')).json();assert.equal(paidAccess.premium.active,true);assert.equal(paidAccess.benefits.worldLimit,5);assert(!JSON.stringify(paidAccess).includes('private-fixture-token'));
  await page.goto(base+'/premium',{waitUntil:'networkidle'});await page.getByRole('button',{name:'Premium ativo',exact:true}).waitFor();
- await page.goto(base+'/lobby',{waitUntil:'networkidle'});await page.getByText('0/5 mundos ativos',{exact:true}).waitFor();
+ await page.goto(base+'/lobby',{waitUntil:'networkidle'});
+ await page.getByRole('link',{name:'Abrir meu perfil',exact:true}).waitFor();
+ for(const width of [320,390,430]){
+  await page.setViewportSize({width,height:844});
+  for(const name of ['Meus mundos','Buscar','Criar']){
+   await page.getByRole('navigation',{name:'Mundos',exact:true}).getByRole('button',{name,exact:true}).click();
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`Lobby ${name} fits ${width}`);
+   await page.screenshot({path:path.join(root,`reports/cozy/lobby-${name==='Meus mundos'?'realms':name==='Buscar'?'search':'create'}-${width}.png`),fullPage:true});
+  }
+ }
+ await page.getByText('0/5 mundos ativos',{exact:true}).waitFor();
  const imperialCreated=await page.request.post(base+'/api/worlds/create',{data:{name:'Imperial crest',mode:'express'}});assert.equal(imperialCreated.status(),200);const imperialWorld=(await imperialCreated.json()).world;
  const imperialEndpoint=base+'/api/worlds/'+imperialWorld.slug+'/cozy';const imperialChoice=await page.request.post(imperialEndpoint,{data:{requestId:'imperial-crest-start',action:{type:'king_choose',profileId:'builder',nickname:'Royal',crestId:'empire-crest-20',crestFinish:'imperial'}}});assert.equal(imperialChoice.status(),200,await imperialChoice.text());
  const imperialSave=await (await page.request.get(imperialEndpoint)).json();assert.equal(imperialSave.state.crestFinish,'imperial');assert.deepEqual(imperialSave.state.king.attributes,{administration:4,command:3,exploration:8});

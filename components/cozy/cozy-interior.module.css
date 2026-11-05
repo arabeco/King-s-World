@@ -346,7 +346,7 @@
   border: 1px solid #a08c55;
   border-bottom: 0;
   border-radius: 20px 20px 0 0;
-  background: linear-gradient(155deg, #233f34, #112824);
+  background: radial-gradient(ellipse at 0% 0%, #45604a44, transparent 60%), linear-gradient(145deg, #272e2e, #171e21);
   color: #f2e5c6;
   box-shadow: 0 -12px 45px #03120c88;
   overflow: hidden;
@@ -544,3 +544,5 @@
 .choiceCosts summary::-webkit-details-marker {display:none}
 .choiceCosts details {padding:0 7px;border:1px solid #bca36955;border-radius:5px}
 .choiceCosts details small {display:block;padding-bottom:5px}
+
+.upgradePreview{display:grid;gap:8px;margin:14px 0;padding:12px 0;border-block:1px solid #b99a5b55}.upgradePreview>div{display:flex;align-items:center;gap:12px}.upgradePreview span{display:grid;gap:4px;flex:1}.upgradePreview small{color:#d0c4a9;font-size:11px}.upgradePreview b{display:flex;align-items:center;gap:10px;font-size:18px;color:#c2b9a8}.upgradePreview strong{color:#f8dc92}.upgradePreview em{font-size:16px;color:#cae6b0;font-style:normal}

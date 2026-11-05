@@ -1,12 +1,13 @@
 "use client";
 
-import { Crown, KeyRound, Lock, Search, ShieldCheck, Sparkles, Trophy } from "lucide-react";
+import { KeyRound, Lock, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useMemo, useState } from "react";
 
 import { SectionCard, StatusBadge } from "@/components/ui";
 import Link from "next/link";
 import type { WorldSummary } from "@/lib/mock-data";
+import styles from "./lobby.module.css";
 
 type DiscoverableWorld = {slug:string;name:string;status:string;mode:string;combatMode?:"cozy"|"competitive";capacity:number;players:number;startsAt:string;locked:boolean};
 
@@ -36,6 +37,7 @@ export function LobbyWorldSelector({
   worlds: WorldSummary[];
 }) {
   const router = useRouter();
+  const [view,setView]=useState<"mine"|"search"|"create">(worlds.length?"mine":"create");
   const firstPlayableWorld = worlds.find((world) => world.rulesVersion === 2 && world.status !== "Finalizado") ?? worlds.find(world=>world.rulesVersion===2) ?? worlds[0] ?? null;
   const hasPlayableWorld = worlds.some((world) => world.status !== "Finalizado");
   const storageKey = `kw:last-world:${username}`;
@@ -177,20 +179,12 @@ export function LobbyWorldSelector({
   };
 
   return (
-    <div className={`dashboard-grid lobby-world-grid ${!worlds.some(w=>w.rulesVersion===2)?"lobby-world-grid--new":""}`}>
-      <SectionCard title={username} eyebrow="Sua conta" mediaSrc="/images/card-premium.jpg" accent="gold" className="lobby-card lobby-card--account">
-        <div className="world-card lobby-compact-card" style={{ background: "rgba(2,6,23,0.42)", borderColor: "rgba(255,255,255,0.16)" }}>
-          <strong>Uma pequena jornada por dia</strong>
-          <p className="list-meta">Escolha Cozy ou competitivo. Cuide das cidades, coopere com seus aliados e alcance 1.500 de influência para conquistar o Selo de Vitória.</p>
-          <p className="list-meta" style={{marginTop:12}}>Os selos e as conquistas da sua conta aparecem abaixo, no seu lugar na história.</p>
-        </div>
-      </SectionCard>
-
+    <div className={styles.worlds}>
+      <nav className={styles.tabs} aria-label="Mundos"><button type="button" aria-pressed={view==="mine"} onClick={()=>setView("mine")}>Meus mundos</button><button type="button" aria-pressed={view==="search"} onClick={()=>setView("search")}>Buscar</button><button type="button" aria-pressed={view==="create"} onClick={()=>setView("create")}>Criar</button></nav>
+      {view==="mine"&&<>
       <SectionCard title="Entrar no mundo" eyebrow="Seletor" mediaSrc="/images/capital.jpg" className="lobby-card lobby-card--entry">
         <div className="form-stack">
-          <label className="list-meta" htmlFor="lobby-world-picker">
-            Mundo ativo da campanha
-          </label>
+          <label className="list-meta" htmlFor="lobby-world-picker">Seus reinados</label>
           <select
             id="lobby-world-picker"
             value={selectedWorldId}
@@ -199,7 +193,7 @@ export function LobbyWorldSelector({
           >
             {worlds.map((world) => (
               <option key={world.id} value={world.id}>
-                {world.name} - {world.status} - Dia {world.day}{world.rulesVersion === 2 ? " · Cooperativo" : " · Regras anteriores"}
+                {world.name} - {world.status} - Dia {world.day}{world.rulesVersion === 2 ? " · Coroa" : " · Regras anteriores"}
               </option>
             ))}
           </select>
@@ -207,7 +201,7 @@ export function LobbyWorldSelector({
           {!hasPlayableWorld ? (
             <div className="world-card lobby-compact-card" style={{ background: "rgba(120,53,15,0.24)", borderColor: "rgba(251,191,36,0.28)", textAlign: "center" }}>
               <strong>Seu próximo reino começa aqui</strong>
-              <p className="list-meta">Crie uma temporada cooperativa ou entre com o código de um amigo. Campanhas anteriores continuam disponíveis para consulta.</p>
+              <button type="button" className="primary-button" onClick={()=>setView("create")}>Criar meu mundo</button><button type="button" className="secondary-button" onClick={()=>setView("search")}>Buscar um mundo</button>
             </div>
           ) : null}
 
@@ -216,9 +210,8 @@ export function LobbyWorldSelector({
               <div className="card-row">
                 <div>
                   <strong>{selectedWorld.name}</strong>
-                  <p className="list-meta">{selectedWorld.rulesVersion===2 ? "Versão nova · Coroa" : "Versão antiga · regras anteriores"}</p>
                   <p className="list-meta">
-                    Dia {selectedWorld.day}/{selectedWorld.durationDays ?? 120} - {selectedWorld.phase} - x{selectedWorld.speedMultiplier ?? 1} - {selectedWorld.players} jogadores
+                    {selectedWorld.seasonMode==='express'?'Expresso':'Normal'} · Dia {selectedWorld.day}/{selectedWorld.durationDays ?? 120} · {selectedWorld.players} jogadores
                   </p>
                 </div>
                 <StatusBadge label={selectedWorld.status} tone={toneForWorld(selectedWorld)} />
@@ -243,7 +236,8 @@ export function LobbyWorldSelector({
         </div>
       </SectionCard>
 
-      <SectionCard title="Criar mundo novo" eyebrow="Coroa · versão atual" accent="gold" className="lobby-card lobby-card--join lobby-card--create">
+      </>}
+      {view==="create"&&<SectionCard title="Criar mundo novo" eyebrow="Coroa · versão atual" accent="gold" className="lobby-card lobby-card--join lobby-card--create">
         <div className="form-stack">
           {benefits&&<div className="card-row"><strong>{benefits.activeWorlds}/{benefits.worldLimit} mundos ativos</strong><Link href="/premium">{benefits.active?'Premium':'Ver Premium'}</Link></div>}
           {createdWorld ? (
@@ -264,7 +258,6 @@ export function LobbyWorldSelector({
             </>
           ) : (
             <>
-              <p className="list-meta">Crie uma temporada cooperativa. Convide seus amigos e abra os portões quando estiverem prontos.</p>
               <div className="inline-actions">
                 <button
                   type="button"
@@ -314,8 +307,8 @@ export function LobbyWorldSelector({
             </>
           )}
         </div>
-      </SectionCard>
-
+      </SectionCard>}
+      {view==="search"&&<>
       <SectionCard title="Buscar mundos" eyebrow="Temporadas" accent="gold" className="lobby-card lobby-card--join lobby-card--discover">
         <div className="form-stack">
           <label htmlFor="world-search">Nome do mundo</label>
@@ -365,38 +358,7 @@ export function LobbyWorldSelector({
         </div>
       </SectionCard>
 
-      <SectionCard title="Atalhos" eyebrow="Conta" accent="cyan" className="lobby-card lobby-card--shortcuts">
-        <div className="world-card lobby-compact-card lobby-flow-card" style={{ marginBottom: "1rem", background: "rgba(2,6,23,0.42)", borderColor: "rgba(255,255,255,0.14)" }}>
-          <strong>Fluxo da campanha</strong>
-          <p className="list-meta">Escolha seu perfil de rei, cuide da capital e faça seu reino crescer até 1.500 de influência.</p>
-        </div>
-        <div className="metric-grid lobby-metric-grid">
-          <div>
-            <span>Premium</span>
-            <strong>
-              <Sparkles aria-hidden="true" size={18} /> Android
-            </strong>
-          </div>
-          <div>
-            <span>Legado</span>
-            <strong>
-              <Trophy aria-hidden="true" size={18} /> Permanente
-            </strong>
-          </div>
-          <div>
-            <span>Conta</span>
-            <strong>
-              <ShieldCheck aria-hidden="true" size={18} /> OK
-            </strong>
-          </div>
-          <div>
-            <span>Coroa</span>
-            <strong>
-              <Crown aria-hidden="true" size={18} /> Livre
-            </strong>
-          </div>
-        </div>
-      </SectionCard>
+      </>}
     </div>
   );
 }

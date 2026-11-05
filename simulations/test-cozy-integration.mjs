@@ -661,7 +661,16 @@ try {
     const page=await browser.newPage({viewport:{width:360,height:640}});
     await page.context().addCookies([{name:'kw_dev_auth',value:'1',url:base}]);
     try{
-      await page.goto(`${base}/world/${created.data.world.slug}/intelligence`,{waitUntil:'networkidle'});
+
+      let releaseEntry;const entryGate=new Promise(resolve=>releaseEntry=resolve);
+      await page.route(`**/api/worlds/${created.data.world.slug}/cozy`,async route=>{if(route.request().method()==='GET')await entryGate;await route.continue();});
+      await page.goto(`${base}/world/${created.data.world.slug}/intelligence`,{waitUntil:'domcontentloaded'});
+      try{
+        const entry=page.getByRole('status',{name:'Carregando reino',exact:true});await entry.waitFor();
+        assert.equal(await entry.getByRole('progressbar').getAttribute('aria-valuenow'),null,'Unknown network progress must not display a made-up percentage');
+        await page.screenshot({path:path.join(reports,'mobile-loading-360.png')});
+      }finally{releaseEntry();}
+
       const firstRoyal=page.getByRole('dialog',{name:'Seu governante',exact:true});await firstRoyal.waitFor();await firstRoyal.getByRole('button',{name:'Iniciar meu reinado',exact:true}).click();await firstRoyal.waitFor({state:'hidden'});
       await page.getByRole('dialog',{name:'Como comandar seu reino',exact:true}).getByRole('button',{name:'Fechar ajuda',exact:true}).click();
       for(let i=0;i<2;i++){
@@ -1208,6 +1217,13 @@ try {
           await assertViewport(`${label} crown`);
           await assertImages(`${label} crown`);
           await assertPanoramaFits(label, 3);
+          const updates=page.getByRole('region',{name:'Acontecimentos do reino',exact:true});
+          const updateCards=updates.getByRole('button');assert(await updateCards.count()>2);
+          await updateCards.last().scrollIntoViewIfNeeded();
+          assert(await updates.locator('div').first().evaluate(el=>el.scrollLeft>0),'Realm cards scroll sideways without moving the page');
+          await page.screenshot({path:path.join(reports,`mobile-return-cards-${viewport.width}.png`)});
+          await updateCards.first().scrollIntoViewIfNeeded();
+
           await page.screenshot({
             path: path.join(
               reports,
@@ -1625,6 +1641,7 @@ try {
             exact: true,
           });
           await administrationDialog.waitFor();
+          await administrationDialog.getByRole("region",{name:"Prévia da evolução",exact:true}).waitFor();
           const functionDescription=administrationDialog.getByText(/Organiza a cidade e aumenta a produção de materiais/);
           assert.equal(await functionDescription.isVisible(),false,'General sector explanation starts collapsed');
           await administrationDialog.getByText('Função do setor',{exact:true}).click();
@@ -2840,7 +2857,7 @@ try {
       else await route.continue();
     });
     try{
-      await page.goto(base+'/lobby',{waitUntil:'domcontentloaded'});
+      await page.goto(base+'/profile',{waitUntil:'domcontentloaded'});
       const panel=page.getByRole('region',{name:'Histórico da conta',exact:true});await panel.waitFor();
       try{await panel.getByText('Histórico temporariamente indisponível',{exact:true}).waitFor();}catch(error){await page.screenshot({path:path.join(reports,'account-failure-360.png')});throw error;}
       await panel.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(reports,'account-error-360.png')});
