@@ -1,7 +1,12 @@
 import {releaseFingerprint} from './scripts/release-fingerprint.mjs';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  env: {KW_CODE_REVISION:releaseFingerprint()},
+  env: {
+    KW_CODE_REVISION: releaseFingerprint(),
+    KW_GIT_REVISION: process.env.VERCEL === '1' && /^[a-f0-9]{40}$/.test(process.env.VERCEL_GIT_COMMIT_SHA ?? '')
+      ? process.env.VERCEL_GIT_COMMIT_SHA
+      : '',
+  },
   reactStrictMode: true,
   // Next's response adapter also normalizes loopback redirects after middleware.
   // Optimized local WebView QA needs the same protection as dev; deployed builds
