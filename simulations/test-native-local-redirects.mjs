@@ -39,8 +39,8 @@ const publicLogin=await production.middleware(request('/lobby','king-s-world-thr
 assert.equal(publicLogin.url,publicOrigin+'/login?next=%2Flobby');
 const api=await production.middleware(request('/api/worlds/private','127.0.0.1:3318'));
 assert.equal(api.kind,'json');assert.equal(api.status,401);assert.equal(api.value.code,'UNAUTHORIZED');
-const configSource=readFileSync(new URL('../next.config.mjs',import.meta.url),'utf8').replace('export default nextConfig;','return nextConfig;');
-const config=env=>new Function('process',configSource)({env});
+const configSource=readFileSync(new URL('../next.config.mjs',import.meta.url),'utf8').replace(/^import \{releaseFingerprint\} from .*;\r?\n/m,'').replace('export default nextConfig;','return nextConfig;');
+const config=env=>new Function('process','releaseFingerprint',configSource)({env},()=> 'test-revision');
 assert.equal(config({NODE_ENV:'production'}).skipMiddlewareUrlNormalize,false,'Deployed builds retain the Next default');
 assert.equal(config({NODE_ENV:'production',KW_LOCAL_WEBVIEW_QA:'1'}).skipMiddlewareUrlNormalize,true,'Explicit local optimized QA preserves redirect origins');
 assert.equal(config({NODE_ENV:'development'}).skipMiddlewareUrlNormalize,true);

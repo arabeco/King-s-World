@@ -20,7 +20,7 @@ for(const mode of ['classic','express']){
  }
  state.heroes=[{id:'general',role:'general',name:'General',cityId:null}];
  const unassigned=view();city.heroId='general';state.heroes[0].cityId=city.id;
- assert.equal(view().influence.government,unassigned.influence.government+30);
+ assert.equal(view().influence.government,unassigned.influence.government);
  assert.ok(view().armyPower>unassigned.armyPower);
  city.integrity=50;assert.equal(view().fortificationPower,Math.floor(90*1.75));
  state.hordesWon=6;const wins=view().influence.military;state.army.militia=0;city.integrity=0;
@@ -29,7 +29,7 @@ for(const mode of ['classic','express']){
  city.life.contentment=35;assert.equal(view().influence.society,0);
  city.life.contentment=70;assert.equal(view().influence.society,200);
  state.quests=[E.QUESTS[0].id];state.progression.feats.wonders=['one'];state.progression.feats.supports=['used-support'];
- const c=view();assert.equal(c.influence.legacy,E.QUESTS[0].points+P.PROGRESSION.wonder+P.PROGRESSION.support);
+ const c=view();assert.equal(c.influence.legacy,E.QUESTS[0].points+100);
  assert.equal(c.influence.total,Object.entries(c.influence).filter(([key])=>key!=='total').reduce((n,[,v])=>n+v,0));
  assert.equal(base.influence.total,0);
  console.log('PASS',mode,'research levels, assigned heroes, military damage/victories, council stability, conquests and total');

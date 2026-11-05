@@ -462,7 +462,7 @@ try {
       assert.deepEqual(stored.progression.feats.projects,[project.id],'Every contributor is recognized in the same committed snapshot');
       assert.equal(stored.allianceProjectReceipts[project.id],'completed');
       const retry=await command(testSlug,{type:'alliance_project_contribute',projectId:project.id,resource:'supplies',amount:50});assert.equal(retry.status,422);
-      saved=(await req(`/api/worlds/${testSlug}/cozy`,null,'second')).data;assert.equal(saved.computed.influenceDetails.conquests.projects,1);assert.equal(saved.computed.influenceDetails.conquests.cooperation,12);
+      saved=(await req(`/api/worlds/${testSlug}/cozy`,null,'second')).data;assert.equal(saved.computed.influenceDetails.conquests.projects,1);assert.equal(saved.computed.influenceDetails.conquests.cooperation,0);
     }finally{if(f){await db.query('delete from world_players where world_id=$1',[f.world.id]);await db.query('delete from worlds where id=$1',[f.world.id]);}}
   });
   if(process.env.COZY_SKIP_BROWSER!=="1")await check('Two mobile players invite, decline, request approval and accept through Crown alerts',async()=>{
@@ -1560,6 +1560,7 @@ try {
               "The circular level uses the original numbered PNG",
             );
             assert.equal(await card.locator("p").count(), 0);
+            assert.equal(await card.locator("small").count(),1,"Every city sector has a current, concrete metric");
             assert(
               !/Organiza a cidade|Produz alimento|Cuida do povo|Mais vagas|Protege o reino/.test(
                 await card.innerText(),
@@ -2435,9 +2436,19 @@ try {
               await page
                 .getByRole("grid", { name: "Territórios próximos" })
                 .waitFor();
+              const current=(await req(`/api/worlds/${slug}/cozy`)).data;
+              beginner.state.decreesSigned=[current.computed.decree?.day??current.computed.day];
+              beginner.state.orders=[{id:"active-guidance-explore",kind:"explore",q:1,r:0,createdAt:Date.now(),arrivesAt:Date.now()+4*3600000}];
+              await saveFixture(beginner);
+              await page.reload({waitUntil:"networkidle"});
+              const waiting=page.getByRole("button",{name:/Exploração em curso/});
+              await waiting.waitFor();assert.equal(await waiting.isDisabled(),true,"Guidance must not send the player to repeat an expedition");
+              beginner.state.orders=[];
               beginner.state.explored = ["1,0"];
               await saveFixture(beginner);
               await page.reload({ waitUntil: "networkidle" });
+              const idle=page.getByRole("button",{name:"Nada novo por enquanto",exact:true});
+              await idle.waitFor();assert.equal(await idle.isDisabled(),true);
               assert.equal(
                 await page
                   .getByText("PRIMEIROS PASSOS", { exact: true })
@@ -2669,7 +2680,7 @@ try {
               assert(pendingDecree);
               assert.equal(
                 await council
-                  .locator("button[aria-pressed]").filter({has:page.getByLabel("Consequências previstas")})
+                  .locator("button[aria-pressed]").filter({has:page.locator("strong")})
                   .count(),
                 2,
               );
@@ -2737,7 +2748,7 @@ try {
               );
               assert.equal(
                 await council
-                  .locator("button[aria-pressed]").filter({has:page.getByLabel("Consequências previstas")})
+                  .locator("button[aria-pressed]").filter({has:page.locator("strong")})
                   .count(),
                 0,
               );

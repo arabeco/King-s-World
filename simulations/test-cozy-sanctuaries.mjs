@@ -64,7 +64,7 @@ test('The third constructed wonder cannot promise or award points beyond the exi
   const city={...structuredClone(s.state.cities[0]),id:`wonder-${i}`,q:i,r:5,capital:false,wonder:false,sectors:Object.fromEntries(Object.keys(s.state.cities[0].sectors).map(k=>[k,10]))};s.state.cities.push(city);
   s=act(s,{type:'wonder',cityId:city.id});
  }
- assert.equal(view(s).influenceDetails.conquests.wonderPoints,120);
+ assert.equal(view(s).influenceDetails.conquests.wonderPoints,200);
  assert(s.state.reports.find(r=>r.body.includes('teto de reconhecimento')));
 });
 console.log(`PASS ${checks} sanctuary and wonder scenarios.`);

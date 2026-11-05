@@ -35,12 +35,14 @@ Renomeação: uma por dono, preservada ao perder/retomar a cidade ou trocar de r
 | Área | Fórmula nos novos Expressos |
 |---|---|
 | Infraestrutura | Cidades ordenadas pelos níveis reais. Pesos: 150, 100, 70, 50, 35, 25, 20, 20, 15, 15; cada parcela = piso(soma dos níveis / 50 × peso). Os pesos somam 500 |
-| Governo | 30 por herói corretamente designado, até 300; quatro pesquisas com cinco níveis × 10 pontos, até 200 |
-| Militar | Até 300 por preparo acima da força inicial: 1 ponto por 90 de força; até 200 pelas seis hordas vencidas. Tropas e fortificações entram no preparo |
+| Governo | 30 por herói contratado, até 300; quatro pesquisas com cinco níveis × 10 pontos, até 200 |
+| Militar | Até 300 por preparo acima da força inicial: 1 ponto por 5 de força nos primeiros 50 acima da base; depois, 1 por 90; até 200 pelas seis hordas vencidas. Tropas e fortificações entram no preparo |
 | Conselho | Mérito administrativo × estabilidade real das cidades. Tetos de fonte: decretos 160, decisões locais 140, administração estável 200 |
-| Conquistas | Seis missões × 50; duas Maravilhas × 60; cooperação útil até 80. Total 500 |
+| Conquistas | Seis marcos × 50; duas Maravilhas × 100. Exploração exige 40 hexágonos distintos, contando o corredor reconhecido. Total 500 |
 
-Infraestrutura e Governo reagem aos níveis, cidades e designações reais. Dano, perda de cidade, baixa militar ou crise podem reduzir influência. Recuperar o que foi perdido não gera XP repetido. Conquistas registra feitos uma vez: perder uma Maravilha já construída não apaga esse feito e reconquistá-la não o concede novamente.
+A revisão de contratação, preparo militar e Conquistas vale para reinos ativos com progressão a partir de zero. Resultados de temporadas já encerradas mantêm suas fontes anteriores.
+
+Infraestrutura reage aos níveis e cidades reais. Governo conta os heróis contratados e as pesquisas; os bônus de função do herói exigem designação. Dano, perda de cidade, baixa militar ou crise podem reduzir influência. Recuperar o que foi perdido não gera XP repetido. Conquistas registra feitos uma vez: perder uma Maravilha já construída não apaga esse feito e reconquistá-la não o concede novamente.
 
 O Conselho reconhece resultados úteis, não cliques. No Expresso, méritos-base 4/6/8 por decreto/cuidado/estabilidade usam o fator econômico 4; créditos locais são amortecidos pela raiz do número de cidades e pelos tetos de fonte. Confiança 35 ou menos não sustenta mérito; 70 sustenta a parcela integral. Uma administração saudável por seis dias também pode progredir. Criar uma crise e repará-la não fornece mérito novo ilimitado.
 
@@ -51,14 +53,14 @@ Sem mínimo obrigatório por área: o selo aceita combinações diferentes. Os t
 Materiais e suprimentos são produzidos; ouro vem de exploração, coletas e resultados do mundo. Não existe manutenção diária de tropas nem cobrança passiva de materiais por ausência.
 
 - Produção por cidade usa Economia, Administração, pesquisa econômica, integridade, efeito local, Administrador, stat Administração do rei, itens e tipo da cidade. Suprimentos também recebem bônus de abastecimento válidos.
-- No novo Expresso, produção-base é multiplicada por quatro; preços de heróis/pesquisas são 25% dos clássicos. Não aplicar o fator de novo na duração ou nas recompensas.
+- No novo Expresso, produção-base é multiplicada por quatro; preços de pesquisa são 25% dos clássicos; heróis seguem a curva própria abaixo. Não aplicar o fator de novo na duração ou nas recompensas.
 - Obra: aproximadamente 150 × 1,36^nível materiais, arredondados. Tempo: 0,04 + 0,014 × nível dias reais; Engenheiro local reduz em 25%.
 - Pesquisa: aproximadamente 50 × 1,7^nível ouro no Expresso. Tempo: 0,25 + 0,1 × nível dias; Sábios designados reduzem 15% cada, até quatro.
-- Herói no Expresso: 50 + 25 × quantidade já contratada ouro. Até dez contratados e um designado por cidade. Herói livre é necessário para ocupar outra cidade.
+- Herói no Expresso: 150 de ouro no primeiro; 225 no segundo, somando 25 em cada seguinte. Até dez contratados e um designado por cidade. Herói livre é necessário para ocupar outra cidade. Com 350 de ouro iniciais, só o primeiro cabe sem obter mais ouro. Os dez custam 3.075 no total. No Normal, a curva segue 200 + 100 por herói já contratado (6.500 pelos dez).
 - Filas planejadas são pré-pagas. Limite de doze planos em espera por fila nos novos perfis; começam offline. Cancelar devolve apenas o que ainda não começou, uma vez.
 - Dano não cobra uma obra novamente nem devolve o nível destruído: os planos pagos rebaseiam seu nível de resultado. Reparar integridade não reconstrói níveis.
 
-Eficiência operacional altera rendimento; não substitui nível. As opções locais mostram efeitos/custos antes da confirmação. As decisões atuais têm resultado determinado; cards com chance de sucesso continuam fora do MVP.
+Eficiência operacional altera rendimento; não substitui nível. As opções locais mostram efeitos/custos antes da confirmação. Alguns decretos oferecem uma caravana com 70% de sucesso. Sucesso rende 440 materiais e +2 confiança; falha rende 0 materiais e −8 confiança. A escolha é resolvida uma vez pelo servidor e o relato registra o resultado.
 
 ## 5. Exploração e reservas
 
@@ -98,7 +100,7 @@ No competitivo, saque transfere 4% do ouro/materiais existentes do perdedor, at�
 
 Aliança: até cinco. Ajuda exige pedido e aceite antes da horda; um envio por dia de jogo, com oferta de 20% da defesa e mínimo 20. Não retira tropas, não cobra recursos e só reconhece a cooperação na resolução do encontro. Apoio não é automaticamente uma vitória.
 
-Projetos: Bastião custa 600 materiais + 400 suprimentos; Rotas custa 500 materiais + 100 ouro. Bônus de 10% por sete dias de jogo. Contribuição útil dá mérito de cooperação dentro dos 80 de Conquistas, sem nova fonte ilimitada.
+Projetos: Bastião custa 600 materiais + 400 suprimentos; Rotas custa 500 materiais + 100 ouro. Bônus de 10% por sete dias de jogo. Contribuição útil é registrada no histórico da aliança. Conquistas usa marcos e Maravilhas.
 
 Seis torres externas e uma central. Reconhecimento e sintonia são opcionais, sem influência direta ou condição de vitória. Pactos solo/aliança custam os recursos do projeto correspondente, exigem reconhecimento e guardiões e podem dar 10% em defesa ou suprimentos. Nos pactos atuais, torre + projeto têm teto conjunto de 15%; várias torres não multiplicam esse efeito. Pactos antigos preservam a regra de bônus correspondente.
 

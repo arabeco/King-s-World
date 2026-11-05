@@ -10,6 +10,8 @@ export const PROGRESSION = {
 } as const;
 const clamp=(n:number,max=500)=>Math.max(0,Math.min(max,n));
 export const hasZeroProgression=(state:CozyState)=>state.progression?.version===2;
+export const usesMobileReviewRules = (state:CozyState) =>
+  hasZeroProgression(state) && (state.finalizedAt === null || state.progression?.mobileReviewRules === true);
 export const newProgressionBalance=(expressEconomy=false)=>({militaryDivisor:90,militaryVictoryMax:200,councilExpansionDamping:true,...(expressEconomy?{expressEconomy:true,constructionGrowth:1.36,councilMeaningfulDecrees:true,councilContinuity:true,plannedCapacity:12,infrastructureRanked:true,infrastructureWeights:[...INFRASTRUCTURE_WEIGHTS],councilSourceCaps:{decree:160,local:140,stable:200},councilMerit:{decree:4,local:6,stable:8}}:{})});
 export function bindWorldBalance(shared:CozyShared,existing:CozyState[],expressEconomy=false){
  if(shared.progressionBalance===undefined){const first=existing.filter(s=>s.progression).sort((a,b)=>a.createdAt-b.createdAt||a.playerId.localeCompare(b.playerId))[0];shared.progressionBalance=first?structuredClone(first.progression!.balance??null):newProgressionBalance(expressEconomy);}
@@ -94,15 +96,16 @@ export function progressionBreakdown(state:CozyState,army:number,walls:number){
  const p=state.progression;
  const cities=Object.fromEntries(state.cities.map(c=>[c.id,infrastructureContribution(state,c)]));
  const assigned=state.heroes.filter(h=>h.cityId!==null&&state.cities.some(c=>c.id===h.cityId&&c.heroId===h.id)).length;
+ const revised=usesMobileReviewRules(state);
  const research=Object.values(state.research).reduce((a,b)=>a+b,0);
  const missions=state.quests.reduce((sum,id)=>sum+(QUESTS.find(q=>q.id===id)?.points??0),0);
  const wonders=p?Math.min(PROGRESSION.wonderLimit,p.feats.wonders.length):Math.min(2,state.cities.filter(c=>c.wonder).length);
  const collected=p?Object.values(p.feats.collected).reduce((a,b)=>a+b,0):0;
  const cooperation=p?Math.min(PROGRESSION.cooperationMax,p.feats.surveys.length*PROGRESSION.survey+Math.floor(collected/PROGRESSION.collectionStep)*PROGRESSION.collectionCredit+p.feats.supports.length*PROGRESSION.support+(p.feats.projects?.length??0)*PROGRESSION.project):Math.min(80,state.cooperation*4);
  const military=Math.max(0,army+walls-(p?.militaryBaseline??0));
- return {model:p?'zero-v1' as const:'legacy' as const,cities,government:{heroes:assigned*(p?PROGRESSION.hero:50),research:p?research*PROGRESSION.researchLevel:0},
+ return {model:p?'zero-v1' as const:'legacy' as const,cities,government:{heroes:(revised?Math.min(10,state.heroes.length):assigned)*(p?PROGRESSION.hero:50),research:p?research*PROGRESSION.researchLevel:0},
   council:{merit:p?.council.merit??0,stability:councilStability(state),episodes:p?.council.episodes.length??0},
-  conquests:{missions,wonders,wonderPoints:wonders*PROGRESSION.wonder,cooperation,surveySteps:p?.feats.surveys.length??0,collectedUnits:collected,supports:p?.feats.supports.length??0,projects:p?.feats.projects?.length??0},
+  conquests:{missions,wonders,wonderPoints:wonders*(revised?100:PROGRESSION.wonder),cooperation:revised?0:cooperation,surveySteps:p?.feats.surveys.length??0,collectedUnits:collected,supports:p?.feats.supports.length??0,projects:p?.feats.projects?.length??0},
   military:{baseline:p?.militaryBaseline??0,capacity:army+walls,earned:military}};
 }
 export function zeroInfluence(state:CozyState,army:number,walls:number):CozyInfluence{
@@ -110,7 +113,10 @@ export function zeroInfluence(state:CozyState,army:number,walls:number):CozyInfl
  const infrastructure=clamp(Object.values(d.cities).reduce((a,b)=>a+b,0));
  const government=clamp(d.government.heroes+d.government.research);
  const victoryMax=state.progression?.balance?.militaryVictoryMax??0;
- const readiness=clamp(Math.floor(d.military.earned/(state.progression?.balance?.militaryDivisor??PROGRESSION.militaryDivisor)),500-victoryMax);
+ const divisor=state.progression?.balance?.militaryDivisor??PROGRESSION.militaryDivisor;
+ const earned=d.military.earned;
+ const early=usesMobileReviewRules(state)?Math.min(50,earned):0;
+ const readiness=clamp(Math.floor(early/5)+Math.floor((earned-early)/divisor),500-victoryMax);
  const military=clamp(readiness+Math.floor(Math.min(6,state.hordesWon)/6*victoryMax));
  const society=clamp(Math.round(d.council.merit*d.council.stability));
  const legacy=clamp(d.conquests.missions+d.conquests.wonderPoints+d.conquests.cooperation);

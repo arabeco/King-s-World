@@ -11,7 +11,7 @@ import {applySanctuaryPactAction,pactFunded,canUsePact,activateSanctuaryPact,San
 import {applyAllianceAction,AllianceRuleError,allianceBonus,syncAllianceProjects} from './alliances';
 import {equipmentBonus} from "./equipment";
 import {ROYAL_PROFILES,royalBonus} from "./royal-profiles";
-import {createProgression,hasZeroProgression,zeroInfluence,progressionBreakdown,localTrustDelta,decreeCareRecognized,councilCredit,recordCityCare,recordStableAdministration,recognizeSupport,PROGRESSION} from './progression';
+import {createProgression,hasZeroProgression,zeroInfluence,progressionBreakdown,localTrustDelta,decreeCareRecognized,councilCredit,recordCityCare,recordStableAdministration,recognizeSupport,usesMobileReviewRules,PROGRESSION} from './progression';
 import {citySocialStatus,SOCIAL_RUPTURE_DAYS,releaseCity} from "./city-crisis";
 import {cityEfficiency,cityDecision} from "./city-life";
 import {combatAssessment} from "./combat";
@@ -185,9 +185,12 @@ function armyPower(state: CozyState) {
       (1 + Math.min(5, heroesOf(state, "general")) * 0.08),
   );
 }
+function cityWallLevels(city: CozyCity) {
+  return city.sectors.defense*(city.integrity??100)/100*(!city.capital&&city.cityClass==="bastiao"?1.05:1);
+}
 function wallPower(state: CozyState) {
   return Math.floor(
-    state.cities.reduce((sum,city)=>sum+city.sectors.defense*(city.integrity??100)/100*(!city.capital&&city.cityClass==="bastiao"?1.05:1),0) *
+    state.cities.reduce((sum,city)=>sum+cityWallLevels(city),0) *
       18 *
       (1 + state.research.fortification * 0.15),
   );
@@ -246,7 +249,7 @@ function questProgress(state: CozyState) {
   const progress: Record<string, number> = {
     city: Math.max(...state.cities.map(getCityDevelopment)),
     expansion: state.cities.length,
-    exploration: state.explored.length,
+    exploration: usesMobileReviewRules(state)?new Set([...state.explored,...(state.scoutedCells??[])]).size:state.explored.length,
     research: Object.values(state.research).reduce(
       (sum, level) => sum + level,
       0,
@@ -254,13 +257,16 @@ function questProgress(state: CozyState) {
     defense: state.hordesWon,
     council: state.decreesSigned.length,
   };
-  return QUESTS.map((quest) => ({
+  return QUESTS.map((quest) => {
+    const target=quest.id==="exploration"&&usesMobileReviewRules(state)?40:quest.target;
+    return {
     id: quest.id,
-    current: Math.min(quest.target, progress[quest.id] ?? 0),
-    target: quest.target,
-    complete: (progress[quest.id] ?? 0) >= quest.target,
+    current: Math.min(target, Math.max(0, progress[quest.id] ?? 0)),
+    target,
+    complete: (progress[quest.id] ?? 0) >= target,
     claimed: state.quests.includes(quest.id),
-  }));
+    };
+  });
 }
 function getDecree(
   state: CozyState,
@@ -277,10 +283,9 @@ function getDecree(
   const counselor = COUNSELORS.find((person) => person.id === counselorId)!;
   const {careLabel,investLabel,careDescription,investDescription,...topic}=councilTopic(state,decreeDay,day,nextHorde(state,shared,world,now)?.day??null);
   const generous = counselorId === "helena" || counselorId === "ines";
-  const effects=(care:boolean)=>{
-    const requested=care?(generous?10:6):generous?2:-5;
+  const effects=(materials:number,requested:number)=>{
     const satisfaction=clamp(state.satisfaction+requested,0,100)-state.satisfaction;
-    return {materials:care?80:generous?220:350,satisfaction,...(hasZeroProgression(state)?{localSatisfaction:Object.fromEntries(state.cities.map(city=>[city.id,clamp((city.life?.contentment??state.satisfaction)+localTrustDelta(state,city,requested),0,100)-(city.life?.contentment??state.satisfaction)]))}:{})};
+    return {materials,satisfaction,...(hasZeroProgression(state)?{localSatisfaction:Object.fromEntries(state.cities.map(city=>[city.id,clamp((city.life?.contentment??state.satisfaction)+localTrustDelta(state,city,requested),0,100)-(city.life?.contentment??state.satisfaction)]))}:{})};
   };
   return {
     id: `${decreeDay}:${counselorId}`,
@@ -290,7 +295,7 @@ function getDecree(
     options: [
       {
         id: "care",
-        effects: effects(true),
+        effects: effects(80,generous?10:6),
         resolution: "certain",
         label: careLabel ?? (generous ? "Acolher e ouvir o povo" : "Abrir uma exceção"),
         description: careDescription ?? (generous
@@ -299,7 +304,7 @@ function getDecree(
       },
       {
         id: "invest",
-        effects: effects(false),
+        effects: effects(generous?220:350,generous?2:-5),
         resolution: "certain",
         label: investLabel ?? (generous
           ? "Combinar ajuda com trabalho"
@@ -308,6 +313,10 @@ function getDecree(
           ? "Organizar uma contribuição voluntária para as oficinas."
           : "Concentrar o esforço do reino em materiais para os próximos desafios."),
       },
+      ...(usesMobileReviewRules(state)&&decreeDay%12===4?[{
+        id:"risk", label:"Apostar numa caravana", description:"Envie mercadores por uma rota incerta.",
+        resolution:"chance" as const, successPercent:70, effects:effects(440,2), failure:effects(0,-8),
+      }]:[]),
     ],
   };
 }
@@ -404,7 +413,7 @@ export function getCozyComputed(
     recruitmentDiscount,
     armyCapacity: 200 + state.cities.filter(c=>!c.capital&&c.cityClass==="posto_avancado").length*10 + sumSectors(state, "recruitment") * 30,
     productionPerDay: production(state,now),
-    cityLife:Object.fromEntries(state.cities.map(city=>{const rates=production(state,now,[city]),decision=started&&!readOnly?cityDecision(city,day):null;if(decision&&hasZeroProgression(state))decision.options=decision.options.map(option=>({...option,contentment:localTrustDelta(state,city,option.contentment)}));return [city.id,{contentment:city.life?.contentment??state.satisfaction,status:citySocialStatus(city),unrestDays:city.life?.unrestDays??0,integrity:city.integrity??100,daysToRupture:!city.capital&&state.cities.length>1&&(city.life?.contentment??state.satisfaction)<35?Math.max(0,SOCIAL_RUPTURE_DAYS-(city.life?.unrestDays??0)):null,efficiency:cityEfficiency(city,now),production:{materials:rates.materials,supplies:rates.supplies},effectEndsAt:city.life?.productionEffect&&city.life.productionEffect.endsAt>now?city.life.productionEffect.endsAt:null,decision}];})),
+    cityLife:Object.fromEntries(state.cities.map(city=>{const rates=production(state,now,[city]),decision=started&&!readOnly?cityDecision(city,day):null;if(decision&&hasZeroProgression(state))decision.options=decision.options.map(option=>({...option,contentment:localTrustDelta(state,city,option.contentment)}));return [city.id,{contentment:city.life?.contentment??state.satisfaction,status:citySocialStatus(city),unrestDays:city.life?.unrestDays??0,integrity:city.integrity??100,daysToRupture:!city.capital&&state.cities.length>1&&(city.life?.contentment??state.satisfaction)<35?Math.max(0,SOCIAL_RUPTURE_DAYS-(city.life?.unrestDays??0)):null,efficiency:cityEfficiency(city,now),production:{materials:rates.materials,supplies:rates.supplies},administrationMaterials:rates.materials*15/(120+city.sectors.economy*85+city.sectors.administration*15),recruitmentCapacity:city.sectors.recruitment*30+(!city.capital&&city.cityClass==="posto_avancado"?10:0),fortification:Math.floor(cityWallLevels(city)*18*(1+state.research.fortification*0.15)),effectEndsAt:city.life?.productionEffect&&city.life.productionEffect.endsAt>now?city.life.productionEffect.endsAt:null,decision}];})),
     nextHorde: nextHorde(state, shared, world, now),
     decree: readOnly ? null : getDecree(state, shared, world, now),
     portalOpen,
@@ -415,7 +424,9 @@ export function getCozyComputed(
       !state.orders.some((order) => order.kind === "portal"),
     unreadReports: state.reports.filter((item) => item.at > state.readAt)
       .length,
-    heroCost: Math.round((200 + state.heroes.length * 100)*(state.progression?.balance?.expressEconomy?0.25:1)),
+    heroCost: state.progression?.balance?.expressEconomy
+      ? (state.heroes.length === 0 ? 150 : 225 + (state.heroes.length - 1) * 25)
+      : 200 + state.heroes.length * 100,
     troopCosts: Object.fromEntries(
       TROOPS.map((troop) => [
         troop.id,
@@ -1152,6 +1163,7 @@ export function settleCozyState(
       `Seu reino continuou produzindo durante sua ausência. ${state.cities.length} cidades, ${influence(state).total} de Influência e ${state.orders.length} ações em andamento.`,
     );
   if ((now >= endsAt! || world.status === "finalized") && options?.deferWorldEventsAt!==until) {
+    if(state.progression)state.progression.mobileReviewRules=true;
     state.finalizedAt = Math.min(now, endsAt!);
     state.finalScore = influence(state).total;
     state.seasonXp = 0; // Legacy field: king XP is earned during gameplay, never as a season payout.
@@ -1491,19 +1503,21 @@ export function applyCozyAction(
         "Este decreto já mudou ou foi assinado.",
       );
       const option=decree.options.find(option=>option.id===action.optionId)!;
-      const {satisfaction,materials}=option.effects;
-      const meaningfulCare=decreeCareRecognized(state,computed.day,option.effects.localSatisfaction??{},satisfaction);
+      const succeeded=option.resolution==="certain"||hash(`council:${world.id}:${state.playerId}:${decree.day}`)%100<option.successPercent;
+      const effects=option.resolution==="chance"&&!succeeded?option.failure:option.effects;
+      const {satisfaction,materials}=effects;
+      const meaningfulCare=decreeCareRecognized(state,computed.day,effects.localSatisfaction??{},satisfaction);
       state.satisfaction=clamp(state.satisfaction+satisfaction,0,100);
       state.resources.materials+=materials;
-      for(const city of state.cities)if(city.life){const before=city.life.contentment;city.life.contentment=clamp(city.life.contentment+(option.effects.localSatisfaction?.[city.id]??satisfaction),0,100);if(city.life.contentment>=35)city.life.unrestDays=0;recordCityCare(state,city,computed.day,city.life.contentment-before,false,false);}
+      for(const city of state.cities)if(city.life){const before=city.life.contentment;city.life.contentment=clamp(city.life.contentment+(effects.localSatisfaction?.[city.id]??satisfaction),0,100);if(city.life.contentment>=35)city.life.unrestDays=0;recordCityCare(state,city,computed.day,city.life.contentment-before,false,false);}
       if(meaningfulCare&&satisfaction>=0&&state.cities.every(city=>(city.life?.contentment??0)>=60&&!((state.progression?.council.selfHarm[`${city.q},${city.r}`]??0)>0)))councilCredit(state,`decree:${decree.day}`,PROGRESSION.decreeMerit);
       state.decreesSigned.push(decree.day);
       report(
         state,
         now,
         "council",
-        "Decreto assinado",
-        `${decree.options.find((option) => option.id === action.optionId)!.label}: ${satisfaction >= 0 ? "+" : ""}${satisfaction} de contentamento e +${materials} materiais.`,
+        option.resolution==="certain"?"Decreto assinado":succeeded?"A caravana voltou":"A caravana não voltou",
+        `${option.label}: ${satisfaction >= 0 ? "+" : ""}${satisfaction} de contentamento e +${materials} materiais.`,
         satisfaction >= 0,
       );
       break;
@@ -1718,7 +1732,7 @@ export function applyCozyAction(
         now,
         "progress",
         "Conquista registrada",
-        `${QUESTS.find((item) => item.id === action.questId)!.name}: +50 de Legado.`,
+        `${QUESTS.find((item) => item.id === action.questId)!.name}: +50 de Conquistas.`,
       );
       break;
     }

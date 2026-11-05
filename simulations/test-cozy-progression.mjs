@@ -57,18 +57,18 @@ test('Retained capital levels feed the city, Crown, total and player ranking',()
   assert.equal(P.infrastructureContribution(state,city),Math.floor(4*(weight??50)/50));
  }
 });
-test('Government recognizes valid duties and finished research, without assignment farming',()=>{
+test('Government recognizes hired heroes and finished research without assignment farming',()=>{
  let save=setup();save.state.resources.gold=10000;const capital=save.state.cities[0];
- save=act(save,{type:'hire',role:'engineer'});const hero=save.state.heroes[0];assert.equal(view(save).influence.government,0);
+ save=act(save,{type:'hire',role:'engineer'});const hero=save.state.heroes[0];assert.equal(view(save).influence.government,30);
  save=act(save,{type:'assign',heroId:hero.id,cityId:capital.id});assert.equal(view(save).influence.government,30);
  save=act(save,{type:'assign',heroId:hero.id,cityId:capital.id});assert.equal(view(save).influence.government,30);
- save=act(save,{type:'assign',heroId:hero.id,cityId:null});assert.equal(view(save).influence.government,0);
- save=act(save,{type:'research',research:'economy'});assert.equal(view(save).influence.government,0);
- save=settle(save,save.state.orders[0].arrivesAt);assert.equal(view(save).influence.government,10);
+ save=act(save,{type:'assign',heroId:hero.id,cityId:null});assert.equal(view(save).influence.government,30);
+ save=act(save,{type:'research',research:'economy'});assert.equal(view(save).influence.government,30);
+ save=settle(save,save.state.orders[0].arrivesAt);assert.equal(view(save).influence.government,40);
  assert.equal(view(save).influenceDetails.government.research,10);
 });
 test('Military measures available capacity above its gift and rebuilding cannot farm lifetime points',()=>{
- const save=setup();save.state.army.militia+=60;const grown=view(save).influence.military;assert.equal(grown,10);
+ const save=setup();save.state.army.militia+=60;const grown=view(save).influence.military;assert.equal(grown,11);
  save.state.army.militia=0;assert.equal(view(save).influence.military,0);
  save.state.army.militia=85;assert.equal(view(save).influence.military,grown);
 });
@@ -114,27 +114,27 @@ test('Useful administration supports peaceful growth and offline civic progress 
 });
 test('Collection credit follows real volume rather than number of orders and never repeats on reload',()=>{
  const run=amounts=>{let save=setup();save.state.orders=amounts.map((amount,i)=>({id:`collect-${i}`,kind:'collect',createdAt:START,arrivesAt:START+1000,q:0,r:1,collectResource:'materials',collectAmount:amount}));return settle(save,START+1000);};
- const split=run([250,250]),whole=run([500]);assert.equal(view(split).influence.legacy,4);assert.equal(view(whole).influence.legacy,4);
- assert.equal(view(settle(split,START+2000)).influence.legacy,4);
+ const split=run([250,250]),whole=run([500]);assert.equal(view(split).influence.legacy,0);assert.equal(view(whole).influence.legacy,0);
+ assert.equal(view(settle(split,START+2000)).influence.legacy,0);
 });
 test('Support is recognized only after use and each resolved request contributes once',()=>{
  let save=setup();save.shared.support.push({id:'support-once',allianceId:'alliance',requesterId:'recipient',waveDay:20,arrivesAt:START+19*DAY,requestedAt:START,supporterId:save.state.playerId,power:20,acceptedAt:START});
  save=settle(save,START+1000);assert.equal(view(save).influence.legacy,0);
  save.shared.support[0].resolvedAt=START+2000;
- save=settle(save,START+2000);assert.equal(view(save).influence.legacy,12);
- save=settle(save,START+3000);assert.equal(view(save).influence.legacy,12);
+ save=settle(save,START+2000);assert.equal(view(save).influence.legacy,0);
+ save=settle(save,START+3000);assert.equal(view(save).influence.legacy,0);
 });
-test('Only genuine survey advancement earns points, including another cell in the same completed area',()=>{
+test('Survey advancement records distinct feats without automatically granting Conquests points',()=>{
  let save=setup(),now=START;save.state.resources.supplies=100000;
  const tiles=()=>E.getCozyTiles(save.state,save.shared,world,now),tile=tiles().find(t=>t.clue.includes('brilho'));assert(tile);
  for(let i=0;i<3;i++){
   save=act(save,{type:'explore',q:tile.q,r:tile.r},now);now=save.state.orders[0].arrivesAt;save=settle(save,now);
  }
- assert.equal(view(save,now).influenceDetails.conquests.cooperation,12);
+ assert.equal(view(save,now).influenceDetails.conquests.surveySteps,3);
  const area=Object.values(save.shared.areas).find(a=>a.cells.includes(tile.id));assert(area);
  const other=tiles().find(t=>t.id!==tile.id&&t.clue.includes('brilho')&&area.cells.includes(t.id)&&!save.state.explored.includes(t.id));assert(other);
  save=act(save,{type:'explore',q:other.q,r:other.r},now);now=save.state.orders[0].arrivesAt;save=settle(save,now);
- assert.equal(view(save,now).influenceDetails.conquests.cooperation,12);
+ assert.equal(view(save,now).influenceDetails.conquests.surveySteps,3);
 });
 test('Losing a colony stops its stability clock without erasing its history or self-inflicted debt',()=>{
  const C=loadCozyEngine('city-crisis'),save=setup(),city=addCity(save),site=`${city.q},${city.r}`;
@@ -148,8 +148,8 @@ test('Losing a colony stops its stability clock without erasing its history or s
 });
 test('Constructed wonders remain feats after a colony is lost and inherited wonders are not construction',()=>{
  let save=setup();save.state.resources.materials=100000;const colony=addCity(save);for(const sector of Object.keys(colony.sectors))colony.sectors[sector]=10;
- save=act(save,{type:'wonder',cityId:colony.id});assert.equal(view(save).influence.legacy,60);
- save.state.cities=save.state.cities.filter(c=>c.id!==colony.id);assert.equal(view(save).influence.legacy,60);
+ save=act(save,{type:'wonder',cityId:colony.id});assert.equal(view(save).influence.legacy,100);
+ save.state.cities=save.state.cities.filter(c=>c.id!==colony.id);assert.equal(view(save).influence.legacy,100);
  const inherited=addCity(save,'inherited');inherited.wonder=true;assert.equal(view(save).influenceDetails.conquests.wonders,1);
  assert.throws(()=>act(save,{type:'wonder',cityId:inherited.id}),/desenvolvimento|Maravilha|maravilha/);
 });
@@ -161,4 +161,57 @@ test('The zero model awards and preserves a 1500 seal without altering an older 
  save=settle(save,START);assert.equal(save.state.portalCrossedAt,START);
  save.state.army.militia=0;save.state.cities=save.state.cities.slice(0,1);save=settle(save,START+1000);assert.equal(save.state.portalCrossedAt,START);
 });
+
+test('Mobile review opening: one hero with 350 gold, military progress from five militia and distinct explored tiles',()=>{
+ const express={...world,mode:'express',economyVersion:2};
+ let state=E.createCozyState(express,'opening','Opening',START),shared=E.createCozyShared(express);
+ const compute=()=>E.getCozyComputed(state,shared,express,START);
+ const perform=action=>{({state,shared}=E.applyCozyAction(state,shared,express,action,START));};
+ assert.equal(state.resources.gold,350);assert.equal(compute().heroCost,150);
+ perform({type:'hire',role:'engineer'});assert.equal(state.resources.gold,200);assert.equal(compute().influence.government,30);
+ assert.equal(compute().heroCost,225);assert.throws(()=>perform({type:'hire',role:'general'}),/ouro/i);
+ perform({type:'recruit',troop:'militia',amount:5});assert.equal(compute().influence.military,1);
+ state.explored=['0,0'];state.scoutedCells=['0,0','0,1'];
+ assert.deepEqual(compute().questProgress.find(q=>q.id==='exploration'),{id:'exploration',current:2,target:40,complete:false,claimed:false});
+});
+test('Optional decree risk shows both outcomes and only resolves once',()=>{
+ const outcomes=new Set();
+ for(let i=0;i<30;i++){
+  const state=E.createCozyState(world,'council-risk-'+i,'Council',START),shared=E.createCozyShared(world);
+  const at=START+3*DAY;
+  const start=E.settleCozyState(state,shared,world,at);
+  const decree=E.getCozyComputed(start.state,start.shared,world,at).decree;
+  const risk=decree.options.find(o=>o.id==='risk');
+  assert.equal(risk.successPercent,70);assert.equal(risk.failure.satisfaction,-8);
+  const action={type:'decree',decreeId:decree.id,optionId:risk.id};
+  const result=E.applyCozyAction(start.state,start.shared,world,action,at);
+  const reward=result.state.resources.materials-start.state.resources.materials;
+  assert([0,440].includes(reward));outcomes.add(reward);
+  const duplicate=E.applyCozyAction(start.state,start.shared,world,action,at);
+  assert.deepEqual(duplicate.state,result.state);
+  assert.throws(()=>E.applyCozyAction(result.state,result.shared,world,action,at),/assinado/);
+ }
+ assert.equal(outcomes.size,2);
+});
+
+
+
+test('Mobile review finalization freezes the revised score while older completed realms keep their old sources',()=>{
+ const saved=setup();
+ saved.state.heroes=[{id:'free',name:'Free hero',role:'engineer',cityId:null}];
+ saved.state.progression.feats.wonders=['one','two'];
+ saved.state.explored=['0,0'];saved.state.scoutedCells=['0,1','0,2'];
+ const before=view(saved);assert.equal(before.influence.government,30);assert.equal(before.influence.legacy,200);
+ const ended=settle(saved,START+120*DAY);
+ assert.equal(ended.state.progression.mobileReviewRules,true);
+ assert.equal(view(ended,START+120*DAY).influence.government,30);
+ assert.equal(view(ended,START+120*DAY).influence.legacy,200);
+ assert.equal(ended.state.finalScore,view(ended,START+120*DAY).influence.total);
+ assert.deepEqual(settle(ended,START+121*DAY).state,ended.state);
+ const old=structuredClone(saved);old.state.finalizedAt=START;
+ assert.equal(view(old).influence.government,0);assert.equal(view(old).influence.legacy,120);
+ assert.equal(view(old).questProgress.find(q=>q.id==='exploration').current,1);
+ assert.equal(view(old).questProgress.find(q=>q.id==='exploration').target,10);
+});
+
 console.log(`PASS ${checks} zero-influence scenarios.`);

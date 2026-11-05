@@ -117,16 +117,19 @@ export type CozyReport = {
     conquered:boolean;
   };
 };
+export type CozyDecreeEffects = {materials:number; satisfaction:number; localSatisfaction?:Record<string,number>};
 export type CozyDecree = {
   id: string;
   day: number;
   counselorId: string;
   title: string;
   body: string;
-  options: { id: string; label: string; description: string; effects: {materials: number; satisfaction: number; localSatisfaction?:Record<string,number>}; resolution: "certain"; }[];
+  options: ({id:string; label:string; description:string; effects:CozyDecreeEffects} &
+    ({resolution:"certain"} | {resolution:"chance"; successPercent:number; failure:CozyDecreeEffects}))[];
 };
 export type CozyProgression = {
   version: 2;
+  mobileReviewRules?: true;
   balance?: {militaryDivisor:number; militaryVictoryMax?:number; councilExpansionDamping:boolean; expressEconomy?:boolean;plannedCapacity?:number;infrastructureRanked?:boolean;infrastructureWeights?:number[];constructionGrowth?:number;councilMeaningfulDecrees?:boolean;councilContinuity?:boolean;councilMerit?:{decree:number;local:number;stable:number};councilSourceCaps?:{decree:number;local:number;stable:number}};
   capitalId: string;
   capitalLevels: Record<CozySector,number>;

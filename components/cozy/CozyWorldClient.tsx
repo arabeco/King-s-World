@@ -224,8 +224,8 @@ type GameOverlay =
 function influenceSources(area:CrownPanel,{state,computed}:CozyPayload): [string,number|string][] {
   const d=computed.influenceDetails;
   if(area==="infrastructure")return state.cities.map(c=>[c.name,d.cities[c.id]??0]);
-  if(area==="achievements")return [["Missões",d.conquests.missions],["Maravilhas",d.conquests.wonderPoints],["Cooperação",d.conquests.cooperation]];
-  if(area==="government")return d.model==="legacy"?[["Heróis em função",d.government.heroes]]:[["Heróis em função",d.government.heroes],["Pesquisas",d.government.research]];
+  if(area==="achievements")return [["Marcos",d.conquests.missions],["Maravilhas",d.conquests.wonderPoints],...(d.conquests.cooperation?[["Cooperação",d.conquests.cooperation] as [string,number]]:[])];
+  if(area==="government")return d.model==="legacy"?[["Heróis em função",d.government.heroes]]:[["Heróis",d.government.heroes],["Pesquisas",d.government.research]];
   if(area==="military"){
     if(d.model==="legacy")return [["Tropas e muralhas",Math.floor(d.military.capacity/6)],["Pesquisa militar",state.research.military*15]];
     const victories=Math.floor(Math.min(6,state.hordesWon)/6*(state.progression?.balance?.militaryVictoryMax??0));
@@ -473,11 +473,10 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
     ) || state.orders.some((entry) => entry.kind === "upgrade");
   const firstRecruit =
     Object.values(state.army).reduce((sum, amount) => sum + amount, 0) > 25;
-  const firstExplore =
-    state.explored.length > 0 ||
-    state.orders.some((entry) => entry.kind === "explore");
+  const activeExploration = state.orders.find(entry => entry.kind === "explore");
+  const firstExplore = state.explored.length > 0 || Boolean(activeExploration);
   const firstStep =
-    !computed.readOnly &&
+    computed.started && !computed.readOnly &&
     !state.portalCrossedAt &&
     state.cities.length === 1 &&
     !firstExplore
@@ -738,6 +737,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                   <button
                     type="button"
                     className={game.questPrompt}
+                    disabled={!computed.readOnly&&!state.portalCrossedAt&&!firstStep&&!computed.decree}
                     onClick={() =>
                       computed.readOnly || state.portalCrossedAt
                         ? setPanel("achievements")
@@ -749,7 +749,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                               ? navigate("map")
                               : computed.decree
                                 ? setPanel("council")
-                                : navigate("map")
+                                : undefined
                     }
                   >
                     {computed.readOnly || state.portalCrossedAt ? (
@@ -777,10 +777,12 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                                   ? "Explore seu primeiro território"
                                   : computed.decree
                                     ? "O Conselho aguarda você"
-                                    : "Escolha sua próxima descoberta"}
+                                    : activeExploration
+                                      ? `Exploração em curso · ${remaining(activeExploration.arrivesAt,clock)}`
+                                      : "Nada novo por enquanto"}
                       </strong>
                     </span>
-                    <ChevronRight size={18} />
+                    {(computed.readOnly||state.portalCrossedAt||firstStep||computed.decree)&&<ChevronRight size={18} />}
                   </button>
                 )}
                 </>}

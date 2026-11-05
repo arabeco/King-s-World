@@ -46,8 +46,8 @@ test('Contributions reserve only missing quantities and completion credits actua
  const r=realm(),id=create(r);r.act('p2',{type:'alliance_join',allianceId:id});r.act('p1',{type:'alliance_project_start',kind:'defense'});let p=r.shared.allianceProjects[0];
  const before=r.states.p2.resources.materials;r.act('p2',{type:'alliance_project_contribute',projectId:p.id,resource:'materials',amount:'max'});assert.equal(before-r.states.p2.resources.materials,600);assert.equal(r.view('p2').influence.legacy,0);
  r.act('p1',{type:'alliance_project_contribute',projectId:p.id,resource:'supplies',amount:'max'});p=r.shared.allianceProjects[0];assert.equal(p.completedAt,START);
- r.settle('p2');assert.deepEqual(r.states.p2.progression.feats.projects,[p.id]);assert.equal(r.view('p2').influence.legacy,12);
- assert.equal(r.view('p1').influence.legacy,12);r.settle('p2');assert.equal(r.view('p2').influence.legacy,12);
+ r.settle('p2');assert.deepEqual(r.states.p2.progression.feats.projects,[p.id]);assert.equal(r.view('p2').influence.legacy,0);
+ assert.equal(r.view('p1').influence.legacy,0);r.settle('p2');assert.equal(r.view('p2').influence.legacy,0);
  assert.throws(()=>r.act('p2',{type:'alliance_project_contribute',projectId:p.id,resource:'materials',amount:50}),/concluído/);
  assert.throws(()=>r.act('p1',{type:'alliance_project_start',kind:'defense'}),/ativo/);
 });
@@ -96,7 +96,7 @@ test('New members receive an active collective benefit without unearned personal
 test('A former contributor retains completion credit while outside the group, without its active bonus',()=>{
  const r=realm(),id=create(r);r.act('p2',{type:'alliance_join',allianceId:id});r.act('p1',{type:'alliance_project_start',kind:'defense'});const p=r.shared.allianceProjects[0];
  r.act('p2',{type:'alliance_project_contribute',projectId:p.id,resource:'materials',amount:'max'});r.act('p2',{type:'alliance_leave'});
- r.act('p1',{type:'alliance_project_contribute',projectId:p.id,resource:'supplies',amount:'max'});r.settle('p2');assert.equal(r.view('p2').influence.legacy,12);assert.equal(r.view('p2').allianceDefenseBonus,0);
+ r.act('p1',{type:'alliance_project_contribute',projectId:p.id,resource:'supplies',amount:'max'});r.settle('p2');assert.equal(r.view('p2').influence.legacy,0);assert.equal(r.view('p2').allianceDefenseBonus,0);
 });
 test('Project funding remains frozen before start and after the season closes',()=>{
  const open={...world,status:'open',startsAt:null};assert.throws(()=>E.applyCozyAction(E.createCozyState(open,'waiting','Esperando',START),E.createCozyShared(open),open,{type:'alliance_project_start',kind:'defense'},START),/Aguarde/);

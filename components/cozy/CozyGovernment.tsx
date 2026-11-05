@@ -13,6 +13,7 @@ import Image from "next/image";
 import { ArrowRight, BookOpen, Check, Users, X } from "lucide-react";
 import type { CozyHeroRole, CozyResearch } from "@/lib/cozy/types";
 import { HERO_ROLES, RESEARCHES, getCozyResearchDurationMs } from "@/lib/cozy/catalog";
+import {usesMobileReviewRules} from "@/lib/cozy/progression";
 import CozyArt from "./CozyArt";
 import {
   CrownButton,
@@ -102,6 +103,7 @@ export default function CozyGovernment({
   const { state, computed } = data;
   const order = state.orders.find((entry) => entry.kind === "research");
   const full = state.heroes.length >= 10;
+  const heroPoints = usesMobileReviewRules(state) ? 30 : 0;
   const poor = state.resources.gold < computed.heroCost;
   const researchChoices=[...RESEARCHES].sort((a,b)=>Number(b.id===order?.research)-Number(a.id===order?.research));
   const needsCare=realmCareCity(state);
@@ -261,7 +263,7 @@ export default function CozyGovernment({
                       onClick={async()=>{if(await act({type:"hire",role:role.id}))setPicker(false);}}
                     >
                       
-                      <CrownCost amount={computed.heroCost} kind="gold" />
+                      <CrownCost amount={computed.heroCost} kind="gold" />{heroPoints>0&&<small>+{heroPoints} influência</small>}
                     </CrownButton>
                   </div>
                 </article>

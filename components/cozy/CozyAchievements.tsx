@@ -17,6 +17,7 @@ import CozySanctuaryCard from "./CozySanctuaryCard";
 import {wonderPlan} from "@/lib/cozy/legacy-objectives";
 import { QUESTS } from "@/lib/cozy/catalog";
 import type { CozyPayload } from "@/lib/cozy/types";
+import {usesMobileReviewRules} from "@/lib/cozy/progression";
 import CozyArt from "./CozyArt";
 import {
   CrownButton,
@@ -61,6 +62,8 @@ export default function CozyAchievements({
   const towers=computed.sanctuaries;
   const visits=towers.filter(t=>t.visitedAt!==null).length;
   const wonders = computed.influenceDetails.conquests.wonders;
+  const revised = usesMobileReviewRules(state);
+  const wonderPoints = revised ? 100 : 60;
   const cooperation = computed.influenceDetails.conquests.cooperation;
   const zeroModel=computed.influenceDetails.model==='zero-v1';
   const missionPoints=computed.influenceDetails.conquests.missions;
@@ -148,14 +151,12 @@ export default function CozyAchievements({
               <details className={styles.breakdown}><summary>Fontes de influência</summary>
               <div className={styles.sources}>
                 <span>
-                  Missões <b>{missionPoints}/300</b>
+                  Marcos <b>{missionPoints}/300</b>
                 </span>
                 <span>
-                  Maravilhas <b>{computed.influenceDetails.conquests.wonderPoints}/120</b>
+                  Maravilhas <b>{computed.influenceDetails.conquests.wonderPoints}/{wonderPoints*2}</b>
                 </span>
-                <span>
-                  Cooperação <b>{cooperation}/80</b>
-                </span>
+                {!revised&&<span>Cooperação <b>{cooperation}/80</b></span>}
               </div>
               </details>
             </div>
@@ -189,7 +190,7 @@ export default function CozyAchievements({
                         <small>Conquistas</small>
                       </span>
                     </div>
-                    <p>{quest.description}</p>
+                    <p>{progress.id==="exploration"?`Explore ${progress.target} hexágonos distintos.`:quest.description}</p>
                     <CrownProgress
                       value={progress.current}
                       max={progress.target}
@@ -234,15 +235,15 @@ export default function CozyAchievements({
                 <span className={styles.eyebrow}>Obras eternas</span>
                 <h3>Maravilhas {wonders}/2</h3>
                 <strong className={styles.reward}>
-                  {wonders * 60}
-                  <small> / 120 de Conquistas</small>
+                  {computed.influenceDetails.conquests.wonderPoints}
+                  <small> / {wonderPoints*2} de Conquistas</small>
                 </strong>
                 <CrownProgress
                   value={wonders}
                   max={2}
                   label="Maravilhas construídas"
                 />
-                <span>+60 por Maravilha · máximo 2</span>
+                <span>+{wonderPoints} por Maravilha · máximo 2</span>
                 {wonders>=2&&<p>Reconhecimento completo. Outras Maravilhas não aumentam esta parcela de influência.</p>}
                 {zeroModel&&<details><summary>Reconhecimento permanente</summary><p>O feito de construir fica registrado, mesmo se a cidade for perdida.</p></details>}
                 {plan&&wonders<2&&<div className={styles.wonderPlan} aria-label="Próxima Maravilha">
@@ -269,7 +270,7 @@ export default function CozyAchievements({
               <div className={styles.towerList}>{towers.map(tower=><CozySanctuaryCard key={tower.id} tower={tower} data={data} act={act} locked={locked} now={now} onLocate={()=>onTower(tower.q,tower.r)}/>)}</div>
             </details>
 
-            <details className={styles.cooperation}>
+            {!revised&&<details className={styles.cooperation}>
               <summary>
                 <CozyArt src="/icons/influence-society.png" size={40} />
                 <span>
@@ -293,7 +294,7 @@ export default function CozyAchievements({
                 {zeroModel&&<dl className={styles.cooperationStats}><div><dt>Etapas de levantamento</dt><dd>{computed.influenceDetails.conquests.surveySteps}</dd></div><div><dt>Recursos recebidos</dt><dd>{crownNumber(computed.influenceDetails.conquests.collectedUnits)}</dd></div><div><dt>Apoios usados</dt><dd>{computed.influenceDetails.conquests.supports}</dd></div><div><dt>Projetos com sua contribuição</dt><dd>{computed.influenceDetails.conquests.projects}</dd></div></dl>}
                 <CrownButton quiet onClick={onAlliance}>Ver aliança <ArrowRight size={14}/></CrownButton>
               </div>
-            </details>
+            </details>}
 
           </>
         )}

@@ -1,7 +1,7 @@
 import {citySocialStatus,SOCIAL_RUPTURE_DAYS} from "./city-crisis";
 import type {CozyCity,CozyResources} from './types';
 export type CityChoice={id:string;label:string;cost:Partial<CozyResources>;contentment:number;productionBonus:number;integrityRestore?:number;materialsReward?:number};
-export type CityLifeView={contentment:number;status:string;unrestDays:number;daysToRupture:number|null;integrity:number;efficiency:number;production:{materials:number;supplies:number};effectEndsAt:number|null;decision:{id:string;title:string;sector:'society'|'economy';options:CityChoice[]}|null};
+export type CityLifeView={contentment:number;status:string;unrestDays:number;daysToRupture:number|null;integrity:number;efficiency:number;production:{materials:number;supplies:number};administrationMaterials:number;recruitmentCapacity:number;fortification:number;effectEndsAt:number|null;decision:{id:string;title:string;sector:'society'|'economy';options:CityChoice[]}|null};
 export function cityEfficiency(city:CozyCity,at:number){return (100+(city.life?.productionEffect&&city.life.productionEffect.endsAt>at?city.life.productionEffect.bonus:0))*(city.integrity??100)/100;}
 export function cityDecision(city:CozyCity,day:number):CityLifeView['decision']{
  if(day<1||city.life?.lastDecisionDay===day)return null;

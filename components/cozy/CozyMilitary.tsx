@@ -11,6 +11,7 @@ import {useRef, useState, type KeyboardEvent} from "react";
 import { ArrowRight, LockKeyhole, Shield, Swords } from "lucide-react";
 import { TROOPS, canRecruitTroop } from "@/lib/cozy/catalog";
 import type {CozyResearch} from "@/lib/cozy/types";
+import {usesMobileReviewRules} from "@/lib/cozy/progression";
 import CozyArt from "./CozyArt";
 import {
   CrownCost,
@@ -202,7 +203,7 @@ export default function CozyMilitary({
       <details className={styles.details}>
         <summary>Preparo e defesa</summary>
         {computed.influenceDetails.model==='zero-v1'&&<p>A força inicial já protege o reino. O preparo desenvolvido além dessa base pode perder influência com baixas ou dano.{state.progression?.balance?.militaryVictoryMax?' As vitórias contra hordas completam o reconhecimento e permanecem registradas.':''}</p>}
-        {state.progression?.balance&&<p>A cada {state.progression.balance.militaryDivisor} de força acima da base inicial, você ganha 1 ponto de preparo. Tropas e fortificações contam nessa força.</p>}
+        {state.progression?.balance&&<p>{usesMobileReviewRules(state)?"Nos primeiros 50 de força extra, cada 5 valem 1 ponto de preparo. ":""}Depois, cada {state.progression.balance.militaryDivisor} de força extra vale 1 ponto. Tropas e fortificações contam nessa força.</p>}
         <p>
           A defesa contra hordas é automática. Tropas não consomem suprimentos por
           dia.

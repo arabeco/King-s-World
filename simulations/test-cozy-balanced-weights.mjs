@@ -5,13 +5,13 @@ const w={id:'weights-test',name:'Test',mode:'classic',status:'running',startsAt:
 const fresh=()=>E.createCozyState(w,'p','p',START);
 const s=fresh(),base=s.progression.militaryBaseline;
 assert.deepEqual(P.zeroInfluence(s,base,0),{infrastructure:0,government:0,military:0,society:0,legacy:0,total:0});
-assert.equal(P.zeroInfluence(s,base+9000,0).military,100);
+assert.equal(P.zeroInfluence(s,base+9000,0).military,109);
 assert.equal(P.zeroInfluence(s,base+100000,0).military,300,'Buying unlimited power cannot complete military');
 s.hordesWon=3;assert.equal(P.zeroInfluence(s,base+27000,0).military,400);
 s.hordesWon=6;assert.equal(P.zeroInfluence(s,base+27000,0).military,500);
 assert.equal(P.zeroInfluence(s,0,0).military,200,'Victories persist but lost readiness does not');
 const old=structuredClone(s);delete old.progression.balance;
-assert.equal(P.zeroInfluence(old,base+60,0).military,10,'Old saves retain old scoring');
+assert.equal(P.zeroInfluence(old,base+60,0).military,11,'Old saves retain old scoring');
 const one=fresh(),many=fresh();many.cities=Array.from({length:9},(_,i)=>({...structuredClone(many.cities[0]),id:'c'+i}));
 P.councilCredit(one,'local:a:1',6);P.councilCredit(many,'local:a:1',6);
 assert.equal(one.progression.council.merit,6);assert.equal(many.progression.council.merit,2);

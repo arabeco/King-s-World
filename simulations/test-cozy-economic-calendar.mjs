@@ -5,7 +5,7 @@ const base={id:'calendar',name:'Calendar',mode:'express',status:'running',starts
 const setup=w=>E.settleCozyState(E.createCozyState(w,'p','p',START),E.createCozyShared(w),w,START);
 const modern={...base,economyVersion:2,speedMultiplier:1},old=setup(base),x=setup(modern),c=E.getCozyComputed(x.state,x.shared,modern,START),o=E.getCozyComputed(old.state,old.shared,base,START);
 assert.equal(c.dayMs,DAY);assert.equal(c.durationDays,30);assert.equal(c.realDurationDays,30);assert.equal(o.dayMs,DAY/4);assert.equal(o.durationDays,120);assert.equal(o.realDurationDays,30);
-assert.equal(c.productionPerDay.materials,o.productionPerDay.materials*4);assert.equal(c.researchCosts.economy,o.researchCosts.economy/4);assert.equal(c.heroCost,o.heroCost/4);
+assert.equal(c.productionPerDay.materials,o.productionPerDay.materials*4);assert.equal(c.researchCosts.economy,o.researchCosts.economy/4);assert.equal(c.heroCost,150);assert.equal(o.heroCost,200);
 assert.equal(c.nextHorde.day,5);const arrived=E.settleCozyState(x.state,x.shared,modern,START+DAY);assert.equal(E.getCozyComputed(arrived.state,arrived.shared,modern,START+DAY).day,2);
 const endpoint=E.settleCozyState(x.state,x.shared,modern,START+30*DAY);assert.deepEqual(endpoint.state.hordesResolved,[5,10,15,20,25,28]);assert.equal(endpoint.state.finalizedAt,START+30*DAY);
 assert.equal(E.nextCityDayAt(endpoint.state,modern),null);assert.deepEqual(E.settleCozyState(endpoint.state,endpoint.shared,modern,START+31*DAY),endpoint);
