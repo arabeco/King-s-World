@@ -64,22 +64,30 @@ function ActionButton({
   onClick,
   disabled,
   quiet = false,
+  blockedReason,
 }: {
   children: ReactNode;
   onClick: () => void;
   disabled?: boolean;
   quiet?: boolean;
+  blockedReason?: string;
 }) {
+  const [explanationVisible,setExplanationVisible]=useState(false);
   return (
+    <>
     <button
       type="button"
-      className={quiet ? styles.secondaryButton : styles.button}
+      className={`${quiet ? styles.secondaryButton : styles.button} ${blockedReason?styles.blockedAction:""}`}
       data-map-action={quiet ? "secondary" : "primary"}
-      onClick={onClick}
-      disabled={disabled}
+      onClick={()=>blockedReason?setExplanationVisible(true):onClick()}
+      disabled={disabled&&!blockedReason}
+      aria-disabled={disabled||undefined}
+      data-blocked={disabled||undefined}
     >
       {children}
     </button>
+    {explanationVisible&&blockedReason&&<p className={styles.inlineNotice} role="status">{blockedReason}</p>}
+    </>
   );
 }
 function ResourceCost({
@@ -297,7 +305,9 @@ export default function CozyMap({
         (order) => order.q === selected.q && order.r === selected.r,
       )
     : undefined;
-  const exploring = data.state.orders.some((order) => order.kind === "explore");
+  const exploration = data.state.orders.find(order=>order.kind==="explore");
+  const exploring = Boolean(exploration);
+  const explorationBlocked = !locked&&exploration ? `Exploração em andamento · ${remaining(exploration.arrivesAt,now)} restantes. Aguarde a chegada para enviar outra.` : undefined;
   const attacking = data.state.orders.some((order) => order.kind === "attack");
   const collecting = data.state.orders.some(
     (order) => order.kind === "collect",
@@ -343,7 +353,7 @@ export default function CozyMap({
       {view==="empires"&&<MapSheet title="Reinos conhecidos" closeLabel="Fechar reinos" onClose={()=>setView(null)}><div className={styles.discoveryList}>{Array.from(new Set(data.tiles.filter(t=>t.revealed).flatMap(t=>(t.ownerId??t.territoryOwnerId)?[t.ownerId??t.territoryOwnerId!]:[]))).sort().map(id=>{const tile=data.tiles.find(t=>t.revealed&&t.ownerId===id&&t.kind==='city')??data.tiles.find(t=>t.revealed&&t.territoryOwnerId===id)!;const player=data.players.find(p=>p.playerId===id);return <button key={id} data-map-realm={id} onClick={()=>{setCenter(tile);setZoom(.55);setSelectedId(null);setView(null);}}><CozyMapEmblem ownerId={id} crest={data.shared.realmCrests?.[id]}/><span><strong>{player?.playerName??'Outro reino'}</strong><small>{mapOwnership(tile,data)}</small></span><ChevronRight size={18}/></button>;})}</div></MapSheet>}
       {view==="choose"&&<MapSheet title="Escolher cidade" closeLabel="Fechar cidades próximas" onClose={()=>setView(null)}><div className={styles.discoveryList}>{candidates.map(tile=><button key={tile.id} onClick={()=>select(tile)} data-map-choice={tile.id}>{tile.ownerId&&<CozyMapEmblem ownerId={tile.ownerId} crest={data.shared.realmCrests?.[tile.ownerId]}/>}<span><strong>{tile.name}</strong><small>{mapOwnership(tile,data)}</small></span><small>{tile.q}, {tile.r}</small></button>)}</div></MapSheet>}
       {view === "unknown" && unknownCoord && <MapSheet compact title="Território desconhecido" closeLabel="Fechar território" onClose={()=>setView(null)}>
-        <div className={styles.selectedTileBody}><div className={styles.ownership}>{unknownCoord.q}, {unknownCoord.r}</div><span>{explorationCorridor(explorationPath(data.state,unknownCoord),data.computed.worldDiagonalLimit??40).filter(id=>!data.tiles.some(t=>t.id===id&&t.revealed)).length} hexágonos novos · caminho e arredores</span><ActionButton disabled={locked||exploring||!data.state.cities.length||data.state.resources.supplies<expeditionCost(data.state,unknownCoord)} onClick={()=>void act({type:'explore',...unknownCoord})}><Compass size={16}/>Explorar caminho<span className={styles.actionQuote}><ResourceCost amount={expeditionCost(data.state,unknownCoord)} kind="supplies"/><CozySymbol name="time" size={18}/>{remaining(now+expeditionTravelMs(data.state,data.world,unknownCoord),now)}</span></ActionButton></div>
+        <div className={styles.selectedTileBody}><div className={styles.ownership}>{unknownCoord.q}, {unknownCoord.r}</div><span>{explorationCorridor(explorationPath(data.state,unknownCoord),data.computed.worldDiagonalLimit??40).filter(id=>!data.tiles.some(t=>t.id===id&&t.revealed)).length} hexágonos novos · caminho e arredores</span><ActionButton blockedReason={explorationBlocked} disabled={locked||exploring||!data.state.cities.length||data.state.resources.supplies<expeditionCost(data.state,unknownCoord)} onClick={()=>void act({type:'explore',...unknownCoord})}><Compass size={16}/>Explorar caminho<span className={styles.actionQuote}><ResourceCost amount={expeditionCost(data.state,unknownCoord)} kind="supplies"/><CozySymbol name="time" size={18}/>{remaining(now+expeditionTravelMs(data.state,data.world,unknownCoord),now)}</span></ActionButton></div>
       </MapSheet>}
       {view === "territory" && selected && (
         <MapSheet
@@ -397,6 +407,7 @@ export default function CozyMap({
             {!selected.revealed && (
               <div className={styles.mapActionBlock}>
                 <ActionButton
+                  blockedReason={explorationBlocked}
                   disabled={
                     locked ||
                     exploring ||
@@ -415,7 +426,7 @@ export default function CozyMap({
                   <span className={styles.actionQuote}><ResourceCost amount={selected.exploreCost} kind="supplies"/><span><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)}</span></span>
                 </ActionButton>
                 {exploring && (
-                  <small>Aguarde sua exploração em andamento.</small>
+                  <small role="status">{explorationBlocked}</small>
                 )}
               </div>
             )}

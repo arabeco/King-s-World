@@ -583,3 +583,4 @@
   color: inherit;
   text-shadow: none;
 }
+.blockedAction { opacity: .55; cursor: help; }

@@ -206,13 +206,53 @@ export default function CozyCityInterior({
     <div className={styles.interior}>
       <header className={styles.cityHeader}>
         <div className={styles.identity}>
-          <h2>{city.name}</h2>
+          <h2>{city.name}</h2><button type="button" className={styles.editIdentity} aria-label="Editar cidade" onClick={()=>{setName(city.name);setRenaming(true);}}><Pencil size={17}/></button>
           <button type="button" className={styles.typeBadge} disabled={city.capital} onClick={()=>{setCandidate(null);setTypeOpen(true);}}>{city.capital?"Capital ♛":city.cityClass&&city.cityClass!=="neutral"?`${CITY_TYPES[city.cityClass]} · fixo`:"Escolher tipo ▾"}</button>
         </div>
         <div className={styles.infraScore}><small>Infra do reino</small><strong aria-label={`Infraestrutura do reino: ${data.computed.influence.infrastructure} de 500`}>{data.computed.influence.infrastructure}/500</strong><small><span aria-label={`Influência desta cidade: ${infrastructure} pontos`}>{infrastructure} pts</span> · <span aria-label={`Território desta cidade: ${territory.length} hexágonos`}>{territory.length} hex</span></small></div>
         
       </header>
       {data.world.combatMode==='competitive'&&state.capitalSelectionPending&&!state.defeat&&<div className={styles.construction} aria-label="Escolha da nova capital"><strong>{city.capital?'Capital provisória':city.name}</strong><button type="button" className={styles.primary} disabled={Boolean(lockReason)||(city.integrity??100)<=0} onClick={()=>void act({type:'capital_choose',cityId:city.id})}>Confirmar como capital</button></div>}
+      {renaming&&<SectorSheet title="Identidade da cidade" onClose={()=>setRenaming(false)}>
+        {!city.renamedBy?.includes(state.playerId)?              <form
+                className={styles.renameForm}
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  if (await act({ type: "rename_city", cityId: city.id, name }))
+                    setRenaming(false);
+                }}
+              >
+                <label htmlFor={`${id}-name`}>Nome da cidade</label>
+                <input
+                  ref={nameInput}
+                  id={`${id}-name`}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  maxLength={32}
+                  required
+                  disabled={locked}
+                />
+                <div>
+                  <button
+                    type="button"
+                    className={styles.textButton}
+                    disabled={locked}
+                    onClick={() => setRenaming(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className={styles.primary}
+                    disabled={locked || name.trim().length<2 || name.trim()===city.name}
+                  >
+                    <Check size={15} />
+                    Salvar nome
+                  </button>
+                </div>
+              </form>:<p>Nome escolhido · {city.name}</p>}
+        <button type="button" className={styles.typeOption} disabled={city.capital} onClick={()=>{setRenaming(false);setCandidate(null);setTypeOpen(true);}}><strong>{city.capital?"Capital":city.cityClass&&city.cityClass!=="neutral"?CITY_TYPES[city.cityClass]:"Escolher tipo"}</strong><small>{city.capital?"Sede do reino":benefits[city.cityClass??"neutral"]}</small></button>
+      </SectorSheet>}
       {typeOpen&&<SectorSheet title={candidate?"Confirmar tipo":"Tipo de aldeia"} onClose={()=>setTypeOpen(false)}>
         {city.cityClass&&city.cityClass!=="neutral"?<p>{CITY_TYPES[city.cityClass]} · {benefits[city.cityClass]}</p>:candidate?<><h3>{CITY_TYPES[candidate]}</h3><p>{benefits[candidate]}</p><p>A escolha é permanente, inclusive após uma conquista.</p><button className={styles.primary} disabled={Boolean(lockReason)} onClick={async()=>{if(await act({type:"city_class",cityId:city.id,cityClass:candidate}))setTypeOpen(false);}}>Confirmar {CITY_TYPES[candidate]}</button></>:Object.entries(CITY_TYPES).filter(([k])=>k!=="neutral").map(([k,label])=><button key={k} className={styles.typeOption} onClick={()=>setCandidate(k as keyof typeof CITY_TYPES)}><strong>{label}</strong><small>{benefits[k as keyof typeof CITY_TYPES]}</small></button>)}
       </SectorSheet>}
@@ -316,8 +356,12 @@ export default function CozyCityInterior({
           {life&&life.contentment<60&&<aside className={styles.crisisNotice} role="status"><strong>{life.status} · satisfação {number(life.contentment)}%</strong><p>{life.daysToRupture!==null?`Recupere a satisfação para pelo menos 35%. Se a crise continuar por mais ${life.daysToRupture} dias de jogo, esta cidade pode se separar.`:"A confiança no governo precisa de atenção. As decisões locais ajudam a recuperar a cidade."}</p></aside>}
           {life&&life.integrity<100&&<aside className={styles.crisisNotice}><strong>Integridade das estruturas: {life.integrity}%</strong><p>Produção e defesa estão reduzidas. {city.capital?"A capital permanece no reino, mesmo após uma derrota.":"Novos ataques podem causar a perda desta colônia."} Os reparos preservam os níveis que você construiu.</p></aside>}
 
+          {(!city.renamedBy?.includes(state.playerId)||(!city.capital&&(!city.cityClass||city.cityClass==="neutral")))&&<div className={styles.firstChoices}>
+            {!city.renamedBy?.includes(state.playerId)&&<button type="button" onClick={()=>{setName(city.name);setRenaming(true);}}><Pencil size={20}/><span>Dar um nome à cidade</span><ArrowRight size={17}/></button>}
+            {!city.capital&&(!city.cityClass||city.cityClass==="neutral")&&<button type="button" onClick={()=>{setCandidate(null);setTypeOpen(true);}}><Sparkles size={20}/><span>Escolher especialização</span><ArrowRight size={17}/></button>}
+          </div>}
           {life&&<article className={styles.decisionCard} aria-label="Decisão local da cidade">
-            <div className={styles.decisionHeading}><CozyArt src={life.decision?.sector==="economy"?"/icons/building-production.png":"/icons/building-society.png"} size={42}/><div><h3>{life.decision?.title??(computed.readOnly?"Histórico da cidade":"Decisão de hoje registrada")}</h3><p>{life.decision?"Escolha um caminho para esta cidade.":"Novas situações chegam no próximo dia de jogo."}</p></div></div>
+            <div className={styles.decisionHeading}><div><h3>{life.decision?.title??(computed.readOnly?"Histórico da cidade":"Decisão de hoje registrada")}</h3><p>{life.decision?`Dia ${computed.day}`:"Novas situações no próximo dia"}</p></div></div>
             {life.decision?.options.map(option=>{const affordable=Object.entries(option.cost).every(([resource,cost])=>state.resources[resource as keyof typeof state.resources]>=cost!);return <div key={option.id} className={styles.localChoiceFrame}>
             <div className={styles.choiceCosts}>{Object.entries(option.cost).map(([resource,cost])=>{
               const label=resource==="supplies"?"Suprimentos":"Materiais";
@@ -419,67 +463,6 @@ export default function CozyCityInterior({
             )}
           </SectorSheet>}
 
-          <article className={styles.decisionCard}>
-            <div className={styles.decisionHeading}>
-              <CozyArt src="/icons/nav-cities.png" size={42} />
-              <div>
-                <h3>Nome da cidade</h3>
-                <p>{city.name}</p>
-              </div>
-            </div>
-            {renaming&&!city.renamedBy?.includes(data.state.playerId) ? (
-              <form
-                className={styles.renameForm}
-                onSubmit={async (event) => {
-                  event.preventDefault();
-                  if (await act({ type: "rename_city", cityId: city.id, name }))
-                    setRenaming(false);
-                }}
-              >
-                <label htmlFor={`${id}-name`}>Nome da cidade</label>
-                <input
-                  ref={nameInput}
-                  id={`${id}-name`}
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  maxLength={32}
-                  required
-                  disabled={locked}
-                />
-                <div>
-                  <button
-                    type="button"
-                    className={styles.textButton}
-                    disabled={locked}
-                    onClick={() => setRenaming(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className={styles.primary}
-                    disabled={locked || name.trim().length<2 || name.trim()===city.name}
-                  >
-                    <Check size={15} />
-                    Salvar nome
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <button
-                type="button"
-                className={styles.textButton}
-                disabled={locked || city.renamedBy?.includes(data.state.playerId)}
-                onClick={() => {
-                  setName(city.name);
-                  setRenaming(true);
-                }}
-              >
-                <Pencil size={14} />
-                {city.renamedBy?.includes(data.state.playerId)?"Nome escolhido":"Renomear"}
-              </button>
-            )}
-          </article>
           <article className={`${styles.decisionCard} ${styles.wonderCard}`}>
             <div className={styles.decisionHeading}>
               <CozyArt src="/buildings/maravilha.png" size={64} />
@@ -552,7 +535,7 @@ export default function CozyCityInterior({
               />
             </span>
           </div>
-          <span className={styles.detailCity}>{city.name}</span>
+          <span className={styles.detailCity}>{city.name} · Nível {level} → {Math.min(10,level+1)}</span>
           <h3 className={styles.detailTitle}>{sector.name}</h3>
           <details className={styles.detailMore}><summary>Função do setor</summary><p>{sector.description}</p></details>
           {preview&&<section className={styles.upgradePreview} aria-label="Prévia da evolução" title="Estimativa ao concluir, nas condições atuais do reino.">
@@ -564,7 +547,7 @@ export default function CozyCityInterior({
             <div className={styles.upgradeSummary}>
               <span>
                 <CozySymbol name="materials" size={25}/>
-                <strong>{number(cost)}</strong> materiais
+                <strong>{number(cost)}</strong>
               </span>
               <span>
                 <CozySymbol name="time" size={18}/>
@@ -595,7 +578,7 @@ export default function CozyCityInterior({
               }}
             >
               <Plus size={17} />
-              Evoluir para o nível {level + 1}
+              <span>Evoluir para o nível {level + 1}</span><CozySymbol name="materials" size={23}/><strong>{number(cost)}</strong>
             </button>
           ) : (
             <span className={styles.complete}>
@@ -611,7 +594,7 @@ export default function CozyCityInterior({
           </section>}
 
           {life&&selected==="defense"&&<section className={styles.localIndicators}><div><strong>Integridade das estruturas</strong><span>{life.integrity}%</span></div><meter min={0} max={100} value={life.integrity} aria-label="Integridade da cidade"/><button className={styles.textButton} onClick={()=>{setSelected(null);setTab("decisions");}}>Ver reparos e decisões <ArrowRight size={15}/></button></section>}
-          <CozyPlans data={data} act={act} locked={locked} now={now} cityId={city.id} sector={selected}/>
+          {data.world.mode==="express"&&<details className={styles.optionalPlans}><summary>Fila automática</summary><CozyPlans data={data} act={act} locked={locked} now={now} cityId={city.id} sector={selected}/></details>}
         </SectorSheet>
       )}
     </div>

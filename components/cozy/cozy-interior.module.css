@@ -546,3 +546,20 @@
 .choiceCosts details small {display:block;padding-bottom:5px}
 
 .upgradePreview{display:grid;gap:8px;margin:14px 0;padding:12px 0;border-block:1px solid #b99a5b55}.upgradePreview>div{display:flex;align-items:center;gap:12px}.upgradePreview span{display:grid;gap:4px;flex:1}.upgradePreview small{color:#d0c4a9;font-size:11px}.upgradePreview b{display:flex;align-items:center;gap:10px;font-size:18px;color:#c2b9a8}.upgradePreview strong{color:#f8dc92}.upgradePreview em{font-size:16px;color:#cae6b0;font-style:normal}
+.editIdentity { min-width: 40px; min-height: 40px; border: 0; color: #f5d58c; background: transparent; }
+.identity { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.identity .typeBadge { flex-basis: 100%; }
+.firstChoices { display: grid; gap: 8px; }
+.firstChoices button { display:flex; gap:10px; align-items:center; min-height:52px; padding:10px; border:1px solid #b3955555; background:linear-gradient(125deg,#403a2e,#20282a); color:#f5dfac; text-align:left; }
+.firstChoices span { flex:1; }
+.optionalPlans { margin-top: 18px; border-top: 1px solid #bca46644; }
+.optionalPlans > summary { min-height: 44px; padding: 12px 0; color: #c7b995; cursor: pointer; }
+.detailArt { height: 82px; }
+.detailArt > img { width: 76px; height: 76px; }
+.detailLevel { transform:scale(.8); }
+.upgradeButton { display:flex; align-items:center; justify-content:center; gap:8px; min-height:54px; border-radius:6px; }
+.localChoiceFrame { position:relative; padding:12px; border-radius:7px; background:linear-gradient(130deg,#303c35,#1b2528); }
+.decisionCard { background:linear-gradient(145deg,#28322d,#171f22); border:0; padding:14px; }
+.decisionHeading h3 { font:700 22px/1.2 Georgia,serif; }
+.choiceCosts details { background:#111a1b; border-color:#bb9e5544; }
+.localChoice:not(:disabled)::after { content:'Confirmar escolha'; margin-top:4px; min-height:24px; }

@@ -176,7 +176,8 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
      <path d={cellPath(selected)} fill="none" stroke="#ffdf87" strokeWidth={2/scale} strokeLinejoin="round"/>
     </g>}
     {visible.filter(t=>scale>=.3||t.kind==='city'||t.id===selectedId||(t.q===cq&&t.r===cr)).map(t=>{const p=mapPoint(t),own=t.ownerId===data.state.playerId,small=scale<.3;
-     const quiet=scale<.85&&!t.ownerId&&!regionAnchors.has(t.id)&&t.kind!=='abandoned';
+     const resourceCell=(t.kind==='gold'||t.kind==='materials')&&!regionAnchors.has(t.id)&&t.id!==selectedId;
+     const quiet=resourceCell||(scale<.85&&!t.ownerId&&!regionAnchors.has(t.id)&&t.kind!=='abandoned');
      const work=own&&!data.computed.readOnly&&data.state.orders.some(o=>o.kind==='upgrade'&&o.cityId===t.cityId);
      const city=own?data.state.cities.find(c=>c.id===t.cityId):undefined;
      const appearance=city?getCityAppearance(city):null;
@@ -184,7 +185,7 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
      const art=spent?null:t.kind==='city'?(appearance?.art??'city'):t.kind==='gold'?'mine':t.kind==='materials'?'materials':t.kind==='abandoned'?'abandoned':t.kind==='npc'?'npc':t.kind==='portal'?'landmark':t.kind==='ruin'?'ruin':null;
      const box=t.kind==='city'&&!small?Math.max(52,44/scale):(small?22:46)/scale;return <foreignObject key={t.id} x={p.x-box/2} y={p.y-box/2} width={box} height={box} overflow="visible">
       <button type="button" role="gridcell" style={{width:box,height:box}} className={styles.tile} data-cozy-tile={t.id} data-centered={t.q===cq&&t.r===cr} aria-selected={t.id===selectedId} aria-label={`${t.name}, ${t.q}, ${t.r}. ${t.kind==='city'?'Cidade':t.clue}${appearance?` · ${appearance.label}`:""}${work?" · obra em andamento":""}`} tabIndex={t.q===cq&&t.r===cr?0:-1} onClick={()=>onSelect(t)}>
-       {t.landmarkId||(quiet&&t.kind==='plain')?null:small||quiet?<span className={styles.dot} style={{width:(quiet?3:small?3:9)/scale,height:(quiet?3:small?3:9)/scale,opacity:t.revealed?1:0,background:t.ownerId?ownerColor(t.ownerId):spent?'#899f81':t.kind==='npc'?'#c18d73':t.kind==='gold'?'#ddbc69':t.kind==='materials'?'#8ab6a0':'#899f81'}}/>:art&&t.revealed?<CozyMapArt name={art} size={t.kind==='city'?50:(scale<.85?21:25)/scale}/>:<span className={styles.fog} style={{fontSize:13/scale}}>{t.revealed?'·':(!selectionOpen&&t.q===cq&&t.r===cr)?'?':''}</span>}
+       {t.landmarkId||(quiet&&t.kind==='plain')?null:small||quiet?<span className={styles.dot} style={{width:(quiet?3:small?3:9)/scale,height:(quiet?3:small?3:9)/scale,opacity:t.revealed?1:0,background:t.ownerId?ownerColor(t.ownerId):spent?'#899f81':t.kind==='npc'?'#c18d73':t.kind==='gold'?'#ddbc69':t.kind==='materials'?'#8ab6a0':'#899f81'}}/>:art&&t.revealed?<CozyMapArt name={art} size={t.kind==='city'?50:(regionAnchors.has(t.id)?32:25)/scale}/>:<span className={styles.fog} style={{fontSize:13/scale}}>{t.revealed?'·':(!selectionOpen&&t.q===cq&&t.r===cr)?'?':''}</span>}
       </button>
      </foreignObject>;
     })}

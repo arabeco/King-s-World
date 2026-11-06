@@ -206,13 +206,22 @@ try{
  await context.addInitScript(id=>{for(const screen of ['crown','cities','city','military'])localStorage.setItem(`kw-screen-help:v1:${screen}:${id}`,'seen');},imperialSave.state.playerId);
  await page.goto(base+imperialWorld.href,{waitUntil:'networkidle'});const navigation=page.getByRole('navigation',{name:'Áreas do reino',exact:true});
  await navigation.getByRole('button',{name:'Cidades',exact:true}).click();await page.getByRole('button',{name:'Ver cidade Capital',exact:true}).click();
- await page.getByRole('tab',{name:'Decisões',exact:true}).click();await page.getByRole('button',{name:'Renomear',exact:true}).click();await page.getByRole('textbox',{name:'Nome da cidade',exact:true}).fill('Porto da Coroa');
+ await page.getByRole('tab',{name:'Decisões',exact:true}).click();await page.getByRole('button',{name:'Editar cidade',exact:true}).click();await page.getByRole('textbox',{name:'Nome da cidade',exact:true}).fill('Porto da Coroa');
  const renameReply=page.waitForResponse(r=>r.url()===imperialEndpoint&&r.request().method()==='POST');await page.getByRole('button',{name:'Salvar nome',exact:true}).click();assert.equal((await renameReply).status(),200);
- await page.getByRole('heading',{name:'Porto da Coroa',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Nome escolhido',exact:true}).isDisabled(),true);
+ await page.getByRole('heading',{name:'Porto da Coroa',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Dar um nome à cidade',exact:true}).count(),0);
  const citySave=await (await page.request.get(imperialEndpoint)).json(),capital=citySave.state.cities[0];assert.equal(citySave.shared.claims[`${capital.q},${capital.r}`].name,'Porto da Coroa');
  assert.equal((await page.request.post(imperialEndpoint,{data:{requestId:'second-name-rejected',action:{type:'rename_city',cityId:capital.id,name:'Outro nome'}}})).status(),422);
  await page.reload({waitUntil:'networkidle'});await navigation.getByRole('button',{name:'Cidades',exact:true}).click();await page.getByRole('button',{name:'Ver cidade Porto da Coroa',exact:true}).waitFor();
- console.log('PASS city rename through mobile UI: shared map name, once-per-owner lock, server rejection and persisted name after reload');
+ const clockRecord=(await db.query('select starts_at,status from worlds where slug=$1',[imperialWorld.slug])).rows[0];
+ try{
+  await db.query("update worlds set starts_at=now()-interval '25 hours',status='running' where slug=$1",[imperialWorld.slug]);
+  await page.goto(base+'/lobby',{waitUntil:'networkidle'});
+  await page.getByRole('navigation',{name:'Mundos',exact:true}).getByRole('button',{name:'Meus mundos',exact:true}).click();
+  await page.locator('[data-smoke="lobby-world-picker"]').selectOption(imperialWorld.slug);
+  assert.match(await page.locator('.lobby-selected-world').innerText(),/Dia 2\/30/);
+ }finally{await db.query('update worlds set starts_at=$1,status=$2 where slug=$3',[clockRecord.starts_at,clockRecord.status,imperialWorld.slug]);}
+ await page.goto(base+imperialWorld.href,{waitUntil:'networkidle'});
+  console.log('PASS city rename through mobile UI: shared map name, once-per-owner lock, server rejection and persisted name after reload');
  await navigation.getByRole('button',{name:'Coroa',exact:true}).click();await page.getByRole('button',{name:'Militar',exact:true}).click();
  const militia=page.getByRole('article',{name:'Milícia',exact:true});
  await militia.getByRole('button',{name:'Aumentar quantidade de Milícia',exact:true}).click();await militia.getByRole('button',{name:'Recrutar 2 Milícia',exact:true}).waitFor();

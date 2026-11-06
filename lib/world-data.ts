@@ -29,7 +29,7 @@ const STRUCTURE_IDS = ["crown", "economy", "society", "recruitment", "defense"] 
 type SeasonMode = "classic" | "express";
 const WORLD_SELECT_BASE = "id,slug,name,status,phase,day_number,starts_at,runtime_started,runtime_real_time_enabled,runtime_anchor_day,runtime_anchor_started_at,sandbox_enabled,player_cap";
 const WORLD_SELECT_WITH_MODE = `${WORLD_SELECT_BASE},season_mode,speed_multiplier`;
-const WORLD_SELECT_WITH_RULES = `${WORLD_SELECT_WITH_MODE},rules_version`;
+const WORLD_SELECT_WITH_RULES = `${WORLD_SELECT_WITH_MODE},rules_version,economy_version`;
 
 type CityStructureId = (typeof STRUCTURE_IDS)[number];
 type StructureDots = Record<"a" | "b" | "c" | "d", number>;
@@ -37,6 +37,7 @@ type VillageStructureLevels = Partial<Record<CityStructureId, number>>;
 type VillageStructureSkills = Partial<Record<CityStructureId, StructureDots>>;
 
 type DbWorld = {
+  economy_version?: number;
   id: string;
   slug: string;
   name: string;
@@ -258,12 +259,14 @@ function clampDay(day: number, durationDays = WORLD_DURATION_DAYS): number {
 function computeRuntime(world: DbWorld) {
   if (world.rules_version === 2) {
     const seasonMode = normalizeSeasonMode(world.season_mode);
-    const speedMultiplier = seasonMode === "express" ? 4 : 1;
+    const economicExpress = seasonMode === "express" && world.economy_version === 2;
+    const speedMultiplier = economicExpress ? 1 : seasonMode === "express" ? (world.speed_multiplier === 2 ? 2 : 4) : 1;
+    const durationDays = economicExpress ? 30 : 120;
     const started = world.status !== "open";
-    const anchorStartedAtMs = world.runtime_anchor_started_at ? Date.parse(world.runtime_anchor_started_at) : world.starts_at ? Date.parse(world.starts_at) : null;
-    const day = !started || anchorStartedAtMs === null ? 0 : Math.min(120, Math.max(1, 1 + Math.floor((Date.now() - anchorStartedAtMs) / (REAL_DAY_MS / speedMultiplier))));
-    return { currentDay: day, seasonMode, speedMultiplier, durationDays: 120, portalStartDay: 91,
-      runtimeState: { started, realTimeEnabled: started, anchorDay: 1, anchorStartedAtMs, seasonMode, speedMultiplier, durationDays: 120 } };
+    const anchorStartedAtMs = world.starts_at ? Date.parse(world.starts_at) : world.runtime_anchor_started_at ? Date.parse(world.runtime_anchor_started_at) : null;
+    const day = !started || anchorStartedAtMs === null ? 0 : Math.min(durationDays, Math.max(1, 1 + Math.floor((Date.now() - anchorStartedAtMs) / (REAL_DAY_MS / speedMultiplier))));
+    return { currentDay: day, seasonMode, speedMultiplier, durationDays, portalStartDay: portalStartDay(durationDays),
+      runtimeState: { started, realTimeEnabled: started, anchorDay: 1, anchorStartedAtMs, seasonMode, speedMultiplier, durationDays } };
   }
   const seasonMode = normalizeSeasonMode(world.season_mode);
   const durationDays = worldDurationDays(world);

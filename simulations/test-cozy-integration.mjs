@@ -1036,7 +1036,7 @@ try {
         await page.getByRole('tab',{name:'Defesa',exact:true}).click();
         await page.getByRole('button',{name:`Cuidar da defesa de ${capital.name}`,exact:true}).click();
         await page.getByRole('dialog',{name:'Defesa',exact:true}).waitFor();
-        assert.equal(await page.getByRole('dialog',{name:'Defesa',exact:true}).getByText(capital.name,{exact:true}).count(),1);
+        assert.equal(await page.getByRole('dialog',{name:'Defesa',exact:true}).getByText(`${capital.name} · Nível`,{exact:false}).count(),1);
         await page.getByRole('button',{name:'Fechar setor',exact:true}).click();
         await page.getByRole('button',{name:'Voltar',exact:true}).click();
         await navigation.getByRole('button',{name:'Coroa',exact:true}).click();
@@ -1261,7 +1261,7 @@ try {
             await treasuryTrigger.click();
             await page
               .getByRole("button", {
-                name: "Ver produção das cidades",
+                name: "Evoluir cidades",
                 exact: true,
               })
               .click();
@@ -1602,7 +1602,7 @@ try {
             "Local decisions are a separate city tab",
           );
           await riverView
-            .getByRole("button", { name: "Renomear", exact: true })
+            .getByRole("button", { name: "Dar um nome à cidade", exact: true })
             .waitFor();
           await assertImages(`${label} city decisions`);
           await assertViewport(`${label} city decisions`);
@@ -3096,6 +3096,17 @@ try {
         assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:path.join(reports,'exploration-corridor-preview-390.png')});
         const sent=page.waitForResponse(r=>r.url().endsWith('/cozy')&&r.request().method()==='POST'&&r.request().postDataJSON()?.action?.type==='explore');await page.getByRole('button',{name:'Explorar caminho',exact:false}).tap();const reply=await sent;assert.equal(reply.status(),200);dispatched=await reply.json();
         assert(dispatched.state.orders.some(o=>o.explorationPath?.length>5));
+        const blockedExplore=page.getByRole('button',{name:'Explorar caminho',exact:false});
+        await page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(button=>button.textContent.includes('Explorar caminho')&&button.getAttribute('aria-disabled')==='true'));
+        let repeatedExplorations=0;
+        const countExplorations=request=>{if(request.method()==='POST'&&request.url().endsWith('/cozy')&&request.postDataJSON()?.action?.type==='explore')repeatedExplorations++;};
+        page.on('request',countExplorations);
+        await blockedExplore.click({force:true});
+        await page.getByRole('status').filter({hasText:/Exploração em andamento/}).waitFor();
+        assert.equal(repeatedExplorations,0,'A blocked exploration explains the wait without issuing another command');
+        page.off('request',countExplorations);
+        await page.screenshot({path:path.join(reports,'exploration-busy-feedback-390.png')});
+
         const order=dispatched.state.orders.find(o=>o.explorationPath),at=Math.max(Date.now(),dispatched.state.settledAt)+30;order.arrivesAt=at;
         await db.query('update kw_cozy_player_states set state_json=$1::jsonb,revision=revision+1 where world_player_id=$2',[JSON.stringify(dispatched.state),dispatched.state.playerId]);await sleep(Math.max(0,at-Date.now()+1));
         await page.reload({waitUntil:'networkidle'});await page.getByRole('button',{name:'Mundo',exact:true}).click();await map.waitFor();
