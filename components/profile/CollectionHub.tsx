@@ -39,6 +39,33 @@ export function CollectionHub({mode,username,seasonId}:{mode:'profile'|'inventor
 
  useEffect(()=>{if(mode==='inventory'){const params=new URLSearchParams(location.search);const category=params.get('tab');if(category&&['king','equipment','crest'].includes(category))setTab(category);}},[mode]);
 
+ const [focusedKingId,setFocusedKingId]=useState<string|null>(null);
+ const kingRail=useRef<HTMLDivElement>(null);
+ const initialKingId=data?.selectedId;
+
+ useEffect(()=>{
+  if(mode!=='profile'||!initialKingId||!kingRail.current)return;
+  const rail=kingRail.current;
+  const card=Array.from(rail.children).find(child=>child.getAttribute('data-king')===initialKingId);
+  if(!card)return;
+  const offset=card.getBoundingClientRect().left-rail.getBoundingClientRect().left;
+  rail.scrollLeft+=offset-(rail.clientWidth-card.clientWidth)/2;
+ },[mode,initialKingId]);
+
+ function focusCenteredKing(){
+  const rail=kingRail.current;
+  if(!rail)return;
+  const center=rail.getBoundingClientRect().left+rail.clientWidth/2;
+  const nearest=Array.from(rail.children).reduce<Element|null>((best,card)=>{
+   const distance=(item:Element)=>{
+    const rect=item.getBoundingClientRect();
+    return Math.abs(rect.left+rect.width/2-center);
+   };
+   return !best||distance(card)<distance(best)?card:best;
+  },null);
+  setFocusedKingId(nearest?.getAttribute('data-king')??null);
+ }
+
  const owned=new Map((data?.inventory??[]).map(i=>[i.id,i]));const selected=COLLECTION_PRODUCTS.find(p=>p.id===data?.selectedId)??COLLECTION_PRODUCTS[0];
 
  async function select(product:Product){setBusy(true);setError('');try{const state=await collectionRequest<{revision:number}>('/api/me/appearance',{cache:'no-store'});await collectionRequest('/api/me/appearance',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({appearance_id:product.id,revision:state.revision})});setData(d=>d?{...d,selectedId:product.id}:d);}catch(e){setError(e instanceof Error?e.message:'Falha ao selecionar.');}finally{setBusy(false);}}
@@ -69,9 +96,11 @@ export function CollectionHub({mode,username,seasonId}:{mode:'profile'|'inventor
   finally{setBusy(false);}
  }
 
- const level=kingLevel(owned.get(selected.id)?.xp??0),xp=owned.get(selected.id)?.xp??0,start=(level-1)**2*KING_PROGRESSION.levelXp,end=level**2*KING_PROGRESSION.levelXp;
+ const viewed=mode==='profile'?COLLECTION_PRODUCTS.find(p=>p.id===focusedKingId&&p.kind==='king'&&(showAll||owned.has(p.id)))??selected:selected;
+ const viewedItem=owned.get(viewed.id);
+ const level=kingLevel(viewedItem?.xp??0),xp=viewedItem?.xp??0,start=(level-1)**2*KING_PROGRESSION.levelXp,end=level**2*KING_PROGRESSION.levelXp;
 
- const added=owned.get(selected.id)?.added;const freePoints=Math.max(0,level-1-(added?.administration??0)-(added?.command??0)-(added?.exploration??0));const stats=effectiveKingStats(selected,owned.get(selected.id));
+ const added=viewedItem?.added;const freePoints=Math.max(0,level-1-(added?.administration??0)-(added?.command??0)-(added?.exploration??0));const stats=effectiveKingStats(viewed,viewedItem);
 
  const visible=COLLECTION_PRODUCTS.filter(p=>p.kind===tab&&(mode==='shop'?p.sale:mode==='profile'?p.kind==='king'&&(showAll||owned.has(p.id)):owned.has(p.id)));
 
@@ -90,7 +119,7 @@ export function CollectionHub({mode,username,seasonId}:{mode:'profile'|'inventor
 
  {mode==='inventory'&&Boolean(data?.seasonRewards?.length)&&<details className={styles.rewards}><summary>Prêmios de temporada</summary>{data?.seasonRewards?.map(r=><div key={r.worldId}><button type="button" className={styles.rewardName} aria-label={`Ver prêmios de ${r.worldName}`} onClick={()=>setRewardDetail(r)}><strong>{r.worldName}</strong>{r.rulesVersion===2&&r.place&&<small>{r.place}º / {r.participants}</small>}</button><span><Gem size={16}/> +{r.gems}</span>{Object.values(r.kingXp??{}).reduce((sum,xp)=>sum+xp,0)>0&&<span>+{Object.values(r.kingXp??{}).reduce((sum,xp)=>sum+xp,0)} XP</span>}{r.productIds?.map(id=>{const product=COLLECTION_PRODUCTS.find(p=>p.id===id);return product?<button type="button" key={id} aria-label={`Ver prêmio ${product.name}`} onClick={()=>setDetail(product)}><img src={product.image} alt=""/></button>:null;})}<time dateTime={r.awardedAt}>{new Date(r.awardedAt).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</time></div>)}</details>}
 
- {mode==='profile'&&data&&<><header className={styles.sovereignHero}><img className={styles.figure} src={selected.body} alt={selected.name}/><div><span className={styles.heroEyebrow}>Seu soberano</span><h1>{username}</h1><button type="button" className={styles.selectedKing} onClick={()=>setDetail(selected)}>{selected.name} <span aria-hidden="true">›</span></button><strong>Nível {level}</strong><div className={styles.xp} role="progressbar" aria-label="Experiência deste rei" aria-valuemin={0} aria-valuemax={level===10?1:end-start} aria-valuenow={level===10?1:Math.max(0,xp-start)}><span style={{width:`${level===10?100:Math.min(100,(xp-start)/(end-start)*100)}%`}}/></div><small>{level===10?`${xp} XP · nível máximo`:`${xp-start} / ${end-start} XP`}</small></div></header>{selected.baseStats&&<><SovereignStats values={stats} label="Stats do rei selecionado"/>{data&&<details><summary>{freePoints} {freePoints===1?'ponto disponível':'pontos disponíveis'}</summary><small>Base fixa. Pontos adicionados são permanentes e valem ao iniciar outro reinado.</small>{(['administration','command','exploration'] as const).map((key,i)=><div className={styles.statAdd} key={key}><span>{['Administração','Comando','Exploração'][i]} · {selected.baseStats![key]} base + {added?.[key]??0}</span><button type="button" disabled={busy||freePoints<=0||stats[key]>=10} onClick={()=>{setError('');setNotice('');setStatNeedsCheck(false);setStatConfirm({kingId:selected.id,stat:key,revision:owned.get(selected.id)?.statRevision??0});}}>+1</button></div>)}</details>}</>}<h2>Seus reis <small>{data?[...owned.keys()].filter(id=>id.startsWith('sovereign-')).length:'—'} / 22</small></h2></>}
+
 
  {notice&&<p role="status" className={styles.notice}>{notice}</p>}{error&&!statConfirm&&!confirm&&!detail&&<div className={styles.error}><p role="alert">{error}</p><button type="button" disabled={busy} onClick={()=>setAttempt(n=>n+1)}>Tentar novamente</button></div>}{!data&&!error&&<p role="status">Consultando coleção…</p>}
 
@@ -100,7 +129,15 @@ export function CollectionHub({mode,username,seasonId}:{mode:'profile'|'inventor
  changeCategory(keys[next]);document.getElementById(`${categoryId}-${keys[next]}`)?.focus();
  }} onClick={()=>{if(key==='gems'||key==='premium'){document.getElementById(key==='gems'?'gem-packs':'premium-plan')?.scrollIntoView({behavior:'smooth'});}else changeCategory(key);}}>{label}</button>)}</div>}
 
- <div className={styles.grid} id={`${categoryId}-panel`} role={mode==='inventory'?'tabpanel':undefined} aria-labelledby={mode==='inventory'?`${categoryId}-${tab}`:undefined}>{visible.map(p=>{const item=owned.get(p.id),missing=Math.max(0,p.price-(data?.gems??0));return <article key={p.id} data-selected={data?.selectedId===p.id} data-rarity={p.kind==='equipment'?p.rarity:undefined}><button type="button" className={styles.inspectArt} aria-label={`Ver detalhes de ${p.name}`} onClick={()=>setDetail(p)}><img loading="lazy" src={p.image} alt=""/></button><strong>{p.name}</strong>{p.kind==='king'&&item&&<small>Nível {kingLevel(item.xp)} · {item.xp} XP</small>}{p.kind==='king'&&p.baseStats&&<SovereignStats compact values={effectiveKingStats(p,item)} label={item?"Stats do rei":"Stats iniciais"}/>}{item?<>{p.kind==='king'?<button type="button" disabled={busy||!data||data.selectedId===p.id} onClick={()=>select(p)}>{data?.selectedId===p.id?'Selecionado':'Selecionar'}</button>:<>{p.kind==='equipment'?<><small>{EQUIPMENT_RARITY_LABELS[p.rarity??'common']}</small><small>{equipmentDescription(p.id)}</small><small>Possuído</small></>:<small>Possuído</small>}</>}</>:<>{mode==='shop'?<><span className={styles.cost}><Gem size={15}/>{p.price}</span><button type="button" className="primary-button" disabled={!data||busy} onClick={()=>{if(missing){document.getElementById('gem-packs')?.scrollIntoView({behavior:'smooth'});return;}setError('');setRequestId(crypto.randomUUID());setConfirm(p);}}>{missing?`Faltam ${missing} Gemas`:'Comprar'}</button></>:<><small><Lock size={12}/> {p.price} Gemas</small><Link href="/premium">Ver na loja</Link></>}</>}</article>;})}</div>
+ {mode==='profile'&&data&&<h2>Seus reis <small>{data?[...owned.keys()].filter(id=>id.startsWith('sovereign-')).length:'—'} / 22</small></h2>}
+ <div className={mode==='profile'?styles.kingRail:styles.grid} ref={mode==='profile'?kingRail:undefined} onScroll={mode==='profile'?focusCenteredKing:undefined} id={`${categoryId}-panel`} role={mode==='inventory'?'tabpanel':undefined} aria-labelledby={mode==='inventory'?`${categoryId}-${tab}`:undefined}>{visible.map(p=>{const item=owned.get(p.id),missing=Math.max(0,p.price-(data?.gems??0));return <article key={p.id} data-king={mode==='profile'?p.id:undefined} data-focused={mode==='profile'&&viewed.id===p.id} data-selected={data?.selectedId===p.id} data-rarity={p.kind==='equipment'?p.rarity:undefined}><button type="button" className={styles.inspectArt} aria-label={mode==='profile'?`Destacar ${p.name}`:`Ver detalhes de ${p.name}`} onClick={event=>{
+  if(mode==='profile'){
+   event.currentTarget.closest('article')?.scrollIntoView({block:'nearest',inline:'center'});
+   setFocusedKingId(p.id);
+  }else setDetail(p);
+ }}><img loading="lazy" src={p.image} alt=""/></button><strong>{p.name}</strong>{p.kind==='king'&&item&&<small>Nível {kingLevel(item.xp)} · {item.xp} XP</small>}{p.kind==='king'&&p.baseStats&&<SovereignStats compact values={effectiveKingStats(p,item)} label={item?"Stats do rei":"Stats iniciais"}/>}{item?<>{p.kind==='king'?<button type="button" disabled={busy||!data||data.selectedId===p.id} onClick={()=>select(p)}>{data?.selectedId===p.id?'Selecionado':'Selecionar'}</button>:<>{p.kind==='equipment'?<><small>{EQUIPMENT_RARITY_LABELS[p.rarity??'common']}</small><small>{equipmentDescription(p.id)}</small><small>Possuído</small></>:<small>Possuído</small>}</>}</>:<>{mode==='shop'?<><span className={styles.cost}><Gem size={15}/>{p.price}</span><button type="button" className="primary-button" disabled={!data||busy} onClick={()=>{if(missing){document.getElementById('gem-packs')?.scrollIntoView({behavior:'smooth'});return;}setError('');setRequestId(crypto.randomUUID());setConfirm(p);}}>{missing?`Faltam ${missing} Gemas`:'Comprar'}</button></>:<><small><Lock size={12}/> {p.price} Gemas</small><Link href="/premium">Ver na loja</Link></>}</>}</article>;})}</div>
+
+ {mode==='profile'&&data&&<><header className={styles.sovereignHero}><img className={styles.figure} src={viewed.body} alt={viewed.name}/><div><span className={styles.heroEyebrow}>Seu soberano</span><h1>{username}</h1><button type="button" className={styles.selectedKing} onClick={()=>setDetail(viewed)}>{viewed.name} <span aria-hidden="true">›</span></button>{viewedItem?<strong>Nível {level}</strong>:<strong>Não adquirido</strong>}{viewedItem&&<><div className={styles.xp} role="progressbar" aria-label="Experiência deste rei" aria-valuemin={0} aria-valuemax={level===10?1:end-start} aria-valuenow={level===10?1:Math.max(0,xp-start)}><span style={{width:`${level===10?100:Math.min(100,(xp-start)/(end-start)*100)}%`}}/></div><small>{level===10?`${xp} XP · nível máximo`:`${xp-start} / ${end-start} XP`}</small></>}</div></header>{viewed.baseStats&&<><SovereignStats values={stats} label="Stats do rei em destaque"/>{viewedItem&&<details><summary>{freePoints} {freePoints===1?'ponto disponível':'pontos disponíveis'}</summary><small>Base fixa. Pontos adicionados são permanentes e valem ao iniciar outro reinado.</small>{(['administration','command','exploration'] as const).map((key,i)=><div className={styles.statAdd} key={key}><span>{['Administração','Comando','Exploração'][i]} · {viewed.baseStats![key]} base + {added?.[key]??0}</span><button type="button" disabled={busy||freePoints<=0||stats[key]>=10} onClick={()=>{setError('');setNotice('');setStatNeedsCheck(false);setStatConfirm({kingId:viewed.id,stat:key,revision:owned.get(viewed.id)?.statRevision??0});}}>+1</button></div>)}</details>}</>}</>}
 
  {mode==='profile'&&data&&<button type="button" className={styles.expand} onClick={()=>setShowAll(value=>!value)}>{showAll?'Mostrar só meus reis':'Ver todos os reis (22)'}</button>}
 

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {AuthSignOutButton} from "@/components/auth-signout-button";
 
 import { LobbyWorldSelector } from "@/components/lobby-world-selector";
@@ -15,6 +14,6 @@ export default async function LobbyPage() {
     <h1 className={styles.brand}>KING’S WORLD</h1>
     <LobbyAccountBanner username={appUser.username}/>
     <LobbyWorldSelector username={appUser.username} worlds={worlds}/>
-    <footer className={styles.footer}><Link href="/profile">Minha conta</Link><AuthSignOutButton/></footer>
+    <footer className={styles.footer}><AuthSignOutButton/></footer>
   </div></main>;
 }

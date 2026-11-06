@@ -39,7 +39,6 @@ export function LobbyWorldSelector({
   const router = useRouter();
   const [view,setView]=useState<"mine"|"search"|"create">(worlds.length?"mine":"create");
   const firstPlayableWorld = worlds.find((world) => world.rulesVersion === 2 && world.status !== "Finalizado") ?? worlds.find(world=>world.rulesVersion===2) ?? worlds[0] ?? null;
-  const hasPlayableWorld = worlds.some((world) => world.status !== "Finalizado");
   const storageKey = `kw:last-world:${username}`;
   const [selectedWorldId, setSelectedWorldId] = useState(firstPlayableWorld?.id ?? "");
   const [creatingWorld, setCreatingWorld] = useState(false);
@@ -182,23 +181,24 @@ export function LobbyWorldSelector({
     <div className={styles.worlds}>
       <nav className={styles.tabs} aria-label="Mundos"><button type="button" aria-pressed={view==="mine"} onClick={()=>setView("mine")}>Meus mundos</button><button type="button" aria-pressed={view==="search"} onClick={()=>setView("search")}>Buscar</button><button type="button" aria-pressed={view==="create"} onClick={()=>setView("create")}>Criar</button></nav>
       {view==="mine"&&<>
-      <SectionCard title="Entrar no mundo" eyebrow="Seletor" mediaSrc="/images/capital.jpg" className="lobby-card lobby-card--entry">
+      <SectionCard title="Seus mundos" className="lobby-card lobby-card--entry">
         <div className="form-stack">
-          <label className="list-meta" htmlFor="lobby-world-picker">Seus reinados</label>
+          {worlds.length>0&&<label className={worlds.length===1&&process.env.NODE_ENV==="production"?styles.onlyWorld:undefined}>
+          <span className="list-meta">Trocar mundo</span>
           <select
-            id="lobby-world-picker"
+            aria-label="Trocar mundo"
             value={selectedWorldId}
             onChange={(event) => setSelectedWorldId(event.target.value)}
             data-smoke="lobby-world-picker"
           >
             {worlds.map((world) => (
               <option key={world.id} value={world.id}>
-                {world.name} - {world.status} - Dia {world.day}{world.rulesVersion === 2 ? " · Coroa" : " · Regras anteriores"}
+                {world.name}
               </option>
             ))}
-          </select>
+          </select></label>}
 
-          {!hasPlayableWorld ? (
+          {!selectedWorld ? (
             <div className="world-card lobby-compact-card" style={{ background: "rgba(120,53,15,0.24)", borderColor: "rgba(251,191,36,0.28)", textAlign: "center" }}>
               <strong>Seu próximo reino começa aqui</strong>
               <button type="button" className="primary-button" onClick={()=>setView("create")}>Criar meu mundo</button><button type="button" className="secondary-button" onClick={()=>setView("search")}>Buscar um mundo</button>
@@ -211,7 +211,7 @@ export function LobbyWorldSelector({
                 <div>
                   <strong>{selectedWorld.name}</strong>
                   <p className="list-meta">
-                    {selectedWorld.seasonMode==='express'?'Expresso':'Normal'} · Dia {selectedWorld.day}/{selectedWorld.durationDays ?? 120} · {selectedWorld.players} jogadores
+                    {selectedWorld.seasonMode==='express'?'Expresso':'Normal'} · Dia {selectedWorld.day}/{selectedWorld.durationDays ?? 120}
                   </p>
                 </div>
                 <StatusBadge label={selectedWorld.status} tone={toneForWorld(selectedWorld)} />
@@ -219,9 +219,9 @@ export function LobbyWorldSelector({
             </div>
           ) : null}
 
-          <button className="primary-button" type="button" onClick={enterWorld} disabled={!selectedWorld} data-smoke="lobby-enter-world">
-            {selectedWorld?.status === "Finalizado" ? "Ver relatorio" : "Entrar"}
-          </button>
+          {selectedWorld&&<button className="primary-button" type="button" onClick={enterWorld} data-smoke="lobby-enter-world">
+            {selectedWorld?.status === "Finalizado" ? "Ver relatório" : "Entrar no mundo"}
+          </button>}
           {process.env.NODE_ENV !== "production" ? (
             <div className="inline-actions lobby-dev-actions">
               <button className="secondary-button" type="button" onClick={() => createTestWorld("classic")} disabled={creatingWorld} data-smoke="create-test-world">

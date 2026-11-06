@@ -7,6 +7,8 @@ import CozyRealmUpdates from "./CozyRealmUpdates";
 import {WorldLoadingScreen} from "../world-loading-screen";
 import CozyAlliance from "./CozyAlliance";
 import {WorldEquipmentSlots} from "./WorldEquipmentSlots";
+import {COLLECTION_PRODUCTS} from "@/lib/collection";
+import {SovereignStats} from "../profile/SovereignStats";
 import CozyRoyalProfile from "./CozyRoyalProfile";
 import CozyScreenHelp from "./CozyScreenHelp";
 import {CozyHelpAnchor} from "./CozyHelpAnchor";
@@ -220,7 +222,7 @@ function Progress({
   );
 }
 type GameOverlay =
-  CrownPanel | "orders" | "defense" | "influence" | "menu" | "resources";
+  CrownPanel | "orders" | "defense" | "influence" | "menu" | "resources" | "royalProfile";
 
 function influenceSources(area:CrownPanel,{state,computed}:CozyPayload): [string,number|string][] {
   const d=computed.influenceDetails;
@@ -508,6 +510,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
     }
   };
   const overlayTitles: Record<GameOverlay, string> = {
+    royalProfile: "Perfil do reinado",
     infrastructure: "Infraestrutura",
     military: "Militar",
     government: "Governo",
@@ -590,7 +593,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
       <div className={game.frame}>
         <header className={game.hud}>
           <div className={game.realmBar}>
-            <button type="button" className={game.accountPortrait} onClick={()=>router.push("/profile")} aria-label="Perfil da conta">
+            <button type="button" className={game.accountPortrait} onClick={()=>setPanel("royalProfile")} aria-label="Perfil do reinado" aria-haspopup="dialog">
               <span className={game.crownSeal}><AccountAppearance compact sovereignId={state.king?.sovereignId} fallback={royalPortrait??"/icons/nav-empire.png"}/></span>
             </button>
             <button type="button" className={game.realmBadge} onClick={()=>setPanel("menu")} aria-label="Menu do reino">
@@ -889,6 +892,9 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
             {(error||uncertain||(showConfirmation&&panel!=="resources"&&panel!=="orders")) && (
               <div className={game.sheetFeedback}>{feedback}</div>
             )}
+            {panel === "royalProfile" && (
+              <ReignProfile data={data} />
+            )}
             {panel === "infrastructure" && (
               <InfrastructureSummary
                 data={data}
@@ -1046,6 +1052,30 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
         )}
       </div>
     </div>
+  );
+}
+
+function ReignProfile({data}: {data: CozyPayload}) {
+  const {state}=data;
+  const king=state.king;
+  const sovereign=COLLECTION_PRODUCTS.find(product=>product.kind==="king"&&product.id===king?.sovereignId);
+  const portrait=sovereign?.body??activeRoyalProfile(state)?.image??"/icons/nav-empire.png";
+
+  return (
+    <section className={game.reignProfile} aria-label="Seu rei neste mundo">
+      <header>
+        <img src={portrait} alt="" />
+        <div>
+          <h3>{king?.nickname??state.playerName}</h3>
+          {sovereign&&<p>{sovereign.name}</p>}
+          <small>{king?.profileId?`Reinado ${king.generation}`:"Aguardando coroação"}</small>
+          {king?.profileId&&!king.alive&&<small>Reinado encerrado</small>}
+        </div>
+      </header>
+      {king?.attributes&&<SovereignStats values={king.attributes} label="Atributos deste reinado" />}
+      {king?.profileId&&<WorldEquipmentSlots value={king.equipment??[]} />}
+      <Link href="/lobby" className="primary-button"><ArrowLeft size={18}/>Voltar ao lobby</Link>
+    </section>
   );
 }
 

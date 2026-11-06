@@ -19,6 +19,12 @@ try{
  await page.goto(base+'/profile',{waitUntil:'networkidle'});const collection=page.getByRole('region',{name:'Coleção de reis',exact:true});
  const collectionCheck=await page.request.get(base+'/api/me/collection');assert.equal(collectionCheck.status(),200,await collectionCheck.text());
  await collection.getByText('Nível 1',{exact:true}).waitFor();assert.equal(await collection.locator('article').count(),4);
+ const secondKing=collection.locator('article').nth(1);
+ await secondKing.getByRole('button',{name:/^Destacar /}).click();
+ await page.waitForFunction(()=>document.querySelectorAll('[data-king]')[1]?.getAttribute('data-focused')==='true');
+ assert.equal(await secondKing.getAttribute('data-selected'),'false','Browsing does not equip the king');
+ await collection.locator('article').first().getByRole('button',{name:/^Destacar /}).click();
+
  await collection.getByRole('button',{name:'Ver todos os reis (22)',exact:true}).click();assert.equal(await collection.locator('article').count(),22);
  await collection.getByRole('button',{name:'Mostrar só meus reis',exact:true}).click();assert.equal(await collection.locator('article').count(),4);
  assert.equal(await page.getByText('Nível da conta',{exact:true}).count(),0);
@@ -122,6 +128,15 @@ try{
  await page.unroute('**/api/worlds/*/cozy');
  const commit=page.waitForResponse(r=>r.url()===endpoint&&r.request().method()==='POST');await recovery.click();const committed=await commit;assert.equal(committed.status(),200);assert.deepEqual(committed.request().postDataJSON(),firstRequest,'Recovery repeats the exact request and selected loadout');
  await royal.waitFor({state:'hidden'});
+ await page.getByRole('dialog',{name:'Como comandar seu reino',exact:true}).getByRole('button',{name:'Fechar ajuda',exact:true}).click();
+ await page.getByRole('button',{name:'Perfil do reinado',exact:true}).click();
+ const reignProfile=page.getByRole('dialog',{name:'Perfil do reinado',exact:true});
+ await reignProfile.getByRole('img',{name:'Livro de Ofícios',exact:true}).waitFor();
+ assert.equal(await reignProfile.getByRole('link',{name:'Voltar ao lobby',exact:true}).getAttribute('href'),'/lobby');
+ await page.screenshot({path:path.join(root,'reports/cozy/world-reign-profile-390.png')});
+ await page.keyboard.press('Escape');
+ await reignProfile.waitFor({state:'hidden'});
+
  assert.equal(await page.evaluate(()=>Object.keys(sessionStorage).filter(k=>k.startsWith('kw-coronation-draft:')).length),0,'Confirmed coronation clears its draft');
  console.log('PASS coronation network recovery preserves request ID, nickname, king, equipment and crest without a second form save');
  const reign=(await (await page.request.get(endpoint)).json()).state.king;assert.equal(reign.nickname,'GlobalKing');assert.equal(reign.sovereignId,'sovereign-01');assert.deepEqual(reign.equipment,['item-craft-ledger','','']);assert.equal(reign.attributes.administration,6);
