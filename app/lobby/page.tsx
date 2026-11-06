@@ -1,3 +1,4 @@
+import AccountNavigation from "@/components/AccountNavigation";
 import {AuthSignOutButton} from "@/components/auth-signout-button";
 
 import { LobbyWorldSelector } from "@/components/lobby-world-selector";
@@ -12,6 +13,7 @@ export default async function LobbyPage() {
 
   return <main className={styles.page}><div className={styles.stage}>
     <h1 className={styles.brand}>KING’S WORLD</h1>
+    <AccountNavigation active="worlds"/>
     <LobbyAccountBanner username={appUser.username}/>
     <LobbyWorldSelector username={appUser.username} worlds={worlds}/>
     <footer className={styles.footer}><AuthSignOutButton/></footer>

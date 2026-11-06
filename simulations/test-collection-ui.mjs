@@ -65,6 +65,11 @@ try{
  await collection.getByText('Comando · 5 base + 1',{exact:true}).waitFor();await collection.getByText('Exploração · 5 base + 0',{exact:true}).waitFor();await collection.getByText('0 pontos disponíveis',{exact:true}).waitFor();
  console.log('PASS permanent points: failed write, failed reconciliation, lost committed response and competing tab all recover without double spend or changing the chosen attribute');
  await page.screenshot({path:path.join(root,'reports/cozy/collection-profile-390.png'),fullPage:true});
+ const accountNav=page.getByRole('navigation',{name:'Atalhos da conta',exact:true});
+ await accountNav.locator('[aria-current="page"]').filter({hasText:'Perfil'}).waitFor();
+ await accountNav.getByRole('link',{name:'Inventário',exact:true}).click();
+ await page.waitForURL('**/inventory');
+ await accountNav.locator('[aria-current="page"]').filter({hasText:'Inventário'}).waitFor();
  await page.goto(base+'/inventory?tab=equipment',{waitUntil:'networkidle'});const inventory=page.getByRole('region',{name:'Inventário',exact:true});await inventory.getByText('Livro de Ofícios',{exact:true}).waitFor();assert.equal(await inventory.locator('article').count(),3);
  const equipmentTab=inventory.getByRole('tab',{name:'Equipamentos',exact:true});assert.equal(await equipmentTab.getAttribute('aria-selected'),'true');await equipmentTab.focus();await page.keyboard.press('ArrowRight');await inventory.getByRole('tab',{name:'Brasões',exact:true}).waitFor();assert.equal(await inventory.locator('article').count(),20);await page.keyboard.press('Home');assert.equal(await inventory.getByRole('tab',{name:'Reis',exact:true}).getAttribute('aria-selected'),'true');await page.keyboard.press('End');assert.equal(await inventory.getByRole('tab',{name:'Brasões',exact:true}).getAttribute('aria-selected'),'true');assert.equal(new URL(page.url()).searchParams.get('tab'),'crest');await page.reload({waitUntil:'networkidle'});await inventory.getByRole('tab',{name:'Brasões',exact:true}).waitFor();assert.equal(await inventory.locator('article').count(),20);await equipmentTab.click();
  const inspect=inventory.getByRole('button',{name:'Ver detalhes de Livro de Ofícios',exact:true});await inspect.click();const itemDetail=page.getByRole('dialog',{name:'Livro de Ofícios',exact:true});await itemDetail.getByText('+1% Materiais',{exact:true}).waitFor();
@@ -72,7 +77,9 @@ try{
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(root,'reports/cozy/inventory-item-detail-390.png')});await page.keyboard.press('Escape');await itemDetail.waitFor({state:'hidden'});assert.equal(await inspect.evaluate(el=>document.activeElement===el),true);
  console.log('PASS inventory category keyboard navigation, item effects/rarity, native dialog focus, Escape and 320/390/430 layout; canceling a permanent stat spends no point');
  const entitlementResponse=await page.request.get(base+'/api/me/entitlements');assert.equal(entitlementResponse.status(),200);const access=await entitlementResponse.json();assert.equal(access.benefits.worldLimit,1);assert(!JSON.stringify(access).includes('purchase_token'));assert(!JSON.stringify(access).includes('raw_payload'));
- await page.goto(base+'/premium',{waitUntil:'networkidle'});const shop=page.getByRole('region',{name:'Loja da Coroa'});await shop.getByRole('button',{name:'Faltam 50 Gemas',exact:true}).first().waitFor();
+ await accountNav.getByRole('link',{name:'Loja',exact:true}).click();
+ await accountNav.locator('[aria-current="page"]').filter({hasText:'Loja'}).waitFor();
+ const shop=page.getByRole('region',{name:'Loja da Coroa'});await shop.getByRole('button',{name:'Faltam 50 Gemas',exact:true}).first().waitFor();
  await shop.getByRole('button',{name:'Premium',exact:true}).click();await page.getByRole('heading',{name:'Coroa Premium',exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Em preparação',exact:true}).count(),5);
  for(const width of [320,390,430]){await page.setViewportSize({width,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
@@ -174,7 +181,8 @@ try{
  await db.query("insert into user_entitlements(user_id,provider,product_id,purchase_token,status,expires_at) values($1,'google_play','premium_monthly','private-fixture-token','canceled',now()+interval '10 days')",[me.id]);
  const paidAccess=await (await page.request.get(base+'/api/me/entitlements')).json();assert.equal(paidAccess.premium.active,true);assert.equal(paidAccess.benefits.worldLimit,5);assert(!JSON.stringify(paidAccess).includes('private-fixture-token'));
  await page.goto(base+'/premium',{waitUntil:'networkidle'});await page.getByRole('button',{name:'Premium ativo',exact:true}).waitFor();
- await page.goto(base+'/lobby',{waitUntil:'networkidle'});
+ await accountNav.getByRole('link',{name:'Mundos',exact:true}).click();
+ await accountNav.locator('[aria-current="page"]').filter({hasText:'Mundos'}).waitFor();
  await page.getByRole('link',{name:'Abrir meu perfil',exact:true}).waitFor();
  for(const width of [320,390,430]){
   await page.setViewportSize({width,height:844});

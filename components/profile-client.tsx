@@ -1,8 +1,8 @@
 "use client";
 
+import AccountNavigation from "@/components/AccountNavigation";
 import {CozyAccountPanel} from "./cozy/CozyAccountPanel";
 import pageStyles from "./sovereign-page.module.css";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Trash2, X } from "lucide-react";
@@ -94,6 +94,7 @@ export function ProfileClient({ initialUsername }: ProfileClientProps) {
 
   return (
     <main className={pageStyles.page}>
+      <AccountNavigation active="profile"/>
       <div className={pageStyles.stage}>
         <button type="button" className={pageStyles.back} aria-label="Voltar" onClick={()=>document.referrer.startsWith(location.origin+"/")?router.back():router.push("/lobby")}>‹</button>
         <CozyAccountPanel username={username}/>
@@ -153,12 +154,6 @@ export function ProfileClient({ initialUsername }: ProfileClientProps) {
         {error&&!editingName ? <p role="alert" style={{ marginTop: "1rem", color: "#fecaca" }}>{error}</p> : null}
 
         <div className="inline-actions" style={{ marginTop: "1rem" }}>
-          <Link className="secondary-button" href="/lobby">
-            Lobby
-          </Link>
-          <Link className="primary-button" href="/premium">
-            Premium
-          </Link>
           <AuthSignOutButton />
         </div>
       </SectionCard>

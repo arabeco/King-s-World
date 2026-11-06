@@ -10,6 +10,6 @@ export default function LobbyAccountBanner({username}:{username:string}){
  const king=COLLECTION_PRODUCTS.find(p=>p.id===data?.selectedId),owned=data?.inventory.find(p=>p.id===data.selectedId);
  return <header className={styles.account}>
   <Link href="/profile" className={styles.identity} aria-label="Abrir meu perfil"><img src={king?.image??'/icons/nav-profile.png'} width={62} height={62} alt=""/><span><strong>{username}</strong><small>{king?`${king.name} · Nível ${kingLevel(owned?.xp??0)}`:'Seu soberano'}</small></span><span aria-hidden="true">›</span></Link>
-  <nav aria-label="Coleção e conta"><Link href="/inventory"><img src="/icons/nav-cities.png" alt=""/>Inventário</Link><Link href="/premium"><img src="/icons/resource-premium.png" alt=""/>Loja</Link></nav>
+
  </header>;
 }
