@@ -1,3 +1,4 @@
+import {armyPower,cityWallLevels,wallPower,defensePower} from './military-power';
 import {expeditionCost,expeditionTravelMs,explorationPath,explorationCorridor} from './exploration-route';
 import {empireArmy,committedTroops,retargetArmyReturns,restoreAbstractArmy} from './expedition-army';
 import {playerCampaign} from './player-campaign';
@@ -164,39 +165,23 @@ function sumSectors(state: CozyState, sector: keyof CozyCity["sectors"]) {
   return state.cities.reduce((sum, city) => sum + city.sectors[sector], 0);
 }
 function production(state: CozyState, at=state.settledAt, cities=state.cities): CozyResources {
-  const technology = (state.progression?.balance?.expressEconomy?4:1)*(1 + state.research.economy * 0.08)*(1+royalBonus(state,"administration"));
+  const balance=state.progression?.balance;
+  // Worlds without explicit rates retain their original economy.
+  const materialsRate=balance?.materialsProductionMultiplier??(balance?.expressEconomy?4:1);
+  const suppliesRate=balance?.suppliesProductionMultiplier??(balance?.expressEconomy?4:1);
+  const technology = (1 + state.research.economy * 0.08)*(1+royalBonus(state,"administration"));
   return cities.reduce(
     (total, city) => {
       const multiplier =
         technology * (cityHasHero(state, city, "administrator") ? 1.15 : 1) * cityEfficiency(city,at)/100;
       total.materials +=
         (120 + city.sectors.economy * 85 + city.sectors.administration * 15) *
-        multiplier * (!city.capital&&city.cityClass==="metropole"?1.05:1)*(1+equipmentBonus(state,"materials"));
-      total.supplies += (70 + city.sectors.economy * 50) * multiplier * (!city.capital&&city.cityClass==="celeiro"?1.05:1) * (1+realmSupportBonus(state,"provisions",at))*(1+equipmentBonus(state,"supplies"));
+        multiplier * materialsRate * (!city.capital&&city.cityClass==="metropole"?1.05:1)*(1+equipmentBonus(state,"materials"));
+      total.supplies += (70 + city.sectors.economy * 50) * multiplier * suppliesRate * (!city.capital&&city.cityClass==="celeiro"?1.05:1) * (1+realmSupportBonus(state,"provisions",at))*(1+equipmentBonus(state,"supplies"));
       return total;
     },
     { gold: 0, materials: 0, supplies: 0 },
   );
-}
-function armyPower(state: CozyState) {
-  return Math.floor(
-    TROOPS.reduce((sum, troop) => sum + state.army[troop.id] * troop.power, 0) *
-      (1 + state.research.military * 0.2) *
-      (1 + Math.min(5, heroesOf(state, "general")) * 0.08),
-  );
-}
-function cityWallLevels(city: CozyCity) {
-  return city.sectors.defense*(city.integrity??100)/100*(!city.capital&&city.cityClass==="bastiao"?1.05:1);
-}
-function wallPower(state: CozyState) {
-  return Math.floor(
-    state.cities.reduce((sum,city)=>sum+cityWallLevels(city),0) *
-      18 *
-      (1 + state.research.fortification * 0.15),
-  );
-}
-function defensePower(state:CozyState,at:number){
- return Math.floor((armyPower(state)+wallPower(state))*(1+royalBonus(state,"command"))*(1+realmSupportBonus(state,'defense',at))*(1+equipmentBonus(state,'defense')));
 }
 function influence(state: CozyState): CozyInfluence {
   if(state.defeat)return {infrastructure:0,government:0,military:0,society:0,legacy:0,total:0};

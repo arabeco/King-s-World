@@ -32,7 +32,7 @@ export function* play(seed, mode, profile, initialShared, playerId, coop, focus,
    const attrs=process.env.ROYAL_SIM==='veteran'?{administration:8,command:8,exploration:8}:{administration:5,command:5,exploration:5};
    save.state.king={profileId:'builder',nickname:playerId,alive:true,generation:1,history:[],attributes:attrs};
   }
-  if(save.state.progression?.balance)save.state.progression.balance.militaryDivisor=Number(process.env.MILITARY_DIVISOR||90);
+  if(save.state.progression?.balance&&process.env.MILITARY_DIVISOR!==undefined)save.state.progression.balance.militaryDivisor=Number(process.env.MILITARY_DIVISOR);
   const history = []; const ledger=[];
   let actions = 0; const failures = {};
   for (let day = 1; day <= (mode==='express'?30:120); day++) {
@@ -133,6 +133,7 @@ export function* play(seed, mode, profile, initialShared, playerId, coop, focus,
         s.resources.gold >= c.researchCosts.military
       )
         choices.push({ type: "research", research: "military" });
+      // Fixed army target keeps the policy comparable across score-curve experiments.
       const target = Math.max(focus==='military'?Number(process.env.MILITARY_DIVISOR||90)*300:140, c.nextHorde?.power * 1.3 || 3000);
       const unit =
         s.research.military >= 3
@@ -260,6 +261,7 @@ export function* play(seed, mode, profile, initialShared, playerId, coop, focus,
         else if(a.type==='city_decision'){const d=c.cityLife[a.cityId]?.decision;if(d?.options.some(o=>o.id==='levy'))a.optionId='levy';}
        }
       }
+      if(behavior.noRecruit)for(let i=choices.length-1;i>=0;i--)if(choices[i].type==='recruit')choices.splice(i,1);
       choices.sort((a,b)=>behavior.quality==='poor'?draw(`${seed}:${playerId}:${day}:${n}:${JSON.stringify(a)}`)-draw(`${seed}:${playerId}:${day}:${n}:${JSON.stringify(b)}`):rank(a)-rank(b));
       if(behavior.quality==='poor'&&draw(`${seed}:${playerId}:neglect:${day}:${n}`)<.3)continue;
       for (const choice of choices) if (run(choice)) break;

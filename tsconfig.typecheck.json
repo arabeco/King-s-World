@@ -6,6 +6,8 @@
     "**/*.tsx"
   ],
   "exclude": [
+    "reports",
+    ".next*/**",
     "node_modules",
     ".next",
     ".next-dev",

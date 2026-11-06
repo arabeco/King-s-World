@@ -229,6 +229,26 @@ try{
  await militia.getByRole('button',{name:'Diminuir quantidade de Milícia',exact:true}).click();
  const armyBefore=await (await page.request.get(imperialEndpoint)).json();const troopReply=page.waitForResponse(r=>r.url()===imperialEndpoint&&r.request().method()==='POST');await militia.getByRole('button',{name:'Recrutar 2 Milícia',exact:true}).click();const troops=await troopReply;assert.equal(troops.status(),200);assert.equal(troops.request().postDataJSON().action.amount,2);const armyAfter=await troops.json();assert.equal(armyAfter.state.army.militia-armyBefore.state.army.militia,2);assert(Math.abs(armyBefore.state.resources.materials-armyAfter.state.resources.materials-2*armyBefore.computed.troopCosts.militia)<1,'Exact cost allows only real time production during HTTP');
  console.log('PASS mobile military quantity: +1, +1, -1 and recruit exactly two with the displayed total cost');
+ const prepare=militia.getByRole('button',{name:/^Para a horda: /});
+ await prepare.waitFor();const recommended=Number((await prepare.innerText()).split(':')[1].trim().replaceAll('.',''));
+ const armyCount=armyAfter.state.army.militia;
+ await prepare.click();await militia.getByRole('button',{name:`Recrutar ${recommended} Milícia`,exact:true}).waitFor();
+ assert.equal((await (await page.request.get(imperialEndpoint)).json()).state.army.militia,armyCount,'Selecting a suggested lot must not purchase it');
+ await militia.getByLabel(`Resultado de recrutar ${recommended} Milícia`,{exact:true}).waitFor();
+ for(const width of [320,390,430]){await page.setViewportSize({width,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));const bounds=await militia.getByRole('button',{name:`Recrutar ${recommended} Milícia`,exact:true}).boundingBox();assert(bounds&&bounds.width>=70&&bounds.height>=44);}
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(root,'reports/cozy/military-value-390.png'),fullPage:true});
+ console.log('PASS military guidance: exact purchasable horde lot, live defense/influence preview, selection does not purchase, and touch layout at 320/390/430');
+ await page.getByRole('button',{name:'Ver preparação contra a horda',exact:true}).click();
+ const warning=page.getByRole('region',{name:'Aviso de horda',exact:true});await warning.waitFor();
+ const warningSurface=await warning.evaluate(el=>getComputedStyle(el.closest('dialog')).backgroundColor);assert.equal(warningSurface,'rgb(28, 27, 28)','Horde warning must retain the dark graphite surface');
+ const warningData=await (await page.request.get(imperialEndpoint)).json(),horde=warningData.computed.nextHorde;
+ const power=warningData.computed.defensePower+horde.supportPower,gap=Math.max(0,horde.power-power);
+ await warning.getByText(String(horde.power),{exact:true}).waitFor();await warning.getByText(String(power),{exact:true}).waitFor();
+ await warning.getByText(`Faltam ${gap} de defesa`,{exact:true}).waitFor();
+ for(const width of [320,390,430]){await page.setViewportSize({width,height:844});const bounds=await warning.boundingBox();assert(bounds&&bounds.width<=width&&bounds.x>=0);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(root,'reports/cozy/horde-warning-390.png')});
+ await warning.getByRole('button',{name:'Preparar tropas',exact:true}).click();await page.getByRole('article',{name:'Milícia',exact:true}).waitFor();
+ console.log('PASS horde warning: card opens force/defense/shortfall from the API, compact mobile forecast, and direct return to recruitment');
  await db.query("update user_entitlements set expires_at=now()-interval '1 second' where user_id=$1",[me.id]);assert.equal((await (await page.request.get(imperialEndpoint)).json()).state.crestFinish,'imperial');
  console.log('PASS owned crest picker, forged crest denial, Premium-only finish, shared map identity and retained cosmetic after expiry without stat bonus');
  console.log('PASS real Premium API, canceled-but-paid access, private token removal and lobby world limits');

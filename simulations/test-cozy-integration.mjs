@@ -2959,7 +2959,7 @@ try {
     const id=made.data.world.slug;const started=await command(id,{type:'start_world'});assert.equal(started.status,200,JSON.stringify(started.data));
     const initial=(await req(`/api/worlds/${id}/cozy`)).data;
     assert.equal(initial.world.economyVersion,2);assert.equal(initial.computed.dayMs,86400000);assert.equal(initial.computed.durationDays,30);
-    assert.equal(initial.shared.progressionBalance.militaryDivisor,90);
+    assert.equal(initial.shared.progressionBalance.militaryDivisor,75);
     const receipt=crypto.randomUUID(),action={type:'plan_research',research:'economy',steps:2};
     const first=await command(id,action,receipt);assert.equal(first.status,200,JSON.stringify(first.data));
     assert.equal((await command(id,action,receipt)).status,200);

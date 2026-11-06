@@ -1066,3 +1066,6 @@
 }
 .reignProfile header p,
 .reignProfile header small { color: #ddcea9; }
+.darkSheet{--ink:#f1e5c8;--muted:#b4aa97;color:#f1e5c8;background:radial-gradient(ellipse at top right,#823f392b,transparent 70%),#1c1b1c}
+.darkSheet .sheetHeader{background:linear-gradient(110deg,#352625,#1d1e1f);border-color:#9f775c66}
+.darkSheet .sheetFeedback{background:#1c1b1c;box-shadow:0 8px 15px #1c1b1c}

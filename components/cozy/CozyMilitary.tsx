@@ -12,6 +12,7 @@ import { ArrowRight, LockKeyhole, Shield, Swords } from "lucide-react";
 import { TROOPS, canRecruitTroop } from "@/lib/cozy/catalog";
 import type {CozyResearch} from "@/lib/cozy/types";
 import {usesMobileReviewRules} from "@/lib/cozy/progression";
+import {hordeRecruitment,recruitPreview} from "@/lib/cozy/recruit-preview";
 import CozyArt from "./CozyArt";
 import {
   CrownCost,
@@ -29,8 +30,8 @@ export default function CozyMilitary({
   locked,
   onResearch,
   onCity,
-  now,onResources,onCities,onAlliance,onOrders,
-}: CrownPanelProps & { onResearch: (research: CozyResearch) => void; onCity: (id:string)=>void;onResources:()=>void;onCities:()=>void;onAlliance:()=>void;onOrders:()=>void }) {
+  now,onResources,onCities,onAlliance,onOrders,onThreat,
+}: CrownPanelProps & { onResearch: (research: CozyResearch) => void; onCity: (id:string)=>void;onResources:()=>void;onCities:()=>void;onAlliance:()=>void;onOrders:()=>void;onThreat:()=>void }) {
   const { state, computed } = data;
   const [tab,setTab]=useState<"recruit"|"defense">("recruit");
   const [lots, setLots] = useState<Record<string, number | "max">>({});
@@ -91,6 +92,10 @@ export default function CozyMilitary({
           label="Capacidade do exército"
         />
       </header>
+      {horde&&tab==='recruit'&&<button type="button" className={styles.hordeTarget} data-ready={totalDefense>=horde.power} onClick={onThreat} aria-label="Ver preparação contra a horda">
+        <CozyArt src="/icons/action-defend.png" size={27}/><span><strong>Horda · dia {horde.day}</strong><small>{crownRemaining(horde.arrivesAt,now)}</small></span>
+        <span><strong>{number(totalDefense)} / {number(horde.power)}</strong><small>{totalDefense>=horde.power?'Defesa suficiente hoje':`Faltam ${number(horde.power-totalDefense)} de defesa`}</small></span>
+      </button>}
       {campaign&&<button type="button" className={styles.marchStatus} onClick={onOrders} aria-label="Acompanhar investida"><CozySymbol name="time" size={21}/><span><strong>{campaign.returning?'Investida retornando':'Investida em andamento'}</strong><small>{crownRemaining(campaign.arrivesAt,now)} · {campaign.returning?'até liberar novo ataque':'até a chegada'}</small></span><ArrowRight size={17}/></button>}
       <div className={styles.tabs} role="tablist" aria-label="Comando militar">
         <button ref={recruitTab} type="button" id="military-recruit-tab" role="tab" aria-controls="military-recruit" tabIndex={tab==="recruit"?0:-1} aria-selected={tab==="recruit"} onKeyDown={moveTab} onClick={()=>setTab("recruit")}>Recrutamento</button>
@@ -120,6 +125,8 @@ export default function CozyMilitary({
           );
           const amount = lots[troop.id] ?? 1;
           const quantity = amount === "max" ? maxUnits : Math.min(amount,Math.max(1,maxUnits));
+          const preview=available?recruitPreview(data,troop.id,quantity,now):null;
+          const hordeLot=available&&horde&&totalDefense<horde.power?hordeRecruitment(data,troop.id,maxUnits,now):0;
           return (
             <article
               key={troop.id}
@@ -188,6 +195,11 @@ export default function CozyMilitary({
                   <ArrowRight size={17} aria-hidden="true" />
                 </button>
               )}
+              {preview&&maxUnits>0&&<div className={styles.purchasePreview} aria-label={`Resultado de recrutar ${quantity} ${troop.name}`}>
+                <span><Shield size={15} aria-hidden="true"/>+{number(preview.defenseGain)} defesa</span>
+                <span><CozyArt src="/icons/influence-military.png" size={17}/>{preview.militaryGain>0?'+':''}{number(preview.militaryGain)} influência</span>
+                {hordeLot!==null&&hordeLot>0&&hordeLot!==quantity&&<button type="button" disabled={locked} onClick={()=>setLots(previous=>({...previous,[troop.id]:hordeLot}))}>Para a horda: {number(hordeLot)}</button>}
+              </div>}
               {available && maxUnits === 0 && (
                 <p id={`recruit-help-${troop.id}`} className={styles.blocked}>
                   {state.defeat?"Império derrotado · recrutamento encerrado.":computed.readOnly?"Esta temporada está encerrada.":!computed.started?"O recrutamento abre quando a temporada começar.":freeSlots === 0

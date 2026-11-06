@@ -12,7 +12,7 @@ const clamp=(n:number,max=500)=>Math.max(0,Math.min(max,n));
 export const hasZeroProgression=(state:CozyState)=>state.progression?.version===2;
 export const usesMobileReviewRules = (state:CozyState) =>
   hasZeroProgression(state) && (state.finalizedAt === null || state.progression?.mobileReviewRules === true);
-export const newProgressionBalance=(expressEconomy=false)=>({militaryDivisor:90,militaryVictoryMax:200,councilExpansionDamping:true,...(expressEconomy?{expressEconomy:true,constructionGrowth:1.36,councilMeaningfulDecrees:true,councilContinuity:true,plannedCapacity:12,infrastructureRanked:true,infrastructureWeights:[...INFRASTRUCTURE_WEIGHTS],councilSourceCaps:{decree:160,local:140,stable:200},councilMerit:{decree:4,local:6,stable:8}}:{})});
+export const newProgressionBalance=(expressEconomy=false)=>({militaryDivisor:90,militaryVictoryMax:200,councilExpansionDamping:true,...(expressEconomy?{militaryDivisor:75,materialsProductionMultiplier:4,suppliesProductionMultiplier:1,expressEconomy:true,constructionGrowth:1.36,councilMeaningfulDecrees:true,councilContinuity:true,plannedCapacity:12,infrastructureRanked:true,infrastructureWeights:[...INFRASTRUCTURE_WEIGHTS],councilSourceCaps:{decree:160,local:140,stable:200},councilMerit:{decree:4,local:6,stable:8}}:{})});
 export function bindWorldBalance(shared:CozyShared,existing:CozyState[],expressEconomy=false){
  if(shared.progressionBalance===undefined){const first=existing.filter(s=>s.progression).sort((a,b)=>a.createdAt-b.createdAt||a.playerId.localeCompare(b.playerId))[0];shared.progressionBalance=first?structuredClone(first.progression!.balance??null):newProgressionBalance(expressEconomy);}
  return shared.progressionBalance;

@@ -23,6 +23,7 @@ import CozyOrders from "./CozyOrders";
 import CozyTreasury from "./CozyTreasury";
 import CozyReports from "./CozyReports";
 import CozyMilitary from "./CozyMilitary";
+import HordeCard from "./CozyHordeWarning";
 import CozyGovernment from "./CozyGovernment";
 import CozyCouncil from "./CozyCouncil";
 import CozyAchievements from "./CozyAchievements";
@@ -245,6 +246,7 @@ function GameSheet({
   title,
   art,
   citySurface = false,
+  darkSurface = false,
   crownTone,
   score,
   sourceData,
@@ -254,6 +256,7 @@ function GameSheet({
   title: string;
   art?: string;
   citySurface?: boolean;
+  darkSurface?: boolean;
   crownTone?: CrownPanel;
   score?: number;
   sourceData?: CozyPayload;
@@ -284,7 +287,7 @@ function GameSheet({
   return (
     <dialog
       ref={ref}
-      className={`${game.sheet} ${citySurface ? game.citySheet : ""} ${crownTone || citySurface ? game.crownSheet : ""}`}
+      className={`${game.sheet} ${citySurface ? game.citySheet : ""} ${crownTone || citySurface ? game.crownSheet : ""} ${darkSurface?game.darkSheet:""}`}
       data-crown-tone={crownTone}
       aria-label={title}
       onKeyDown={(event) => {
@@ -870,6 +873,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
         {panel && (
           <GameSheet
             key={panel}
+            darkSurface={panel==='defense'}
             title={overlayTitles[panel]}
             art={overlayArt}
             sourceData={data}
@@ -889,7 +893,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
             }
             onClose={() => setPanel(null)}
           >
-            {(error||uncertain||(showConfirmation&&panel!=="resources"&&panel!=="orders")) && (
+            {(error||uncertain||(showConfirmation&&panel!=="resources"&&panel!=="orders"&&panel!=="defense")) && (
               <div className={game.sheetFeedback}>{feedback}</div>
             )}
             {panel === "royalProfile" && (
@@ -906,6 +910,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
               <CozyMilitary
                 {...props}
                 onOrders={()=>setPanel('orders')}
+                onThreat={()=>setPanel('defense')}
                 onResources={()=>openTreasury("materials")}
                 onCities={()=>navigate("cities")}
                 onAlliance={()=>navigate("alliance")}
@@ -939,7 +944,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
               />
             )}
             {panel === "defense" && (
-              <><CozyScreenHelp screen="military" playerId={state.playerId}/><HordeCard {...props} onMilitary={()=>setPanel("military")} onCity={id=>openCity(id,'decisions')} onAlliance={() => navigate("alliance")} /></>
+              <HordeCard {...props} onMilitary={()=>setPanel("military")} onCity={id=>openCity(id,'defense')} onThreatCity={id=>openCity(id,'decisions')} onAlliance={() => navigate("alliance")} />
             )}
             {panel === "orders" && (
               <CozyOrders
@@ -1076,78 +1081,6 @@ function ReignProfile({data}: {data: CozyPayload}) {
       {king?.profileId&&<WorldEquipmentSlots value={king.equipment??[]} />}
       <Link href="/lobby" className="primary-button"><ArrowLeft size={18}/>Voltar ao lobby</Link>
     </section>
-  );
-}
-
-function HordeCard({
-  data,
-  now,
-  onAlliance,
-  onCity,
-  onMilitary,
-}: PanelProps & { onAlliance: () => void;onCity:(id:string)=>void;onMilitary:()=>void }) {
-  const horde = data.computed.nextHorde;
-  const attacks=data.computed.playerThreats??[];
-  const defense=data.computed.defensePower+(horde?.supportPower??0);
-  const vulnerable=[...data.state.cities.filter(c=>!c.capital),...data.state.cities.filter(c=>c.capital)].sort((a,b)=>Number(a.capital)-Number(b.capital)||(a.integrity??100)-(b.integrity??100)||b.sectors.economy-a.sectors.economy||a.id.localeCompare(b.id))[0];
-  return (
-    <div className={`${styles.asideCard} ${styles.hordeCard}`}>
-      <div className={styles.row}>
-        <span className={styles.eyebrow}>Vigia do reino</span>
-        <Shield size={20} />
-      </div>
-      {attacks.length>0&&<section className={game.incomingAttacks} aria-label="Ataques de jogadores">{attacks.map(attack=><button type="button" key={attack.orderId} onClick={()=>onCity(attack.cityId)} aria-label={`Preparar ${attack.cityName} contra ${attack.attackerName}`}><CozyArt src="/icons/action-attack.png" size={32}/><span><strong>{attack.cityName}</strong><small>{attack.attackerName} · {remaining(attack.arrivesAt,now)}</small></span><ArrowRight size={17}/></button>)}</section>}
-      <h3>
-        {attacks.length>0&&!horde?'Investida a caminho.':horde
-          ? "Uma horda se aproxima."
-          : data.computed.readOnly
-            ? "A jornada terminou."
-            : "Um respiro nas fronteiras."}
-      </h3>
-      {horde ? (
-        <>
-          <div className={styles.hordeTime}>
-            <CozySymbol name="time" size={18}/>
-            <strong>{remaining(horde.arrivesAt, now)}</strong>
-            <small>Dia {horde.day}</small>
-          </div>
-          <div className={styles.hordeStats}>
-            <span>
-              Força da horda<strong>{number(horde.power)}</strong>
-            </span>
-            <span>
-              Nossa defesa
-              <strong>
-                {number(data.computed.defensePower + horde.supportPower)}
-              </strong>
-            </span>
-          </div>
-
-          <div className={game.threatForecast} data-ready={defense>=horde.power} aria-label="Previsão com a defesa atual"><strong>{defense>=horde.power?"Defesa suficiente hoje":`Faltam ${number(horde.power-defense)} de defesa`}</strong><progress aria-label="Preparo para a horda" value={Math.min(defense,horde.power)} max={horde.power}/>{defense<horde.power&&vulnerable&&<button type="button" onClick={()=>onCity(vulnerable.id)}><CozyArt src="/icons/building-wall.png" size={24}/><span>{vulnerable.name}<small>Estruturas em risco · {vulnerable.integrity??100}% íntegras</small></span><ArrowRight size={16}/></button>}<small>Bônus e cidades podem mudar até a chegada.</small></div>
-          <ActionButton onClick={onMilitary}>Reforçar exército <ArrowRight size={16}/></ActionButton>
-          {horde.supportPower > 0 && (
-            <p>
-              <CozySymbol name="alliance" size={18}/> Aliados enviaram +
-              {number(horde.supportPower)} de proteção.
-            </p>
-          )}
-          <p>
-            Seu exército responderá automaticamente. O resultado chegará nas
-            crônicas.
-          </p>
-          <ActionButton quiet onClick={onAlliance}>
-            <CozySymbol name="alliance" size={18}/>
-            Preparar apoio
-          </ActionButton>
-        </>
-      ) : (
-        <p>
-          {attacks.length>0?'Prepare a cidade antes da chegada.':data.computed.readOnly
-            ? "Os relatos e o ranking guardam a história do seu reino."
-            : "Aproveite este tempo para cuidar das cidades e conhecer o mundo."}
-        </p>
-      )}
-    </div>
   );
 }
 

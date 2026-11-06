@@ -130,7 +130,7 @@ export type CozyDecree = {
 export type CozyProgression = {
   version: 2;
   mobileReviewRules?: true;
-  balance?: {militaryDivisor:number; militaryVictoryMax?:number; councilExpansionDamping:boolean; expressEconomy?:boolean;plannedCapacity?:number;infrastructureRanked?:boolean;infrastructureWeights?:number[];constructionGrowth?:number;councilMeaningfulDecrees?:boolean;councilContinuity?:boolean;councilMerit?:{decree:number;local:number;stable:number};councilSourceCaps?:{decree:number;local:number;stable:number}};
+  balance?: {militaryDivisor:number; militaryVictoryMax?:number; councilExpansionDamping:boolean; expressEconomy?:boolean;materialsProductionMultiplier?:number;suppliesProductionMultiplier?:number;plannedCapacity?:number;infrastructureRanked?:boolean;infrastructureWeights?:number[];constructionGrowth?:number;councilMeaningfulDecrees?:boolean;councilContinuity?:boolean;councilMerit?:{decree:number;local:number;stable:number};councilSourceCaps?:{decree:number;local:number;stable:number}};
   capitalId: string;
   capitalLevels: Record<CozySector,number>;
   militaryBaseline: number;

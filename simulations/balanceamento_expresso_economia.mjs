@@ -24,7 +24,7 @@ function* play(seed, mode, profile, initialShared, playerId, coop, focus) {
     world,
     START,
   );
-  if(save.state.progression?.balance)save.state.progression.balance.militaryDivisor=Number(process.env.MILITARY_DIVISOR||90);
+  if(save.state.progression?.balance&&process.env.MILITARY_DIVISOR!==undefined)save.state.progression.balance.militaryDivisor=Number(process.env.MILITARY_DIVISOR);
   const history = []; const ledger=[];
   let actions = 0; const failures = {};
   for (let day = 1; day <= (mode==='express'?30:120); day++) {
@@ -110,6 +110,7 @@ function* play(seed, mode, profile, initialShared, playerId, coop, focus) {
         s.resources.gold >= c.researchCosts.military
       )
         choices.push({ type: "research", research: "military" });
+      // Fixed army target keeps the policy comparable across score-curve experiments.
       const target = Math.max(focus==='military'?Number(process.env.MILITARY_DIVISOR||90)*300:140, c.nextHorde?.power * 1.3 || 3000);
       const unit =
         s.research.military >= 3
@@ -276,4 +277,4 @@ for(const seed of (process.env.ECON_QUICK?[11]:[11,22,33]))for(const mode of ['e
  while(!x.done){shared=x.value.shared;x=g.next(shared);}
  results.push(x.value);console.log(seed,mode,profile,focus,x.value.score);
 }
-await writeFile(new URL(`../reports/cozy/economy-30-${process.env.MILITARY_DIVISOR||90}-${process.env.WITH_PLANS||1}.json`,import.meta.url),JSON.stringify({scope:'Real engine; behavioral randomness, shared candidate menus; 3 seeds, 2 routines, 6 priorities, economic Express calendar. No random influence grants. Not population telemetry.',militaryDivisor:Number(process.env.MILITARY_DIVISOR||90),economicDays:30,plans:process.env.WITH_PLANS!=='0',results},null,2));
+await writeFile(new URL(`../reports/cozy/economy-30-${process.env.MILITARY_DIVISOR??loadCozyEngine('progression').newProgressionBalance(true).militaryDivisor}-${process.env.WITH_PLANS||1}.json`,import.meta.url),JSON.stringify({scope:'Real engine; behavioral randomness, shared candidate menus; 3 seeds, 2 routines, 6 priorities, economic Express calendar. No random influence grants. Not population telemetry.',militaryDivisor:Number(process.env.MILITARY_DIVISOR??loadCozyEngine('progression').newProgressionBalance(true).militaryDivisor),economicDays:30,plans:process.env.WITH_PLANS!=='0',results},null,2));

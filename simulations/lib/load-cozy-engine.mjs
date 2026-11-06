@@ -9,13 +9,19 @@ export function loadCozyEngine(moduleName = "engine") {
     const module = { exports: {} };
     cache.set(filename, module);
     let source = fs.readFileSync(filename, "utf8");
-    // Explicit offline experiment. Production code and persisted world rules are unchanged.
-    const factor = process.env.COZY_SIM_PRODUCTION_FACTOR;
-    if (factor !== undefined && filename.endsWith(path.join("cozy", "engine.ts"))) {
-      if (![1, 2, 4].includes(Number(factor))) throw new Error("Unsupported simulation production factor");
-      const expression = "(state.progression?.balance?.expressEconomy?4:1)";
-      if (!source.includes(expression)) throw new Error("Production experiment no longer matches the engine");
-      source = source.replace(expression, `(state.progression?.balance?.expressEconomy?${Number(factor)}:1)`);
+    // Offline experiments change only the initial balance of newly created worlds.
+    if(filename.endsWith(path.join('cozy','progression.ts'))){
+      for(const [env,key,base,allowed] of [
+        ['COZY_SIM_PRODUCTION_FACTOR','materialsProductionMultiplier',4,[1,2,3,4]],
+        ['COZY_SIM_SUPPLIES_FACTOR','suppliesProductionMultiplier',1,[1,2,3,4]],
+        ['COZY_SIM_MILITARY_DIVISOR','militaryDivisor',75,[45,60,75,90]],
+      ]){
+        const value=process.env[env];if(value===undefined)continue;
+        if(!allowed.includes(Number(value)))throw new Error('Unsupported experiment: '+env);
+        const expression=key+':'+base;
+        if(!source.includes(expression))throw new Error('Experiment no longer matches progression: '+key);
+        source=source.replace(expression,key+':'+Number(value));
+      }
     }
     const code = ts.transpileModule(source, {
       compilerOptions: {

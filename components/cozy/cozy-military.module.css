@@ -377,3 +377,7 @@
 
 .recruit .recruitAction{flex-direction:row;gap:10px;white-space:nowrap}.recruit .recruitAction>span{font-size:13px}
 .marchStatus{display:flex;align-items:center;gap:9px;width:100%;min-height:52px;padding:9px 10px;margin:8px 0 12px;border:1px solid #c49d5a55;border-radius:6px;background:linear-gradient(120deg,#3b2e2c,#202024);color:#ecd6a5;font:inherit;text-align:left;cursor:pointer}.marchStatus>span{flex:1;display:grid;gap:4px}.marchStatus strong{font-size:13px}.marchStatus small{font-size:11px;color:#c9bda7}.marchStatus:focus-visible{outline:2px solid #f1d485;outline-offset:3px}
+.hordeTarget{width:100%;display:flex;align-items:center;gap:9px;padding:10px 0;border:0;border-bottom:1px solid #71534b;background:transparent;color:#f2d7ae;text-align:left;min-height:52px}
+.hordeTarget>span{display:grid;gap:3px}.hordeTarget>span:last-child{margin-left:auto;text-align:right}.hordeTarget strong{font-size:13px}.hordeTarget small{font-size:11px;color:#e4af97}.hordeTarget[data-ready=true] small{color:#b3c6a1}
+.purchasePreview{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:3px 0 6px;color:#e9d6af;font-size:12px}
+.purchasePreview>span{display:flex;align-items:center;gap:5px}.purchasePreview>button{margin-left:auto;min-height:44px;padding:5px 9px;border:1px solid #826e4c;border-radius:5px;background:#282324;color:#ffe0a0;font-size:12px}
