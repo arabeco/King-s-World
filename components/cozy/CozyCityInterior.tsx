@@ -5,6 +5,7 @@
 import {cityTerritoryCells} from "@/lib/cozy/city-territory";
 import CozySymbol from "./CozySymbol";
 import {cityUpgradePreview} from "@/lib/cozy/upgrade-preview";
+import DecisionEffects,{resourceEffects} from "./DecisionEffects";
 import CozyPlans from './CozyPlans';
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -137,6 +138,7 @@ export default function CozyCityInterior({
   feedback,
   onGovernment,
 }: Props) {
+  const [localPick,setLocalPick]=useState<{decisionId:string;optionId:string}|null>(null);
   const [tab, setTab] = useState<"sectors" | "decisions">(initialEntry === "decisions" ? "decisions" : "sectors");
   const [selected, setSelected] = useState<CozySector | null>(initialEntry === "sectors" || initialEntry === "decisions" ? null : initialEntry);
   const [renaming, setRenaming] = useState(false);
@@ -362,21 +364,25 @@ export default function CozyCityInterior({
           </div>}
           {life&&<article className={styles.decisionCard} aria-label="Decisão local da cidade">
             <div className={styles.decisionHeading}><div><h3>{life.decision?.title??(computed.readOnly?"Histórico da cidade":"Decisão de hoje registrada")}</h3><p>{life.decision?`Dia ${computed.day}`:"Novas situações no próximo dia"}</p></div></div>
-            {life.decision?.options.map(option=>{const affordable=Object.entries(option.cost).every(([resource,cost])=>state.resources[resource as keyof typeof state.resources]>=cost!);return <div key={option.id} className={styles.localChoiceFrame}>
-            <div className={styles.choiceCosts}>{Object.entries(option.cost).map(([resource,cost])=>{
-              const label=resource==="supplies"?"Suprimentos":"Materiais";
-              return <details key={resource}><summary aria-label={`${label}: ${number(cost!)}`}><CozyArt src={resource==="supplies"?"/icons/resource-supplies.png":"/icons/resource-materials.png"} size={22}/>−{number(cost!)}</summary><small>{label}</small></details>;
-            })}{[
-              ...(option.contentment?[{id:"contentment",icon:"/icons/influence-society.png",value:`${option.contentment>0?"+":""}${number(option.contentment>0?Math.min(option.contentment,100-life.contentment):Math.max(option.contentment,-life.contentment))}`,help:"Satisfação nesta cidade"}]:[]),
-              ...(option.integrityRestore?[{id:"integrity",icon:"/icons/building-wall.png",value:`+${number(Math.min(option.integrityRestore,100-life.integrity))}%`,help:"Integridade das estruturas"}]:[]),
-              ...(option.productionBonus?[{id:"production",icon:"/icons/building-production.png",value:`${100+option.productionBonus}%`,help:"Eficiência-base por 2 dias de jogo. Substitui o efeito anterior; danos às estruturas ainda reduzem a produção."}]:[]),
-              ...(option.materialsReward?[{id:"materials",icon:"/icons/resource-materials.png",value:`+${number(option.materialsReward)}`,help:"Materiais recebidos"}]:[]),
-            ].map(effect=><details key={effect.id}><summary aria-label={`${effect.help}: ${effect.value}`}><CozyArt src={effect.icon} size={22}/>{effect.value}</summary><small>{effect.help}</small></details>)}</div>
-            <button className={styles.localChoice} disabled={Boolean(lockReason)||!affordable} onClick={()=>void act({type:"city_decision",cityId:city.id,decisionId:life.decision!.id,optionId:option.id})} aria-label={`Decidir: ${option.label}`}>
+            {life.decision?.options.map(option=>{const affordable=Object.entries(option.cost).every(([resource,cost])=>state.resources[resource as keyof typeof state.resources]>=cost!);return <div key={option.id} className={styles.localChoiceFrame} data-selected={localPick?.decisionId===life.decision?.id&&localPick.optionId===option.id||undefined}>
+            <button className={styles.localChoice} disabled={Boolean(lockReason)||!affordable} onClick={()=>state.progression?.balance?.unifiedRules?setLocalPick({decisionId:life.decision!.id,optionId:option.id}):void act({type:"city_decision",cityId:city.id,decisionId:life.decision!.id,optionId:option.id})} aria-pressed={state.progression?.balance?.unifiedRules?localPick?.decisionId===life.decision?.id&&localPick.optionId===option.id:undefined} aria-label={`${state.progression?.balance?.unifiedRules?'Escolher':'Decidir'}: ${option.label}`}>
               <strong>{option.label}</strong>
 
               {!affordable&&<small>Recursos insuficientes.</small>}
-            </button></div>;})}
+            </button>
+            <DecisionEffects flow label="Efeitos da decisão local" items={[
+              ...resourceEffects(option.cost,true),
+              ...resourceEffects({...option.rewards,materials:(option.rewards?.materials??0)+(option.materialsReward??0)}),
+              ...(option.contentment?[{key:'trust',label:'Satisfação nesta cidade',icon:'/icons/influence-society.png',value:`${option.contentment>0?'+':''}${number(option.contentment>0?Math.min(option.contentment,100-life.contentment):Math.max(option.contentment,-life.contentment))}`,negative:option.contentment<0}]:[]),
+              ...(option.integrityRestore?[{key:'repair',label:'Integridade das estruturas',icon:'/icons/building-wall.png',value:`+${number(Math.min(option.integrityRestore,100-life.integrity))}%`}]:[]),
+              ...(option.productionBonus?[{key:'production',label:'Eficiência-base por 2 dias de jogo',icon:'/icons/building-production.png',value:`+${option.productionBonus}%`}]:[]),
+            ]}/>
+            {option.chance&&<div className={styles.localRisk}><details><summary>{option.chance.successPercent}% de sucesso</summary><small>O custo é gasto também se falhar.</small></details><span>Se falhar</span><DecisionEffects label="Se a decisão local falhar" items={[
+              ...resourceEffects(option.chance.failure.rewards??{}),
+              ...(option.chance.failure.contentment?[{key:'trust',label:'Satisfação nesta cidade',icon:'/icons/influence-society.png',value:String(option.chance.failure.contentment),negative:true}]:[]),
+            ]}/></div>}
+</div>;})}
+            {state.progression?.balance?.unifiedRules&&life.decision&&<button type="button" className={styles.localConfirm} disabled={Boolean(lockReason)||!life.decision.options.some(option=>localPick?.decisionId===life.decision!.id&&localPick.optionId===option.id&&Object.entries(option.cost).every(([key,cost])=>state.resources[key as keyof typeof state.resources]>=cost))} onClick={()=>localPick&&void act({type:'city_decision',cityId:city.id,decisionId:localPick.decisionId,optionId:localPick.optionId})}><Check size={18}/>Confirmar decisão</button>}
             {life.effectEndsAt&&<p className={styles.description}>Produção com {life.efficiency}% de eficiência · {remaining(life.effectEndsAt,now)} restantes.</p>}
           </article>}
 

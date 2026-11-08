@@ -120,14 +120,14 @@ export type CozyReport = {
     conquered:boolean;
   };
 };
-export type CozyDecreeEffects = {materials:number; satisfaction:number; localSatisfaction?:Record<string,number>};
+export type CozyDecreeEffects = {materials:number; satisfaction:number;gold?:number;supplies?:number;integrityRestore?:number;productionBonus?:number; localSatisfaction?:Record<string,number>};
 export type CozyDecree = {
   id: string;
   day: number;
   counselorId: string;
   title: string;
   body: string;
-  options: ({id:string; label:string; description:string; effects:CozyDecreeEffects} &
+  options: ({id:string; label:string; description:string; cost?:Partial<CozyResources>; effects:CozyDecreeEffects} &
     ({resolution:"certain"} | {resolution:"chance"; successPercent:number; failure:CozyDecreeEffects}))[];
 };
 export type CozyProgression = {

@@ -46,7 +46,8 @@
     ".next-map-fog-preview/types/**/*.ts",
     ".next-collection-test/types/**/*.ts",
     ".next/types/**/*.ts",
-    ".next-map-occupation-test/types/**/*.ts"
+    ".next-map-occupation-test/types/**/*.ts",
+    ".next-smart-decisions-test/types/**/*.ts"
   ],
   "exclude": [
     "reports",

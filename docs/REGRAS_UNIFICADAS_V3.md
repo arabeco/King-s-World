@@ -72,6 +72,23 @@ ocupação de cidades de jogadores no modo competitivo.
 
 ## Validação reproduzível
 
+### Decisões contextuais
+
+- Cidade: crise, recuperação, feira, escambo, oficinas, colheita e entregas.
+  Efeitos locais pequenos; trocas usam o orçamento real do império.
+- Conselho: crise e danos têm prioridade; depois vêm hordas, comércio e oficinas.
+  Decisões coletivas alcançam as cidades, sem recrutar tropas ou restaurar níveis.
+- Custos e resultados ficam lado a lado. Selecionar opção ou tocar no ícone não
+  gasta nada; o botão dourado confirma a decisão.
+- Algumas expedições têm chance de sucesso. O custo é pago em ambos os resultados;
+  uma nova leitura ou repetição da mesma confirmação não sorteia outra vez.
+- Reparos consideram o dano real. Bônus coletivos preservam efeitos mais fortes,
+  e não são oferecidos se todas as cidades já estiverem melhor atendidas.
+- O catálogo novo usa `unifiedRules`; temporadas históricas conservam os eventos
+  e pagamentos antigos. A apresentação de ícones é compartilhada.
+- `npm run test:smart-decisions` e `npm run test:smart-decisions:ui` verificam
+  pagamentos, contextos, relógios, sucesso/falha e confirmação no celular.
+
 - `npm run test:unified-map`: regras, calendário SQL, ataque/anexação,
   reserva exclusiva, fundação e distribuição dos distritos.
 - `npm run test:unified-map:ui`: mundo v3 real na fixture SQL/API, barra em

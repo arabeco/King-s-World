@@ -1,3 +1,5 @@
+import {decisionReceipt} from './decision-receipt';
+import {modernCouncilDecision} from './council-decisions';
 import {CITY_FOUNDATION_COST,CITY_FOUNDATION_DAYS,foundationSite} from './city-foundation';
 import {npcOccupation} from './npc-occupation';
 import {armyPower,cityWallLevels,wallPower,defensePower} from './military-power';
@@ -274,6 +276,7 @@ function getDecree(
     const satisfaction=clamp(state.satisfaction+requested,0,100)-state.satisfaction;
     return {materials,satisfaction,...(hasZeroProgression(state)?{localSatisfaction:Object.fromEntries(state.cities.map(city=>[city.id,clamp((city.life?.contentment??state.satisfaction)+localTrustDelta(state,city,requested),0,100)-(city.life?.contentment??state.satisfaction)]))}:{})};
   };
+  if(state.progression?.balance?.unifiedRules)return modernCouncilDecision(state,decreeDay,day,nextHorde(state,shared,world,now)?.day??null,counselorId,effects,now);
   return {
     id: `${decreeDay}:${counselorId}`,
     day: decreeDay,
@@ -400,7 +403,7 @@ export function getCozyComputed(
     recruitmentDiscount,
     armyCapacity: 200 + state.cities.filter(c=>!c.capital&&c.cityClass==="posto_avancado").length*10 + sumSectors(state, "recruitment") * 30,
     productionPerDay: production(state,now),
-    cityLife:Object.fromEntries(state.cities.map(city=>{const rates=production(state,now,[city]),decision=started&&!readOnly?cityDecision(city,day):null;if(decision&&hasZeroProgression(state))decision.options=decision.options.map(option=>({...option,contentment:localTrustDelta(state,city,option.contentment)}));return [city.id,{contentment:city.life?.contentment??state.satisfaction,status:citySocialStatus(city),unrestDays:city.life?.unrestDays??0,integrity:city.integrity??100,daysToRupture:!city.capital&&state.cities.length>1&&(city.life?.contentment??state.satisfaction)<35?Math.max(0,SOCIAL_RUPTURE_DAYS-(city.life?.unrestDays??0)):null,efficiency:cityEfficiency(city,now),production:{materials:rates.materials,supplies:rates.supplies},administrationMaterials:rates.materials*15/(120+city.sectors.economy*85+city.sectors.administration*15),recruitmentCapacity:city.sectors.recruitment*30+(!city.capital&&city.cityClass==="posto_avancado"?10:0),fortification:Math.floor(cityWallLevels(city)*18*(1+state.research.fortification*0.15)),effectEndsAt:city.life?.productionEffect&&city.life.productionEffect.endsAt>now?city.life.productionEffect.endsAt:null,decision}];})),
+    cityLife:Object.fromEntries(state.cities.map(city=>{const rates=production(state,now,[city]),decision=started&&!readOnly?cityDecision(city,day,state.progression?.balance?.unifiedRules?{resources:state.resources,now,hordeSoon:Boolean(nextHorde(state,shared,world,now)&&nextHorde(state,shared,world,now)!.day-day<=3)}:undefined):null;if(decision&&hasZeroProgression(state))decision.options=decision.options.map(option=>({...option,contentment:localTrustDelta(state,city,option.contentment),...(option.chance?{chance:{...option.chance,failure:{...option.chance.failure,contentment:localTrustDelta(state,city,option.chance.failure.contentment)}}}:{})}));return [city.id,{contentment:city.life?.contentment??state.satisfaction,status:citySocialStatus(city),unrestDays:city.life?.unrestDays??0,integrity:city.integrity??100,daysToRupture:!city.capital&&state.cities.length>1&&(city.life?.contentment??state.satisfaction)<35?Math.max(0,SOCIAL_RUPTURE_DAYS-(city.life?.unrestDays??0)):null,efficiency:cityEfficiency(city,now),production:{materials:rates.materials,supplies:rates.supplies},administrationMaterials:rates.materials*15/(120+city.sectors.economy*85+city.sectors.administration*15),recruitmentCapacity:city.sectors.recruitment*30+(!city.capital&&city.cityClass==="posto_avancado"?10:0),fortification:Math.floor(cityWallLevels(city)*18*(1+state.research.fortification*0.15)),effectEndsAt:city.life?.productionEffect&&city.life.productionEffect.endsAt>now?city.life.productionEffect.endsAt:null,decision}];})),
     nextHorde: nextHorde(state, shared, world, now),
     decree: readOnly ? null : getDecree(state, shared, world, now),
     portalOpen,
@@ -1329,16 +1332,20 @@ export function applyCozyAction(
       rule(decision&&decision.id===action.decisionId,"Esta decisão da cidade já foi resolvida ou mudou.");
       const option=decision.options.find(o=>o.id===action.optionId);rule(option,"Opção de cidade inválida.");
       resourceSpend(state,option.cost);
+      const succeeded=!option.chance||hash(`local:${world.id}:${state.playerId}:${city.id}:${computed.day}:${decision.id}`)%100<option.chance.successPercent;
+      const outcome=option.chance&&!succeeded?option.chance.failure:option;
       city.life??={contentment:state.satisfaction,lastDecisionDay:null};
       const priorTrust=city.life.contentment,priorIntegrity=city.integrity??100,priorBonus=city.life.productionEffect&&city.life.productionEffect.endsAt>now?city.life.productionEffect.bonus:0;
-      city.life.contentment=clamp(city.life.contentment+option.contentment,0,100);
+      city.life.contentment=clamp(city.life.contentment+outcome.contentment,0,100);
       if(city.life.contentment>=35)city.life.unrestDays=0;
       city.life.lastDecisionDay=computed.day;
-      state.resources.materials+=option.materialsReward??0;
-      if(option.integrityRestore)city.integrity=clamp((city.integrity??100)+option.integrityRestore,0,100);
-      if(option.productionBonus)city.life.productionEffect={bonus:option.productionBonus,endsAt:now+2*dayMs(world)};
-      recordCityCare(state,city,computed.day,city.life.contentment-priorTrust,(city.integrity??100)>priorIntegrity||option.productionBonus>priorBonus);
-      report(state,now,"council",`${city.name}: decisão concluída`,`${option.label}.${option.integrityRestore?` Integridade: ${city.integrity}%.`:""}${option.materialsReward?` +${option.materialsReward} materiais.`:""}${option.contentment?` Satisfação local: ${city.life.contentment}%.`:''}${option.productionBonus?` Eficiência de produção: +${option.productionBonus}% por dois dias de jogo.`:''}`);
+      state.resources.materials+=outcome.materialsReward??0;
+      for(const resource of ['gold','materials','supplies'] as const)state.resources[resource]+=outcome.rewards?.[resource]??0;
+      if(outcome.integrityRestore)city.integrity=clamp((city.integrity??100)+outcome.integrityRestore,0,100);
+      if(outcome.productionBonus)city.life.productionEffect={bonus:outcome.productionBonus,endsAt:now+2*dayMs(world)};
+      recordCityCare(state,city,computed.day,city.life.contentment-priorTrust,(city.integrity??100)>priorIntegrity||outcome.productionBonus>priorBonus);
+      const receipt=state.progression?.balance?.unifiedRules?decisionReceipt(option.cost,{...outcome.rewards,materials:(outcome.materialsReward??0)+(outcome.rewards?.materials??0)}):'';
+      report(state,now,"council",`${city.name}: ${option.chance&&!succeeded?"o plano não deu certo":"decisão concluída"}`,`${option.label}.${receipt?` ${receipt}.`:''}${!state.progression?.balance?.unifiedRules&&outcome.rewards?` ${Object.entries(outcome.rewards).map(([key,value])=>`+${value} ${key==='gold'?'ouro':key==='supplies'?'suprimentos':'materiais'}`).join(', ')}.`:''}${outcome.integrityRestore?` Integridade: ${city.integrity}%.`:""}${!state.progression?.balance?.unifiedRules&&outcome.materialsReward?` +${outcome.materialsReward} materiais.`:""}${outcome.contentment?` Satisfação local: ${city.life.contentment}%.`:''}${outcome.productionBonus?` Eficiência de produção: +${outcome.productionBonus}% por dois dias de jogo.`:''}`,succeeded&&outcome.contentment>=0);
       break;
     }
     case 'cancel_plan': {
@@ -1522,13 +1529,14 @@ export function applyCozyAction(
         "Este decreto já mudou ou foi assinado.",
       );
       const option=decree.options.find(option=>option.id===action.optionId)!;
+      resourceSpend(state,option.cost??{});
       const succeeded=option.resolution==="certain"||hash(`council:${world.id}:${state.playerId}:${decree.day}`)%100<option.successPercent;
       const effects=option.resolution==="chance"&&!succeeded?option.failure:option.effects;
       const {satisfaction,materials}=effects;
-      const meaningfulCare=decreeCareRecognized(state,computed.day,effects.localSatisfaction??{},satisfaction);
+      const meaningfulCare=decreeCareRecognized(state,computed.day,effects.localSatisfaction??{},satisfaction)||Boolean(effects.integrityRestore&&state.cities.some(city=>(city.integrity??100)<100))||Boolean(effects.productionBonus&&state.cities.some(city=>!city.life?.productionEffect||city.life.productionEffect.endsAt<=now||city.life.productionEffect.bonus<effects.productionBonus!));
       state.satisfaction=clamp(state.satisfaction+satisfaction,0,100);
-      state.resources.materials+=materials;
-      for(const city of state.cities)if(city.life){const before=city.life.contentment;city.life.contentment=clamp(city.life.contentment+(effects.localSatisfaction?.[city.id]??satisfaction),0,100);if(city.life.contentment>=35)city.life.unrestDays=0;recordCityCare(state,city,computed.day,city.life.contentment-before,false,false);}
+      state.resources.materials+=materials;state.resources.gold+=effects.gold??0;state.resources.supplies+=effects.supplies??0;
+      for(const city of state.cities)if(city.life){const before=city.life.contentment;city.life.contentment=clamp(city.life.contentment+(effects.localSatisfaction?.[city.id]??satisfaction),0,100);if(city.life.contentment>=35)city.life.unrestDays=0;if(effects.integrityRestore)city.integrity=clamp((city.integrity??100)+effects.integrityRestore,0,100);if(effects.productionBonus&&(!city.life.productionEffect||city.life.productionEffect.endsAt<=now||city.life.productionEffect.bonus<=effects.productionBonus))city.life.productionEffect={bonus:effects.productionBonus,endsAt:now+2*dayMs(world)};recordCityCare(state,city,computed.day,city.life.contentment-before,false,false);}
       if(meaningfulCare&&satisfaction>=0&&state.cities.every(city=>(city.life?.contentment??0)>=60&&!((state.progression?.council.selfHarm[`${city.q},${city.r}`]??0)>0)))councilCredit(state,`decree:${decree.day}`,PROGRESSION.decreeMerit);
       state.decreesSigned.push(decree.day);
       report(
@@ -1536,7 +1544,7 @@ export function applyCozyAction(
         now,
         "council",
         option.resolution==="certain"?"Decreto assinado":succeeded?"A caravana voltou":"A caravana não voltou",
-        `${option.label}: ${satisfaction >= 0 ? "+" : ""}${satisfaction} de contentamento e +${materials} materiais.`,
+        state.progression?.balance?.unifiedRules?`${option.label}.${decisionReceipt(option.cost??{},{materials,gold:effects.gold,supplies:effects.supplies})?` ${decisionReceipt(option.cost??{},{materials,gold:effects.gold,supplies:effects.supplies})}.`:''}${satisfaction?` ${satisfaction>0?'+':''}${satisfaction} de confiança.`:''}${effects.integrityRestore?` Até +${effects.integrityRestore}% de integridade nas cidades.`:''}${effects.productionBonus?` +${effects.productionBonus}% de eficiência-base por dois dias de jogo; efeitos mais fortes preservados.`:''}`:`${option.label}: ${satisfaction >= 0 ? "+" : ""}${satisfaction} de contentamento e +${materials} materiais.`,
         satisfaction >= 0,
       );
       break;

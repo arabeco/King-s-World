@@ -1,10 +1,13 @@
+import {modernCityDecision,type CityDecisionContext} from './city-decisions';
 import {citySocialStatus,SOCIAL_RUPTURE_DAYS} from "./city-crisis";
 import type {CozyCity,CozyResources} from './types';
-export type CityChoice={id:string;label:string;cost:Partial<CozyResources>;contentment:number;productionBonus:number;integrityRestore?:number;materialsReward?:number};
+export type CityOutcome={contentment:number;productionBonus:number;integrityRestore?:number;materialsReward?:number;rewards?:Partial<CozyResources>};
+export type CityChoice=CityOutcome&{id:string;label:string;cost:Partial<CozyResources>;chance?:{successPercent:number;failure:CityOutcome}};
 export type CityLifeView={contentment:number;status:string;unrestDays:number;daysToRupture:number|null;integrity:number;efficiency:number;production:{materials:number;supplies:number};administrationMaterials:number;recruitmentCapacity:number;fortification:number;effectEndsAt:number|null;decision:{id:string;title:string;sector:'society'|'economy';options:CityChoice[]}|null};
 export function cityEfficiency(city:CozyCity,at:number){return (100+(city.life?.productionEffect&&city.life.productionEffect.endsAt>at?city.life.productionEffect.bonus:0))*(city.integrity??100)/100;}
-export function cityDecision(city:CozyCity,day:number):CityLifeView['decision']{
+export function cityDecision(city:CozyCity,day:number,context?:CityDecisionContext):CityLifeView['decision']{
  if(day<1||city.life?.lastDecisionDay===day)return null;
+ if(context)return modernCityDecision(city,day,context);
  if((city.life?.contentment??70)<35)return {id:`${city.id}:${day}:crisis`,title:'A cidade exige uma resposta',sector:'society',options:[
  {id:'relief',label:'Enviar provisões e acolher as reivindicações',cost:{supplies:120},contentment:12,productionBonus:0},
  {id:'listen',label:'Ouvir os moradores e negociar uma resposta',cost:{},contentment:5,productionBonus:0},
