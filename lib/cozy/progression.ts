@@ -13,13 +13,14 @@ export const hasZeroProgression=(state:CozyState)=>state.progression?.version===
 export const usesMobileReviewRules = (state:CozyState) =>
   hasZeroProgression(state) && (state.finalizedAt === null || state.progression?.mobileReviewRules === true);
 export const newProgressionBalance=(expressEconomy=false)=>({militaryDivisor:90,militaryVictoryMax:200,councilExpansionDamping:true,...(expressEconomy?{militaryDivisor:75,materialsProductionMultiplier:4,suppliesProductionMultiplier:1,expressEconomy:true,constructionGrowth:1.36,councilMeaningfulDecrees:true,councilContinuity:true,plannedCapacity:12,infrastructureRanked:true,infrastructureWeights:[...INFRASTRUCTURE_WEIGHTS],councilSourceCaps:{decree:160,local:140,stable:200},councilMerit:{decree:4,local:6,stable:8}}:{})});
-export function bindWorldBalance(shared:CozyShared,existing:CozyState[],expressEconomy=false){
- if(shared.progressionBalance===undefined){const first=existing.filter(s=>s.progression).sort((a,b)=>a.createdAt-b.createdAt||a.playerId.localeCompare(b.playerId))[0];shared.progressionBalance=first?structuredClone(first.progression!.balance??null):newProgressionBalance(expressEconomy);}
+export const unifiedProgressionBalance=()=>({unifiedRules:true as const,militaryDivisor:90,militaryVictoryMax:200,councilExpansionDamping:true,materialsProductionMultiplier:1,suppliesProductionMultiplier:1,constructionGrowth:1.42,plannedCapacity:12,infrastructureRanked:false,councilMeaningfulDecrees:true,councilContinuity:true,councilSourceCaps:{decree:160,local:140,stable:200},councilMerit:{decree:8,local:6,stable:4}});
+export function bindWorldBalance(shared:CozyShared,existing:CozyState[],expressEconomy=false,unified=false){
+ if(shared.progressionBalance===undefined){const first=existing.filter(s=>s.progression).sort((a,b)=>a.createdAt-b.createdAt||a.playerId.localeCompare(b.playerId))[0];shared.progressionBalance=first?structuredClone(first.progression!.balance??null):unified?unifiedProgressionBalance():newProgressionBalance(expressEconomy);}
  return shared.progressionBalance;
 }
-export function createProgression(state:CozyState,militaryBaseline:number,expressEconomy=false){
+export function createProgression(state:CozyState,militaryBaseline:number,expressEconomy=false,unified=false){
  const capital=state.cities.find(c=>c.capital)!;
- state.progression={version:2,balance:newProgressionBalance(expressEconomy),capitalId:capital.id,capitalLevels:{...capital.sectors},militaryBaseline,
+ state.progression={version:2,balance:unified?unifiedProgressionBalance():newProgressionBalance(expressEconomy),capitalId:capital.id,capitalLevels:{...capital.sectors},militaryBaseline,
   council:{merit:0,episodes:[],careSince:{},selfHarm:{}},feats:{wonders:[],surveys:[],collected:{},supports:[]}};
 }
 function infrastructureLevels(state:CozyState,city:CozyCity){

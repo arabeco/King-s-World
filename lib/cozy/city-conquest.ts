@@ -2,14 +2,14 @@ import {applyAllianceAction,syncAllianceProjects} from './alliances';
 import {cancelOrphanedPacts,syncSanctuaryPacts} from './sanctuary-pacts';
 import {combatAssessment} from './combat';
 import {retargetArmyReturns} from './expedition-army';
-import {seasonDays} from './rhythm';
+import {seasonDays,clockSpeed} from './rhythm';
 import type {CozyShared,CozyState,CozyWorld} from './types';
 import {releaseCityTerritory,restoreCityTerritory} from './city-territory';
 /** Atomic domain transfer primitive. Live dispatch remains unavailable until competitive worlds are enabled. */
 export function conquerPlayerCity(input:{attacker:CozyState;defender:CozyState;shared:CozyShared;world:CozyWorld;cityId:string;heroId:string;at:number;attackPower:number;defensePower:number}){
  const {world,cityId,heroId,at}=input;
  if(world.combatMode!=='competitive'||world.status!=='running'||!Number.isFinite(at)||world.startsAt===null||at<world.startsAt)throw Error('CONQUEST_MODE_CLOSED');
- const duration=world.mode==='express'&&world.economyVersion!==2?86400000/(world.speedMultiplier===2?2:4):86400000;
+ const duration=86400000/clockSpeed(world);
  if(at>=world.startsAt+seasonDays(world)*duration)throw Error('CONQUEST_SEASON_CLOSED');
  if(!Number.isFinite(input.attackPower)||!Number.isFinite(input.defensePower)||input.attackPower<=0||input.defensePower<0||!combatAssessment(input.attackPower,input.defensePower).occupationMargin)throw Error('CONQUEST_MARGIN_REQUIRED');
  if(at<input.attacker.settledAt||at<input.defender.settledAt)throw Error('CONQUEST_TIME_REWIND');

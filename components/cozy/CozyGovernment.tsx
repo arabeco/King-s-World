@@ -329,7 +329,7 @@ export default function CozyGovernment({
           {needsGold&&!complete&&!order&&!noTime&&<button type="button" className={styles.cityLink} onClick={()=>{setDetail(null);onResources();}}>Ver tesouro <ArrowRight size={16}/></button>}
         </section>;
       })()}
-          {data.world.mode==="express"&&<details className={styles.queueDrawer}><summary><CozySymbol name="time" size={24}/>Fila de pesquisas <b>{state.orders.filter(o=>o.kind==="research").length}</b></summary><CozyPlans key={initialResearch??"economy"} data={data} act={act} locked={locked} now={now} initialResearch={initialResearch}/></details>}
+          {(data.world.mode==="express"||data.world.economyVersion===3)&&<details className={styles.queueDrawer}><summary><CozySymbol name="time" size={24}/>Fila de pesquisas <b>{state.orders.filter(o=>o.kind==="research").length}</b></summary><CozyPlans key={initialResearch??"economy"} data={data} act={act} locked={locked} now={now} initialResearch={initialResearch}/></details>}
 
         </div>
       )}

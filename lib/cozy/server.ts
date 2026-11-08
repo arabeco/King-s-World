@@ -147,8 +147,8 @@ function toWorld(row: WorldRow): CozyWorld {
     combatMode:row.combat_mode==='competitive'?'competitive':'cozy',
     name: row.name,
     mode: row.season_mode === "express" ? "express" : "classic",
-    speedMultiplier: row.season_mode==='express'?(row.economy_version===2?1:row.speed_multiplier===2?2:4):1,
-    ...(row.economy_version===2?{economyVersion:2 as const}:{}),
+    speedMultiplier: row.season_mode==='express'?(row.economy_version===2?1:row.economy_version===3?4:row.speed_multiplier===2?2:4):1,
+    ...([2,3].includes(row.economy_version)?{economyVersion:row.economy_version as 2|3}:{}),
     status: row.status,
     startsAt: row.status === "open" || !Number.isFinite(start) ? null : start,
     influenceVersion:row.influence_version,
@@ -376,7 +376,7 @@ export async function getCozyPayload(
     const now = Date.now();
     const originalShared = sharedRows[0];
     let shared = structuredClone(originalShared?.state_json ?? createCozyShared(world));
-    const balance=world.influenceVersion===2?bindWorldBalance(shared,saved.map(s=>s.state_json),world.economyVersion===2):null;
+    const balance=world.influenceVersion===2?bindWorldBalance(shared,saved.map(s=>s.state_json),world.economyVersion===2,world.economyVersion===3):null;
     const players: CommitPlayer[] = members.map((member) => {
       const previous = saved.find(
         (entry) => entry.world_player_id === member.id,

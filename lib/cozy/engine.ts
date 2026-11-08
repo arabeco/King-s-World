@@ -1,10 +1,12 @@
+import {CITY_FOUNDATION_COST,CITY_FOUNDATION_DAYS,foundationSite} from './city-foundation';
+import {npcOccupation} from './npc-occupation';
 import {armyPower,cityWallLevels,wallPower,defensePower} from './military-power';
 import {expeditionCost,expeditionTravelMs,explorationPath,explorationCorridor} from './exploration-route';
 import {empireArmy,committedTroops,retargetArmyReturns,restoreAbstractArmy} from './expedition-army';
 import {playerCampaign} from './player-campaign';
 import {damageCityBuildings} from './city-damage';
 import {bindCityTerritories,nearestTerritoryCity,restoreCityTerritory} from './city-territory';
-import {economicExpress,seasonDays,waveDays} from './rhythm';
+import {economicExpress,seasonDays,waveDays,clockSpeed} from './rhythm';
 import {WAVE_POWER} from "./hordes";
 import {resolveSanctuaryRaids,sanctuaryThreats,syncSanctuaryRaidReports} from "./sanctuary-raids";
 import {councilTopic} from "./council-context";
@@ -18,7 +20,7 @@ import {cityEfficiency,cityDecision} from "./city-life";
 import {combatAssessment} from "./combat";
 import {knownMapCells, visibleTerrainCells} from "./map-visibility";
 import {sanctuaryAt, ALL_SANCTUARIES} from "./landmarks";
-import {migrateResourceAreas, resourceArea, discoverResourceArea, areaAllied, canUseArea, syncAreaDeposits} from "./areas";
+import {migrateResourceAreas, resourceArea, resourceAreaId, areaCells, discoverResourceArea, areaAllied, canUseArea, syncAreaDeposits} from "./areas";
 import {
   CITY_TYPES,COZY_LIMITS,researchCost,upgradeCost,planningCapacity,
   COUNSELORS,
@@ -88,7 +90,7 @@ function distance(a: CozyCoord, b: CozyCoord) {
   );
 }
 function dayMs(world: CozyWorld) {
-  return economicExpress(world)?DAY:DAY / (world.mode === "express" ? (world.speedMultiplier===2?2:4) : 1);
+  return DAY/clockSpeed(world);
 }
 function endAt(world: CozyWorld) {
   return world.startsAt === null ? null : world.startsAt + dayMs(world) * seasonDays(world);
@@ -456,7 +458,7 @@ function baseTile(
   power: number;
 } {
   const independent=shared?.independentCities?.[key(coord)];
-  if(independent)return {kind:independent.reason==="horde"?"npc":"abandoned",name:independent.city.name,clue:independent.reason==="horde"?"A horda ocupa as estruturas desta antiga cidade do reino.":"Uma cidade independente guarda as marcas do antigo reino.",power:25+independent.city.sectors.defense*18};
+  if(independent)return {kind:independent.reason==="horde"?"npc":"abandoned",name:independent.city.name,clue:independent.reason==="horde"?"A horda ocupa as estruturas desta antiga cidade do reino.":"Uma cidade independente guarda as marcas do antigo reino.",power:shared?.npcResistance?.[key(coord)]?.remaining??(25+independent.city.sectors.defense*18)};
   if (coord.q === 0 && coord.r === 0)
     return {
       kind: "portal",
@@ -465,7 +467,7 @@ function baseTile(
       power: 0,
     };
   const n = hash(`${world.id}:tile:${key(coord)}`) % 100;
-  const kind =
+  let kind: Exclude<CozyTileKind,"unknown"|"city"> =
     n < 18
       ? "npc"
       : n < 30
@@ -477,6 +479,12 @@ function baseTile(
             : n < 77
               ? "materials"
               : "plain";
+  if(world.economyVersion===3){
+    const q0=Math.floor((coord.q+40)/8)*8-40,r0=Math.floor((coord.r+40)/8)*8-40;
+    const district=hash(`${world.id}:district:${q0},${r0}`)%100;
+    // A resource district is one continuous area, never a different objective per cell.
+    kind=district<15?'gold':district<30?'materials':coord.q===q0+3&&coord.r===r0+3&&district<65?'abandoned':n<2?'npc':n<4?'ruin':'plain';
+  }
   const names = {
     npc: "Aldeia da horda",
     abandoned: "Cidade abandonada",
@@ -499,7 +507,7 @@ function baseTile(
     name: names[kind],
     clue: clues[kind],
     power:
-      25 + centralPressure * 8 + (hash(`${world.id}:power:${key(coord)}`) % 70),
+      shared?.npcResistance?.[key(coord)]?.remaining??(25 + centralPressure * 8 + (hash(`${world.id}:power:${key(coord)}`) % 70)),
   };
 }
 function tileDistance(state: CozyState, coord: CozyCoord) {
@@ -527,6 +535,7 @@ function mapTile(
   const reserved=Boolean(sanctuary&&!shared.claims[id]&&!legacyDeposit&&!shared.independentCities?.[id]);
   const area = (base.kind === "gold" || base.kind === "materials") ? resourceArea(shared,coord,base.kind) : undefined;
   const areaKnown = area && !reserved && (revealed || area.owners.includes(state.playerId));
+  const areaConflict=Boolean(area?.cells.some(id=>{const owner=shared.claims[id]?.playerId??shared.territories?.[id];return owner&&owner!==state.playerId&&(area.exclusive||!areaAllied(shared,owner,state.playerId));}));
   const city =
     claim?.playerId === state.playerId
       ? state.cities.find((item) => item.id === claim.cityId)
@@ -559,7 +568,9 @@ function mapTile(
         : null,
     deposit: !reserved && revealed ? (area?.reserve ?? shared.deposits[id] ?? null) : null,
     territoryOwnerId: revealed ? shared.territories?.[id] ?? null : null,
-    area: areaKnown ? {id:area.id,cells:area.cells,owners:area.owners,canCollect:canUseArea(shared,area,state.playerId),canAnnex:area.reserve.surveys===3&&area.reserve.remaining>0&&(!area.owners.length||(!area.owners.includes(state.playerId)&&areaAllied(shared,area.owners[0],state.playerId)))} : null,
+    area: areaKnown ? {exclusive:area.exclusive,id:area.id,cells:area.cells,owners:area.owners,canCollect:canUseArea(shared,area,state.playerId),blockedReason:areaConflict?'Há território de outro império nesta área.':null,canAnnex:!areaConflict&&area.reserve.surveys===3&&area.reserve.remaining>0&&(!area.owners.length||(!area.exclusive&&!area.owners.includes(state.playerId)&&areaAllied(shared,area.owners[0],state.playerId)))} : world.economyVersion===3&&revealed&&!reserved&&['gold','materials'].includes(base.kind)?{exclusive:true,id:resourceAreaId(coord,base.kind as 'gold'|'materials'),cells:areaCells(coord,true),owners:[],canAnnex:false,canCollect:false}:null,
+    ...(world.economyVersion===3&&revealed&&!claim&&['npc','abandoned'].includes(base.kind)?{occupation:npcOccupation(base.power,shared.npcResistance?.[id]?.initial??base.power)}:{}),
+    ...(world.economyVersion===3&&revealed&&!claim&&!reserved&&base.kind==='plain'?{foundation:{canFound:!foundationSite(state,shared,coord),reason:foundationSite(state,shared,coord),materials:CITY_FOUNDATION_COST.materials,supplies:CITY_FOUNDATION_COST.supplies+exploreCost(state,coord),durationMs:travelMs(state,world,coord)+CITY_FOUNDATION_DAYS*dayMs(world)}}:{}),
     distance: tileDistance(state, coord),
     combat: !reserved&&revealed&&(base.kind==="npc"||base.kind==="abandoned")&&!claim ? combatAssessment(armyPower(state),base.power) : null,
     exploreCost: exploreCost(state, coord),
@@ -664,7 +675,7 @@ export function createCozyState(
     seasonXp: 0,
     sequence: 0,
   };
-  if(world.influenceVersion===2)createProgression(state,armyPower(state)+wallPower(state),economicExpress(world));
+  if(world.influenceVersion===2)createProgression(state,armyPower(state)+wallPower(state),economicExpress(world),world.economyVersion===3);
   report(
     state,
     now,
@@ -793,6 +804,7 @@ function establishCity(
   coord: CozyCoord,
   heroId: string,
   at: number,
+  foundation=false,
 ) {
   const hero = state.heroes.find(
     (item) => item.id === heroId && item.cityId === null,
@@ -808,7 +820,7 @@ function establishCity(
     );
     return;
   }
-  const level = 1 + (hash(`${world.id}:${key(coord)}:city`) % 3);
+  const level = foundation?0:1 + (hash(`${world.id}:${key(coord)}:city`) % 3);
   const city: CozyCity = {
     ...coord,
     id: nextId(state, "city"),
@@ -829,6 +841,7 @@ function establishCity(
   if(independent){city.renamedBy=clone(independent.city.renamedBy??[]);city.cityClass=independent.city.cityClass;city.name=independent.city.name;city.sectors=clone(independent.city.sectors);city.wonder=independent.city.wonder;city.integrity=independent.city.integrity??100;city.life={contentment:Math.max(35,independent.city.life?.contentment??35),lastDecisionDay:null,lastSocialDay:getCozyDay(world,at),unrestDays:0};delete shared.independentCities![key(coord)];}
   hero.cityId = city.id;
   state.cities.push(city);
+  if(shared.npcResistance)delete shared.npcResistance[key(coord)];
   if(independent)restoreCityTerritory(state,shared,city,independent);
   shared.claims[key(coord)] = {
     playerId: state.playerId,
@@ -840,7 +853,7 @@ function establishCity(
     at,
     "progress",
     `${city.name} se une ao reino`,
-    `${hero.name} assumiu a cidade. O território está amarelo; desenvolvimento 60 o torna verde. A conquista não cobrou recursos adicionais.`,
+    `${hero.name} assumiu a cidade. ${foundation?"O investimento de fundação foi aplicado aos primeiros assentamentos.":"A cidade foi anexada após a expedição."} A infraestrutura e os bônus passam a contar para o reino.`,
   );
 }
 function resolveOrder(
@@ -939,17 +952,17 @@ function resolveOrder(
       let area = resourceArea(shared,coord,base.kind);
       if(!area){
         const capacity=(base.kind === "gold" ? 1600 : 6000)+(hash(`${world.id}:deposit:${id}`)%(base.kind === "gold" ? 1800 : 6000));
-        area=discoverResourceArea(shared,coord,{id,resource:base.kind,capacity,remaining:capacity,surveys:0,contributors:[]});
+        area=discoverResourceArea(shared,coord,{id,resource:base.kind,capacity,remaining:capacity,surveys:0,contributors:[]},world.economyVersion===3);
       }
       const deposit=area.reserve;
       const priorSurveys=deposit.surveys;
-      deposit.surveys=Math.min(3,deposit.surveys+1);
+      deposit.surveys=world.economyVersion===3?3:Math.min(3,deposit.surveys+1);
       if(state.progression&&deposit.surveys>priorSurveys){const step=`${area.id}:${deposit.surveys}`;if(!state.progression.feats.surveys.includes(step))state.progression.feats.surveys.push(step);}
       if(!deposit.contributors.includes(state.playerId))deposit.contributors.push(state.playerId);
       shared.deposits[id]={...deposit,id};
       syncAreaDeposits(shared,area);
       state.cooperation += 1;
-      detail = `Levantamento da área ${deposit.surveys}/3. ${deposit.surveys === 3 ? "A área pode ser anexada pelo reino ou compartilhada em aliança." : "Mais uma exploração avança o levantamento; qualquer jogador pode ajudar."}`;
+      detail = `Levantamento da área ${deposit.surveys}/3. ${deposit.surveys === 3 ? "O levantamento terminou. Anexar ocupa a área inteira; explorar não muda o dono." : "Mais uma exploração avança o levantamento; qualquer jogador pode ajudar."}`;
     } else if (first && (base.kind === "ruin" || base.kind === "abandoned")) {
       const gold = 80 + (hash(`${world.id}:discovery:${id}`) % 121);
       state.resources.gold += gold;
@@ -960,6 +973,11 @@ function resolveOrder(
   }
   if (order.kind === "attack") {
     if (!state.explored.includes(id)) state.explored.push(id);
+    if(order.foundation){
+      const hero=state.heroes.find(h=>h.id===order.heroId&&h.cityId===null);
+      if(base.kind!=="plain"||foundationSite(state,shared,coord)||!hero){state.resources.materials+=order.foundationMaterials??CITY_FOUNDATION_COST.materials;report(state,at,"progress","Fundação interrompida","O local ou o herói ficou indisponível. Os materiais de construção foram devolvidos; os suprimentos da expedição foram gastos.",false);return;}
+      establishCity(state,shared,world,coord,hero.id,at,true);report(state,at,"progress","Nova cidade fundada","A cidade começa com os cinco setores no nível zero. Escolha seu tipo e desenvolva as construções.");return;
+    }
     if (shared.claims[id]) {
       report(
         state,
@@ -976,8 +994,24 @@ function resolveOrder(
       report(state,at,"combat","Ocupação interrompida","O destino está reservado ou pertence a outro império. O herói permanece disponível.",false);
       return;
     }
+    if(order.occupationOnly){
+      const hero=state.heroes.find(h=>h.id===order.heroId&&h.cityId===null);
+      if(!npcOccupation(base.power,shared.npcResistance?.[id]?.initial??base.power).canAnnex||!hero||state.cities.length>=10){report(state,at,"combat","Anexação interrompida","A cidade voltou a ter resistência, o herói ficou indisponível ou o limite de cidades foi atingido.",false);return;}
+      establishCity(state,shared,world,coord,hero.id,at);return;
+    }
     const power = armyPower(state);
     const won = combatAssessment(power,base.power).attackWins;
+    if(world.economyVersion===3&&!order.conquest){
+      const losses=loseTroops(state,won?.06:.2);
+      const initial=shared.npcResistance?.[id]?.initial??base.power;
+      const remaining=won?0:Math.max(1,base.power-Math.max(1,Math.floor(power*.35)));
+      (shared.npcResistance??={})[id]={initial,remaining,at};state.raided[id]=at;
+      const home=state.cities.find(c=>c.capital)??state.cities[0];
+      if(home){const returning={...order,id:nextId(state,'return'),createdAt:at,q:home.q,r:home.r,returning:true,conquest:false,arrivesAt:at+(order.returnTravelMs??travelMs(state,world,coord)),...(won?{cargo:{gold:100+Math.floor(initial*.6),materials:100+initial}}:{})};delete returning.heroId;state.orders.push(returning);}
+      const occupation=npcOccupation(remaining,initial);
+      report(state,at,"combat",occupation.canAnnex?"Cidade pronta para anexar":"Resistência enfraquecida",`${power} de poder contra ${base.power}. ${losses} tropas perdidas. Controle: ${Math.ceil(occupation.control)}%. Anexação liberada em ${occupation.threshold}% ou menos. ${occupation.canAnnex?"Envie um herói disponível para anexar; a cidade ainda não pertence ao reino.":"Reforce as tropas e ataque novamente."}`,won);
+      return;
+    }
     const losses =
       base.kind === "abandoned" ? 0 : loseTroops(state, won ? 0.06 : 0.2);
     state.raided[id] = at;
@@ -1313,7 +1347,7 @@ export function applyCozyAction(
       cancelPlans(state,target!);report(state,now,'economy','Planejamento cancelado','Este plano e os seguintes foram retirados da fila. As reservas que não foram utilizadas voltaram ao tesouro.');break;
     }
     case 'plan_upgrade':case 'plan_research': {
-      rule(world.mode==='express','O planejamento está disponível no Expresso.');
+      rule(world.mode==='express'||world.economyVersion===3,'O planejamento exige as regras de filas desta temporada.');
       rule(action.steps===undefined||[1,2,3,4].includes(action.steps),'Quantidade de planos inválida.');
       if(action.steps&&action.steps>1){
         let next={state,shared};
@@ -1581,6 +1615,15 @@ export function applyCozyAction(
       });
       break;
     }
+    case "found_city": {
+      rule(world.economyVersion===3,"A fundação exige as regras de expansão desta nova temporada.");
+      const coord=validateCoord(action,state,shared),id=key(coord),base=baseTile(world,coord,shared);
+      rule(knownMapCells(state,shared).has(id)&&base.kind==='plain'&&!sanctuaryAt(coord),"Escolha um terreno livre já explorado, fora dos distritos de torre.");
+      const reason=foundationSite(state,shared,coord);rule(!reason,reason??'Local indisponível.');validateFreeHero(state,action.heroId);
+      rule(!state.orders.some(o=>o.kind==='attack'),"Uma expedição já está em andamento. Aguarde o retorno.");
+      resourceSpend(state,{materials:CITY_FOUNDATION_COST.materials,supplies:CITY_FOUNDATION_COST.supplies+exploreCost(state,coord)});
+      addOrder(state,world,now,{kind:'attack',...coord,foundation:true,foundationMaterials:CITY_FOUNDATION_COST.materials,heroId:action.heroId,arrivesAt:now+travelMs(state,world,coord)+CITY_FOUNDATION_DAYS*dayMs(world)});break;
+    }
     case "attack":
     case "annex": {
       const coord = validateCoord(action,state,shared),
@@ -1610,7 +1653,14 @@ export function applyCozyAction(
             typeof action.conquest === "boolean",
           "Modo de investida inválido.",
         );
-      if (action.type === "annex")
+      const staged=world.economyVersion===3;
+      if(staged){
+        rule(state.explored.includes(id),"Explore a cidade antes de atacar ou anexar.");
+        rule(action.type!=="attack"||!action.conquest,"Primeiro ataque; a anexação é uma ação separada, depois da vitória.");
+        rule(action.type!=="annex"||npcOccupation(base.power,shared.npcResistance?.[id]?.initial??base.power).canAnnex,"Ainda há resistência. Ataque antes de anexar.");
+        rule(action.type!=="attack"||!npcOccupation(base.power,shared.npcResistance?.[id]?.initial??base.power).canAnnex,"A cidade já foi vencida. Agora envie um herói para anexar.");
+      }
+      if (action.type === "annex"&&!staged)
         rule(
           base.kind === "abandoned" && state.explored.includes(id),
           "Revele a cidade abandonada antes de anexar.",
@@ -1619,15 +1669,16 @@ export function applyCozyAction(
         rule(state.cities.length < 10, "Seu reino já tem dez cidades.");
         validateFreeHero(state, action.heroId);
         rule(
-          combatAssessment(computed.armyPower,base.power).occupationMargin,
+          staged||combatAssessment(computed.armyPower,base.power).occupationMargin,
           "A conquista exige poder pelo menos 25% maior que a resistência local.",
         );
       } else
         rule(
-          !state.raided[id] || now - state.raided[id] >= dayMs(world) * 6,
+          staged || !state.raided[id] || now - state.raided[id] >= dayMs(world) * 6,
           "Esse local se recupera do último saque. Aguarde seis dias de jogo.",
         );
-      rule(computed.armyPower > 0, "Recrute tropas antes de atacar.");
+      rule(staged&&conquest||computed.armyPower > 0, "Recrute tropas antes de atacar.");
+      if(staged)resourceSpend(state,{supplies:exploreCost(state,coord)});
       if(conquest){
           const owner=shared.territories?.[id];
         rule(!owner||owner===state.playerId||areaAllied(shared,owner,state.playerId),"Este território pertence a outro império.");
@@ -1636,6 +1687,8 @@ export function applyCozyAction(
         kind: "attack",
         ...coord,
         conquest,
+        ...(staged&&conquest?{occupationOnly:true}:{}),
+        ...(staged&&!conquest?{returnTravelMs:travelMs(state,world,coord)}:{}),
         areaRules: true,
         heroId: conquest ? action.heroId : undefined,
         arrivesAt: now + travelMs(state, world, coord),
@@ -1646,11 +1699,11 @@ export function applyCozyAction(
       const coord=validateCoord(action,state,shared),base=baseTile(world,coord,shared);
       rule(base.kind==="gold"||base.kind==="materials","Selecione um ponto de recurso.");
       const area=resourceArea(shared,coord,base.kind as "gold"|"materials");
-      rule(Boolean(area)&&state.explored.includes(key(coord)),"Revele a área antes de anexar.");
+      rule(Boolean(area)&&area!.cells.some(id=>state.explored.includes(id)||(state.scoutedCells??[]).includes(id)),"Revele a área antes de anexar.");
       rule(area!.reserve.surveys===3&&area!.reserve.remaining>0,"Conclua os levantamentos de uma área com reserva disponível.");
       rule(!area!.owners.includes(state.playerId),"Seu reino já anexou esta área.");
-      rule(!area!.owners.length||areaAllied(shared,area!.owners[0],state.playerId),"A área pertence a outro reino. É preciso uma aliança para compartilhar.");
-      rule(area!.cells.every(id=>{const owner=shared.claims[id]?.playerId??shared.territories?.[id];return !owner||owner===state.playerId||areaAllied(shared,owner,state.playerId);}),"Há território de outro império nesta área.");
+      rule(!area!.owners.length||(!area!.exclusive&&areaAllied(shared,area!.owners[0],state.playerId)),"Esta área já pertence a outro reino. A aliança não transfere a reserva.");
+      rule(area!.cells.every(id=>{const owner=shared.claims[id]?.playerId??shared.territories?.[id];return !owner||owner===state.playerId||(!area!.exclusive&&areaAllied(shared,owner,state.playerId));}),"Há território de outro império nesta área.");
       area!.owners.push(state.playerId);area!.annexedAt??=now;
       const territoryCity=nearestTerritoryCity(state,coord)!;(area!.ownerCities??={})[state.playerId]=territoryCity.id;shared.territoryCities??={};
       for(const id of area!.cells)if(!shared.claims[id]&&!shared.independentCities?.[id]&&!shared.territories![id]&&!sanctuaryAt(fromKey(id))) {shared.territories![id]=state.playerId;shared.territoryCities[id]={playerId:state.playerId,cityId:territoryCity.id};}
@@ -1661,7 +1714,7 @@ export function applyCozyAction(
       const coord = validateCoord(action,state,shared), id=key(coord), base=baseTile(world,coord,shared);
       const area=(base.kind==="gold"||base.kind==="materials")?resourceArea(shared,coord,base.kind):undefined;
       const deposit=area?.reserve;
-      rule(state.explored.includes(id)&&deposit&&deposit.surveys===3,"Revele a área e conclua os três levantamentos para coletar.");
+      rule(area&&area.cells.some(cell=>state.explored.includes(cell)||(state.scoutedCells??[]).includes(cell))&&deposit&&deposit.surveys===3,"Revele a área e conclua os três levantamentos para coletar.");
       rule(Boolean(area)&&canUseArea(shared,area!,state.playerId),"Anexe a área ou compartilhe-a em aliança antes de coletar.");
       rule(deposit.remaining > 0, "Esse depósito está esgotado.");
       rule(

@@ -40,6 +40,13 @@ export function borderPath(tiles: CozyCoord[]) {
   }).join(' ');
 }
 export type ResourceRegion={id:string;kind:string;cells:CozyTile[];footprint?:CozyCoord[]};
+/** The grid remains touchable; markers are reserved for destinations, not every cell. */
+export function hasMapMarker(tile:CozyTile,resourceAnchors:ReadonlySet<string>,selectedId:string|null){
+ if(!tile.revealed||tile.landmarkId||tile.kind==='plain'||tile.kind==='unknown')return false;
+ if(tile.kind==='gold'||tile.kind==='materials')return resourceAnchors.has(tile.id);
+ if(tile.kind==='ruin')return tile.id===selectedId;
+ return true;
+}
 /** Prefer authoritative area identity; keep a visual fallback for undiscovered legacy points. */
 export function resourceRegions(tiles:CozyTile[]) {
  const resources=tiles.filter(t=>t.revealed&&!t.ownerId&&(['gold','materials'].includes(t.kind))&&(!t.deposit||t.deposit.remaining>0));

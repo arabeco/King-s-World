@@ -6,5 +6,6 @@ import type {CozyCoord,CozyState,CozyWorld} from './types';
 export const PLAYER_ATTACK_PREPARATION_MS=12*60*60*1000;
 export function playerCampaign(state:CozyState,world:CozyWorld,target:CozyCoord){
  const travelMs=expeditionTravelMs(state,world,target);
- return {supplies:expeditionCost(state,target),preparationMs:PLAYER_ATTACK_PREPARATION_MS,arrivalMs:PLAYER_ATTACK_PREPARATION_MS+travelMs,returnMs:travelMs,totalMs:PLAYER_ATTACK_PREPARATION_MS+2*travelMs};
+ const preparationMs=PLAYER_ATTACK_PREPARATION_MS/(world.economyVersion===3&&world.mode==='express'?4:1);
+ return {supplies:expeditionCost(state,target),preparationMs,arrivalMs:preparationMs+travelMs,returnMs:travelMs,totalMs:preparationMs+2*travelMs};
 }

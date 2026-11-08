@@ -12,7 +12,7 @@ export default function CozyPlans({data,act,locked,now,cityId,sector,initialRese
  const [research,setResearch]=useState(initialResearch??'economy');
  const [count,setCount]=useState(2);
  const [cancelFrom,setCancelFrom]=useState<string|null>(null);
- if(world.mode!=='express')return null;
+ if(world.mode!=='express'&&world.economyVersion!==3)return null;
  const city=state.cities.find(c=>c.id===cityId);
  const lane=state.orders.filter(o=>city?o.kind==='upgrade'&&o.cityId===city.id:o.kind==='research').sort((a,b)=>a.arrivesAt-b.arrivesAt);
  const queued=lane.filter(orderQueued),active=lane.find(o=>!orderQueued(o));

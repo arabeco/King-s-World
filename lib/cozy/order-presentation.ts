@@ -3,6 +3,8 @@ import type {CozyOrder} from './types';
 /** The phase belongs to the order, not to the tile currently underneath it. */
 export function orderMapLabel(order:CozyOrder):string {
  if(order.returning)return 'Retorno do exército';
+ if(order.foundation)return 'Fundação de cidade';
+ if(order.occupationOnly)return 'Anexação da cidade';
  if(order.targetPlayerId)return 'Ataque a outro império';
  if(order.sanctuaryPactId)return 'Desafio aos guardiões';
  if(order.sanctuaryId)return 'Reconhecimento da torre';

@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import {loadCozyEngine} from './lib/load-cozy-engine.mjs';
+const E=loadCozyEngine(),S=loadCozyEngine('settlement'),START=1800000000000;
+for(const mode of ['classic','express']){
+ const world={id:'occupation-stages',mode,economyVersion:3,influenceVersion:2,status:'running',startsAt:START};
+ let save=E.settleCozyState(E.createCozyState(world,'p','Player',START),E.createCozyShared(world),world,START);
+ save.state.resources={gold:10000,materials:10000,supplies:10000};
+ const visible=E.getCozyTiles(save.state,save.shared,world);save.state.explored=Array.from({length:81},(_,q)=>Array.from({length:81},(_,r)=>`${q-40},${r-40}`)).flat();
+ const target=E.getCozyTiles(save.state,save.shared,world).find(t=>t.kind==='abandoned'&&t.attackable&&t.power>20&&!t.landmarkId);
+ assert(target);const coord={q:target.q,r:target.r},act=(action,at=START)=>E.applyCozyAction(save.state,save.shared,world,action,at);
+ assert.throws(()=>act({type:'annex',...coord,heroId:'fake'}),/resistência/);
+ assert.throws(()=>act({type:'attack',...coord,conquest:true,heroId:'fake'}),/separada/);
+ save.state.army.militia=10;
+ save=act({type:'attack',...coord,conquest:false});const attack=save.state.orders.find(o=>o.kind==='attack');assert(attack&&!attack.heroId);
+ const first=E.settleCozyState(save.state,save.shared,world,attack.arrivesAt);save=first;
+ assert.equal(save.state.cities.length,1);assert.equal(save.state.heroes.length,0,'Attacking does not require or assign a hero');
+ const remaining=save.shared.npcResistance[target.id].remaining;
+ assert(remaining>0&&remaining<target.power,'A failed attack weakens the shared NPC instead of resetting it');
+ assert.equal(E.getCozyTiles(save.state,save.shared,world).find(t=>t.id===target.id).power,remaining);
+ assert.deepEqual(E.settleCozyState(save.state,save.shared,world,attack.arrivesAt),save,'Duplicate settlement never applies damage twice');
+ const firstReturn=save.state.orders.find(o=>o.returning);assert(firstReturn);
+ assert.throws(()=>act({type:'attack',...coord,conquest:false},attack.arrivesAt+1),/andamento/);
+ save=E.settleCozyState(save.state,save.shared,world,firstReturn.arrivesAt);
+ save.state.army.militia=remaining+20;
+ save=act({type:'attack',...coord,conquest:false},firstReturn.arrivesAt+1);const second=save.state.orders.find(o=>o.kind==='attack');
+ save=E.settleCozyState(save.state,save.shared,world,second.arrivesAt);
+ assert.equal(save.shared.npcResistance[target.id].remaining,0);assert.equal(save.state.cities.length,1,'Winning a battle never occupies automatically');
+ const secondReturn=save.state.orders.find(o=>o.returning);save=E.settleCozyState(save.state,save.shared,world,secondReturn.arrivesAt);
+ assert.throws(()=>act({type:'annex',...coord,heroId:'fake'},secondReturn.arrivesAt),/herói/);
+ save=act({type:'hire',role:'general'},secondReturn.arrivesAt);const hero=save.state.heroes[0];
+ // Two real player snapshots may dispatch before either arrives. Only one can claim the city.
+ let rival=E.settleCozyState(E.createCozyState(world,'rival','Rival',secondReturn.arrivesAt),save.shared,world,secondReturn.arrivesAt);
+ rival.state.explored.push(target.id);rival.state.resources={gold:10000,materials:10000,supplies:10000};
+ rival=E.applyCozyAction(rival.state,rival.shared,world,{type:'hire',role:'general'},secondReturn.arrivesAt);
+ const candidate=E.applyCozyAction(save.state,rival.shared,world,{type:'annex',...coord,heroId:hero.id},secondReturn.arrivesAt);
+ rival=E.applyCozyAction(rival.state,candidate.shared,world,{type:'annex',...coord,heroId:rival.state.heroes[0].id},secondReturn.arrivesAt);
+ const players=[{playerId:save.state.playerId,state:candidate.state,influence:0},{playerId:rival.state.playerId,state:rival.state,influence:0}];
+ const deadline=Math.max(...players.flatMap(p=>p.state.orders.map(o=>o.arrivesAt)))+1;
+ const raced=S.settleWorld(players,rival.shared,world,deadline);
+ assert.equal(players.reduce((n,p)=>n+p.state.cities.filter(c=>c.q===target.q&&c.r===target.r).length,0),1);
+ assert.equal(players.flatMap(p=>p.state.heroes).filter(h=>h.cityId===null).length,1,'The losing envoy remains available');
+ assert(players.some(p=>p.playerId===raced.claims[target.id].playerId&&p.state.cities.length===2));
+
+ save=act({type:'annex',...coord,heroId:hero.id},secondReturn.arrivesAt);const annex=save.state.orders.find(o=>o.kind==='attack');
+ assert(annex.occupationOnly);assert.equal(save.state.heroes[0].cityId,null,'Hero selection reserves the expedition without assigning before arrival');
+ save=E.settleCozyState(save.state,save.shared,world,annex.arrivesAt);
+ assert.equal(save.state.cities.length,2);assert.equal(save.shared.claims[target.id].playerId,'p');assert(save.state.heroes[0].cityId);
+ assert.deepEqual(E.settleCozyState(save.state,save.shared,world,annex.arrivesAt),save);
+ console.log('PASS',mode,'scout, weaken without a hero, retry, defeat, separate occupation, shared remaining defense, immutable completion and hero assignment only on occupation');
+}

@@ -144,6 +144,7 @@ function MapSheet({
   onClose,
   restoreFocus,
   compact = false,
+  footer,
 }: {
   children: ReactNode;
   title: string;
@@ -151,6 +152,7 @@ function MapSheet({
   onClose: () => void;
   restoreFocus?: () => void;
   compact?: boolean;
+  footer?:ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -204,6 +206,7 @@ function MapSheet({
         </button>
       </header>
       <div className={`${styles.sheetBody} ${base.gamePanel} ${base.companion}`}>{children}</div>
+      {footer&&<footer className={styles.mapSheetFooter}>{footer}</footer>}
     </dialog>
   );
 }
@@ -294,6 +297,7 @@ export default function CozyMap({
     freeHeroes.find((hero) => hero.id === heroId)?.id ||
     freeHeroes[0]?.id ||
     "";
+  const heroSlots=(label:string)=><div className={styles.occupationSlots} role="group" aria-label={label}>{freeHeroes.map(hero=><button key={hero.id} type="button" aria-label={`Escolher ${hero.name} para ${label.includes("fundar")?"fundar":"anexar"}`} aria-pressed={hero.id===selectedHero} onClick={()=>setHeroId(hero.id)}><img src={`/herois/hero-${({general:'gareth-valkren',engineer:'karl-ponteiro',administrator:'elara-voss',explorer:'lyra-morn',sage:'aldebaran-velorian'})[hero.role]}.jpg`} alt=""/><small>{hero.name}</small></button>)}{!freeHeroes.length&&<span>Libere ou contrate um herói no Governo.</span>}</div>;
   const tileIcon = (tile: CozyTile) => {
     if (!tile.revealed) return <span>?</span>;
     const ownCity = data.state.cities.find(city => city.id === tile.cityId);
@@ -312,6 +316,7 @@ export default function CozyMap({
   const collecting = data.state.orders.some(
     (order) => order.kind === "collect",
   );
+  const selectedAction=selected?.occupation?(selected.occupation.canAnnex?<ActionButton disabled={locked||attacking||!selectedHero||data.state.cities.length>=10||data.state.resources.supplies<selected.exploreCost} onClick={()=>void act({type:'annex',q:selected.q,r:selected.r,heroId:selectedHero})}><Flag size={18}/>Anexar cidade<ResourceCost amount={selected.exploreCost} kind="supplies"/></ActionButton>:<ActionButton disabled={locked||attacking||data.computed.armyPower<=0||data.state.resources.supplies<selected.exploreCost} onClick={()=>void act({type:'attack',q:selected.q,r:selected.r,conquest:false})}><Swords size={18}/>Atacar cidade<ResourceCost amount={selected.exploreCost} kind="supplies"/></ActionButton>):selected?.foundation?.canFound?<ActionButton disabled={locked||attacking||!selectedHero||data.state.resources.materials<selected.foundation.materials||data.state.resources.supplies<selected.foundation.supplies} onClick={()=>void act({type:'found_city',q:selected.q,r:selected.r,heroId:selectedHero})}><Castle size={18}/>Fundar cidade</ActionButton>:null;
   const select = (tile: CozyTile) => {
     setUnknownCoord(null);
     setSelectedId(tile.id);
@@ -359,6 +364,7 @@ export default function CozyMap({
         <MapSheet
           compact
           title={selected.name}
+          footer={selectedAction}
           closeLabel="Fechar território"
           onClose={() => setView(null)}
           restoreFocus={() =>
@@ -370,7 +376,7 @@ export default function CozyMap({
           }
         >
           <div ref={feedbackRef}>{feedback}</div>
-          <div className={styles.selectedTileArt}>
+          <div className={styles.selectedTileArt} hidden={Boolean(selected.occupation||selected.foundation)}>
             {selectedCity?<CozyMapArt name={getCityAppearance(selectedCity).art} size={160}/>:<img
               src={selected.landmarkId ? (selected.landmarkId==="sanctuary-central"?"/landmarks/observatory-study-v1.png":"/landmarks/sanctuary-district-v1.png") : `/images/${selected.kind === "portal" ? "portal-closed.jpg" : selected.kind === "city" ? "capital.jpg" : selected.kind === "npc" ? "territory-hostile.jpg" : selected.kind === "gold" || selected.kind === "materials" ? "treasure.jpg" : selected.revealed ? "territory-known-empty.jpg" : "territory-unknown.jpg"}`}
               alt=""
@@ -388,15 +394,15 @@ export default function CozyMap({
               {selected.revealed&&selected.area&&selected.area.owners.length>1&&<span aria-label="Impérios que compartilham a reserva">{selected.area.owners.map(id=><span key={id} title={data.players.find(p=>p.playerId===id)?.playerName??'Outro reino'}><CozyMapEmblem ownerId={id} crest={data.shared.realmCrests?.[id]}/><span className={styles.srOnly}>{data.players.find(p=>p.playerId===id)?.playerName??'Outro reino'}</span></span>)}</span>}
               {mapAreaAccess(selected,data.state.playerId)&&<strong>{mapAreaAccess(selected,data.state.playerId)}</strong>}
             </div>
-            {selected.kind!=="city"&&!selectedTower&&<details className={styles.tileInfo}><summary>ⓘ Detalhes</summary><p>{selected.clue}</p></details>}
+            {selected.kind!=="city"&&!selectedTower&&!selected.occupation&&!selected.foundation&&<details className={styles.tileInfo}><summary>ⓘ Detalhes</summary><p>{selected.clue}</p></details>}
             {selectedTower&&<CozySanctuaryCard tower={selectedTower} data={data} act={act} locked={locked} now={now}/>}
-            {selected.power !== null && selected.power > 0 && (
+            {!selected.occupation&&selected.power !== null && selected.power > 0 && (
               <div className={styles.inlineNotice}>
                 <Shield size={16} />
                 Defesa da aldeia: {number(selected.power)}
               </div>
             )}
-            {selected.power!==null&&selected.attackable&&<div className={styles.combatQuote}><span>Seu ataque <strong>{number(data.computed.armyPower)}</strong></span><span>Mínimo para iniciar ocupação <strong>{number(selected.combat?.occupationRequired??Math.ceil(selected.power*1.25))}</strong></span><small>O combate pode causar perdas. A margem de ocupação usa a força na chegada, antes das baixas.</small><span><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)} até a chegada</span></div>}
+            {!selected.occupation&&selected.power!==null&&selected.attackable&&<div className={styles.combatQuote}><span>Seu ataque <strong>{number(data.computed.armyPower)}</strong></span><span>Mínimo para iniciar ocupação <strong>{number(selected.combat?.occupationRequired??Math.ceil(selected.power*1.25))}</strong></span><small>O combate pode causar perdas. A margem de ocupação usa a força na chegada, antes das baixas.</small><span><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)} até a chegada</span></div>}
             {tileOrder && (
               <div className={styles.inlineNotice}>
                 <CozySymbol name="time" size={18}/>
@@ -430,31 +436,14 @@ export default function CozyMap({
                 )}
               </div>
             )}
-            {!selected.revealed && selected.attackable && (
-              <details className={`${styles.mapActionBlock} ${styles.tileInfo}`}>
-                <summary><Swords size={16}/> Investida militar</summary>
-                <p>
-                  A pista indica uma aldeia. Você pode atacar antes de revelar,
-                  mas a resistência é desconhecida e o combate pode causar
-                  perdas.
-                </p>
-                <ActionButton
-                  quiet
-                  disabled={locked || attacking || data.computed.armyPower <= 0}
-                  onClick={() =>
-                    void act({
-                      type: "attack",
-                      q: selected.q,
-                      r: selected.r,
-                      conquest: false,
-                    })
-                  }
-                >
-                  <Swords size={16} />
-                  Atacar sem explorar
-                </ActionButton>
-              </details>
-            )}
+            {selected.foundation&&<div className={styles.mapActionBlock}>
+              <h4>Fundar uma cidade</h4>
+              {selected.foundation.reason?<small>{selected.foundation.reason}</small>:<>
+                <div className={styles.row}><ResourceCost amount={selected.foundation.materials} kind="materials"/><ResourceCost amount={selected.foundation.supplies} kind="supplies"/><small><CozySymbol name="time" size={18}/>{remaining(now+selected.foundation.durationMs,now)}</small></div>
+                <strong>Heróis disponíveis · {freeHeroes.length}/10</strong>{heroSlots("Herói para fundar cidade")}
+                <small>Nova cidade · cinco setores no nível 0 · {data.state.cities.length}/10 cidades</small>
+              </>}
+            </div>}
             {selected.kind === "city" &&
               selected.ownerId === data.state.playerId &&
               selected.cityId && (
@@ -481,7 +470,21 @@ export default function CozyMap({
             {selected.revealed &&
               ["npc", "abandoned"].includes(selected.kind) &&
               !selected.ownerId && (
-                <div className={styles.mapActionBlock}>
+                data.world.economyVersion===3?<div className={styles.mapActionBlock}>
+                  {!selected.occupation?.canAnnex&&<div className={styles.row}><span>Defesa restante</span><strong>{number(selected.power??0)}</strong></div>}
+                  {selected.occupation&&<div className={styles.occupationControl} aria-label="Controle da cidade">
+                    <div><strong>Controle · {Math.ceil(selected.occupation.control)}%</strong><small>Anexar em ≤ {selected.occupation.threshold}%</small></div>
+                    <span><progress aria-label="Controle da cidade: quanto menor, mais próxima da anexação" value={selected.occupation.control} max={100}/><i style={{left:`${selected.occupation.threshold}%`}} aria-hidden="true"/></span>
+                  </div>}
+                  {!selected.occupation?.canAnnex?<>
+                    <small>Atacar reduz a defesa. Só anexar muda a posse da cidade.</small>
+                    <small><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)} até a chegada</small>
+                  </>:<>
+                    <strong>Heróis disponíveis · {freeHeroes.length}/10</strong>
+                    {heroSlots("Herói para anexar cidade")}
+                    <small>{data.state.cities.length}/10 cidades · o herói será enviado ao confirmar.</small>
+                  </>}
+                </div>:<div className={styles.mapActionBlock}>
                   <h4>
                     {selected.kind === "npc"
                       ? "Um encontro com NPCs"
@@ -570,6 +573,10 @@ export default function CozyMap({
                   </small>
                 </div>
               )}
+            {selected.revealed&&!selected.deposit&&['gold','materials'].includes(selected.kind)&&<div className={styles.mapActionBlock}>
+              <h4>{selected.kind==='gold'?'Área de ouro':'Área de materiais'}</h4><small>Reconheça a reserva para anexar a área inteira.</small>
+              <ActionButton blockedReason={explorationBlocked} disabled={locked||exploring||data.state.resources.supplies<selected.exploreCost} onClick={()=>void act({type:'explore',q:selected.q,r:selected.r})}><Compass size={18}/>Reconhecer área<ResourceCost amount={selected.exploreCost} kind="supplies"/></ActionButton>
+            </div>}
             {selected.deposit && (
               <div className={styles.mapActionBlock}>
                 <div className={styles.row}>
@@ -577,7 +584,7 @@ export default function CozyMap({
                   <CozySymbol name={selected.deposit.resource} size={24}/>
                 </div>
                 <p>
-                  Os pontos desta área usam a mesma reserva. Anexe para coletar; aliados podem compartilhar o acesso. O território permanece após o esgotamento.
+                  Uma área inteira, uma reserva. Explore para reconhecer, anexe para tomar posse e depois colete. O território permanece quando a reserva acabar.
                 </p>
                 <Progress
                   value={selected.deposit.surveys}
@@ -591,7 +598,7 @@ export default function CozyMap({
                   <span>Reserva disponível</span>
                   <strong>{number(selected.deposit.remaining)}</strong>
                 </div>
-                {selected.area && <p>{selected.area.owners.length ? `Impérios registrados: ${selected.area.owners.map(id=>data.players.find(p=>p.playerId===id)?.playerName??id).join(", ")}.` : "Área ainda não anexada."}</p>}
+                {selected.area && <p>{selected.area.owners.length ? `Posse da área: ${selected.area.owners.map(id=>data.players.find(p=>p.playerId===id)?.playerName??id).join(", ")}.` : "Área ainda não anexada."}</p>}
                 {selected.area&&selected.area.owners.includes(data.state.playerId)&&!selected.area.canCollect&&<p>O acesso compartilhado exige uma aliança vigente com o primeiro anexante.</p>}
                 {selected.area?.canAnnex && <ActionButton disabled={locked} onClick={()=>void act({type:"area_annex",q:selected.q,r:selected.r})}><Flag size={16}/>{selected.area.owners.length ? "Compartilhar em aliança" : "Anexar área"}</ActionButton>}
                 {selected.deposit.surveys < 3 ? (
@@ -610,7 +617,7 @@ export default function CozyMap({
                     }
                   >
                     <Compass size={16} />
-                    Explorar mais um trecho{" "}
+                    Reconhecer área{" "}
                     <ResourceCost
                       amount={selected.exploreCost}
                       kind="supplies"

@@ -28,6 +28,8 @@
     "smoke:campaign": "node simulations/smoke-campaign-ui.mjs",
     "typecheck": "tsc --noEmit --project tsconfig.typecheck.json",
     "test:appearance": "node simulations/test-account-appearance.mjs",
+    "test:unified-map": "node simulations/test-cozy-unified-rules.mjs && node simulations/test-cozy-unified-sql.mjs && node simulations/test-cozy-npc-occupation.mjs && node simulations/test-cozy-exclusive-areas.mjs && node simulations/test-cozy-city-foundation.mjs && node simulations/test-cozy-map-districts.mjs",
+    "test:unified-map:ui": "node simulations/test-cozy-map-occupation-ui.mjs",
     "test:recruit-preview": "node simulations/test-cozy-recruit-preview.mjs",
     "test:collection": "node simulations/test-collection-wallet.mjs",
     "test:king-progression": "node simulations/test-king-gameplay-progression.mjs && node simulations/test-world-equipment.mjs",

@@ -39,6 +39,7 @@ export function commandFeedback(
     case "sanctuary_explore":return "Expedição enviada à torre. O reconhecimento será registrado na chegada.";
     case "explore":
       return "Exploração enviada. A descoberta chegará nos relatos.";
+    case "found_city":return "Expedição de fundação enviada. A cidade será criada na chegada.";
     case "attack":
     case "annex":
       return "Ordem enviada. Acompanhe a chegada nas ordens do reino.";

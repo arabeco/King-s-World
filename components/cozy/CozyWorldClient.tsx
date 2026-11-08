@@ -608,7 +608,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                     : computed.readOnly
                     ? "Temporada encerrada"
                     : computed.started
-                      ? `Dia ${computed.day} / ${computed.durationDays} · ${world.mode === "express" ? "Expresso" : "Clássico"}`
+                      ? `Dia ${computed.day} / ${computed.durationDays} · ${world.mode === "express" ? world.economyVersion===3?"Expresso ×4" : "Expresso" : "Clássico"}`
                       : "Aguardando abertura"}
                 </small>
               </span>

@@ -594,7 +594,7 @@ export default function CozyCityInterior({
           </section>}
 
           {life&&selected==="defense"&&<section className={styles.localIndicators}><div><strong>Integridade das estruturas</strong><span>{life.integrity}%</span></div><meter min={0} max={100} value={life.integrity} aria-label="Integridade da cidade"/><button className={styles.textButton} onClick={()=>{setSelected(null);setTab("decisions");}}>Ver reparos e decisões <ArrowRight size={15}/></button></section>}
-          {data.world.mode==="express"&&<details className={styles.optionalPlans}><summary>Fila automática</summary><CozyPlans data={data} act={act} locked={locked} now={now} cityId={city.id} sector={selected}/></details>}
+          {(data.world.mode==="express"||data.world.economyVersion===3)&&<details className={styles.optionalPlans}><summary>Fila automática</summary><CozyPlans data={data} act={act} locked={locked} now={now} cityId={city.id} sector={selected}/></details>}
         </SectorSheet>
       )}
     </div>

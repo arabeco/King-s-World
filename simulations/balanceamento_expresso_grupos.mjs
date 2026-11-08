@@ -9,6 +9,7 @@ const E = loadCozyEngine(),
   START = 1800000000000;
 function draw(key){let x=2166136261;for(const c of key)x=Math.imul(x^c.charCodeAt(0),16777619);x^=x>>>16;x=Math.imul(x,0x7feb352d);x^=x>>>15;return (x>>>0)/4294967296;}
 export function* play(seed, mode, profile, initialShared, playerId, coop, focus, useTowers, royal, behavior={}) {
+  const unified=process.env.COZY_SIM_UNIFIED==='1';
   const review=(process.env.BOT_POLICY??'').startsWith('review'),advanced=process.env.BOT_POLICY==='review2',visitRate=behavior.visitRate??(profile==='casual'?.55:.9);
   const world = {
       id: `season-${seed}`,
@@ -16,11 +17,11 @@ export function* play(seed, mode, profile, initialShared, playerId, coop, focus,
       mode,
       influenceVersion: 2,
       speedMultiplier: 1,
-      economyVersion: mode==='express'?2:undefined,
+      economyVersion: unified?3:mode==='express'?2:undefined,
       status: "running",
       startsAt: START,
     },
-    d = DAY;
+    d = DAY/(unified&&mode==='express'?4:1);
   let save = E.settleCozyState(
     E.createCozyState(world, playerId, playerId, START),
     initialShared,
@@ -35,7 +36,7 @@ export function* play(seed, mode, profile, initialShared, playerId, coop, focus,
   if(save.state.progression?.balance&&process.env.MILITARY_DIVISOR!==undefined)save.state.progression.balance.militaryDivisor=Number(process.env.MILITARY_DIVISOR);
   const history = []; const ledger=[];
   let actions = 0; const failures = {};
-  for (let day = 1; day <= (mode==='express'?30:120); day++) {
+  for (let day = 1; day <= (mode==='express'&&!unified?30:120); day++) {
     save = yield {state:save.state,shared:save.shared,day};
     const now = START + (day - 1) * d;
     save = E.settleCozyState(save.state, save.shared, world, now);
@@ -158,12 +159,16 @@ export function* play(seed, mode, profile, initialShared, playerId, coop, focus,
           .sort((a, b) => a.distance - b.distance)[0];
         if (target)
           choices.push({
-            type: target.kind==='npc'?"attack":"annex",
-            ...(target.kind==='npc'?{conquest:true}:{}),
+            type: unified?(target.occupation?.canAnnex?'annex':'attack'):target.kind==='npc'?"attack":"annex",
+            ...(unified&&!target.occupation?.canAnnex?{conquest:false}:!unified&&target.kind==='npc'?{conquest:true}:{}),
             q: target.q,
             r: target.r,
             heroId: free.id,
           });
+      }
+      if(unified&&free&&s.cities.length<10&&!s.orders.some(o=>o.kind==='attack')){
+        const site=ts.filter(t=>t.foundation?.canFound&&s.resources.materials>=t.foundation.materials&&s.resources.supplies>=t.foundation.supplies).sort((a,b)=>a.distance-b.distance)[0];
+        if(site)choices.push({type:'found_city',q:site.q,r:site.r,heroId:free.id});
       }
       const roleCounts=Object.fromEntries(['general','engineer','administrator','explorer','sage'].map(role=>[role,s.heroes.filter(h=>h.role===role).length]));
       const role=focus==='government'&&roleCounts.sage<4?'sage':(focus==='infrastructure'||focus==='conquests')&&roleCounts.engineer<Math.min(3,s.cities.length)?'engineer':focus==='military'&&roleCounts.general<5?'general':roleCounts.general<2?'general':roleCounts.sage<2?'sage':'administrator';
@@ -201,7 +206,7 @@ export function* play(seed, mode, profile, initialShared, playerId, coop, focus,
         choices.push(upgrade(item.city, item.sector));
       for(const city of s.cities)if(!city.wonder&&c.influenceDetails.conquests.wonders<2&&E.getCityDevelopment(city)===100&&s.resources.materials>=c.wonderCost)choices.push({type:'wonder',cityId:city.id});
       if(c.influence.society<500)for(const city of s.cities){const decision=c.cityLife[city.id]?.decision;const episode=`local:${city.q},${city.r}:${Math.floor((c.day-1)/6)}`;if(decision&&!s.progression.council.episodes.includes(episode)){const option=decision.options.find(o=>Object.entries(o.cost).every(([k,v])=>s.resources[k]>=v)&&((o.contentment>0&&(city.life?.contentment??0)<100)||(o.productionBonus>(city.life?.productionEffect?.endsAt>now?city.life.productionEffect.bonus:0))));if(option)choices.push({type:'city_decision',cityId:city.id,decisionId:decision.id,optionId:option.id});}}
-      if(mode==='express' && process.env.WITH_PLANS!=='0') {
+      if((unified||mode==='express') && process.env.WITH_PLANS!=='0') {
        for(const city of s.cities)for(const sec of E.SECTORS){
         const lane=s.orders.filter(o=>o.kind==='upgrade'&&o.cityId===city.id);
         const expected=city.sectors[sec.id]+lane.filter(o=>o.sector===sec.id).length;
@@ -236,7 +241,7 @@ export function* play(seed, mode, profile, initialShared, playerId, coop, focus,
        if(['upgrade','plan_upgrade'].includes(a.type)&&a.sector==='economy'&&s.cities.find(c=>c.id===a.cityId)?.sectors.economy<3)return -15+noise;
        if(a.type==='recruit'&&c.nextHorde&&c.nextHorde.power*(focus==='infrastructure'?1.3:1)>c.defensePower)return -100;
        if(a.type==='city_decision'&&s.cities.find(x=>x.id===a.cityId)?.life?.contentment<35)return -100;
-       if((a.type==='annex'||review&&a.type==='attack'&&a.conquest)&&s.cities.length<3)return -20;
+       if((a.type==='annex'||a.type==='found_city'||review&&a.type==='attack'&&(a.conquest||unified))&&s.cities.length<3)return -20;
        if(focus==='infrastructure'&&urbanReady&&s.cities.length<(review?10:6)&&['annex','hire',...(review?['attack']:[])].includes(a.type))return -6+noise;
        if(focus==='infrastructure'&&a.type==='city_decision'&&((s.cities.find(c=>c.id===a.cityId)?.life?.contentment??70)<60||(s.cities.find(c=>c.id===a.cityId)?.integrity??100)<80))return -20+noise;
        if(focus==='conquests'&&['upgrade','plan_upgrade'].includes(a.type)&&a.cityId===s.cities.find(city=>!city.wonder)?.id&&Object.values(s.cities.find(city=>city.id===a.cityId).sectors).reduce((a,b)=>a+b,0)<50)return -5+noise;
@@ -312,14 +317,14 @@ export function* play(seed, mode, profile, initialShared, playerId, coop, focus,
     });
   }
   save=yield {state:save.state,shared:save.shared,phase:'end'};
-  save = E.settleCozyState(save.state, save.shared, world, START+(mode==='express'?30:120)*d);
+  save = E.settleCozyState(save.state, save.shared, world, START+(mode==='express'&&!unified?30:120)*d);
   return {
     seed,
     mode,
     score: save.state.finalScore,
     cities: save.state.cities.length,
     seal: save.state.portalCrossedAt !== null,
-    profile, playerId, coop, focus, balance:save.state.progression.balance, actions, failures, ledger, influence: E.getCozyComputed(save.state,save.shared,world,START+(mode==='express'?30:120)*d).influence,
+    profile, playerId, coop, focus, balance:save.state.progression.balance, actions, failures, ledger, influence: E.getCozyComputed(save.state,save.shared,world,START+(mode==='express'&&!unified?30:120)*d).influence,
     visitedDays:history.length,hordesWon: save.state.hordesWon,
     research:save.state.research,heroes:save.state.heroes, history, resources:save.state.resources, council:save.state.progression.council, cityLevels:save.state.cities.map(c=>({id:c.id,sectors:c.sectors})),
   };

@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useId,useMemo,useRef,useState} from 'react';
 import type {CozyCoord,CozyPayload,CozyTile} from '@/lib/cozy/types';
-import {MAP_GROUND_Y,borderPath,cellPath,mapCoord,mapPoint,roundMapCoord,resourceRegions} from '@/lib/cozy/map-presentation';
+import {MAP_GROUND_Y,borderPath,cellPath,mapCoord,mapPoint,roundMapCoord,resourceRegions,hasMapMarker} from '@/lib/cozy/map-presentation';
 import {mapIdentity} from '@/lib/cozy/map-identity';
 import CozyMapEmblem from './CozyMapEmblem';
 import CozyMapTerrain from './CozyMapTerrain';
@@ -164,10 +164,10 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
      const x=from.x+(to.x-from.x)*progress,y=from.y+(to.y-from.y)*progress;
      return <g key={`journey-${order.id}`} data-map-journey={order.id} aria-hidden="true" pointerEvents="none">
       <path d={`M${from.x} ${from.y} L${to.x} ${to.y}`} fill="none" stroke="#102c26" strokeWidth={4/scale}/>
-      <path d={`M${from.x} ${from.y} L${to.x} ${to.y}`} fill="none" stroke={order.returning?'#a9cba2':order.kind==='attack'?'#dcad8c':'#e0cf8f'} strokeWidth={1.4/scale} strokeDasharray={`${5/scale} ${5/scale}`}/>
+      <path d={`M${from.x} ${from.y} L${to.x} ${to.y}`} fill="none" stroke={order.foundation?'#9ec6d6':order.returning?'#a9cba2':order.kind==='attack'?'#dcad8c':'#e0cf8f'} strokeWidth={1.4/scale} strokeDasharray={`${5/scale} ${5/scale}`}/>
       <g transform={`translate(${x} ${y}) scale(${1/scale})`} data-journey-kind={order.kind}>
        <circle r="8" fill="#142e26" stroke="#e0cf8f" strokeWidth="1"/>
-       {order.kind==='attack'?<path d="M-4 -4L4 4M4 -4L-4 4" stroke="#ffe9be" strokeWidth="2"/>:order.kind==='collect'?<path d="M0 -5L5 3H-5Z" fill="#ffe9be"/>:<circle r="3" fill="#ffe9be"/>}
+       {order.foundation?<path d="M-5 5V-2h3v-3h4v3h3v7H1V1h-2v4Z" fill="#ffe9be"/>:order.kind==='attack'?<path d="M-4 -4L4 4M4 -4L-4 4" stroke="#ffe9be" strokeWidth="2"/>:order.kind==='collect'?<path d="M0 -5L5 3H-5Z" fill="#ffe9be"/>:<circle r="3" fill="#ffe9be"/>}
       </g>
      </g>;
     })}
@@ -176,7 +176,8 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
      <path d={cellPath(selected)} fill="none" stroke="#ffdf87" strokeWidth={2/scale} strokeLinejoin="round"/>
     </g>}
     {visible.filter(t=>scale>=.3||t.kind==='city'||t.id===selectedId||(t.q===cq&&t.r===cr)).map(t=>{const p=mapPoint(t),own=t.ownerId===data.state.playerId,small=scale<.3;
-     const resourceCell=(t.kind==='gold'||t.kind==='materials')&&!regionAnchors.has(t.id)&&t.id!==selectedId;
+     const resourceCell=(t.kind==='gold'||t.kind==='materials')&&!regionAnchors.has(t.id);
+     const noMarker=!hasMapMarker(t,regionAnchors,selectedId);
      const quiet=resourceCell||(scale<.85&&!t.ownerId&&!regionAnchors.has(t.id)&&t.kind!=='abandoned');
      const work=own&&!data.computed.readOnly&&data.state.orders.some(o=>o.kind==='upgrade'&&o.cityId===t.cityId);
      const city=own?data.state.cities.find(c=>c.id===t.cityId):undefined;
@@ -185,7 +186,7 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
      const art=spent?null:t.kind==='city'?(appearance?.art??'city'):t.kind==='gold'?'mine':t.kind==='materials'?'materials':t.kind==='abandoned'?'abandoned':t.kind==='npc'?'npc':t.kind==='portal'?'landmark':t.kind==='ruin'?'ruin':null;
      const box=t.kind==='city'&&!small?Math.max(52,44/scale):(small?22:46)/scale;return <foreignObject key={t.id} x={p.x-box/2} y={p.y-box/2} width={box} height={box} overflow="visible">
       <button type="button" role="gridcell" style={{width:box,height:box}} className={styles.tile} data-cozy-tile={t.id} data-centered={t.q===cq&&t.r===cr} aria-selected={t.id===selectedId} aria-label={`${t.name}, ${t.q}, ${t.r}. ${t.kind==='city'?'Cidade':t.clue}${appearance?` · ${appearance.label}`:""}${work?" · obra em andamento":""}`} tabIndex={t.q===cq&&t.r===cr?0:-1} onClick={()=>onSelect(t)}>
-       {t.landmarkId||(quiet&&t.kind==='plain')?null:small||quiet?<span className={styles.dot} style={{width:(quiet?3:small?3:9)/scale,height:(quiet?3:small?3:9)/scale,opacity:t.revealed?1:0,background:t.ownerId?ownerColor(t.ownerId):spent?'#899f81':t.kind==='npc'?'#c18d73':t.kind==='gold'?'#ddbc69':t.kind==='materials'?'#8ab6a0':'#899f81'}}/>:art&&t.revealed?<CozyMapArt name={art} size={t.kind==='city'?50:(regionAnchors.has(t.id)?32:25)/scale}/>:<span className={styles.fog} style={{fontSize:13/scale}}>{t.revealed?'·':(!selectionOpen&&t.q===cq&&t.r===cr)?'?':''}</span>}
+       {t.landmarkId||noMarker?null:small||quiet?<span className={styles.dot} style={{width:(quiet?3:small?3:9)/scale,height:(quiet?3:small?3:9)/scale,opacity:t.revealed?1:0,background:t.ownerId?ownerColor(t.ownerId):spent?'#899f81':t.kind==='npc'?'#c18d73':t.kind==='gold'?'#ddbc69':t.kind==='materials'?'#8ab6a0':'#899f81'}}/>:art&&t.revealed?<CozyMapArt name={art} size={t.kind==='city'?50:(regionAnchors.has(t.id)?42:32)/scale}/>:<span className={styles.fog} style={{fontSize:13/scale}}>{t.revealed?'·':(!selectionOpen&&t.q===cq&&t.r===cr)?'?':''}</span>}
       </button>
      </foreignObject>;
     })}

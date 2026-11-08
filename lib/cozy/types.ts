@@ -6,7 +6,7 @@ export type CozyWorld = {
   name: string;
   mode: "classic" | "express";
   speedMultiplier?: 1 | 2 | 4;
-  economyVersion?:2;
+  economyVersion?:2|3;
   status: "open" | "running" | "finalized";
   startsAt: number | null;
   influenceVersion?: 1 | 2;
@@ -72,6 +72,9 @@ export type CozyOrder = {
   targetCityId?:string;
   expeditionArmy?:Record<CozyTroop,number>;
   abstractAttack?:boolean;
+  foundation?:true;
+  foundationMaterials?:number;
+  occupationOnly?:boolean;
   returning?:boolean;
   returnTravelMs?:number;
   cargo?:Partial<CozyResources>;
@@ -130,7 +133,7 @@ export type CozyDecree = {
 export type CozyProgression = {
   version: 2;
   mobileReviewRules?: true;
-  balance?: {militaryDivisor:number; militaryVictoryMax?:number; councilExpansionDamping:boolean; expressEconomy?:boolean;materialsProductionMultiplier?:number;suppliesProductionMultiplier?:number;plannedCapacity?:number;infrastructureRanked?:boolean;infrastructureWeights?:number[];constructionGrowth?:number;councilMeaningfulDecrees?:boolean;councilContinuity?:boolean;councilMerit?:{decree:number;local:number;stable:number};councilSourceCaps?:{decree:number;local:number;stable:number}};
+  balance?: {unifiedRules?:true;militaryDivisor:number; militaryVictoryMax?:number; councilExpansionDamping:boolean; expressEconomy?:boolean;materialsProductionMultiplier?:number;suppliesProductionMultiplier?:number;plannedCapacity?:number;infrastructureRanked?:boolean;infrastructureWeights?:number[];constructionGrowth?:number;councilMeaningfulDecrees?:boolean;councilContinuity?:boolean;councilMerit?:{decree:number;local:number;stable:number};councilSourceCaps?:{decree:number;local:number;stable:number}};
   capitalId: string;
   capitalLevels: Record<CozySector,number>;
   militaryBaseline: number;
@@ -192,6 +195,7 @@ export type CozyDeposit = {
   contributors: string[];
 };
 export type CozyResourceArea = {
+  exclusive?:true;
   id: string;
   resource: "gold" | "materials";
   cells: string[];
@@ -236,6 +240,7 @@ export type CozySupport = {
   resolvedAt?:number;
 };
 export type CozyShared = {
+  npcResistance?:Record<string,{initial:number;remaining:number;at:number}>;
   realmCrests?:Record<string,{id:string;finish:'plain'|'imperial'}>;
   version: 2;
   progressionBalance?: CozyProgression['balance'] | null;
@@ -269,6 +274,8 @@ export type CozyTile = CozyCoord & {
   name: string;
   revealed: boolean;
   terrainVisible?: boolean;
+  foundation?:{canFound:boolean;reason:string|null;durationMs:number;supplies:number;materials:number};
+  occupation?:{control:number;threshold:number;canAnnex:boolean;remaining:number;initial:number};
   attackable: boolean;
   ownerId: string | null;
   cityId: string | null;
@@ -278,7 +285,7 @@ export type CozyTile = CozyCoord & {
   territoryOwnerId?: string | null;
   landmarkId?: string | null;
   combat?: {attackRequired:number;occupationRequired:number;attackWins:boolean;occupationMargin:boolean} | null;
-  area?: { id: string; cells: string[]; owners: string[]; canAnnex: boolean; canCollect: boolean } | null;
+  area?: { blockedReason?:string|null; exclusive?:true; id: string; cells: string[]; owners: string[]; canAnnex: boolean; canCollect: boolean } | null;
   distance: number;
   exploreCost: number;
   travelMs: number;
@@ -368,6 +375,7 @@ export type CozyAction =
   areaRules?: boolean;
       heroId?: string;
     }
+  | { type: "found_city"; q:number; r:number; heroId:string }
   | { type: "annex"; q: number; r: number; heroId: string }
   | { type: "collect"; q: number; r: number }
   | { type: "wonder"; cityId: string }

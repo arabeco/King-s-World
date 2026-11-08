@@ -260,7 +260,7 @@ function computeRuntime(world: DbWorld) {
   if (world.rules_version === 2) {
     const seasonMode = normalizeSeasonMode(world.season_mode);
     const economicExpress = seasonMode === "express" && world.economy_version === 2;
-    const speedMultiplier = economicExpress ? 1 : seasonMode === "express" ? (world.speed_multiplier === 2 ? 2 : 4) : 1;
+    const speedMultiplier = economicExpress ? 1 : seasonMode === "express" ? (world.economy_version === 3 ? 4 : world.speed_multiplier === 2 ? 2 : 4) : 1;
     const durationDays = economicExpress ? 30 : 120;
     const started = world.status !== "open";
     const anchorStartedAtMs = world.starts_at ? Date.parse(world.starts_at) : world.runtime_anchor_started_at ? Date.parse(world.runtime_anchor_started_at) : null;

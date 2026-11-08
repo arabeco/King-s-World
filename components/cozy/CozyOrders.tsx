@@ -64,7 +64,7 @@ export default function CozyOrders({
       {visible.length ? (
         <div className={styles.orderList}>
           {visible.map((order) => {
-            const info = orderInfo[order.kind];
+            const info = order.foundation?{title:"Fundação de cidade",art:"nav-cities.png"}:order.occupationOnly?{title:"Anexação da cidade",art:"action-enter-world.png"}:orderInfo[order.kind];
             const city = data.state.cities.find(
               (entry) => entry.id === order.cityId,
             );
@@ -72,7 +72,7 @@ export default function CozyOrders({
             const research = RESEARCHES.find(
               (entry) => entry.id === order.research,
             );
-            const title = order.returning||order.targetPlayerId?orderMapLabel(order):order.sanctuaryPactId?"Desafio aos guardiões da torre":order.sanctuaryId?`Reconhecimento: ${data.computed.sanctuaries.find(t=>t.id===order.sanctuaryId)?.name??"Torre"}`:
+            const title = order.foundation||order.occupationOnly||order.returning||order.targetPlayerId?orderMapLabel(order):order.sanctuaryPactId?"Desafio aos guardiões da torre":order.sanctuaryId?`Reconhecimento: ${data.computed.sanctuaries.find(t=>t.id===order.sanctuaryId)?.name??"Torre"}`:
               order.kind === "upgrade" && sector
                 ? sector.name
                 : order.kind === "research" && research

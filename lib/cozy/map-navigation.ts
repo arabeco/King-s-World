@@ -32,7 +32,7 @@ export function mapOwnership(tile: CozyTile, data: CozyPayload): string {
   if (!tile.revealed) return tile.terrainVisible ? "À vista · não explorado" : "Sob a névoa";
   if (tile.reservedSlot) return "Reino disponível";
   const owner = tile.ownerId ?? tile.territoryOwnerId;
-  if (!owner) return "Território livre";
+  if (!owner) return tile.kind==='npc'||tile.kind==='abandoned'?"Cidade independente":"Território livre";
   if (owner === data.state.playerId) return "Seu império";
   const player = data.players.find(p => p.playerId === owner);
   const allied = data.state.allianceId && player?.allianceId === data.state.allianceId;
@@ -44,6 +44,7 @@ export function mapAreaAccess(tile: CozyTile, playerId: string): string {
   if (tile.deposit.remaining <= 0) return "Reserva esgotada · território preservado";
   if (!tile.area) return "Reserva descoberta";
   if (tile.area.canCollect) return tile.area.owners.length===1 && tile.area.owners[0] === playerId ? "Sua área · coleta liberada" : "Área compartilhada · coleta liberada";
+  if (tile.area.blockedReason) return tile.area.blockedReason;
   if (tile.area.canAnnex) return tile.area.owners.length ? "Disponível para compartilhar em aliança" : "Disponível para anexar";
   return tile.area.owners.length ? "Área anexada · sem acesso à coleta" : "Explore a reserva para anexar";
 }
@@ -53,7 +54,7 @@ export function mapDestinations(data: CozyPayload, filter: MapFilter, search = "
   const query = normalize(search.trim().replace(/\s*[,;:]\s*/g, ", ")), groups = new Map<string, MapDestination>();
   for (const tile of [...data.tiles].sort((a,b) => a.distance-b.distance || a.id.localeCompare(b.id))) {
     const orders = data.state.orders.filter(o => o.q === tile.q && o.r === tile.r);
-    const resource = tile.revealed && !tile.ownerId && !!tile.deposit && tile.deposit.remaining > 0;
+    const resource = tile.revealed && !tile.ownerId && ['gold','materials'].includes(tile.kind) && (!tile.deposit || tile.deposit.remaining > 0);
     const accepted = filter === "journeys" ? orders.length > 0
       : filter === "cities" ? tile.revealed && tile.kind === "city"
       : filter === "resources" ? resource
@@ -63,7 +64,7 @@ export function mapDestinations(data: CozyPayload, filter: MapFilter, search = "
     // An active journey may point into fog, but cannot expose that tile's hidden name or clue.
     const title = tile.revealed ? `${tile.name} ${tile.clue} ${mapOwnership(tile,data)} ${mapAreaAccess(tile,data.state.playerId)}` : "Exploração em andamento";
     if (query && !normalize(`${title} ${tile.q}, ${tile.r}`).includes(query)) continue;
-    const group = filter !== "journeys" && resource && tile.area ? `area:${tile.deposit!.resource}:${tile.area.id}` : `tile:${tile.id}`;
+    const group = filter !== "journeys" && resource && tile.area ? `area:${tile.kind}:${tile.area.id}` : `tile:${tile.id}`;
     const previous = groups.get(group);
     if (previous) { previous.accesses++; previous.orders.push(...orders); }
     else groups.set(group,{tile,accesses:1,orders:[...orders]});

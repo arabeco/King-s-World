@@ -584,3 +584,11 @@
   text-shadow: none;
 }
 .blockedAction { opacity: .55; cursor: help; }
+
+.occupationSlots{display:flex;gap:8px;overflow-x:auto;padding:5px 0 10px}.occupationSlots button{flex:0 0 72px;min-height:88px;padding:4px;background:#202122;border:1px solid #756348;border-radius:6px;color:#ead7b5}.occupationSlots button[aria-pressed=true]{border-color:#f0cd77;background:linear-gradient(#5a492d,#252425)}.occupationSlots img{display:block;width:58px;height:58px;object-fit:cover;margin:auto;border-radius:4px}.occupationSlots small{display:block;font-size:11px;padding-top:4px}
+
+.occupationControl{display:grid;gap:8px;padding:10px 0}.occupationControl>div{display:flex;justify-content:space-between;align-items:center;gap:8px}.occupationControl small{font-size:11px;color:#cab994}.occupationControl>span{position:relative;display:block}.occupationControl progress{width:100%;height:10px;accent-color:#cd9b62}.occupationControl i{position:absolute;top:-3px;height:16px;border-left:2px solid #ffe5a0}
+
+.compactSheet .sheetHeader{position:sticky;top:0;z-index:2;flex:none;background:#252b27}.compactSheet .sheetBody{flex:1 1 auto}.compactSheet .occupationSlots button{min-height:68px;flex-basis:64px}.compactSheet .occupationSlots img{height:44px;width:44px}.compactSheet .occupationSlots{padding-bottom:4px}.compactSheet .occupationControl{padding:6px 0}.compactSheet [hidden]{display:none!important}
+
+.mapSheetFooter{flex:none;padding:8px 14px 10px;border-top:1px solid #a38b5344;background:#1b211e}.mapSheetFooter>button{width:100%;min-height:46px}.compactSheet .mapActionBlock h4{margin:0 0 4px}
