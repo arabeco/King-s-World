@@ -22,7 +22,7 @@ try{
  await command({type:'start_world'});let data=await command({type:'king_choose',profileId:'builder',nickname:'Account king'});assert.equal(data.world.economyVersion,3);
  const city=data.state.cities[0];data.state.resources={gold:0,materials:1000,supplies:600};
  const save=async()=>{await db.query('update kw_cozy_player_states set state_json=$1::jsonb,revision=revision+1 where world_player_id=$2',[JSON.stringify(data.state),data.state.playerId]);};await save();
- await context.addInitScript(id=>{for(const screen of ['crown','cities','city','council'])localStorage.setItem(`kw-screen-help:v1:${screen}:${id}`,'seen');},data.state.playerId);
+ await context.addInitScript(id=>{for(const screen of ['crown','cities','city','council','influence'])localStorage.setItem(`kw-screen-help:v1:${screen}:${id}`,'seen');},data.state.playerId);
  let commands=0;page.on('request',request=>{if(request.method()==='POST'&&request.url()===endpoint)commands++;});
  let writes=0;page.on('request',request=>{if(request.method()==='POST'&&request.url()===endpoint&&['city_decision','decree'].includes(request.postDataJSON()?.action?.type))writes++;});
  const nav=()=>page.getByRole('navigation',{name:'Áreas do reino',exact:true});
@@ -82,5 +82,16 @@ try{
  // Optional last-world preferences cannot turn a successful login into a broken lobby.
  await context.addInitScript(()=>{const get=Storage.prototype.getItem,set=Storage.prototype.setItem;Storage.prototype.getItem=function(key){if(key.startsWith('kw:last-world:'))throw new DOMException('Storage unavailable','SecurityError');return get.call(this,key);};Storage.prototype.setItem=function(key,value){if(key.startsWith('kw:last-world:'))throw new DOMException('Storage unavailable','SecurityError');return set.call(this,key,value);};});
  await page.goto(base+'/lobby',{waitUntil:'networkidle'});const enter=page.locator('[data-smoke="lobby-enter-world"]');await enter.waitFor();assert(await enter.isEnabled());await page.screenshot({path:path.join(root,'reports/cozy/journey-lobby-390.png')});await enter.tap();await page.waitForURL(`**/world/${slug}/**`);assert.equal(commands,beforeTracking,'Returning through the lobby is navigation only');
+ // A mid-season fixture exercises the actual ghost band and its neutral explanation.
+ await db.query("update worlds set starts_at=now()-interval '15 days',runtime_anchor_started_at=now()-interval '15 days',ends_at=now()+interval '15 days' where id=$1",[data.world.id]);
+ data.state.orders=[];data.state.settledAt=Date.now();await save();
+ await page.reload({waitUntil:'networkidle'});const influenceButton=page.getByRole('button',{name:/^Detalhes da influência:/});await influenceButton.waitFor();
+ const band=page.locator('[data-reference="band"]');await band.waitFor();
+ for(const width of [320,390,430]){await page.setViewportSize({width,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert(await band.evaluate(el=>{const rect=el.getBoundingClientRect(),track=el.parentElement.getBoundingClientRect();return rect.width>0&&rect.left>=track.left-1&&rect.right<=track.right+1;}),'Reference band remains inside the real track');}
+ await page.setViewportSize({width:390,height:844});await influenceButton.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(root,'reports/cozy/influence-reference-crown-390.png')});const beforeReference=commands;
+ await influenceButton.tap();const influencePanel=page.getByRole('dialog',{name:'Influência',exact:true});await influencePanel.getByRole('region',{name:'Referência de evolução',exact:true}).waitFor();await page.screenshot({path:path.join(root,'reports/cozy/influence-reference-details-390.png')});
+ await influencePanel.getByText('Como é calculada',{exact:true}).tap();await influencePanel.getByText(/Não inclui disputas entre jogadores/).waitFor();assert.equal(commands,beforeReference,'Reference inspection is read-only');
+ assert.equal(await influencePanel.getByText(/atrasado|abaixo do esperado/i).count(),0,'No negative comparison verdict');
+ await influencePanel.getByRole('button',{name:'Abrir progresso de Militar',exact:true}).tap();await page.getByRole('dialog',{name:'Militar',exact:true}).waitFor();assert.equal(commands,beforeReference,'Opening an area from influence never spends');
  console.log('PASS mobile smart decisions: real v3 SQL/API, local/council resource exchanges, gold/material/supply PNGs, tap-to-explain, selection without spending, explicit confirmation, risk cost/failure inspection and 320/390/430 layout.');
 }catch(error){console.error(log);throw error;}finally{if(browser)await browser.close();server.kill();await rest.close();await db.close();}

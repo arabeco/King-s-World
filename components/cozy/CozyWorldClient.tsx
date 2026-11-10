@@ -2,6 +2,8 @@
 
 import {AccountAppearance} from "../profile/AccountAppearance";
 import {activeRoyalProfile} from "@/lib/cozy/royal-profiles";
+import {influenceReference} from "@/lib/cozy/influence-reference";
+import CozyInfluenceTrack,{InfluenceReferenceDetails} from "./CozyInfluenceTrack";
 import CozySymbol from "./CozySymbol";
 import {seasonDisplay} from "@/lib/cozy/season-display";
 import {kingdomJourney,type JourneyTarget} from "@/lib/cozy/kingdom-journey";
@@ -467,6 +469,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
     (entry) => getCityDevelopment(entry) >= 100 && !entry.wonder,
   );
   const journey=kingdomJourney(data,clock);
+  const reference=influenceReference(data,clock);
   const calendar=seasonDisplay(computed.day,computed.durationDays,computed.realDurationDays);
   const navigate = (next: Screen) => {
     setPanel(null);
@@ -696,9 +699,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                       {((id==="infrastructure"&&wonderReady)||(id==="council"&&computed.decree)||(id==="achievements"&&!!computed.sanctuaryThreats?.length))&&<i aria-label="Atenção"/>}
                     </button>;
                   })}
-                  <button type="button" className={game.influenceTrack} aria-label={`Detalhes da influência: ${computed.influence.total} de 2500`} onClick={()=>setPanel("influence")}>
-                    <span>Influência</span><span className={game.victoryTrack}><progress value={computed.influence.total} max={2500}/><i title="Selo de Vitória · 1.500" aria-label="Meta de vitória: 1500">◆</i></span><strong>{number(computed.influence.total)} / 2.500</strong>
-                  </button>
+                  <CozyInfluenceTrack score={computed.influence.total} reference={reference} onOpen={()=>setPanel("influence")}/>
                 </div>
               </div>
             </section>
@@ -908,7 +909,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                   title={`${number(computed.influence.total)} / 2.500`}
                 />
                 <span className={styles.eyebrow}><Trophy size={16}/> Selo · 1.500</span>
-                <div className={game.influenceList}>
+                <InfluenceReferenceDetails reference={reference}/><div className={game.influenceList} data-influence-overview>
                   {Object.entries(influenceNames).map(([id, name]) => (
                     <button type="button" key={id} className={game.influenceArea} aria-label={`Abrir progresso de ${name}`} onClick={()=>setPanel(influenceDestinations[id as keyof typeof influenceNames])}>
                       <div>

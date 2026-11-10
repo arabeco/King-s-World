@@ -1069,3 +1069,10 @@
 .darkSheet{--ink:#f1e5c8;--muted:#b4aa97;color:#f1e5c8;background:radial-gradient(ellipse at top right,#823f392b,transparent 70%),#1c1b1c}
 .darkSheet .sheetHeader{background:linear-gradient(110deg,#352625,#1d1e1f);border-color:#9f775c66}
 .darkSheet .sheetFeedback{background:#1c1b1c;box-shadow:0 8px 15px #1c1b1c}
+/* Keep the reference and the five real scores in one calm, compact overview. */
+[data-influence-overview] .influenceArea{display:grid;grid-template-columns:minmax(0,1fr) 18px;gap:8px 12px;min-height:70px;padding:12px 2px;border:0;border-bottom:1px solid #bac6b626;border-radius:0;background:transparent;color:#e6dfc9;box-shadow:none}
+[data-influence-overview] .influenceArea>div:first-child{grid-column:1;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}
+[data-influence-overview] .influenceArea>div:first-child strong{font-size:13px;font-variant-numeric:tabular-nums;color:#e9d9ac}
+[data-influence-overview] .influenceArea>[role=progressbar]{grid-column:1;height:6px;min-height:6px;margin:0;border:0;border-radius:4px;background:#b9c4b329;overflow:hidden}
+[data-influence-overview] .influenceArea>[role=progressbar]>span{height:100%;background:linear-gradient(90deg,#a2864b,#e0c88b)}
+[data-influence-overview] .influenceArea>svg{grid-column:2;grid-row:1/3;align-self:center;color:#bcbca8}

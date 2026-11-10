@@ -31,7 +31,7 @@ const guides = {
   {art:"/icons/action-defend.png",title:"Volte à ação",text:"Use os filtros e a busca. Os atalhos de cada relato levam ao lugar que precisa de atenção."},
  ]},
  influence: {title:"Como acompanhar sua influência",steps:[
-  {art:"/icons/influencia.png",title:"Cinco caminhos",text:"Cada área chega a 500 pontos. Toque na barra para abrir seus comandos e acompanhar o progresso."},
+  {art:"/icons/influencia.png",title:"Cinco caminhos",text:"O dourado mostra seus pontos. A faixa cinza é uma referência de simulações para este período, não uma meta nem uma média real."},
   {art:"/icons/influence-legacy.png",title:"Seu selo",text:"Alcance 1.500 de influência para registrar o Selo de Vitória. A temporada continua até o ranking final."},
  ]},
  infrastructure: {title:"Como evoluir suas cidades",steps:[
