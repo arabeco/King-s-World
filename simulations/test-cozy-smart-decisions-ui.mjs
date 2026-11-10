@@ -23,9 +23,25 @@ try{
  const city=data.state.cities[0];data.state.resources={gold:0,materials:1000,supplies:600};
  const save=async()=>{await db.query('update kw_cozy_player_states set state_json=$1::jsonb,revision=revision+1 where world_player_id=$2',[JSON.stringify(data.state),data.state.playerId]);};await save();
  await context.addInitScript(id=>{for(const screen of ['crown','cities','city','council'])localStorage.setItem(`kw-screen-help:v1:${screen}:${id}`,'seen');},data.state.playerId);
+ let commands=0;page.on('request',request=>{if(request.method()==='POST'&&request.url()===endpoint)commands++;});
  let writes=0;page.on('request',request=>{if(request.method()==='POST'&&request.url()===endpoint&&['city_decision','decree'].includes(request.postDataJSON()?.action?.type))writes++;});
  const nav=()=>page.getByRole('navigation',{name:'Áreas do reino',exact:true});
- await page.goto(base+`/world/${slug}/intelligence`,{waitUntil:'networkidle'});await nav().getByRole('button',{name:'Cidades',exact:true}).tap();await page.getByRole('button',{name:'Ver cidade Capital',exact:true}).tap();await page.getByRole('tab',{name:'Decisões',exact:true}).tap();
+ await page.goto(base+`/world/${slug}/intelligence`,{waitUntil:'networkidle'});await nav().getByRole('button',{name:'Cidades',exact:true}).tap();await page.getByRole('button',{name:'Ver cidade Capital',exact:true}).tap();await page.getByRole('tab',{name:'Setores',exact:true}).tap();
+ // Inspect every building without paying, and keep the real numeric preview legible on mobile.
+ const initialMaterials=data.state.resources.materials;
+ for(const [name,key] of [['Administração','administration'],['Economia','economy'],['Sociedade','society'],['Recrutamento','recruitment'],['Defesa','defense']]){
+  await page.getByRole('button',{name:`Ver setor ${name}`,exact:true}).tap();
+  const sheet=page.getByRole('dialog',{name,exact:true});await sheet.waitFor();
+  assert.equal(await sheet.getByRole('button',{name:`Evoluir ${name}`,exact:true}).isEnabled(),true);
+  await sheet.getByRole('region',{name:'Prévia da evolução',exact:true}).waitFor();
+  for(const width of [320,390,430]){await page.setViewportSize({width,height:844});assert(await sheet.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'No horizontal sheet overflow');assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
+  await page.setViewportSize({width:390,height:844});await sheet.locator('img').evaluateAll(async images=>{await Promise.all(images.map(img=>img.decode().catch(()=>{})));});await page.screenshot({path:path.join(root,`reports/cozy/welcoming-upgrade-${key}-390.png`)});
+  await sheet.getByRole('button',{name:'Fechar setor',exact:true}).tap();
+ }
+ for(const width of [320,390,430]){await page.setViewportSize({width,height:844});for(const card of await page.getByRole('button',{name:/^Ver setor /}).all())assert(await card.evaluate(el=>Array.from(el.children).every(child=>child.getBoundingClientRect().right<=el.getBoundingClientRect().right+1)),'All sector content fits its row');}
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(root,'reports/cozy/welcoming-city-sectors-390.png')});
+ assert.equal(commands,0,'Inspecting sectors submits no game commands');const inspected=(await (await page.request.get(endpoint)).json()).state.resources.materials;assert(inspected>=initialMaterials&&inspected<initialMaterials+5,'Only passive production changes while inspecting');
+ await page.getByRole('tab',{name:'Decisões',exact:true}).tap();
  const local=page.getByRole('article',{name:'Decisão local da cidade',exact:true});await local.getByRole('button',{name:'Escolher: Vender parte dos materiais',exact:true}).tap();
  assert.equal(writes,0,'Selecting a local choice must not spend');await local.getByRole('button',{name:'Ouro: +16',exact:true}).tap();assert.equal(writes,0,'Reading an effect is free');
  for(const width of [320,390,430]){await page.setViewportSize({width,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await local.getByRole('button',{name:'Confirmar decisão',exact:true}).scrollIntoViewIfNeeded();assert(await local.getByRole('button',{name:'Confirmar decisão',exact:true}).isEnabled());}
@@ -42,5 +58,16 @@ try{
  await council.getByRole('button',{name:'Assinar',exact:true}).scrollIntoViewIfNeeded();await page.waitForLoadState('networkidle');await page.screenshot({path:path.join(root,'reports/cozy/smart-council-risk-390.png')});assert.equal(writes,2,'Risk inspection never submits the selected decree');
  response=page.waitForResponse(reply=>reply.url()===endpoint&&reply.request().method()==='POST'&&reply.request().postDataJSON()?.action?.type==='decree');await council.getByRole('button',{name:'Assinar',exact:true}).tap();reply=await response;assert.equal(reply.status(),200,await reply.text());result=await reply.json();assert([975,1070].includes(result.state.resources.gold));assert.equal(writes,3);assert(result.state.resources.supplies>=800&&result.state.resources.supplies<801);
  const replay=await page.request.post(endpoint,{data:reply.request().postDataJSON()});assert.equal(replay.status(),200,await replay.text());const replayed=await replay.json();assert.equal(replayed.state.resources.gold,result.state.resources.gold);assert.equal(replayed.state.decreesSigned.filter(day=>day===4).length,1);
+ // Confirm one actual improvement: spend once, create the order, then expose its waiting state.
+ await council.getByRole('button',{name:'Fechar painel',exact:true}).tap();
+ await nav().getByRole('button',{name:'Cidades',exact:true}).tap();await page.getByRole('button',{name:'Ver cidade Capital',exact:true}).tap();
+ await page.getByRole('tab',{name:'Setores',exact:true}).tap();await page.getByRole('button',{name:'Ver setor Economia',exact:true}).tap();
+ const economy=page.getByRole('dialog',{name:'Economia',exact:true});
+ response=page.waitForResponse(reply=>reply.url()===endpoint&&reply.request().method()==='POST'&&reply.request().postDataJSON()?.action?.type==='upgrade');
+ await economy.getByRole('button',{name:'Evoluir Economia',exact:true}).tap();reply=await response;assert.equal(reply.status(),200,await reply.text());
+ const upgraded=await reply.json();assert(upgraded.state.resources.materials<result.state.resources.materials);assert(upgraded.state.orders.some(order=>order.kind==='upgrade'&&order.sector==='economy'));
+ await page.getByRole('button',{name:'Ver setor Economia',exact:true}).tap();assert.equal(await economy.getByRole('button',{name:'Evoluir Economia',exact:true}).isDisabled(),true);
+ await page.screenshot({path:path.join(root,'reports/cozy/welcoming-upgrade-waiting-390.png')});
+ await economy.getByRole('button',{name:'Fechar setor',exact:true}).tap();
  console.log('PASS mobile smart decisions: real v3 SQL/API, local/council resource exchanges, gold/material/supply PNGs, tap-to-explain, selection without spending, explicit confirmation, risk cost/failure inspection and 320/390/430 layout.');
 }catch(error){console.error(log);throw error;}finally{if(browser)await browser.close();server.kill();await rest.close();await db.close();}

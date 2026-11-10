@@ -1036,7 +1036,9 @@ try {
         await page.getByRole('tab',{name:'Defesa',exact:true}).click();
         await page.getByRole('button',{name:`Cuidar da defesa de ${capital.name}`,exact:true}).click();
         await page.getByRole('dialog',{name:'Defesa',exact:true}).waitFor();
-        assert.equal(await page.getByRole('dialog',{name:'Defesa',exact:true}).getByText(`${capital.name} · Nível`,{exact:false}).count(),1);
+        const defenseSheet=page.getByRole('dialog',{name:'Defesa',exact:true});
+        assert.equal(await defenseSheet.getByText(capital.name,{exact:true}).count(),1);
+        assert.equal(await defenseSheet.locator(`[aria-label="Nível ${capital.sectors.defense} de 10"]`).count(),1,'The reorganized header retains the selected city and its actual defense level');
         await page.getByRole('button',{name:'Fechar setor',exact:true}).click();
         await page.getByRole('button',{name:'Voltar',exact:true}).click();
         await navigation.getByRole('button',{name:'Coroa',exact:true}).click();

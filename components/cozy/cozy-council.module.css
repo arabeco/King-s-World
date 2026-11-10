@@ -401,3 +401,31 @@
 .counselorPortrait img{width:52px;height:52px;object-fit:cover!important;object-position:50% 12%;transform:scale(2);transform-origin:50% 12%;border-radius:0!important}
 
 .venture{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding-top:6px;border-top:1px solid #8e715033;margin-top:5px;font-size:11px;color:#d4baa0}.venture summary{cursor:pointer;min-height:36px;display:flex;align-items:center;color:#e4bd78}.venture details small{max-width:210px;display:block}.optionFrame{background:linear-gradient(120deg,#49405022,#1d1e2111);border-color:#82727955}.optionFrame[data-selected=true]{background:linear-gradient(110deg,#64502d55,#2d253344);border-color:#d6b168}.scene{min-height:120px}.choiceNote{font-size:12px;line-height:1.5}.story{font-size:13px;line-height:1.5}
+/* A quieter audience: portraits, daylight and one clear signature. */
+.seatRack{max-width:none;gap:12px;margin:4px 0 14px}
+.seatRack button{flex-direction:row;justify-content:flex-start;min-height:70px;padding:8px;text-align:left;border:0;border-bottom:1px solid #c9c0b32b;border-radius:0;background:linear-gradient(120deg,#af99a411,transparent)}
+.seatRack button>span:not(.counselorPortrait){flex:1;min-width:0}
+.seatRack .counselorPortrait{flex:0 0 44px;width:44px;height:44px;border-color:#bfae8c66}
+.seatRack .counselorPortrait img{width:44px;height:44px}
+.seatRack button>svg:last-child{position:static;flex:none;width:13px}
+.seatRack strong{font-size:15px;color:#f4ead6}.seatRack small{font-size:10px;color:#c5bec7}
+.decision .scene:not([data-empty]){min-height:158px;border-radius:11px;padding:12px 14px 16px}
+.scene::after{background:linear-gradient(180deg,#211e262b,#27232b05 30%,#28272bbd 74%,#28292c)}
+.scene .sceneArt{filter:brightness(1.16) saturate(.85)}
+.sceneTitle h2{font:650 25px/1.12 var(--font-display),Georgia,serif;text-shadow:0 2px 8px #0006;max-width:330px}
+.contentment{background:#252c26ae;border-color:#c2c9af30;color:#e6dfbd}
+.decreeBody{padding:12px 1px 4px}.author{color:#d3c9cf;font-size:11px}.author>span+span{color:#bfb6c4}
+.decision .story{margin:8px 0 16px;color:#c9c7c4;font-size:13px;line-height:1.55}
+.options{gap:9px}
+.optionFrame{padding:5px 12px 10px;border:1px solid transparent;border-radius:10px;background:#baadbd0a;transition:background .15s,border-color .15s}
+.optionFrame[data-selected=true]{border-color:#c8b99d66;background:linear-gradient(120deg,#b0a08d1a,#b3a0c00d)}
+.optionFrame .option{min-height:44px;padding:3px 0 6px;color:#f1e8d9}
+.optionCopy>strong{font-size:15px;font-weight:600;line-height:1.35}
+.choiceDot{border-color:#bdb5c07a;width:17px;height:17px}
+.option[aria-pressed=true] .choiceDot{background:#d4c38d;box-shadow:inset 0 0 0 4px #39333e}
+.signDecree{width:100%;min-height:48px;border-radius:9px;margin-top:15px;font-size:15px;box-shadow:var(--kw-action-shadow)}
+.signDecree:disabled{opacity:.45;box-shadow:none}
+.venture{border-top-color:#baa59319;color:#ccbda8}
+.cityCare{background:#b0bba009;border-color:#b0bba02b;box-shadow:none}
+@media(max-width:350px){.seatRack{gap:7px}.seatRack button{gap:4px;padding:6px 2px}.seatRack .counselorPortrait{flex-basis:38px;width:38px;height:38px}.seatRack .counselorPortrait img{width:38px;height:38px}.seatRack strong{font-size:14px}.decision .scene:not([data-empty]){min-height:145px}.sceneTitle h2{font-size:23px}}
+@media(prefers-reduced-motion:reduce){.optionFrame{transition:none}}

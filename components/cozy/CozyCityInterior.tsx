@@ -2,6 +2,7 @@
 
 
 
+import {cityDecisionStory} from "@/lib/cozy/decision-presentation";
 import {cityTerritoryCells} from "@/lib/cozy/city-territory";
 import CozySymbol from "./CozySymbol";
 import {cityUpgradePreview} from "@/lib/cozy/upgrade-preview";
@@ -18,6 +19,7 @@ import {
   Plus,
   Sparkles,
   X,
+  ChevronDown,
 } from "lucide-react";
 import {
   HERO_ROLES,
@@ -69,7 +71,9 @@ function SectorSheet({
   title,
   children,
   onClose,
+  tone,
 }: {
+  tone?: CozySector;
   title: string;
   children: ReactNode;
   onClose: () => void;
@@ -95,6 +99,7 @@ function SectorSheet({
     <dialog
       ref={ref}
       className={styles.sheet}
+      data-sector={tone}
       aria-label={title}
       onCancel={(event) => {
         event.preventDefault();
@@ -200,6 +205,14 @@ export default function CozyCityInterior({
           : state.resources.materials < cost
             ? `Faltam ${number(Math.ceil(cost - state.resources.materials))} materiais.`
             : "");
+  const sectorBenefit = (key: CozySector) => {
+    if (!life) return null;
+    if (key === 'administration') return <><CozySymbol name="materials" size={21}/><b>+{number(life.administrationMaterials)}</b><span>/dia por nível</span></>;
+    if (key === 'economy') return <><CozySymbol name="materials" size={21}/><b>{number(life.production.materials)}</b><CozySymbol name="supplies" size={21}/><b>{number(life.production.supplies)}</b><span>/dia</span></>;
+    if (key === 'society') return <><CozyArt src="/icons/influence-society.png" size={21}/><b>{number(life.contentment)}%</b><span>{life.status}</span></>;
+    if (key === 'recruitment') return <><CozyArt src="/icons/building-barracks.png" size={21}/><b>+{number(life.recruitmentCapacity)}</b><span>vagas · +30 / nível</span></>;
+    return <><CozyArt src="/icons/building-wall.png" size={21}/><b>{number(life.fortification)}</b><span>defesa · {life.integrity}% íntegra</span></>;
+  };
   const heroRole = hero
     ? HERO_ROLES.find((entry) => entry.id === hero.role)
     : null;
@@ -329,11 +342,8 @@ export default function CozyCityInterior({
                 </span>
                 <span className={styles.sectorCopy}>
                   <strong>{item.name}</strong>
-                  {life&&item.id==="administration"&&<small className={styles.sectorMetric}>+{number(life.administrationMaterials)} materiais/dia por nível</small>}
-                  {life&&item.id==="recruitment"&&<small className={styles.sectorMetric}>+{number(life.recruitmentCapacity)} vagas · +30 por nível</small>}
-                  {life&&item.id==="defense"&&<small className={styles.sectorMetric}>{number(life.fortification)} de fortificação · {life.integrity}% íntegra</small>}
-                  {life&&item.id==="society"&&<small className={styles.sectorMetric}>{life.status} · {number(life.contentment)}%</small>}
-                  {life&&item.id==="economy"&&<small className={styles.sectorMetric}>{number(life.production.materials)} materiais · {number(life.production.supplies)} suprimentos/dia</small>}
+                  <small className={styles.sectorMetric}>{sectorBenefit(item.id)}</small>
+                  <span className={styles.sectorProgress} aria-hidden="true">{Array.from({length:10},(_,i)=><i key={i} data-filled={i<city.sectors[item.id]||undefined}/>)}</span>
                 </span>
                 {order?.sector === item.id && (
                   <span className={styles.cardFoot}>
@@ -363,7 +373,11 @@ export default function CozyCityInterior({
             {!city.capital&&(!city.cityClass||city.cityClass==="neutral")&&<button type="button" onClick={()=>{setCandidate(null);setTypeOpen(true);}}><Sparkles size={20}/><span>Escolher especialização</span><ArrowRight size={17}/></button>}
           </div>}
           {life&&<article className={styles.decisionCard} aria-label="Decisão local da cidade">
-            <div className={styles.decisionHeading}><div><h3>{life.decision?.title??(computed.readOnly?"Histórico da cidade":"Decisão de hoje registrada")}</h3><p>{life.decision?`Dia ${computed.day}`:"Novas situações no próximo dia"}</p></div></div>
+            <div className={styles.localScene} data-sector={life.decision?.sector??'society'}>
+              <span className={styles.localDay}>{life.decision?`Dia ${computed.day} · Na cidade`:computed.readOnly?"Memórias da cidade":!computed.started?"Aguardando a abertura":"Por hoje, tudo cuidado"}</span>
+              <h3>{life.decision?.title??(computed.readOnly?"Histórico da cidade":!computed.started?"Um novo começo":"Decisão registrada")}</h3>
+            </div>
+            {life.decision&&<p className={styles.localStory}>{cityDecisionStory(life.decision.id)}</p>}
             {life.decision?.options.map(option=>{const affordable=Object.entries(option.cost).every(([resource,cost])=>state.resources[resource as keyof typeof state.resources]>=cost!);return <div key={option.id} className={styles.localChoiceFrame} data-selected={localPick?.decisionId===life.decision?.id&&localPick.optionId===option.id||undefined}>
             <button className={styles.localChoice} disabled={Boolean(lockReason)||!affordable} onClick={()=>state.progression?.balance?.unifiedRules?setLocalPick({decisionId:life.decision!.id,optionId:option.id}):void act({type:"city_decision",cityId:city.id,decisionId:life.decision!.id,optionId:option.id})} aria-pressed={state.progression?.balance?.unifiedRules?localPick?.decisionId===life.decision?.id&&localPick.optionId===option.id:undefined} aria-label={`${state.progression?.balance?.unifiedRules?'Escolher':'Decidir'}: ${option.label}`}>
               <strong>{option.label}</strong>
@@ -527,71 +541,40 @@ export default function CozyCityInterior({
         </section>
       )}
       {sector && selected && (
-        <SectorSheet title={sector.name} onClose={() => setSelected(null)}>
+        <SectorSheet tone={selected} title={sector.name} onClose={() => setSelected(null)}>
           {feedback}
-          <div className={styles.detailArt}>
-            <CozyArt src={art[selected]} size={132} />
-            <span
-              className={styles.detailLevel}
-              aria-label={`Nível ${level} de 10`}
-            >
-              <CozyArt
-                src={`/icons/${String(level).padStart(2, "0")}.png`}
-                size={52}
-              />
-            </span>
+          <div className={styles.upgradeHero} data-sector={selected}>
+            <div className={styles.detailArt}>
+              <CozyArt src={art[selected]} size={148} />
+            </div>
+            <div className={styles.upgradeIdentity}>
+              <span className={styles.detailCity}>{city.name}</span>
+              <h3 className={styles.detailTitle}>{sector.name}</h3>
+              <span className={styles.levelJourney} aria-label={`Nível ${level} de 10`}>
+                <b>{level}</b>{level<10?<><ArrowRight size={17}/><strong>{level+1}</strong></>:<CheckCircle2 size={22}/>}
+              </span>
+              <small>{level<10?'Próximo nível':'Desenvolvimento completo'}</small>
+            </div>
           </div>
-          <span className={styles.detailCity}>{city.name} · Nível {level} → {Math.min(10,level+1)}</span>
-          <h3 className={styles.detailTitle}>{sector.name}</h3>
-          <details className={styles.detailMore}><summary>Função do setor</summary><p>{sector.description}</p></details>
+          <details className={styles.detailMore}><summary>Função do setor <ChevronDown size={15}/></summary><p>{sector.description}</p></details>
           {preview&&<section className={styles.upgradePreview} aria-label="Prévia da evolução" title="Estimativa ao concluir, nas condições atuais do reino.">
-            {preview.metrics.map(metric=><div key={metric.key}><CozyArt src={metric.icon} size={26}/><span><small>{metric.label}</small><b>{number(metric.before)}{metric.percent?"%":""} <ArrowRight size={14}/> <strong>{number(metric.after)}{metric.percent?"%":""}</strong></b></span></div>)}
+            <h4 className={styles.previewTitle}>Com a melhoria</h4>
+            {preview.metrics.map(metric=><div key={metric.key}>{metric.key==='materials'||metric.key==='supplies'?<CozySymbol name={metric.key} size={26}/>:<CozyArt src={metric.icon} size={26}/>}<span><small>{metric.label}</small><b>{number(metric.before)}{metric.percent?"%":""} <ArrowRight size={14}/> <strong>{number(metric.after)}{metric.percent?"%":""}</strong></b></span></div>)}
             <div><CozyArt src="/icons/influence-infrastructure.png" size={26}/><span><small>Influência total ao concluir</small><b>{number(preview.influenceBefore)} <ArrowRight size={14}/> <strong>{number(preview.influenceAfter)}</strong></b></span><em>+{number(preview.influenceAfter-preview.influenceBefore)}</em></div>
           </section>}
 
-          {level < 10 && (
-            <div className={styles.upgradeSummary}>
-              <span>
-                <CozySymbol name="materials" size={25}/>
-                <strong>{number(cost)}</strong>
-              </span>
-              <span>
-                <CozySymbol name="time" size={18}/>
-                {remaining(now + duration, now)}
-              </span>
-            </div>
-          )}
-          {reason && (
-            <p className={styles.notice} role="status">
-              {reason}
-            </p>
-          )}
-          {level < 10 ? (
-            <button
-              type="button"
-              className={`${styles.primary} ${styles.upgradeButton}`}
-              aria-label={`Evoluir ${sector.name}`}
-              disabled={!!reason}
-              onClick={async () => {
-                if (
-                  await act({
-                    type: "upgrade",
-                    cityId: city.id,
-                    sector: selected,
-                  })
-                )
-                  setSelected(null);
-              }}
-            >
-              <Plus size={17} />
-              <span>Evoluir para o nível {level + 1}</span><CozySymbol name="materials" size={23}/><strong>{number(cost)}</strong>
-            </button>
-          ) : (
-            <span className={styles.complete}>
-              <CheckCircle2 size={17} />
-              Nível máximo
-            </span>
-          )}
+          <div className={styles.upgradeCommit}>
+            {level < 10 && <div className={styles.upgradeSummary}>
+              <span aria-label={`Custo: ${number(cost)} materiais`}><CozySymbol name="materials" size={25}/><strong>{number(cost)}</strong></span>
+              <span aria-label={`Duração: ${remaining(now + duration, now)}`}><CozySymbol name="time" size={22}/><strong>{remaining(now + duration, now)}</strong></span>
+            </div>}
+            {reason && <p className={styles.notice} role="status">{reason}</p>}
+            {level < 10 ? <button type="button" className={`${styles.primary} ${styles.upgradeButton}`}
+              aria-label={`Evoluir ${sector.name}`} disabled={!!reason}
+              onClick={async()=>{if(await act({type:'upgrade',cityId:city.id,sector:selected}))setSelected(null);}}>
+              <Plus size={19}/><span>Evoluir para o nível {level+1}</span>
+            </button>:<span className={styles.complete}><CheckCircle2 size={19}/>Nível máximo</span>}
+          </div>
           {life&&(selected==="economy"||selected==="society")&&<section className={styles.localIndicators} aria-label={`Indicadores de ${sector.name}`}>
             <div><strong>{selected==="economy"?"Eficiência":"Satisfação local"}</strong><span>{selected==="economy"?life.efficiency:number(life.contentment)}%</span></div>
             <meter min={0} max={selected==="economy"?105:100} value={selected==="economy"?life.efficiency:life.contentment} aria-label={selected==="economy"?"Eficiência de produção":"Satisfação da cidade"}/>

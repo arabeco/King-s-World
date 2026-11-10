@@ -82,7 +82,7 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
             </span>
           </div>
           <div className={styles.sceneTitle}>
-            <h2 id="council-decision-title">{decree?.title ?? (computed.readOnly?"Temporada encerrada":!computed.started?"Decisões após a abertura":"Nenhum decreto pendente")}
+            <h2 id="council-decision-title">{decree?.title ?? (computed.readOnly?"Temporada encerrada":!computed.started?"Decisões após a abertura":"O Conselho está em dia")}
             </h2>
           </div>
         </header>
@@ -116,7 +116,7 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
           </div>
         ) : null}
       </article>
-      {care.length>0&&computed.started&&!computed.readOnly&&<section className={styles.cityCare} aria-label="Cidades que precisam de cuidado"><div><CozyArt src="/icons/influence-society.png" size={31}/><span><strong>{critical.length?`${critical.length} ${critical.length===1?'cidade em crise':'cidades em crise'}`:`${care.length} ${care.length===1?'cidade em tensão':'cidades em tensão'}`}</strong><small>Sociedade é cuidada dentro de cada cidade.</small></span></div><p>{care[0].name} · confiança {computed.cityLife[care[0].id]?.contentment??state.satisfaction}%</p><button type="button" onClick={()=>onCity(care[0].id)}>Cuidar de {care[0].name}<ArrowRight size={15}/></button></section>}
+      {care.length>0&&computed.started&&!computed.readOnly&&<section className={styles.cityCare} aria-label="Cidades que precisam de cuidado"><div><CozyArt src="/icons/influence-society.png" size={31}/><span><strong>{critical.length?`${critical.length} ${critical.length===1?'cidade em crise':'cidades em crise'}`:`${care.length} ${care.length===1?'cidade em tensão':'cidades em tensão'}`}</strong></span></div><p>{care[0].name} · confiança {computed.cityLife[care[0].id]?.contentment??state.satisfaction}%</p><button type="button" onClick={()=>onCity(care[0].id)}>Cuidar de {care[0].name}<ArrowRight size={15}/></button></section>}
 
     </CrownPanel>
   );
