@@ -5,13 +5,13 @@ import CozyFirstVisitHelp from "./CozyFirstVisitHelp";
 const guides = {
  map: {title:"Como explorar o mundo",steps:[
   {art:"/icons/nav-world.png",title:"Encontre seu caminho",text:"Arraste com um dedo e ajuste com + e −. Mundo mostra o contorno inteiro. O botão de grade liga ou desliga a malha."},
-  {art:"/icons/action-explore.png",title:"Toque para descobrir",text:"Toque em uma cidade, torre ou terreno para abrir suas opções. Confira suprimentos e tempo antes de explorar."},
+  {art:"/icons/action-explore.png",title:"Toque para descobrir",text:"Explorar revela o caminho e a região próxima. Confira suprimentos e chegada antes de enviar. Anexar uma área conhecida é outra ação."},
   {art:"/icons/alliance-crest-v1.png",title:"Fronteiras e reservas",text:"Branco indica exploração. Cor e brasão indicam o dono. O tracejado marca reservas. Uma silhueta na névoa indica uma torre avistada."},
  ]},
  crown: {title:"Como comandar seu reino",steps:[
   {art:"/icons/nav-empire.png",title:"Sua Coroa",text:"As cinco áreas reúnem os comandos do reino. Toque nos ícones para construir, recrutar e decidir."},
-  {art:"/icons/recursos.png",title:"Tudo à vista",text:"Os recursos ficam no topo. Ordens e hordas mostram o tempo restante. Toque para acompanhar."},
-  {art:"/icons/nav-cities.png",title:"Seu próximo passo",text:"Use o menu inferior para abrir cidades, aliança e relatos. O botão de informação reabre as dicas."},
+  {art:"/icons/recursos.png",title:"Tudo à vista",text:"O topo mostra dias reais. Ordens e hordas mostram o tempo até a chegada e continuam enquanto você está fora."},
+  {art:"/icons/nav-cities.png",title:"Seu próximo passo",text:"Toque no próximo passo para ver até três opções. Os atalhos só abrem a tela; nada é gasto até você confirmar a ação."},
  ]},
  cities: {title:"Como navegar pelas cidades",steps:[
   {art:"/icons/nav-cities.png",title:"Seu reino em cidades",text:"Cada cartão mostra os níveis dos cinco setores. Toque na cidade para escolher uma obra ou decisão."},

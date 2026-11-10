@@ -26,7 +26,13 @@ try{
  let commands=0;page.on('request',request=>{if(request.method()==='POST'&&request.url()===endpoint)commands++;});
  let writes=0;page.on('request',request=>{if(request.method()==='POST'&&request.url()===endpoint&&['city_decision','decree'].includes(request.postDataJSON()?.action?.type))writes++;});
  const nav=()=>page.getByRole('navigation',{name:'Áreas do reino',exact:true});
- await page.goto(base+`/world/${slug}/intelligence`,{waitUntil:'networkidle'});await nav().getByRole('button',{name:'Cidades',exact:true}).tap();await page.getByRole('button',{name:'Ver cidade Capital',exact:true}).tap();await page.getByRole('tab',{name:'Setores',exact:true}).tap();
+ await page.goto(base+`/world/${slug}/intelligence`,{waitUntil:'networkidle'});
+ await page.getByRole('button',{name:'Evoluir Capital',exact:true}).tap();
+ const guide=page.getByRole('dialog',{name:'Próximos passos do reino',exact:true});await guide.waitFor();assert.equal(commands,0,'Opening guidance never dispatches a command');
+ for(const width of [320,390,430]){await page.setViewportSize({width,height:844});assert(await guide.evaluate(el=>el.scrollWidth<=el.clientWidth+1));}
+ await page.setViewportSize({width:390,height:844});await guide.locator('img').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));await page.screenshot({path:path.join(root,'reports/cozy/journey-first-step-390.png')});
+ await guide.getByRole('button',{name:'Ver melhoria',exact:true}).tap();await page.getByRole('dialog',{name:'Economia',exact:true}).waitFor();assert.equal(commands,0,'Navigating from guidance never spends');await page.getByRole('button',{name:'Fechar setor',exact:true}).tap();
+ await nav().getByRole('button',{name:'Cidades',exact:true}).tap();await page.getByRole('button',{name:'Ver cidade Capital',exact:true}).tap();await page.getByRole('tab',{name:'Setores',exact:true}).tap();
  // Inspect every building without paying, and keep the real numeric preview legible on mobile.
  const initialMaterials=data.state.resources.materials;
  for(const [name,key] of [['Administração','administration'],['Economia','economy'],['Sociedade','society'],['Recrutamento','recruitment'],['Defesa','defense']]){
@@ -69,5 +75,12 @@ try{
  await page.getByRole('button',{name:'Ver setor Economia',exact:true}).tap();assert.equal(await economy.getByRole('button',{name:'Evoluir Economia',exact:true}).isDisabled(),true);
  await page.screenshot({path:path.join(root,'reports/cozy/welcoming-upgrade-waiting-390.png')});
  await economy.getByRole('button',{name:'Fechar setor',exact:true}).tap();
+ // Arrival tracking survives reload without recommending a duplicate exploration.
+ data.state=upgraded.state;data.state.resources={gold:0,materials:0,supplies:0};data.state.orders.push({id:'guide-exploring',kind:'explore',q:1,r:0,createdAt:Date.now(),arrivesAt:Date.now()+4*3600000});data.state.readAt=Date.now();await save();
+ await page.reload({waitUntil:'networkidle'});await page.getByRole('button',{name:'Exploração em curso',exact:true}).tap();await guide.getByText(/A expedição já está a caminho/).waitFor();const beforeTracking=commands;
+ await page.screenshot({path:path.join(root,'reports/cozy/journey-waiting-390.png')});await guide.getByRole('button',{name:'Acompanhar ordens',exact:true}).tap();await page.getByRole('dialog',{name:'Ordens do reino',exact:true}).waitFor();assert.equal(commands,beforeTracking,'Tracking an expedition issues no new command');
+ // Optional last-world preferences cannot turn a successful login into a broken lobby.
+ await context.addInitScript(()=>{const get=Storage.prototype.getItem,set=Storage.prototype.setItem;Storage.prototype.getItem=function(key){if(key.startsWith('kw:last-world:'))throw new DOMException('Storage unavailable','SecurityError');return get.call(this,key);};Storage.prototype.setItem=function(key,value){if(key.startsWith('kw:last-world:'))throw new DOMException('Storage unavailable','SecurityError');return set.call(this,key,value);};});
+ await page.goto(base+'/lobby',{waitUntil:'networkidle'});const enter=page.locator('[data-smoke="lobby-enter-world"]');await enter.waitFor();assert(await enter.isEnabled());await page.screenshot({path:path.join(root,'reports/cozy/journey-lobby-390.png')});await enter.tap();await page.waitForURL(`**/world/${slug}/**`);assert.equal(commands,beforeTracking,'Returning through the lobby is navigation only');
  console.log('PASS mobile smart decisions: real v3 SQL/API, local/council resource exchanges, gold/material/supply PNGs, tap-to-explain, selection without spending, explicit confirmation, risk cost/failure inspection and 320/390/430 layout.');
 }catch(error){console.error(log);throw error;}finally{if(browser)await browser.close();server.kill();await rest.close();await db.close();}

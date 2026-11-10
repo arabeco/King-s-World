@@ -3,6 +3,9 @@
 import {AccountAppearance} from "../profile/AccountAppearance";
 import {activeRoyalProfile} from "@/lib/cozy/royal-profiles";
 import CozySymbol from "./CozySymbol";
+import {seasonDisplay} from "@/lib/cozy/season-display";
+import {kingdomJourney,type JourneyTarget} from "@/lib/cozy/kingdom-journey";
+import CozyNextSteps from "./CozyNextSteps";
 import CozyRealmUpdates from "./CozyRealmUpdates";
 import {WorldLoadingScreen} from "../world-loading-screen";
 import CozyAlliance from "./CozyAlliance";
@@ -37,13 +40,11 @@ import {
   ArrowRight,
   CheckCircle2,
   ChevronRight,
-  Compass,
   Crown,
   Flag,
   LoaderCircle,
   Plus,
   RefreshCw,
-  ScrollText,
   Shield,
   Trophy,
   X,
@@ -357,6 +358,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
   const [governmentTab, setGovernmentTab] = useState<"heroes" | "research">(
     "heroes",
   );
+  const [achievementEntry,setAchievementEntry]=useState<"Conquistas"|"Vitória"|"Ranking"|undefined>();
   const [panel, setPanel] = useState<GameOverlay | null>(null);
 
   const [cityId, setCityId] = useState<string | null>(null);
@@ -464,25 +466,8 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
   const wonderReady = state.cities.some(
     (entry) => getCityDevelopment(entry) >= 100 && !entry.wonder,
   );
-  const firstUpgrade =
-    state.cities.some((entry) =>
-      Object.values(entry.sectors).some((level) => level > (state.progression?0:1)),
-    ) || state.orders.some((entry) => entry.kind === "upgrade");
-  const firstRecruit =
-    Object.values(state.army).reduce((sum, amount) => sum + amount, 0) > 25;
-  const activeExploration = state.orders.find(entry => entry.kind === "explore");
-  const firstExplore = state.explored.length > 0 || Boolean(activeExploration);
-  const firstStep =
-    computed.started && !computed.readOnly &&
-    !state.portalCrossedAt &&
-    state.cities.length === 1 &&
-    !firstExplore
-      ? !firstUpgrade
-        ? "upgrade"
-        : !firstRecruit
-          ? "recruit"
-          : "explore"
-      : null;
+  const journey=kingdomJourney(data,clock);
+  const calendar=seasonDisplay(computed.day,computed.durationDays,computed.realDurationDays);
   const navigate = (next: Screen) => {
     setPanel(null);
     setScreen(next);
@@ -511,6 +496,14 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
       setPanel(null);
       setScreen("map");
     }
+  };
+  const followJourney=(target:JourneyTarget)=>{
+    if(target.kind==='city')openCity(target.cityId,target.entry);
+    else if(target.kind==='map')navigate('map');
+    else if(target.kind==='reports')navigate('reports');
+    else if(target.kind==='achievements'){setAchievementEntry(target.tab);setPanel('achievements');}
+    else if(target.kind==='research'){setGovernmentTab('research');setGovernmentResearch(target.research);setPanel('government');}
+    else setPanel(target.kind);
   };
   const overlayTitles: Record<GameOverlay, string> = {
     royalProfile: "Perfil do reinado",
@@ -604,11 +597,11 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                 <strong>{world.name}</strong>
                 <small>
                   {state.defeat&&state.finalizedAt===null
-                    ? `Império derrotado · Dia ${computed.day} / ${computed.durationDays}`
+                    ? `Império derrotado · Dia ${calendar.day} / ${calendar.duration}`
                     : computed.readOnly
                     ? "Temporada encerrada"
                     : computed.started
-                      ? `Dia ${computed.day} / ${computed.durationDays} · ${world.mode === "express" ? world.economyVersion===3?"Expresso ×4" : "Expresso" : "Clássico"}`
+                      ? `Dia ${calendar.day} / ${calendar.duration} · ${world.mode === "express" ? world.economyVersion===3?"Expresso ×4" : "Expresso" : "Clássico"}`
                       : "Aguardando abertura"}
                 </small>
               </span>
@@ -690,63 +683,14 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                     )}
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    className={game.questPrompt}
-                    disabled={!computed.readOnly&&!state.portalCrossedAt&&!firstStep&&!computed.decree}
-                    onClick={() =>
-                      computed.readOnly || state.portalCrossedAt
-                        ? setPanel("achievements")
-                        : firstStep === "upgrade"
-                          ? openCity(state.cities[0].id)
-                          : firstStep === "recruit"
-                            ? setPanel("military")
-                            : firstStep === "explore"
-                              ? navigate("map")
-                              : computed.decree
-                                ? setPanel("council")
-                                : undefined
-                    }
-                  >
-                    {computed.readOnly || state.portalCrossedAt ? (
-                      <Trophy size={20} />
-                    ) : firstStep === "upgrade" ? (
-                      <CozyArt src="/icons/action-upgrade.png" size={30} />
-                    ) : firstStep === "recruit" ? (
-                      <CozyArt src="/icons/influence-military.png" size={30} />
-                    ) : computed.decree && !firstStep ? (
-                      <ScrollText size={20} />
-                    ) : (
-                      <Compass size={20} />
-                    )}
-                    <span>
-                      <strong>
-                        {computed.readOnly
-                          ? "Veja suas conquistas"
-                          : state.portalCrossedAt
-                            ? "Você conquistou o Selo de Vitória"
-                            : firstStep === "upgrade"
-                              ? `Evoluir ${state.cities[0]?.name ?? "cidade"}`
-                              : firstStep === "recruit"
-                                ? "Reforce seu exército"
-                                : firstStep === "explore"
-                                  ? "Explore seu primeiro território"
-                                  : computed.decree
-                                    ? "O Conselho aguarda você"
-                                    : activeExploration
-                                      ? `Exploração em curso · ${remaining(activeExploration.arrivesAt,clock)}`
-                                      : "Nada novo por enquanto"}
-                      </strong>
-                    </span>
-                    {(computed.readOnly||state.portalCrossedAt||firstStep||computed.decree)&&<ChevronRight size={18} />}
-                  </button>
+                  <CozyNextSteps steps={journey} now={clock} onNavigate={followJourney}/>
                 )}
                 </>}
                 <div className={game.seals} aria-label="Comandos da Coroa">
                   {panels.map(({id,title,image})=>{
                     const scoreKey = id === "council" ? "society" : id === "achievements" ? "legacy" : id;
                     const score = computed.influence[scoreKey];
-                    return <button type="button" key={id} data-command={id} aria-label={title} aria-haspopup="dialog" onClick={()=>{if(id==="government")setGovernmentTab("heroes");setPanel(id);}}>
+                    return <button type="button" key={id} data-command={id} aria-label={title} aria-haspopup="dialog" onClick={()=>{if(id==="government")setGovernmentTab("heroes");if(id==="achievements")setAchievementEntry(undefined);setPanel(id);}}>
                       <CozyArt src={image} size={36} priority/>
                       <span><strong>{title}</strong><b key={score}>{score}<small>/500</small></b></span>
                       {((id==="infrastructure"&&wonderReady)||(id==="council"&&computed.decree)||(id==="achievements"&&!!computed.sanctuaryThreats?.length))&&<i aria-label="Atenção"/>}
@@ -929,7 +873,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
             {panel === "achievements" && (
               <CozyAchievements
                 {...props}
-                initialTab={state.defeat?'Ranking':'Conquistas'}
+                initialTab={achievementEntry??(state.defeat?'Ranking':'Conquistas')}
                 onWonderCity={id=>openCity(id,"decisions")}
                 onTower={(q,r)=>{setMapTarget({q,r});setPanel(null);setScreen("map");}}
                 onCities={() => navigate("cities")}

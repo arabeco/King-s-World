@@ -1,4 +1,5 @@
 "use client";
+import {seasonDisplay} from "@/lib/cozy/season-display";
 import type {CozyPayload} from '@/lib/cozy/types';
 import {hordeForecast} from '@/lib/cozy/horde-forecast';
 import {orderMapLabel,orderQueued,orderStartsAt,orderSummary} from '@/lib/cozy/order-presentation';
@@ -23,7 +24,7 @@ export default function CozyRealmUpdates({data,now,allianceNotice,onOrders,onDef
  const defenseUrgent=Boolean(attack||forecast.urgent);
  const cards=[
   {id:'orders',icon:'/icons/status-time-v1.png',label:`Ordens do reino: ${orders.label}`,title:orders.label,detail:orderDetail,action:onOrders,tone:'blue'},
-  {id:'defense',icon:'/icons/action-defend.png',label:attack?`Ataque a caminho de ${attack.cityName}`:undefined,title:attack?`Ataque · ${attack.cityName}`:horde?`Horda · dia ${horde.day}`:'Fronteiras em paz',detail:attack?crownRemaining(attack.arrivesAt,now):horde?`${defenseGap>0?`Preparar +${crownNumber(defenseGap)} defesa`:'Defesa preparada'} · ${crownRemaining(horde.arrivesAt,now)}`:'Sem ameaças',action:onDefense,tone:defenseUrgent?'danger':'red'},
+  {id:'defense',icon:'/icons/action-defend.png',label:attack?`Ataque a caminho de ${attack.cityName}`:undefined,title:attack?`Ataque · ${attack.cityName}`:horde?`Horda · dia ${seasonDisplay(horde.day,computed.durationDays,computed.realDurationDays).day}`:'Fronteiras em paz',detail:attack?crownRemaining(attack.arrivesAt,now):horde?`${defenseGap>0?`Preparar +${crownNumber(defenseGap)} defesa`:'Defesa preparada'} · ${crownRemaining(horde.arrivesAt,now)}`:'Sem ameaças',action:onDefense,tone:defenseUrgent?'danger':'red'},
   ...(computed.unreadReports?[{id:'reports',icon:'/icons/nav-intel.png',label:undefined,title:highlight?.title??(computed.unreadReports===1?'Novo relato':`${computed.unreadReports} novos relatos`),detail:finished.length===1?finished[0].body:finished.length>1?`${finished.length} ordens concluídas`:'Ver relatos do reino',action:onReports,tone:'gold'}]:[]),
   ...damaged.slice(0,1).map(city=>({id:'city',icon:'/icons/influence-society.png',label:undefined,title:city.name,detail:(computed.cityLife[city.id]?.contentment??70)<35?'Sociedade em crise':`Integridade ${city.integrity}%`,action:()=>onCity(city.id),tone:'danger'})),
   ...(computed.decree?[{id:'council',icon:'/icons/nav-intel.png',label:undefined,title:'Decisão disponível',detail:computed.decree.title,action:onCouncil,tone:'purple'}]:[]),

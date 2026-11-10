@@ -2428,18 +2428,21 @@ try {
               await page
                 .getByRole("button", { name: new RegExp(`^Evoluir ${beginner.state.cities[0].name}$`) })
                 .click();
+              await page.getByRole('dialog',{name:'Próximos passos do reino',exact:true}).getByRole('button',{name:'Ver melhoria',exact:true}).click();
               await page
-                .getByRole("region", {
-                  name: `Cidade ${beginner.state.cities[0].name}`,
+                .getByRole("dialog", {
+                  name: "Economia",
                   exact: true,
                 })
                 .waitFor();
+              await page.getByRole('button',{name:'Fechar setor',exact:true}).click();
               beginner.state.cities[0].sectors.administration = 1;
               await saveFixture(beginner);
               await page.reload({ waitUntil: "networkidle" });
               await page
                 .getByRole("button", { name: /Reforce seu exército/ })
                 .click();
+              await page.getByRole('dialog',{name:'Próximos passos do reino',exact:true}).getByRole('button',{name:'Ver recrutamento',exact:true}).click();
               await page
                 .getByRole("dialog", { name: "Militar", exact: true })
                 .waitFor();
@@ -2452,6 +2455,7 @@ try {
                   name: /Explore seu primeiro território/,
                 })
                 .click();
+              await page.getByRole('dialog',{name:'Próximos passos do reino',exact:true}).getByRole('button',{name:'Ver mundo',exact:true}).click();
               await page
                 .getByRole("grid", { name: "Territórios próximos" })
                 .waitFor();
@@ -2461,13 +2465,17 @@ try {
               await saveFixture(beginner);
               await page.reload({waitUntil:"networkidle"});
               const waiting=page.getByRole("button",{name:/Exploração em curso/});
-              await waiting.waitFor();assert.equal(await waiting.isDisabled(),true,"Guidance must not send the player to repeat an expedition");
+              await waiting.waitFor();await waiting.click();
+              const guide=page.getByRole('dialog',{name:'Próximos passos do reino',exact:true});
+              await guide.getByRole('button',{name:'Acompanhar ordens',exact:true}).waitFor();
+              assert.equal(await guide.getByRole('button',{name:'Ver mundo',exact:true}).count(),0,'An active exploration is tracked instead of repeated');
+              await guide.getByRole('button',{name:'Fechar próximos passos',exact:true}).click();
               beginner.state.orders=[];
               beginner.state.explored = ["1,0"];
               await saveFixture(beginner);
               await page.reload({ waitUntil: "networkidle" });
-              const idle=page.getByRole("button",{name:"Nada novo por enquanto",exact:true});
-              await idle.waitFor();assert.equal(await idle.isDisabled(),true);
+              assert.equal(await page.getByRole('button',{name:'Explore seu primeiro território',exact:true}).count(),0);
+              await page.getByRole('button',{name:new RegExp(`^Evoluir ${beginner.state.cities[0].name}$`)}).waitFor();
               assert.equal(
                 await page
                   .getByText("PRIMEIROS PASSOS", { exact: true })
@@ -3211,9 +3219,9 @@ try {
       if(process.env.COZY_SKIP_BROWSER!=='1'){
         const {chromium}=await import('playwright');const browser=await chromium.launch();try{
           const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,extraHTTPHeaders:{'x-kw-smoke':'1'}});await context.addCookies([{name:'kw_dev_auth',value:users[0],url:base}]);await context.addInitScript(id=>{for(const screen of ['crown','achievements'])localStorage.setItem(`kw-screen-help:v1:${screen}:${id}`,'seen');},payloads[0].state.playerId);const page=await context.newPage();
-          await page.goto(base+`/world/${slug}/intelligence`,{waitUntil:'networkidle'});await page.getByRole('button',{name:'Conquistas',exact:true}).tap();await page.getByRole('tab',{name:'Vitória',exact:true}).tap();await page.getByRole('link',{name:'Ver prêmios da temporada',exact:true}).tap();await page.waitForURL(`**/inventory?season=${id}`);const details=page.getByRole('dialog',{name:`Prêmios de ${name}`,exact:true});await details.waitFor();await details.getByText('XP por colocação · +10%',{exact:true}).waitFor();assert.equal(await details.locator('[aria-label="XP de cada rei"]').count(),1);
+          await page.goto(base+`/world/${slug}/intelligence`,{waitUntil:'networkidle'});await page.getByRole('button',{name:'Conquistas',exact:true}).tap();await page.getByRole('tab',{name:'Vitória',exact:true}).tap();await page.getByRole('link',{name:'Ver prêmios da temporada',exact:true}).tap();await page.waitForURL(`**/inventory?season=${id}`);const details=page.getByRole('dialog',{name:`Prêmios de ${name}`,exact:true});await details.waitFor();await details.getByText('Bônus da colocação · +10%',{exact:true}).waitFor();assert.equal(await details.locator('[aria-label="XP de cada rei"]').count(),1);
           for(const width of [320,390]){await page.setViewportSize({width,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:path.join(reports,`season-prize-v2-${width}.png`)});}
-          await details.getByRole('button',{name:'Voltar',exact:true}).tap();await page.reload({waitUntil:'networkidle'});await details.waitFor();await details.getByText('XP por colocação · +10%',{exact:true}).waitFor();await details.getByRole('button',{name:'Voltar',exact:true}).tap();
+          await details.getByRole('button',{name:'Voltar',exact:true}).tap();await page.reload({waitUntil:'networkidle'});await details.waitFor();await details.getByText('Bônus da colocação · +10%',{exact:true}).waitFor();await details.getByRole('button',{name:'Voltar',exact:true}).tap();
           const unchanged=await req('/api/me/collection',undefined,users[0]);assert.deepEqual(unchanged.data,after[0]);
         }finally{await browser.close();}
       }

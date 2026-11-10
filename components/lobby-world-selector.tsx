@@ -1,5 +1,6 @@
 "use client";
 
+import {seasonDisplay} from "@/lib/cozy/season-display";
 import { KeyRound, Lock, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useMemo, useState } from "react";
@@ -11,6 +12,7 @@ import styles from "./lobby.module.css";
 
 type DiscoverableWorld = {slug:string;name:string;status:string;mode:string;combatMode?:"cozy"|"competitive";capacity:number;players:number;startsAt:string;locked:boolean};
 
+function rememberWorld(key:string,value:string){try{window.localStorage.setItem(key,value);}catch{/* Remembering a selection must never block entering a world. */}}
 function worldDay(world: DiscoverableWorld): number {
   if (world.status === "open") return 0;
   const start = Date.parse(world.startsAt);
@@ -62,8 +64,11 @@ export function LobbyWorldSelector({
     [firstPlayableWorld, selectedWorldId, worlds],
   );
 
+  const duration=selectedWorld?.durationDays??(selectedWorld?.seasonMode==='express'?30:120);
+  const speed=selectedWorld?.speedMultiplier??(selectedWorld?.seasonMode==='express'&&duration===120?4:1);
+  const calendar=seasonDisplay(selectedWorld?.day??0,duration,duration/Math.max(1,speed));
   useEffect(() => {
-    const savedWorldId = window.localStorage.getItem(storageKey);
+    let savedWorldId:string|null=null;try{savedWorldId=window.localStorage.getItem(storageKey);}catch{/* Optional selection preference. */}
     if (savedWorldId && worlds.some((world) => world.id === savedWorldId && world.rulesVersion === 2)) {
       setSelectedWorldId(savedWorldId);
     }
@@ -85,7 +90,7 @@ export function LobbyWorldSelector({
 
   const enterWorld = () => {
     if (!selectedWorld) return;
-    window.localStorage.setItem(storageKey, selectedWorld.id);
+    rememberWorld(storageKey, selectedWorld.id);
     startTransition(() => {
       router.push(hrefForWorld(selectedWorld));
     });
@@ -105,7 +110,7 @@ export function LobbyWorldSelector({
         throw new Error(payload.error ?? "Nao foi possivel criar a campanha Alpha.");
       }
       if (payload.world.slug) {
-        window.localStorage.setItem(storageKey, payload.world.slug);
+        rememberWorld(storageKey, payload.world.slug);
       }
       router.push(payload.world.href);
       router.refresh();
@@ -166,7 +171,7 @@ export function LobbyWorldSelector({
         throw new Error(payload.error ?? "Código inválido.");
       }
       if (payload.world.slug) {
-        window.localStorage.setItem(storageKey, payload.world.slug);
+        rememberWorld(storageKey, payload.world.slug);
       }
       router.push(payload.world.href);
       router.refresh();
@@ -211,7 +216,7 @@ export function LobbyWorldSelector({
                 <div>
                   <strong>{selectedWorld.name}</strong>
                   <p className="list-meta">
-                    {selectedWorld.seasonMode==='express'?'Expresso':'Normal'} · Dia {selectedWorld.day}/{selectedWorld.durationDays ?? 120}
+                    {selectedWorld.seasonMode==='express'?'Expresso':'Normal'} · {selectedWorld.status==='Em Aberto'?'Aguardando abertura':`Dia ${calendar.day}/${calendar.duration} reais`} · {selectedWorld.players} {selectedWorld.players===1?'jogador':'jogadores'}
                   </p>
                 </div>
                 <StatusBadge label={selectedWorld.status} tone={toneForWorld(selectedWorld)} />
@@ -220,7 +225,7 @@ export function LobbyWorldSelector({
           ) : null}
 
           {selectedWorld&&<button className="primary-button" type="button" onClick={enterWorld} data-smoke="lobby-enter-world">
-            {selectedWorld?.status === "Finalizado" ? "Ver relatório" : "Entrar no mundo"}
+            {selectedWorld?.status === "Finalizado" ? "Ver resultado" : selectedWorld?.status === "Em Andamento" ? "Continuar reinado" : "Entrar no mundo"}
           </button>}
           {process.env.NODE_ENV !== "production" ? (
             <div className="inline-actions lobby-dev-actions">
@@ -237,7 +242,7 @@ export function LobbyWorldSelector({
       </SectionCard>
 
       </>}
-      {view==="create"&&<SectionCard title="Criar mundo novo" eyebrow="Coroa · versão atual" accent="gold" className="lobby-card lobby-card--join lobby-card--create">
+      {view==="create"&&<SectionCard title="Criar mundo novo" accent="gold" className="lobby-card lobby-card--join lobby-card--create">
         <div className="form-stack">
           {benefits&&<div className="card-row"><strong>{benefits.activeWorlds}/{benefits.worldLimit} mundos ativos</strong><Link href="/premium">{benefits.active?'Premium':'Ver Premium'}</Link></div>}
           {createdWorld ? (

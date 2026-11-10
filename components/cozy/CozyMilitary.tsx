@@ -1,4 +1,5 @@
 "use client";
+import {seasonDisplay} from "@/lib/cozy/season-display";
 
 
 
@@ -93,7 +94,7 @@ export default function CozyMilitary({
         />
       </header>
       {horde&&tab==='recruit'&&<button type="button" className={styles.hordeTarget} data-ready={totalDefense>=horde.power} onClick={onThreat} aria-label="Ver preparação contra a horda">
-        <CozyArt src="/icons/action-defend.png" size={27}/><span><strong>Horda · dia {horde.day}</strong><small>{crownRemaining(horde.arrivesAt,now)}</small></span>
+        <CozyArt src="/icons/action-defend.png" size={27}/><span><strong>Horda · dia {seasonDisplay(horde.day,computed.durationDays,computed.realDurationDays).day}</strong><small>{crownRemaining(horde.arrivesAt,now)}</small></span>
         <span><strong>{number(totalDefense)} / {number(horde.power)}</strong><small>{totalDefense>=horde.power?'Defesa suficiente hoje':`Faltam ${number(horde.power-totalDefense)} de defesa`}</small></span>
       </button>}
       {campaign&&<button type="button" className={styles.marchStatus} onClick={onOrders} aria-label="Acompanhar investida"><CozySymbol name="time" size={21}/><span><strong>{campaign.foundation?'Fundação de cidade em andamento':campaign.occupationOnly?'Anexação em andamento':campaign.returning?'Investida retornando':'Investida em andamento'}</strong><small>{crownRemaining(campaign.arrivesAt,now)} · {campaign.returning?'até liberar novo ataque':'até a chegada'}</small></span><ArrowRight size={17}/></button>}
@@ -106,7 +107,7 @@ export default function CozyMilitary({
 
         {computed.sanctuaryBonuses.defense>0&&<div className={styles.availableNow}><CozyBonus kind="defense" value={computed.sanctuaryBonuses.defense}/></div>}
         {horde?<article className={`${styles.defenseCard} ${styles.threat}`} aria-label="Preparação para a próxima horda"><div>
-          <div className={styles.threatHeading}><CozyArt src="/icons/action-defend.png" size={35}/><div><small>Próxima ameaça</small><h3>Horda do dia {horde.day}</h3></div><span><CozySymbol name="time" size={18}/>{crownRemaining(horde.arrivesAt,now)}</span></div>
+          <div className={styles.threatHeading}><CozyArt src="/icons/action-defend.png" size={35}/><div><small>Próxima ameaça</small><h3>Horda do dia {seasonDisplay(horde.day,computed.durationDays,computed.realDurationDays).day}</h3></div><span><CozySymbol name="time" size={18}/>{crownRemaining(horde.arrivesAt,now)}</span></div>
           <div className={styles.defenseTotals}><span>Sua defesa<strong>{number(computed.defensePower)}</strong></span><span>Apoio aliado<strong>+{number(horde.supportPower)}</strong></span><span>Força da horda<strong>{number(horde.power)}</strong></span></div>
           <p className={styles.readiness} data-ready={totalDefense>=horde.power}>{totalDefense>=horde.power?'Sua defesa atual cobre a força estimada.':`Faltam ${number(horde.power-totalDefense)} de defesa na força atual.`}</p>
           <div className={styles.defenseActions}><button type="button" onClick={()=>{setTab('recruit');recruitTab.current?.focus();}}>Preparar tropas<ArrowRight size={15}/></button><button type="button" onClick={onAlliance}><CozySymbol name="alliance" size={18}/>{state.allianceId?'Ver apoio da aliança':'Encontrar aliados'}</button></div>

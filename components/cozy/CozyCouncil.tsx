@@ -72,7 +72,7 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
             className={styles.sceneArt}
           />
           <div className={styles.sceneTop}>
-            {decree&&<span className={styles.eyebrow}>Dia {decree.day}</span>}
+            {decree&&<span className={styles.eyebrow}>Dia de jogo {decree.day}</span>}
             <span
               className={styles.contentment}
               aria-label={`${zeroModel?'Confiança média das cidades':'Satisfação'} ${trust}%`}

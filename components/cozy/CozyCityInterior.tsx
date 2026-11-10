@@ -374,10 +374,10 @@ export default function CozyCityInterior({
           </div>}
           {life&&<article className={styles.decisionCard} aria-label="Decisão local da cidade">
             <div className={styles.localScene} data-sector={life.decision?.sector??'society'}>
-              <span className={styles.localDay}>{life.decision?`Dia ${computed.day} · Na cidade`:computed.readOnly?"Memórias da cidade":!computed.started?"Aguardando a abertura":"Por hoje, tudo cuidado"}</span>
+              <span className={styles.localDay}>{life.decision?`Dia de jogo ${computed.day} · Na cidade`:computed.readOnly?"Memórias da cidade":!computed.started?"Aguardando a abertura":"Por hoje, tudo cuidado"}</span>
               <h3>{life.decision?.title??(computed.readOnly?"Histórico da cidade":!computed.started?"Um novo começo":"Decisão registrada")}</h3>
             </div>
-            {life.decision&&<p className={styles.localStory}>{cityDecisionStory(life.decision.id)}</p>}
+            {life.decision?<p className={styles.localStory}>{cityDecisionStory(life.decision.id)}</p>:computed.started&&!computed.readOnly?<p className={styles.localStory}>Novas situações no próximo dia de jogo.</p>:null}
             {life.decision?.options.map(option=>{const affordable=Object.entries(option.cost).every(([resource,cost])=>state.resources[resource as keyof typeof state.resources]>=cost!);return <div key={option.id} className={styles.localChoiceFrame} data-selected={localPick?.decisionId===life.decision?.id&&localPick.optionId===option.id||undefined}>
             <button className={styles.localChoice} disabled={Boolean(lockReason)||!affordable} onClick={()=>state.progression?.balance?.unifiedRules?setLocalPick({decisionId:life.decision!.id,optionId:option.id}):void act({type:"city_decision",cityId:city.id,decisionId:life.decision!.id,optionId:option.id})} aria-pressed={state.progression?.balance?.unifiedRules?localPick?.decisionId===life.decision?.id&&localPick.optionId===option.id:undefined} aria-label={`${state.progression?.balance?.unifiedRules?'Escolher':'Decidir'}: ${option.label}`}>
               <strong>{option.label}</strong>
