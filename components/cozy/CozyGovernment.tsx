@@ -7,6 +7,7 @@ import {realmCareCity} from "@/lib/cozy/council-context";
 
 
 import CozySymbol from "./CozySymbol";
+import CozyScene from "./CozyScene";
 import CozyPlans from './CozyPlans';
 
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
@@ -313,7 +314,12 @@ export default function CozyGovernment({
           id="government-research"
           aria-labelledby="government-research-tab"
         >
-          <div className={styles.researchTreasury}><CozyArt src="/icons/building-government.png" size={30}/><span>Biblioteca</span><CrownCost amount={Math.floor(state.resources.gold)} kind="gold"/></div>
+          <div className={styles.researchTreasury}>
+            <CozyScene src="/images/cenas-cozy/pesquisa.jpg" position="center 46%" />
+            <CozyArt src="/icons/building-government.png" size={34}/>
+            <strong>Biblioteca</strong>
+            <CrownCost amount={Math.floor(state.resources.gold)} kind="gold"/>
+          </div>
           {order && (
             <div className={styles.activeResearch} role="status">
               <CozySymbol name="time" size={19}/>

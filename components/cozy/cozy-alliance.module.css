@@ -115,6 +115,22 @@
 .banner[data-unaffiliated] .crest { width: 87px; height: 104px; border: 2px solid #be9550; border-radius: 3px 3px 40% 40%; background: linear-gradient(90deg,#192d24,#3c5140,#18291f); }
 .banner[data-unaffiliated] .bannerHelp { position: absolute; top: 8px; right: 8px; }
 .banner[data-unaffiliated] p { justify-content: center; }
+
+.root .banner {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid #ba9b6055;
+  border-radius: 8px;
+}
+.root .banner[data-unaffiliated] {
+  min-height: 142px;
+  flex-direction: row;
+  justify-content: flex-start;
+  text-align: left;
+}
+.root .banner[data-unaffiliated] .crest { width: 64px; height: 76px; }
+.root .banner[data-unaffiliated] p { justify-content: flex-start; }
+.root .banner h1 { color: #ffe5ac; }
 .entryLinks { display: flex; gap: 8px; }
 .root .entryLinks button { flex: 1; min-height: 44px; border: 1px solid #91784c; border-radius: 5px; background: #211f1c; color: #ecdbbd; }
 .root .entryLinks button[aria-pressed="true"] { background: var(--kw-action-gold); color: #281809; }

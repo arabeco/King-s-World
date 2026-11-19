@@ -15,20 +15,37 @@ export const revalidate = 0;
 
 const headers = { "Cache-Control": "private, no-store, max-age=0" };
 
+function responseTiming() {
+  const started=performance.now();
+  const phases=new Map<string, number>();
+  return {
+    record(phase: string,duration: number) {
+      phases.set(phase,(phases.get(phase)??0)+duration);
+    },
+    headers() {
+      const entries=[...phases,["total",performance.now()-started] as const];
+      return {...headers,"Server-Timing":entries.map(([name,duration])=>`${name};dur=${duration.toFixed(1)}`).join(", ")};
+    },
+  };
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { worldId: string } },
 ) {
+  const timing=responseTiming();
   try {
+    const authStarted=performance.now();
     const user = await requireAuthenticatedAppUser();
+    timing.record("auth",performance.now()-authStarted);
     if (new URL(request.url).searchParams.get("view")==="ascension")
-      return NextResponse.json(await readCozyAscensionPreview(params.worldId,user),{headers});
-    return NextResponse.json(await getCozyPayload(params.worldId, user), {
-      headers,
+      return NextResponse.json(await readCozyAscensionPreview(params.worldId,user),{headers:timing.headers()});
+    return NextResponse.json(await getCozyPayload(params.worldId, user, undefined, timing.record), {
+      headers:timing.headers(),
     });
   } catch (error) {
     const result = cozyErrorResponse(error);
-    return NextResponse.json(result.body, { status: result.status, headers });
+    return NextResponse.json(result.body, { status: result.status, headers:timing.headers() });
   }
 }
 
@@ -36,6 +53,7 @@ export async function POST(
   request: Request,
   { params }: { params: { worldId: string } },
 ) {
+  const timing=responseTiming();
   try {
     const origin = request.headers.get("origin");
     if (origin) {
@@ -58,7 +76,9 @@ export async function POST(
           "INVALID_ORIGIN",
         );
     }
+    const authStarted=performance.now();
     const user = await requireAuthenticatedAppUser();
+    timing.record("auth",performance.now()-authStarted);
     const text = await request.text();
     if (text.length > 4096)
       throw new CozyHttpError("Ação inválida.", 413, "BODY_TOO_LARGE");
@@ -95,8 +115,8 @@ export async function POST(
       throw new CozyHttpError("Ação inválida.");
     if ((action as { type: string }).type === "start_world") {
       await startCozyWorld(params.worldId, user);
-      return NextResponse.json(await getCozyPayload(params.worldId, user), {
-        headers,
+      return NextResponse.json(await getCozyPayload(params.worldId, user, undefined, timing.record), {
+        headers:timing.headers(),
       });
     }
     return NextResponse.json(
@@ -104,11 +124,11 @@ export async function POST(
         action: action as CozyAction,
         requestId,
         playerId: typeof playerId==="string" ? playerId : undefined,
-      }),
-      { headers },
+      },timing.record),
+      { headers:timing.headers() },
     );
   } catch (error) {
     const result = cozyErrorResponse(error);
-    return NextResponse.json(result.body, { status: result.status, headers });
+    return NextResponse.json(result.body, { status: result.status, headers:timing.headers() });
   }
 }

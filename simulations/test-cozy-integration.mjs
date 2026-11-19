@@ -3112,7 +3112,7 @@ try {
         const countExplorations=request=>{if(request.method()==='POST'&&request.url().endsWith('/cozy')&&request.postDataJSON()?.action?.type==='explore')repeatedExplorations++;};
         page.on('request',countExplorations);
         await blockedExplore.click({force:true});
-        await page.getByRole('status').filter({hasText:/Exploração em andamento/}).waitFor();
+        await page.getByRole('status').filter({hasText:'Este destino já tem uma exploração.'}).first().waitFor();
         assert.equal(repeatedExplorations,0,'A blocked exploration explains the wait without issuing another command');
         page.off('request',countExplorations);
         await page.screenshot({path:path.join(reports,'exploration-busy-feedback-390.png')});

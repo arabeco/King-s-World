@@ -22,6 +22,8 @@
   background: #12272a;
   box-shadow: 0 0 100px #0009;
 }
+.frame button { touch-action: manipulation; }
+.frame button:active:not(:disabled) { filter: brightness(1.16); }
 .hud {
   flex: none;
   position: relative;

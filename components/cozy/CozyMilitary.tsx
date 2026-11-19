@@ -15,6 +15,7 @@ import type {CozyResearch} from "@/lib/cozy/types";
 import {usesMobileReviewRules} from "@/lib/cozy/progression";
 import {hordeRecruitment,recruitPreview} from "@/lib/cozy/recruit-preview";
 import CozyArt from "./CozyArt";
+import CozyScene from "./CozyScene";
 import {
   CrownCost,
   CrownButton,
@@ -30,10 +31,11 @@ export default function CozyMilitary({
   data,
   act,
   locked,
+  recruitmentPending,
   onResearch,
   onCity,
   now,onResources,onCities,onAlliance,onOrders,onThreat,onExpedition,
-}: CrownPanelProps & { onResearch: (research: CozyResearch) => void; onCity: (id:string)=>void;onResources:()=>void;onCities:()=>void;onAlliance:()=>void;onOrders:()=>void;onThreat:()=>void;onExpedition:()=>void }) {
+}: CrownPanelProps & { recruitmentPending?:boolean; onResearch: (research: CozyResearch) => void; onCity: (id:string)=>void;onResources:()=>void;onCities:()=>void;onAlliance:()=>void;onOrders:()=>void;onThreat:()=>void;onExpedition:()=>void }) {
   const { state, computed } = data;
   const [tab,setTab]=useState<"recruit"|"defense">("recruit");
   const [lots, setLots] = useState<Record<string, number | "max">>({});
@@ -60,6 +62,7 @@ export default function CozyMilitary({
     <CrownPanel tone="military">
       
       <header className={styles.command} data-mode={tab}>
+        <CozyScene src={tab==="recruit"?"/images/military-royal-guard.jpg":"/images/cenas-cozy/defesa.jpg"} />
         <div className={styles.commandTitle}>
           <CozyArt src="/icons/exercito.png" size={54} />
           <div>
@@ -95,6 +98,7 @@ export default function CozyMilitary({
           max={computed.armyCapacity}
           label="Capacidade do exército"
         />
+        {recruitmentPending&&<small className={styles.recruiting} role="status">Confirmando recrutamento…</small>}
       </header>
       {frontier && tab==="recruit" && <section className={styles.frontier} aria-label="Vitórias da expedição">
         <div><CozyArt src="/icons/action-attack.png" size={27}/><strong>Alvos vencidos</strong><b>{victories.count}/{victories.target}</b></div>
@@ -183,10 +187,10 @@ export default function CozyMilitary({
               {available ? (
                 <div className={styles.recruit}>
                   <div className={styles.lots} aria-label={`Quantidade de ${troop.name}`}>
-                    <button type="button" aria-label={`Diminuir quantidade de ${troop.name}`} disabled={locked||quantity<=1} onClick={()=>setLots(previous=>({...previous,[troop.id]:Math.max(1,quantity-1)}))}>−</button>
+                    <button type="button" aria-label={`Diminuir quantidade de ${troop.name}`} disabled={quantity<=1} onClick={()=>setLots(previous=>({...previous,[troop.id]:Math.max(1,quantity-1)}))}>−</button>
                     <output aria-label={`Quantidade selecionada: ${quantity}`}>{number(quantity)}</output>
-                    <button type="button" aria-label={`Aumentar quantidade de ${troop.name}`} disabled={locked||maxUnits<=quantity} onClick={()=>setLots(previous=>({...previous,[troop.id]:Math.min(maxUnits,quantity+1)}))}>+</button>
-                    <button type="button" aria-label={`Selecionar máximo de ${troop.name}`} disabled={locked||maxUnits===0} aria-pressed={amount==="max"} onClick={()=>setLots(previous=>({...previous,[troop.id]:"max"}))}>Máx.</button>
+                    <button type="button" aria-label={`Aumentar quantidade de ${troop.name}`} disabled={maxUnits<=quantity} onClick={()=>setLots(previous=>({...previous,[troop.id]:Math.min(maxUnits,quantity+1)}))}>+</button>
+                    <button type="button" aria-label={`Selecionar máximo de ${troop.name}`} disabled={maxUnits===0} aria-pressed={amount==="max"} onClick={()=>setLots(previous=>({...previous,[troop.id]:"max"}))}>Máx.</button>
                   </div>
                   <button className={styles.recruitAction} type="button"
                     disabled={locked || quantity <= 0 || quantity > maxUnits}

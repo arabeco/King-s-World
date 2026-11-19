@@ -5,6 +5,7 @@ import type {CozyPayload} from '@/lib/cozy/types';
 import type {CozyCommand} from './useCozyWorld';
 import {CrownButton,CrownCost,crownRemaining} from './CozyCrownUI';
 import CozyArt from './CozyArt';
+import CozyScene from './CozyScene';
 import styles from './cozy-mini-mission.module.css';
 
 export default function CozyMiniMission({data,now,locked,act}:{data:CozyPayload;now:number;locked:boolean;act:(action:CozyCommand)=>Promise<boolean>}){
@@ -21,7 +22,12 @@ export default function CozyMiniMission({data,now,locked,act}:{data:CozyPayload;
  return <><button className={styles.prompt} type="button" aria-haspopup="dialog" onClick={()=>setOpen(offer.id)}><CozyArt src="/icons/action-attack.png" size={30}/><span><strong>{offer.title}</strong><small>Encontro disponível · {crownRemaining(offer.expiresAt,now)}</small></span><b>›</b></button>
  {open===offer.id&&<dialog ref={dialog} className={styles.dialog} aria-label={offer.title} onCancel={e=>{e.preventDefault();e.stopPropagation();setOpen(null);}}>
  <header><span>Encontro opcional</span><button type="button" aria-label="Fechar" onClick={()=>setOpen(null)}>×</button></header>
- <div className={styles.body}><h2>{offer.title}</h2><p>{offer.description}</p><p>{offer.enemy} · poder {offer.enemyPower}</p>
+ <div className={styles.body}>
+ <div className={styles.story}>
+   <CozyScene src="/images/cenas-cozy/expedicao.jpg" />
+   <h2>{offer.title}</h2><p>{offer.description}</p>
+ </div>
+ <p>{offer.enemy} · poder {offer.enemyPower}</p>
  <div className={styles.comparison}><span>Seu exército <strong>{data.computed.armyPower}</strong></span><span>{data.computed.armyPower>=offer.enemyPower?'Força suficiente agora':'Reforce seu exército'}</span></div>
  <p>Recompensa se vencer</p><div className={styles.costs}>{offer.reward.gold>0&&<CrownCost kind="gold" amount={offer.reward.gold}/ >}{offer.reward.materials>0&&<CrownCost kind="materials" amount={offer.reward.materials}/ >}{offer.reward.supplies>0&&<CrownCost kind="supplies" amount={offer.reward.supplies}/>}</div>
  <p>Custo: <CrownCost kind="supplies" amount={offer.suppliesCost}/> · retorno em {crownRemaining(now+Math.round(data.computed.dayMs*.5),now)}</p>

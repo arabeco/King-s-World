@@ -14,6 +14,7 @@ import type {CozyAllianceProjectKind,CozyResources} from '@/lib/cozy/types';
 import type {CrownPanelProps} from './CozyCrownUI';
 import {crownNumber as number,crownRemaining as remaining} from './CozyCrownUI';
 import CozyArt from './CozyArt';
+import CozyScene from './CozyScene';
 import {entryNotice,invitationNotice,isNewNotice,supportNotice,unreadAllianceGifts} from '@/lib/cozy/notices';
 import {CozyNovelty,VisibleNotice} from './CozyNovelty';
 import CozyAllianceGifts from './CozyAllianceGifts';
@@ -61,6 +62,7 @@ export default function CozyAlliance({data,act,locked,now}:CrownPanelProps){
  const projectCopy=(kind:CozyAllianceProjectKind)=>`+${number(ALLIANCE_PROJECTS[kind].bonus*100)}% ${kind==='defense'?'de defesa contra hordas':'de produção de suprimentos'}`;
  return <section ref={rootRef} className={styles.root} aria-label="Aliança do reino">
   <header className={styles.banner} data-unaffiliated={!alliance || undefined} data-compact={!!alliance&&tab!=='overview'||undefined}>
+   {(!alliance||tab==='overview')&&<CozyScene src="/images/cenas-cozy/alianca.jpg" position="center 45%" />}
    <span className={styles.crest}><CozySymbol name="alliance" size={56}/></span>
    <div><h1>{alliance?.name??'Nenhuma aliança'}</h1><p>{alliance?<><span className={styles.slots}>{alliance.members.length}/{ALLIANCE_LIMIT} reinos</span>{leader?'Você lidera':'Você faz parte'}</>:'Até 5 reinos'}</p></div>
    <span className={styles.bannerHelp}></span>

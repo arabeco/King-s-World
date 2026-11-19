@@ -1,2 +1,11 @@
 .prompt,.active{width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:linear-gradient(110deg,#30251e,#181a1c);color:#f5e2ba;border:1px solid #a17c45;border-radius:8px;text-align:left}.prompt span,.active span{display:grid;flex:1}.prompt small,.active small{color:#c8b895;font-size:12px}.prompt b{font-size:24px;color:#eac779}.dialog{width:min(92vw,440px);max-height:85dvh;padding:0;border:1px solid #ad8b56;border-radius:12px;background:linear-gradient(150deg,#302722,#16191c);color:#f7e8c9}.dialog::backdrop{background:#000b}.dialog header{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid #716047;color:#d6bb88}.dialog header button{border:0;background:none;color:#f6dfb4;font-size:28px;min-width:44px;min-height:44px}.body{padding:16px;overflow:auto}.body h2{margin:0;font-family:Georgia,serif}.body p{margin:12px 0}.body small{color:#d4c7b3}.comparison{display:flex;justify-content:space-between;gap:10px;padding:10px;border-block:1px solid #57483b}.comparison strong{font-size:20px}.costs,.actions{display:flex;gap:10px;flex-wrap:wrap}.actions{margin-top:18px}.actions button{flex:1;min-height:44px}
 .costs>span,.body p>span{font-size:15px}.costs{gap:18px}.dialog:focus-visible,.prompt:focus-visible{outline:2px solid #f6d881;outline-offset:2px}
+.story {
+  position: relative;
+  isolation: isolate;
+  padding: 12px;
+  border: 1px solid #ab885d66;
+  border-radius: 7px;
+  background: #2d2c27;
+}
+.body .story p { margin: 6px 0 0; color: #f3e2c0; }

@@ -385,3 +385,10 @@
 .frontier > div:first-child, .frontier > div:last-child { display: flex; align-items: center; gap: 8px; }
 .frontier strong { flex: 1; }
 .frontier > div:last-child { justify-content: space-between; color: #e8c9aa; font-size: .77rem; }
+.command { position: relative; isolation: isolate; }
+.recruiting {
+  display: block;
+  padding-top: 8px;
+  color: #ffdf9d;
+  font-size: 12px;
+}

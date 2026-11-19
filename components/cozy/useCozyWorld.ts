@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {newerCozySnapshot} from "@/lib/cozy/snapshot-order";
+import {projectRecruitment} from "@/lib/cozy/recruit-preview";
 import type { CozyAction, CozyPayload } from "@/lib/cozy/types";
 
 export type CozyCommand = CozyAction | { type: "start_world" };
@@ -42,6 +43,7 @@ function savePending(key: string, command: PendingCommand | null) {
 /** The browser sends intentions only. Even arrival timers are settled by the API. */
 export function useCozyWorld(worldId: string) {
   const [payload, setPayload] = useState<CozyPayload | null>(null);
+  const [recruitment,setRecruitment]=useState<{base:CozyPayload;preview:CozyPayload}|null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pending, setPending] = useState(false);
@@ -82,7 +84,7 @@ export function useCozyWorld(worldId: string) {
         throw new Error(
           result.error || "O reino não respondeu. Tente novamente.",
         );
-      accept(result as CozyPayload,requestEpoch);
+      if(!inFlight.current)accept(result as CozyPayload,requestEpoch);
       if (alive.current&&requestEpoch===epoch.current) setError(null);
     } catch (reason) {
       if (alive.current&&requestEpoch===epoch.current)
@@ -111,6 +113,7 @@ export function useCozyWorld(worldId: string) {
     alive.current = true;
     epoch.current+=1;inFlight.current=false;readingEpoch.current=null;currentPayload.current=null;serverOffset.current=0;
     setPayload(null);setLoading(true);setError(null);setUncertain(null);setPending(false);setLastAction(null);setLastSyncedAt(null);
+    setRecruitment(null);
     receiptScope.current = null;
     void refresh();
     const interval = window.setInterval(() => {
@@ -150,9 +153,10 @@ export function useCozyWorld(worldId: string) {
     if (payload.allianceGifts && payload.allianceGifts.resetsAt-payload.serverNow<=30_000)
       arrivals.push(payload.allianceGifts.resetsAt);
     const next = Math.min(...arrivals.filter((at) => at > payload.serverNow));
-    if (!Number.isFinite(next)) return;
+    // The regular poll already covers distant arrivals.
+    if (!Number.isFinite(next) || next-payload.serverNow>30_000) return;
     const timer = window.setTimeout(
-      () => void refresh(),
+      () => { if(!document.hidden)void refresh(); },
       Math.max(
         1000,
         Math.min(30_000, next - (Date.now() + serverOffset.current) + 1200),
@@ -162,7 +166,7 @@ export function useCozyWorld(worldId: string) {
   }, [payload, pending, refresh]);
 
   const execute = useCallback(
-    async (command: PendingCommand) => {
+    async (command: PendingCommand, project = true) => {
       if (inFlight.current || !currentPayload.current?.state.playerId) return false;
       const playerId = currentPayload.current.state.playerId;
       if (currentPayload.current.world.persistent && command.playerId!==playerId) return false;
@@ -173,6 +177,11 @@ export function useCozyWorld(worldId: string) {
       setPending(true);
       setError(null);
       setLastAction(null);
+      const base=currentPayload.current;
+      if(project&&command.action.type==='recruit'){
+        const preview=projectRecruitment(base,command.action.troop,command.action.amount);
+        if(preview!==base)setRecruitment({base,preview});
+      }
       savePending(commandKey, command);
       try {
         const response = await fetch(endpoint, {
@@ -214,7 +223,7 @@ export function useCozyWorld(worldId: string) {
         return false;
       } finally {
         window.clearTimeout(timeout);
-        if (alive.current&&requestEpoch===epoch.current){inFlight.current=false;setPending(false);}
+        if (alive.current&&requestEpoch===epoch.current){inFlight.current=false;setPending(false);setRecruitment(null);}
       }
     },
     [accept, endpoint, worldId],
@@ -233,7 +242,8 @@ export function useCozyWorld(worldId: string) {
         if(!response.ok)return false;
         const next=await response.json();
         if(!alive.current||requestEpoch!==epoch.current)return false;
-        accept(next as CozyPayload,requestEpoch);return true;
+        if(!inFlight.current)accept(next as CozyPayload,requestEpoch);
+        return true;
       }catch{return false;}
       finally{window.clearTimeout(timeout);if(acknowledging.current?.epoch===requestEpoch)acknowledging.current=null;}
     })();
@@ -256,7 +266,8 @@ export function useCozyWorld(worldId: string) {
           body:JSON.stringify({action:{type:"notice_seen",id},requestId:crypto.randomUUID(),playerId:currentPayload.current?.state.playerId}),
         });
         if (!response.ok || !alive.current || requestEpoch !== epoch.current) return false;
-        accept(await response.json() as CozyPayload,requestEpoch);
+        const next=await response.json() as CozyPayload;
+        if(!inFlight.current)accept(next,requestEpoch);
         return true;
       } catch {
         return false;
@@ -281,7 +292,8 @@ export function useCozyWorld(worldId: string) {
   );
 
   return {
-    payload,
+    payload: recruitment && recruitment.base===payload && recruitment.preview || payload,
+    recruitmentPending: Boolean(recruitment && recruitment.base===payload),
     loading,
     refreshing,
     pending,
@@ -293,7 +305,7 @@ export function useCozyWorld(worldId: string) {
     refresh,
     act,
     retryCommand: () =>
-      uncertain ? execute(uncertain) : Promise.resolve(false),
+      uncertain ? execute(uncertain,false) : Promise.resolve(false),
     clearError: () => setError(null),
   };
 }

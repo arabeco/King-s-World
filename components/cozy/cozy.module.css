@@ -2745,9 +2745,31 @@
   border-color: #ad985650;
 }
 
-.syncError { flex-wrap:wrap; }
-.syncError > span { flex:1 1 180px; }
-.syncRetry { min-height:44px; padding:8px 12px; border:1px solid #c7a76e88; border-radius:9px; background:#3c4c35; color:#f2e0bc; font:inherit; font-size:12px; }
+.error.syncError {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 2px 8px;
+  margin: 6px 0;
+  padding: 6px 10px;
+  border: 1px solid #ae746771;
+  border-radius: 6px;
+  background: #302327;
+  color: #ffe2cb;
+  font-size: 13px;
+}
+.syncError > span { align-self: center; }
+.syncError > .iconButton { grid-column: 2; grid-row: 1; }
+.syncRetry {
+  grid-column: 1;
+  justify-self: start;
+  min-height: 44px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: #efd18f;
+  font: inherit;
+  text-decoration: underline;
+}
 
 /* Ações principais têm um único acabamento reconhecível no jogo. */
 .button:not(:disabled), .companion .button:not(:disabled) {

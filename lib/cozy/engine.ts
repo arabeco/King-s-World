@@ -205,7 +205,7 @@ function production(state: CozyState, at=state.settledAt, cities=state.cities): 
     { gold: 0, materials: 0, supplies: 0 },
   );
 }
-function influence(state: CozyState): CozyInfluence {
+export function influence(state: CozyState): CozyInfluence {
   if (state.founding) {
     const government = state.heroes.length * PROGRESSION.hero;
     return { infrastructure: 0, government, military: 0, society: 0, legacy: 0, total: government };
@@ -399,14 +399,14 @@ function syncDecisionInbox(state: CozyState, shared: CozyShared, world: CozyWorl
     if (draft) inbox.cities[city.id] = {...draft,day,...(hero ? {author:{name:hero.name,role:hero.role}} : {})};
   }
 }
-function nextHorde(
+export function nextHorde(
   state: CozyState,
   shared: CozyShared,
   world: CozyWorld,
   now: number,
 ) {
   if (
-    world.startsAt === null ||
+    state.founding || world.startsAt === null ||
     world.status === "open" ||
     state.finalizedAt !== null || Boolean(state.defeat)
   )

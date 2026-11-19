@@ -23,6 +23,7 @@ try{
  await secondKing.getByRole('button',{name:/^Destacar /}).click();
  await page.waitForFunction(()=>document.querySelectorAll('[data-king]')[1]?.getAttribute('data-focused')==='true');
  assert.equal(await secondKing.getAttribute('data-selected'),'false','Browsing does not equip the king');
+ assert.equal(await collection.getByRole('button',{name:/^Selecionar/}).count(),0,'The king is chosen inside the world');
  await collection.locator('article').first().getByRole('button',{name:/^Destacar /}).click();
 
  await collection.getByRole('button',{name:'Ver todos os reis (22)',exact:true}).click();assert.equal(await collection.locator('article').count(),22);
@@ -227,8 +228,50 @@ try{
  await militia.getByRole('button',{name:'Aumentar quantidade de Milícia',exact:true}).click();await militia.getByRole('button',{name:'Recrutar 2 Milícia',exact:true}).waitFor();
  await militia.getByRole('button',{name:'Aumentar quantidade de Milícia',exact:true}).click();await militia.getByRole('button',{name:'Recrutar 3 Milícia',exact:true}).waitFor();
  await militia.getByRole('button',{name:'Diminuir quantidade de Milícia',exact:true}).click();
- const armyBefore=await (await page.request.get(imperialEndpoint)).json();const troopReply=page.waitForResponse(r=>r.url()===imperialEndpoint&&r.request().method()==='POST');await militia.getByRole('button',{name:'Recrutar 2 Milícia',exact:true}).click();const troops=await troopReply;assert.equal(troops.status(),200);assert.equal(troops.request().postDataJSON().action.amount,2);const armyAfter=await troops.json();assert.equal(armyAfter.state.army.militia-armyBefore.state.army.militia,2);assert(Math.abs(armyBefore.state.resources.materials-armyAfter.state.resources.materials-2*armyBefore.computed.troopCosts.militia)<1,'Exact cost allows only real time production during HTTP');
- console.log('PASS mobile military quantity: +1, +1, -1 and recruit exactly two with the displayed total cost');
+ const armyBefore=await (await page.request.get(imperialEndpoint)).json();
+ let releaseRecruit;
+ const recruitGate=new Promise(resolve=>{releaseRecruit=resolve;});
+ await page.route(imperialEndpoint,async route=>{
+  if(route.request().method()!=='POST'||route.request().postDataJSON()?.action?.type!=='recruit')return route.continue();
+  await recruitGate;
+  await route.continue();
+ });
+ const recruitButton=militia.getByRole('button',{name:'Recrutar 2 Milícia',exact:true});
+ const troopReply=page.waitForResponse(r=>r.url()===imperialEndpoint&&r.request().method()==='POST');
+ try{
+  await recruitButton.click();
+  await militia.getByLabel(`${armyBefore.state.army.militia+2} no exército`,{exact:true}).waitFor();
+  await page.getByText('Confirmando recrutamento…',{exact:true}).waitFor();
+  assert(await recruitButton.isDisabled());
+  const stillSaved=await (await page.request.get(imperialEndpoint)).json();
+  assert.equal(stillSaved.state.army.militia,armyBefore.state.army.militia);
+ }finally{releaseRecruit();}
+ const troops=await troopReply;
+ assert.equal(troops.status(),200);
+ assert.match(troops.headers()['server-timing'],/world-read;dur=.*commit;dur=.*world-view;dur=/);
+ assert.equal(troops.request().postDataJSON().action.amount,2);
+ const armyAfter=await troops.json();
+ assert.equal(armyAfter.state.army.militia-armyBefore.state.army.militia,2);
+ assert(Math.abs(armyBefore.state.resources.materials-armyAfter.state.resources.materials-2*armyBefore.computed.troopCosts.militia)<1,'Exact cost allows only real time production during HTTP');
+ await page.unroute(imperialEndpoint);
+ await page.getByText('Confirmando recrutamento…',{exact:true}).waitFor({state:'hidden'});
+
+ let rejectRecruit;
+ const rejectGate=new Promise(resolve=>{rejectRecruit=resolve;});
+ await page.route(imperialEndpoint,async route=>{
+  if(route.request().method()!=='POST'||route.request().postDataJSON()?.action?.type!=='recruit')return route.continue();
+  await rejectGate;
+  await route.fulfill({status:422,json:{error:'O lote mudou. Confira as vagas.'}});
+ });
+ try{
+  await recruitButton.click();
+  await militia.getByLabel(`${armyAfter.state.army.militia+2} no exército`,{exact:true}).waitFor();
+ }finally{rejectRecruit();}
+ await militia.getByLabel(`${armyAfter.state.army.militia} no exército`,{exact:true}).waitFor();
+ await page.getByText('O lote mudou. Confira as vagas.',{exact:true}).waitFor();
+ await page.unroute(imperialEndpoint);
+ await page.getByRole('dialog',{name:'Militar',exact:true}).getByRole('button',{name:'Fechar aviso'}).click();
+ console.log('PASS mobile recruitment: immediate estimate while network is held, one confirmed purchase, and rollback on rejection',troops.headers()['server-timing']);
  const prepare=militia.getByRole('button',{name:/^Para a horda: /});
  await prepare.waitFor();const recommended=Number((await prepare.innerText()).split(':')[1].trim().replaceAll('.',''));
  const armyCount=armyAfter.state.army.militia;
@@ -293,6 +336,26 @@ try{
  await page.reload({waitUntil:'networkidle'});await shop.getByRole('heading',{name:/Gemas/}).waitFor();assert.equal(await shop.getByText('Estorno · 50 Gemas',{exact:true}).count(),0);
  const recovered=await (await page.request.get(base+'/api/me/collection')).json();assert.equal(recovered.gemDebt,0);assert.equal(recovered.gems,0);assert(recovered.inventory.some(i=>i.id===refundable));
  console.log('PASS refunded real SQL checkout: owned king preserved, debt visible in mobile shop/API, future credit offsets it once, cash checkout stays disabled');
+ }
+
+ await page.setViewportSize({width:390,height:844});
+ await page.goto(base+imperialWorld.href,{waitUntil:'networkidle'});
+ for (const [screen,name,scene] of [
+  ['Aliança','Aliança do reino','alianca.jpg'],
+  ['Relatos','Relatos do reino','livro-legado.jpg'],
+ ]) {
+  await navigation.getByRole('button',{name:screen,exact:true}).click();
+  const region=page.getByRole('region',{name,exact:true});
+  const art=region.locator(`header img[src*="${scene}"]`);
+  await art.evaluate(img=>img.decode());
+  const tutorial=page.getByRole('button',{name:'Pular',exact:true});
+  if(await tutorial.isVisible())await tutorial.click();
+  for(const width of [320,390,430]){
+   await page.setViewportSize({width,height:844});
+   assert(await region.evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+  }
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:path.join(root,`reports/cozy/${scene.replace('.jpg','')}-screen-390.png`)});
  }
 
 

@@ -348,6 +348,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
     loading,
     refreshing,
     pending,
+    recruitmentPending,
     error,
     uncertain,
     clock,
@@ -851,7 +852,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
             role="status"
             aria-label={
               pending
-                ? "Registrando ordem"
+                ? recruitmentPending ? "Recrutamento aguardando confirmação" : "Registrando ordem"
                 : refreshing
                   ? "Sincronizando reino"
                   : "Reino sincronizado"
@@ -902,6 +903,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
             {panel === "military" && (
               <CozyMilitary
                 {...props}
+                recruitmentPending={recruitmentPending}
                 onOrders={()=>setPanel('orders')}
                 onExpedition={()=>{
                   const victories = state.progression?.feats.frontier?.victories ?? [];

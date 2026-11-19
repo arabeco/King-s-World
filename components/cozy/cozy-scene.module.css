@@ -1,0 +1,16 @@
+.scene {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.scene img { object-fit: cover; }
+.scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #111619ed, #15191b82 62%, #16181830),
+    linear-gradient(0deg, #111619e6, transparent 64%);
+}

@@ -10,6 +10,7 @@ import {isUnreadReport,reportNotice} from "@/lib/cozy/notices";
 import {CozyNovelty,VisibleNotice} from "./CozyNovelty";
 import {counselorPortraits,heroPortraits} from "./cozy-portraits";
 import CozyArt from "./CozyArt";
+import CozyScene from "./CozyScene";
 import CozyBattleResult from './CozyBattleResult';
 
 import styles from "./cozy-reports.module.css";
@@ -172,6 +173,7 @@ export default function CozyReports({
   return (
     <section className={styles.reports} aria-label="Relatos do reino">
       <header className={styles.header}>
+        <CozyScene src="/images/cenas-cozy/livro-legado.jpg" position="center 58%" />
         <CozyArt src="/images/cenas-cozy/carta.png" size={52} />
         <div>
           <h2>Relatos do reino</h2>

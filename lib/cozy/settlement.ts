@@ -1,6 +1,6 @@
 import {resolvePlayerAttacks} from './player-combat';
 import {nextSanctuaryRaidAt,resolveSanctuaryRaids} from './sanctuary-raids';
-import {nextCityDayAt,getCozyComputed,settleCozyState} from './engine';
+import {nextCityDayAt,nextHorde,influence,settleCozyState} from './engine';
 import type {CozyState,CozyShared,CozyWorld} from './types';
 /** Settle shared events in arrival order across every player, not request order. */
 export function settleWorld(
@@ -30,12 +30,12 @@ export function settleWorld(
         }
         const social=nextCityDayAt(player.state,world);
         if(social!==null&&social>player.state.settledAt&&social<=now)boundary=Math.min(boundary,social);
-        const next = getCozyComputed(
+        const next = nextHorde(
           player.state,
           shared,
           world,
           player.state.settledAt,
-        ).nextHorde;
+        );
         if (
           next &&
           next.arrivesAt > player.state.settledAt &&
@@ -74,12 +74,7 @@ export function settleWorld(
     const next = settleCozyState(player.state, shared, world, now);
     player.state = next.state;
     shared = next.shared;
-    player.influence = getCozyComputed(
-      player.state,
-      shared,
-      world,
-      now,
-    ).influence.total;
+    player.influence = influence(player.state).total;
   }
   return shared;
 }

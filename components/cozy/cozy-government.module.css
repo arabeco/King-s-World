@@ -379,6 +379,16 @@
 .rosterEffect > span {margin-left:auto;}
 .researchTreasury {display:flex;align-items:center;gap:8px;min-height:42px;margin-bottom:10px;color:#ecdfbf;font-size:15px;}
 .researchTreasury > span:last-child {margin-left:auto;}
+.researchTreasury {
+  position: relative;
+  isolation: isolate;
+  min-height: 76px;
+  padding: 8px 12px;
+  border: 1px solid #a786505c;
+  border-radius: 7px;
+  background: #252b30;
+}
+.researchTreasury > strong { font: 700 19px Georgia, serif; color: #ffe3aa; }
 .discoveryGrid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
 .researchTile {position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;min-height:205px;padding:15px 9px 0;border:1px solid #8092a05c;border-radius:8px;background:radial-gradient(ellipse at 50% 20%,#52647b55,transparent 65%),linear-gradient(145deg,#2e3945,#171e25);color:#f2e3bf;font:inherit;text-align:center;cursor:pointer;box-shadow:inset 0 1px #ffffff0d,0 3px 10px #0003;}
 .researchTile[data-active] {border-color:#e6c577;box-shadow:inset 0 0 22px #a4bcce16;}

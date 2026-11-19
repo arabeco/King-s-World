@@ -25,6 +25,7 @@ import {
   createCozyState,
   getCozyComputed,
   getCozyTiles,
+  influence,
   transferAllianceGift,
 } from "@/lib/cozy/engine";
 import type {
@@ -341,6 +342,7 @@ export async function getCozyPayload(
   worldRouteId: string,
   user: AppUserRecord,
   command?: { action: CozyAction; requestId: string; playerId?: string },
+  recordTiming?: (phase: string, duration: number) => void,
 ): Promise<CozyServerPayload> {
   const hash = command ? actionFingerprint(command.action) : null;
   if (command?.action.type === "read_reports") {
@@ -381,6 +383,7 @@ export async function getCozyPayload(
     );
   }
   for (let attempt = 0; attempt < 6; attempt += 1) {
+    const readStarted=performance.now();
     const row = await fetchWorld(worldRouteId);
     if (row.rules_version !== 2)
       throw new CozyHttpError(
@@ -441,6 +444,8 @@ export async function getCozyPayload(
       ),
     ]);
     const now = Date.now();
+    recordTiming?.("world-read",performance.now()-readStarted);
+    const engineStarted=performance.now();
     const originalShared = sharedRows[0];
     let shared = structuredClone(originalShared?.state_json ?? createCozyShared(world));
     const balance=world.influenceVersion===2?bindWorldBalance(shared,saved.map(s=>s.state_json),world.economyVersion===2,world.economyVersion===3):null;
@@ -550,13 +555,7 @@ export async function getCozyPayload(
       if(command.action.type==="ascend"||command.action.type.startsWith("alliance_")||command.action.type.startsWith("sanctuary_pact_"))
         shared=settleWorld(players,shared,world,now);
     }
-    for (const player of players)
-      player.influence = getCozyComputed(
-        player.state,
-        shared,
-        world,
-        now,
-      ).influence.total;
+    for (const player of players) player.influence=influence(player.state).total;
     const dirty =
       !originalShared ||
       !sameState(originalShared.state_json, shared) ||
@@ -567,7 +566,9 @@ export async function getCozyPayload(
         return !previous || previous.influence !== player.influence || !sameState(previous.state_json, player.state);
       });
     let revision = originalShared?.revision ?? -1;
+    recordTiming?.("engine",performance.now()-engineStarted);
     if (world.status !== "finalized" && (dirty || command || finalize)) {
+      const commitStarted=performance.now();
       const result = await supabaseRpc<{
         status: "committed" | "conflict" | "duplicate" | "closed";
         revision?: number;
@@ -583,6 +584,7 @@ export async function getCozyPayload(
         p_action_hash: finalize ? null : hash,
         p_finalize: finalize,
       });
+      recordTiming?.("commit",performance.now()-commitStarted);
       if (result.status === "conflict" || result.status === "closed") continue;
       if (result.status === "duplicate")
         return getCozyPayload(worldRouteId, user);
@@ -595,7 +597,10 @@ export async function getCozyPayload(
         409,
         "WORLD_CLOSED",
       );
+    const accountStarted=performance.now();
     const account = await getCozyAccount(user);
+    recordTiming?.("account",performance.now()-accountStarted);
+    const viewStarted=performance.now();
     const computed = getCozyComputed(actorState.state, shared, world, now);
     if(world.combatMode==='competitive')computed.playerThreats=incomingPlayerAttacks(players,actorState.state,now);
     const giftGroup = shared.alliances.find(group=>group.id===actorState.state.allianceId && group.members.includes(actor.id));
@@ -611,12 +616,14 @@ export async function getCozyPayload(
             receivedLimitReached:allianceGiftUsage(player.state,computed.day).received>=ALLIANCE_GIFT_RECEIVE_LIMIT,
           })),
       } : undefined;
+    const tiles=getCozyTiles(actorState.state,shared,world);
+    recordTiming?.("world-view",performance.now()-viewStarted);
     return {
       world,
       state: actorState.state,
       shared,
       computed,
-      tiles: getCozyTiles(actorState.state, shared, world),
+      tiles,
       players: players
         .map(({ playerId, state, influence }) => ({
           playerId,
