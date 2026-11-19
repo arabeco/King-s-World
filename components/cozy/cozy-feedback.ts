@@ -7,6 +7,7 @@ export function commandFeedback(
   data: CozyPayload,
 ): string {
   switch (action.type) {
+    case 'mini_mission': return action.accept?'Expedição enviada.':'Encontro recusado.';
     case "found_capital": return `${action.name.trim()} foi fundada como capital.`;
     case "attack_player":return "Investida enviada. O confronto será resolvido na chegada.";
     case "capital_choose":return `${data.state.cities.find(city=>city.id===action.cityId)?.name??'A cidade'} foi confirmada como capital.`;

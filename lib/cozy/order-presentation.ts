@@ -3,6 +3,7 @@ import type {CozyOrder,CozyResearch,CozyState} from './types';
 
 /** The phase belongs to the order, not to the tile currently underneath it. */
 export function orderMapLabel(order:CozyOrder):string {
+ if(order.miniMission)return order.miniMission.title;
  if(order.riteExpedition)return 'Expedição do Rito';
  if(order.tradeRoute)return 'Caravana comercial';
  if(order.returning)return 'Retorno do exército';

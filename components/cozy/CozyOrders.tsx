@@ -80,7 +80,7 @@ export default function CozyOrders({
             const research = RESEARCHES.find(
               (entry) => entry.id === order.research,
             );
-            const title = order.tradeRoute||order.foundation||order.occupationOnly||order.returning||order.targetPlayerId?orderMapLabel(order):order.sanctuaryPactId?"Desafio aos guardiões da torre":order.sanctuaryId?`Reconhecimento: ${data.computed.sanctuaries.find(t=>t.id===order.sanctuaryId)?.name??"Torre"}`:
+            const title = order.miniMission||order.tradeRoute||order.foundation||order.occupationOnly||order.returning||order.targetPlayerId?orderMapLabel(order):order.sanctuaryPactId?"Desafio aos guardiões da torre":order.sanctuaryId?`Reconhecimento: ${data.computed.sanctuaries.find(t=>t.id===order.sanctuaryId)?.name??"Torre"}`:
               order.kind === "upgrade" && sector
                 ? sector.name
                 : order.kind === "research" && research
@@ -89,7 +89,7 @@ export default function CozyOrders({
                     ? `Coleta de ${order.collectResource === "gold" ? "ouro" : "materiais"}`
                     : info.title;
             const target =
-              city?.name ??
+              (order.miniMission ? `Contra ${order.miniMission.enemy}` : city?.name) ??
               (order.kind === "research"
                 ? "Pesquisa para todo o reino"
                 : order.q !== undefined && order.r !== undefined
@@ -134,7 +134,7 @@ export default function CozyOrders({
                   <span style={{ width: `${progress}%` }} />
                 </div>
                 <p className={styles.arrivalDate}>Previsão · <time dateTime={new Date(order.arrivesAt).toISOString()}>{new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).format(order.arrivesAt)}</time></p>
-                <button
+                {!order.miniMission&&<button
                   className={styles.orderLink}
                   type="button"
                   onClick={() => onOrder(order)}
@@ -146,7 +146,7 @@ export default function CozyOrders({
                       ? "Ver pesquisa"
                       : order.kind==="portal"?"Ver registro":"Ver destino"}
                   <ArrowRight size={16} aria-hidden="true" />
-                </button>
+                </button>}
                 {data.world.persistent && queued && order.kind==="explore" &&
                   (cancelFrom===order.id ? <div role="group" aria-label="Cancelar explorações da fila">
                     <p>Suprimentos devolvidos: {orders.filter(item=>item.kind==="explore"&&orderQueued(item)&&

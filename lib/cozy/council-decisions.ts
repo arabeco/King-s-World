@@ -32,6 +32,27 @@ export function modernCouncilDecision(state:CozyState,decreeDay:number,day:numbe
    certain('care','Garantir as provisões do povo','Mantém a confiança enquanto você prepara a defesa no Militar.',{supplies:100+count*20},effects(8)),
    certain('invest','Comprar materiais para a defesa','Troca ouro por materiais. Não recruta tropas automaticamente.',{gold:65},effects(0,{materials:300})),
   ];
+ }else if(state.orders.some(order=>order.miniMission)){
+  const mission=state.orders.find(order=>order.miniMission)!.miniMission!;
+  key='mission-away';title='Enquanto a expedição viaja';body=`O Conselho acompanha ${mission.title}. Como preparar o retorno?`;
+  options=[
+   certain('care','Preparar mantimentos','Troca materiais por suprimentos para o reino.',{materials:180},effects(0,{supplies:160})),
+   certain('invest','Cuidar das famílias','Reserva suprimentos e reforça a confiança nas cidades.',{supplies:90},effects(5)),
+  ];
+ }else if(state.reports.some(report=>report.miniMission&&report.at<=now&&report.at>=now-2*86400000)){
+  const result=state.reports.find(report=>report.miniMission&&report.at<=now&&report.at>=now-2*86400000)!.miniMission!;
+  key=result.won?'mission-victory':'mission-return';title=result.won?'A expedição voltou':'Acolher quem voltou';
+  body=result.won?`Os relatos de ${result.title} chegaram ao Conselho.`:`Após ${result.title}, o Conselho recebe as notícias da retirada.`;
+  options=[
+   certain('care','Acolher os viajantes','Usa suprimentos para fortalecer a confiança nas cidades.',{supplies:90},effects(5)),
+   certain('invest','Repor as reservas','Troca ouro por materiais para obras ou tropas.',{gold:50},effects(0,{materials:200})),
+  ];
+ }else if(state.resources.supplies<100){
+  key='low-supplies';title='Os celeiros precisam de atenção';body='Os estoques de suprimentos estão baixos. O Conselho apresenta duas formas de preparar o reino.';
+  options=[
+   certain('care','Comprar mantimentos','Troca ouro por suprimentos.',{gold:35},effects(0,{supplies:200})),
+   certain('invest','Organizar as oficinas','Troca materiais por suprimentos.',{materials:180},effects(0,{supplies:160})),
+  ];
  }else{
   const rotation=Math.floor((decreeDay-1)/3)%3;
   if(rotation===0){

@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {loadCozyEngine} from './lib/load-cozy-engine.mjs';
+const E=loadCozyEngine(),M=loadCozyEngine('mini-missions'),C=loadCozyEngine('council-decisions');
+const start=1800000000000,world={id:'contexts',name:'Vale',mode:'express',economyVersion:3,influenceVersion:2,status:'running',startsAt:start,persistent:true};
+const state=E.createCozyState(world,'one','Teste',start);
+const decide=(s,now=start)=>C.modernCouncilDecision(s,1,1,null,'helena',(materials,satisfaction)=>({materials,satisfaction}),now);
+const stories=new Set();
+for(let day=0;day<9;day++)stories.add(M.miniMissionOffer(state,world,start+day*M.MISSION_WINDOW_MS).title);
+assert.equal(stories.size,9,'nine consecutive windows have unique stories');
+const active=structuredClone(state);active.orders.push({id:'m',kind:'attack',createdAt:start,arrivesAt:start+1000,miniMission:{title:'O pomar do vale',enemy:'Salteadores',enemyPower:60,reward:{gold:0,materials:0,supplies:0}}});
+assert.equal(decide(active).title,'Enquanto a expedição viaja');assert(decide(active).body.includes('O pomar do vale'));
+const result=structuredClone(state);result.reports.unshift({id:'r',kind:'combat',at:start,title:'Resultado',body:'',positive:false,miniMission:{title:'O pomar do vale',won:false}});
+assert.equal(decide(result).title,'Acolher quem voltou');
+result.reports[0].miniMission.won=true;assert.equal(decide(result).title,'A expedição voltou');
+assert.notEqual(decide(result,start+3*M.MISSION_WINDOW_MS).title,'A expedição voltou');
+const low=structuredClone(state);low.resources.supplies=0;assert.equal(decide(low).title,'Os celeiros precisam de atenção');
+const crisis=structuredClone(active);crisis.cities[0].life={contentment:10,lastDecisionDay:null};assert.equal(decide(crisis).title,'A confiança está por um fio');
+console.log('PASS nove encontros; Conselho reage a expedição, vitória, retirada e estoques; crises têm prioridade.');

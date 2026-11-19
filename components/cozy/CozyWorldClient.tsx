@@ -8,6 +8,7 @@ import CozySymbol from "./CozySymbol";
 import {seasonDisplay} from "@/lib/cozy/season-display";
 import {kingdomJourney,type JourneyTarget} from "@/lib/cozy/kingdom-journey";
 import CozyNextSteps from "./CozyNextSteps";
+import CozyMiniMission from "./CozyMiniMission";
 import CozyRealmUpdates from "./CozyRealmUpdates";
 import {CozyNovelty} from "./CozyNovelty";
 import {allianceNoticeIds,cityNotice,councilNotice,isNewNotice,unreadAllianceGifts} from "@/lib/cozy/notices";
@@ -701,6 +702,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
 
 
               <div className={game.cityDock}>
+                {world.persistent&&computed.started&&!state.firstAudience&&<CozyMiniMission data={data} now={clock} locked={locked} act={act}/>}
                 {!state.defeat&&<>
                 {!computed.started && !computed.readOnly ? (
                   <div className={game.seasonPrompt}>

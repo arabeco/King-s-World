@@ -105,10 +105,12 @@ export type CozyOrder = {
   collectResource?: "gold" | "materials";
   tradeRoute?: true;
   riteExpedition?: true;
+  miniMission?: {title:string;enemy:string;enemyPower:number;reward:CozyResources};
   collectAmount?: number;
 };
 export type CozyReport = {
   id: string;
+  miniMission?: {title:string;won:boolean};
   at: number;
   kind:
     | "welcome"
@@ -180,6 +182,7 @@ export type CozyState = {
   allianceGiftDay?: {day:number; sentTo:string[]; received:number};
   peakInfluence?: number;
   pendingDefenseDay?: number;
+  lastMiniMissionCycle?: number;
   nextTradeAt?: number;
   knownTerritories?:string[];
   scoutedCells?:string[];
@@ -400,6 +403,7 @@ export type CozyComputed = {
   }[];
 };
 export type CozyAction =
+  | {type:'mini_mission'; id:string; accept:boolean}
   | {type:"rite_provisions"}
   | {type:"rite_expedition"}
   | {type:"rite_council";choice:"welcome"|"repair"}

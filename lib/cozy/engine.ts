@@ -14,6 +14,7 @@ import {bindCityTerritories,nearestTerritoryCity,restoreCityTerritory} from './c
 import {economicExpress,seasonDays,waveDays,clockSpeed} from './rhythm';
 import { FRONTIER_RENEWAL_DAYS, renewFrontier, TRADE_ROUTE, TRADE_ROUTE_TRIPS } from "./frontier-renewal";
 import {WAVE_POWER} from "./hordes";
+import {miniMissionOffer} from './mini-missions';
 import {resolveSanctuaryRaids,sanctuaryThreats,syncSanctuaryRaidReports} from "./sanctuary-raids";
 import {councilTopic} from "./council-context";
 import {applySanctuaryPactAction,pactFunded,canUsePact,activateSanctuaryPact,SanctuaryPactError,syncSanctuaryPacts,sanctuaryBonus,realmSupportBonus,cancelOrphanedPacts,cancelUnfinishedPacts} from "./sanctuary-pacts";
@@ -1073,6 +1074,19 @@ function resolveOrder(
   order: CozyOrder,
 ) {
   const at = order.arrivesAt;
+  if(order.miniMission){
+    const mission=order.miniMission;
+    const power=armyPower(state);
+    const won=combatAssessment(power,mission.enemyPower).attackWins;
+    const losses=loseTroops(state,won?.06:.2);
+    if(won)for(const resource of ['gold','materials','supplies'] as const)
+      state.resources[resource]+=mission.reward[resource];
+    const reward=won?`Recompensa: ${mission.reward.gold} ouro, ${mission.reward.materials} materiais e ${mission.reward.supplies} suprimentos.`:'Sem recompensa desta vez.';
+    const receipt=report(state,at,'combat',won?`${mission.title}: vitória`:`${mission.title}: retirada`,
+      `${power} de poder contra ${mission.enemyPower} de ${mission.enemy}. ${losses} tropas perdidas. ${reward} O exército voltou ao reino.`,won);
+    receipt.miniMission={title:mission.title,won};
+    return;
+  }
   if(order.riteExpedition){
     const power=armyPower(state);
     const won=combatAssessment(power,RITE.expedition.enemyPower).attackWins;
@@ -1682,6 +1696,20 @@ export function applyCozyAction(
   if(action.type==="king_choose" || preparing || signingWelcome)rule(!computed.readOnly,"Esta temporada já terminou.");
   rule(!state.defeat,"Seu império foi derrotado. Você ainda pode acompanhar os relatos e o resultado.");
   switch (action.type) {
+    case 'mini_mission': {
+      const offer=miniMissionOffer(state,world,now);
+      rule(offer && typeof action.id==='string' && action.id===offer.id && typeof action.accept==='boolean',
+        'Este encontro já terminou ou não está mais disponível.');
+      if(action.accept){
+        rule(!state.orders.some(order=>order.kind==='attack'),'Aguarde o retorno do exército.');
+        rule(computed.armyPower>0,'Recrute tropas antes de partir.');
+        resourceSpend(state,{supplies:offer.suppliesCost});
+        addOrder(state,world,now,{kind:'attack',miniMission:{title:offer.title,enemy:offer.enemy,
+          enemyPower:offer.enemyPower,reward:{...offer.reward}},arrivesAt:now+Math.round(computed.dayMs*.5)});
+      }
+      state.lastMiniMissionCycle=offer.cycle;
+      break;
+    }
     case "rite_provisions":
     case "rite_expedition":
     case "rite_council":
