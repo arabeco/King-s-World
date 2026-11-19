@@ -12,8 +12,8 @@
     "build": "next build",
     "start": "next start",
     "android:add": "cap add android",
-    "android:sync": "cap sync android",
-    "android:sync:prod": "set CAPACITOR_SERVER_URL=https://king-s-world-three.vercel.app&& cap sync android",
+    "android:sync": "npm run app:build && cap sync android",
+    "android:sync:prod": "npm run android:sync",
     "android:open": "cap open android",
     "sim:season": "node simulations/simulate-season-v2.mjs",
     "sim:super-world": "node simulations/super-world-report.mjs",
@@ -47,7 +47,12 @@
     "test:conquest": "node simulations/test-city-conquest.mjs",
     "test:pvp": "node simulations/test-city-conquest.mjs && node simulations/test-player-combat.mjs && node simulations/test-multi-player-combat.mjs && node simulations/test-expedition-roundtrip.mjs && node simulations/test-single-army-combat.mjs && node simulations/test-expedition-city-loss.mjs && node simulations/test-pvp-distance-cost.mjs && node simulations/test-competitive-world-mode.mjs",
     "android:bundle": "npm run android:sync && node scripts/check-android-release.mjs && cd android && gradlew.bat bundleRelease",
-    "test:android-shell": "node simulations/test-native-shell-release.mjs"
+    "test:android-shell": "node simulations/test-native-shell-release.mjs",
+    "app:dev": "vite --config native-app/vite.config.mjs --mode development",
+    "app:build": "vite build --config native-app/vite.config.mjs",
+    "app:preview": "vite preview --config native-app/vite.config.mjs --host 127.0.0.1 --port 5175",
+    "android:apk": "npm run android:sync && cd android && gradlew.bat assembleDebug",
+    "test:app-shell": "node simulations/test-app-shell.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
@@ -72,7 +77,9 @@
     "autoprefixer": "^10.4.27",
     "playwright": "^1.54.2",
     "postcss": "^8.5.8",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
-    "typescript": "5.8.2"
+    "typescript": "5.8.2",
+    "vite": "^6.4.3"
   }
 }

@@ -1,4 +1,5 @@
 import {NextResponse} from "next/server";
+import {isTrustedOrigin} from "@/lib/request-origin";
 import {requireAuthenticatedAppUser} from "@/lib/app-user";
 import {supabaseSelect,supabaseRpc} from "@/lib/supabase-rest";
 import {SOVEREIGN_APPEARANCES} from "@/lib/sovereign-appearances";
@@ -13,8 +14,7 @@ export async function GET(){
 }
 export async function POST(request:Request){
  try{
-  const origin=request.headers.get('origin');
-  if(origin){let valid=false;try{const parsed=new URL(origin);valid=['http:','https:'].includes(parsed.protocol)&&parsed.host===(request.headers.get('host')??new URL(request.url).host);}catch{}if(!valid)return NextResponse.json({error:'Origem inválida.'},{status:403,headers});}
+  if(!isTrustedOrigin(request))return NextResponse.json({error:'Origem inválida.'},{status:403,headers});
   const user=await requireAuthenticatedAppUser();const body=await request.json();
   if(!Number.isSafeInteger(body.revision)||body.revision<0||typeof body.appearance_id!=='string')return NextResponse.json({error:'Seleção inválida.'},{status:400,headers});
   if(!SOVEREIGN_APPEARANCES.some(item=>item.id===body.appearance_id))return NextResponse.json({error:'Esta aparência ainda não está disponível.'},{status:403,headers});

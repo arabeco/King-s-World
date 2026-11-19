@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import {isTrustedOrigin} from "@/lib/request-origin";
 
 import { requireAuthenticatedAppUser, type AppUserRecord } from "@/lib/app-user";
 import { supabasePatchReturning } from "@/lib/supabase-rest";
@@ -34,8 +35,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const origin=request.headers.get('origin');
-    if(origin){let valid=false;try{const parsed=new URL(origin);valid=['http:','https:'].includes(parsed.protocol)&&parsed.host===(request.headers.get('host')??new URL(request.url).host);}catch{}if(!valid)return NextResponse.json({error:'Origem inválida.'},{status:403});}
+    if(!isTrustedOrigin(request))return NextResponse.json({error:'Origem inválida.'},{status:403});
     const appUser = await requireAuthenticatedAppUser();
     const body = (await request.json()) as ProfilePatchPayload;
     const username = normalizeUsername(body.username);

@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {newerCozySnapshot} from "@/lib/cozy/snapshot-order";
-import {projectRecruitment} from "@/lib/cozy/recruit-preview";
+import {predictCozyPayload} from "@/lib/cozy/predict";
 import type { CozyAction, CozyPayload } from "@/lib/cozy/types";
 
 export type CozyCommand = CozyAction | { type: "start_world" };
 type PendingCommand = { action: CozyCommand; requestId: string; playerId?: string };
+/** A tap waiting for the server. Optimistic taps already show their predicted result. */
+type QueuedCommand = { command: PendingCommand; optimistic: boolean; at: number; resolve: (ok: boolean) => void };
+type SendStatus = "ok" | "rejected" | "uncertain" | "stale";
 
 function pendingKey(worldId: string, playerId: string) {
   return `kw-cozy-pending:${encodeURIComponent(worldId)}:${encodeURIComponent(playerId)}`;
@@ -40,15 +43,21 @@ function savePending(key: string, command: PendingCommand | null) {
   }
 }
 
-/** The browser sends intentions only. Even arrival timers are settled by the API. */
+/**
+ * The browser sends intentions; the API settles and saves them. A tap that the shared rules
+ * can foresee changes the screen at once (like Elite/Glyph) and is confirmed in the background.
+ */
 export function useCozyWorld(worldId: string) {
   const [payload, setPayload] = useState<CozyPayload | null>(null);
-  const [recruitment,setRecruitment]=useState<{base:CozyPayload;preview:CozyPayload}|null>(null);
+  const queue = useRef<QueuedCommand[]>([]);
+  const [queueVersion, setQueueVersion] = useState(0);
+  const uncertainRef = useRef<PendingCommand | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uncertain, setUncertain] = useState<PendingCommand | null>(null);
+  const [uncertain, setUncertainState] = useState<PendingCommand | null>(null);
+  const setUncertain = useCallback((value: PendingCommand | null) => { uncertainRef.current = value; setUncertainState(value); }, []);
   const [clock, setClock] = useState(Date.now());
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [lastAction, setLastAction] = useState<PendingCommand | null>(null);
@@ -69,7 +78,7 @@ export function useCozyWorld(worldId: string) {
       setUncertain(restorePending(scope,next.world.persistent?next.state.playerId:undefined));
     }
     currentPayload.current=next;serverOffset.current=next.serverNow-Date.now();setClock(next.serverNow);setPayload(next);setLastSyncedAt(Date.now());
-  },[worldId]);
+  },[worldId,setUncertain]);
 
   const refresh = useCallback(async () => {
     const requestEpoch=epoch.current;
@@ -113,7 +122,8 @@ export function useCozyWorld(worldId: string) {
     alive.current = true;
     epoch.current+=1;inFlight.current=false;readingEpoch.current=null;currentPayload.current=null;serverOffset.current=0;
     setPayload(null);setLoading(true);setError(null);setUncertain(null);setPending(false);setLastAction(null);setLastSyncedAt(null);
-    setRecruitment(null);
+    for (const item of queue.current.splice(0)) item.resolve(false);
+    setQueueVersion(version => version + 1);
     receiptScope.current = null;
     void refresh();
     const interval = window.setInterval(() => {
@@ -135,7 +145,7 @@ export function useCozyWorld(worldId: string) {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onVisible);
     };
-  }, [refresh]);
+  }, [refresh,setUncertain]);
 
   useEffect(() => {
     if (!payload || pending) return;
@@ -165,23 +175,16 @@ export function useCozyWorld(worldId: string) {
     return () => window.clearTimeout(timer);
   }, [payload, pending, refresh]);
 
-  const execute = useCallback(
-    async (command: PendingCommand, project = true) => {
-      if (inFlight.current || !currentPayload.current?.state.playerId) return false;
+  /** Sends one command and applies the server's answer. Never touches the tap queue. */
+  const send = useCallback(
+    async (command: PendingCommand, optimistic: boolean): Promise<SendStatus> => {
+      if (!currentPayload.current?.state.playerId) return "stale";
       const playerId = currentPayload.current.state.playerId;
-      if (currentPayload.current.world.persistent && command.playerId!==playerId) return false;
+      if (currentPayload.current.world.persistent && command.playerId!==playerId) return "rejected";
       const commandKey = pendingKey(worldId, playerId);
       const requestEpoch=epoch.current;
       const controller=new AbortController(),timeout=window.setTimeout(()=>controller.abort(),20_000);
-      inFlight.current = true;
-      setPending(true);
-      setError(null);
-      setLastAction(null);
-      const base=currentPayload.current;
-      if(project&&command.action.type==='recruit'){
-        const preview=projectRecruitment(base,command.action.troop,command.action.amount);
-        if(preview!==base)setRecruitment({base,preview});
-      }
+      if(!optimistic){setError(null);setLastAction(null);}
       savePending(commandKey, command);
       try {
         const response = await fetch(endpoint, {
@@ -191,7 +194,7 @@ export function useCozyWorld(worldId: string) {
           body: JSON.stringify(command),
         });
         const result = await response.json();
-        if(!alive.current||requestEpoch!==epoch.current)return false;
+        if(!alive.current||requestEpoch!==epoch.current)return "stale";
         if (!response.ok) {
           if (response.status >= 500) {
             // The write may have committed before a later read or proxy failed.
@@ -201,33 +204,85 @@ export function useCozyWorld(worldId: string) {
               result.error ||
                 "O reino ainda não confirmou esta ação. Consulte o mesmo pedido novamente.",
             );
-            return false;
+            return "uncertain";
           }
-          // A definitive rejection contains no successful client-side state change.
-          setError(result.error || "Não foi possível concluir esta ação.");
+          // A definitive rejection contains no successful state change on the server.
+          setError(`${result.error || "Não foi possível concluir esta ação."}${optimistic ? " A ação foi desfeita." : ""}`);
           setUncertain(null);
           savePending(commandKey, null);
-          return false;
+          return "rejected";
         }
         accept(result as CozyPayload,requestEpoch);
         setUncertain(null);
-        setLastAction(command.action.type==='read_reports'?null:command);
+        if(!optimistic)setLastAction(command.action.type==='read_reports'?null:command);
         savePending(commandKey, null);
-        return true;
+        return "ok";
       } catch {
-        if(!alive.current||requestEpoch!==epoch.current)return false;
+        if(!alive.current||requestEpoch!==epoch.current)return "stale";
         setUncertain(command);
         setError(
           "A conexão caiu antes da confirmação. Confira a mesma ação abaixo para receber o resultado com segurança.",
         );
-        return false;
+        return "uncertain";
       } finally {
         window.clearTimeout(timeout);
-        if (alive.current&&requestEpoch===epoch.current){inFlight.current=false;setPending(false);setRecruitment(null);}
       }
     },
-    [accept, endpoint, worldId],
+    [accept, endpoint, worldId, setUncertain],
   );
+
+  const syncQueueState = useCallback(() => {
+    setQueueVersion(version => version + 1);
+    setPending(queue.current.some(item => !item.optimistic));
+  }, []);
+
+  /** Sends queued taps one at a time, in the order the player made them. */
+  const pump = useCallback(async () => {
+    if (inFlight.current) return;
+    while (queue.current.length && alive.current) {
+      const requestEpoch = epoch.current;
+      const item = queue.current[0];
+      inFlight.current = true;
+      let status: SendStatus;
+      try { status = await send(item.command, item.optimistic); }
+      finally { if (requestEpoch === epoch.current) inFlight.current = false; }
+      if (requestEpoch !== epoch.current || !alive.current) return;
+      queue.current.shift();
+      item.resolve(status === "ok");
+      if (status !== "ok") {
+        // Later taps were planned on top of this one: undo them too.
+        const dropped = queue.current.splice(0);
+        dropped.forEach(next => next.resolve(false));
+        if (item.optimistic || dropped.some(next => next.optimistic)) setLastAction(null);
+      }
+      syncQueueState();
+    }
+  }, [send, syncQueueState]);
+
+  const enqueue = useCallback((command: PendingCommand, optimistic: boolean) => {
+    const promise = new Promise<boolean>(resolve => {
+      queue.current.push({ command, optimistic, at: Date.now() + serverOffset.current, resolve });
+    });
+    syncQueueState();
+    void pump();
+    return promise;
+  }, [pump, syncQueueState]);
+
+  /** Confirmed snapshot plus every tap still on its way to the server. */
+  const displayed = useMemo(() => {
+    let view = payload;
+    if (!view) return view;
+    for (const item of queue.current) {
+      if (!item.optimistic) continue;
+      const next = predictCozyPayload(view, item.command.action, Math.max(item.at, view.serverNow));
+      if (next) view = next;
+    }
+    return view;
+  // queueVersion marks changes to the queue, which lives in a ref.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payload, queueVersion]);
+  const displayedRef = useRef(displayed);
+  displayedRef.current = displayed;
 
   // Read acknowledgement has no spending intent to recover. It must never reserve
   // the gameplay command slot or overwrite its persisted receipt/error/feedback.
@@ -283,17 +338,31 @@ export function useCozyWorld(worldId: string) {
   const act = useCallback(
     (action: CozyCommand) => {
       if(action.type==='notice_seen')return acknowledgeNotice(action.id);
-      if (uncertain || inFlight.current) return Promise.resolve(false);
+      if (uncertainRef.current) return Promise.resolve(false);
       if(action.type==='read_reports')return acknowledgeReports();
-      return execute({ action, requestId: crypto.randomUUID(),
-        ...(payload?.world.persistent ? {playerId:payload.state.playerId} : {}) });
+      const view = displayedRef.current;
+      if (!view?.state.playerId) return Promise.resolve(false);
+      // A command that needs the server's answer first keeps the old one-at-a-time lock.
+      if (queue.current.some(item => !item.optimistic)) return Promise.resolve(false);
+      const command = { action, requestId: crypto.randomUUID(),
+        ...(view.world.persistent ? {playerId:view.state.playerId} : {}) };
+      const predicted = predictCozyPayload(view, action, Date.now() + serverOffset.current);
+      if (predicted) {
+        setError(null);
+        setLastAction(command);
+        void enqueue(command, true);
+        return Promise.resolve(true);
+      }
+      return enqueue(command, false);
     },
-    [execute, uncertain,acknowledgeReports,acknowledgeNotice,payload?.world.persistent,payload?.state.playerId],
+    [enqueue,acknowledgeReports,acknowledgeNotice],
   );
 
   return {
-    payload: recruitment && recruitment.base===payload && recruitment.preview || payload,
-    recruitmentPending: Boolean(recruitment && recruitment.base===payload),
+    payload: displayed,
+    recruitmentPending: queue.current.some(item => item.command.action.type === "recruit"),
+    /** Taps already on screen that the server hasn't confirmed yet. */
+    syncing: queue.current.length > 0,
     loading,
     refreshing,
     pending,
@@ -304,8 +373,11 @@ export function useCozyWorld(worldId: string) {
     lastAction,
     refresh,
     act,
-    retryCommand: () =>
-      uncertain ? execute(uncertain,false) : Promise.resolve(false),
+    retryCommand: () => {
+      const command = uncertainRef.current;
+      if (!command || queue.current.length) return Promise.resolve(false);
+      return enqueue(command, false);
+    },
     clearError: () => setError(null),
   };
 }

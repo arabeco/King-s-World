@@ -8,6 +8,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import { SectionCard, StatusBadge } from "@/components/ui";
 import Link from "next/link";
 import type { WorldSummary } from "@/lib/mock-data";
+import { PVP_VISIBLE, seasonModeLabel } from "@/lib/game-modes";
 import styles from "./lobby.module.css";
 
 type DiscoverableWorld = {slug:string;name:string;status:string;mode:string;combatMode?:"cozy"|"competitive";persistent?:boolean;capacity:number;players:number;startsAt:string;locked:boolean};
@@ -101,31 +102,6 @@ export function LobbyWorldSelector({
     startTransition(() => {
       router.push(hrefForWorld(selectedWorld));
     });
-  };
-
-  const createTestWorld = async (mode: "classic" | "express") => {
-    setCreatingWorld(true);
-    setCreateWorldError(null);
-    try {
-      const response = await fetch("/api/worlds/alpha", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode }),
-      });
-      const payload = (await response.json()) as { world?: { slug?: string; href?: string }; error?: string };
-      if (!response.ok || !payload.world?.href) {
-        throw new Error(payload.error ?? "Nao foi possivel criar a campanha Alpha.");
-      }
-      if (payload.world.slug) {
-        rememberWorld(storageKey, payload.world.slug);
-      }
-      router.push(payload.world.href);
-      router.refresh();
-    } catch (error) {
-      setCreateWorldError(error instanceof Error ? error.message : "Nao foi possivel criar a campanha Alpha.");
-    } finally {
-      setCreatingWorld(false);
-    }
   };
 
   const createWorld = async () => {
@@ -241,7 +217,7 @@ export function LobbyWorldSelector({
                 <div>
                   <strong>{selectedWorld.name}</strong>
                   <p className="list-meta">
-                    {selectedWorld.seasonMode==='express'?'Expresso':'Normal'} · {selectedWorld.status==='Em Aberto'?'Aguardando abertura':`Dia ${calendar.day}${selectedWorld.persistent ? "" : `/${calendar.duration} reais`}`} · {selectedWorld.players} {selectedWorld.players===1?'jogador':'jogadores'}
+                    {seasonModeLabel(selectedWorld.seasonMode,selectedWorld.persistent).split(' · ')[0]} · {selectedWorld.status==='Em Aberto'?'Aguardando abertura':`Dia ${calendar.day}${selectedWorld.persistent ? "" : `/${calendar.duration} reais`}`} · {selectedWorld.players} {selectedWorld.players===1?'jogador':'jogadores'}
                   </p>
                 </div>
                 <StatusBadge label={selectedWorld.reignArchived?"Reinado arquivado":selectedWorld.status} tone={toneForWorld(selectedWorld)} />
@@ -274,16 +250,6 @@ export function LobbyWorldSelector({
             {deleteError&&<p role="alert">{deleteError}</p>}
             <div><button type="button" className="secondary-button" disabled={deleting} onClick={()=>setDeleteOpen(false)} autoFocus>Voltar</button><button type="button" className={styles.confirmDelete} disabled={deleting} onClick={()=>void deleteWorld()}>{deleting?'Excluindo…':'Excluir mundo'}</button></div>
           </section></div>}
-          {process.env.NODE_ENV !== "production" ? (
-            <div className="inline-actions lobby-dev-actions">
-              <button className="secondary-button" type="button" onClick={() => createTestWorld("classic")} disabled={creatingWorld} data-smoke="create-test-world">
-                {creatingWorld ? "Criando..." : "Alpha clássica (legado)"}
-              </button>
-              <button className="secondary-button" type="button" onClick={() => createTestWorld("express")} disabled={creatingWorld} data-smoke="create-express-world">
-                {creatingWorld ? "Criando..." : "Alpha expressa (legado)"}
-              </button>
-            </div>
-          ) : null}
           {createWorldError ? <p role="alert" className="list-meta">{createWorldError}</p> : null}
         </div>
       </SectionCard>
@@ -318,7 +284,7 @@ export function LobbyWorldSelector({
                   style={{ flex: 1 }}
                   data-smoke="create-world-normal"
                 >
-                  {creatingPersistent ? "Normal" : "Clássico · 120 dias reais"}
+                  {seasonModeLabel("normal",creatingPersistent)}
                 </button>
                 <button
                   type="button"
@@ -327,10 +293,10 @@ export function LobbyWorldSelector({
                   style={{ flex: 1 }}
                   data-smoke="create-world-express"
                 >
-                  {creatingPersistent ? "Expresso ×4" : "Expresso · 30 dias reais"}
+                  {seasonModeLabel("express",creatingPersistent)}
                 </button>
               </div>
-              <div className="inline-actions" role="group" aria-label="Confrontos no mundo"><button type="button" disabled={creatingWorld} aria-pressed={combatMode==='cozy'} className={combatMode==='cozy'?'primary-button':'secondary-button'} onClick={()=>setCombatMode('cozy')}>Cozy · sem PvP</button><button type="button" disabled={creatingWorld} aria-pressed={combatMode==='competitive'} className={combatMode==='competitive'?'primary-button':'secondary-button'} onClick={()=>setCombatMode('competitive')}>Competitivo · PvP</button></div>
+              {PVP_VISIBLE&&<div className="inline-actions" role="group" aria-label="Confrontos no mundo"><button type="button" disabled={creatingWorld} aria-pressed={combatMode==='cozy'} className={combatMode==='cozy'?'primary-button':'secondary-button'} onClick={()=>setCombatMode('cozy')}>Cozy · sem PvP</button><button type="button" disabled={creatingWorld} aria-pressed={combatMode==='competitive'} className={combatMode==='competitive'?'primary-button':'secondary-button'} onClick={()=>setCombatMode('competitive')}>Competitivo · PvP</button></div>}
               {combatMode==='competitive'&&<p className="list-meta" role="status">Cidades e capital podem ser conquistadas. Perder a última cidade encerra seu império nesse mundo.</p>}
               <input type="password" autoComplete="new-password" placeholder="Senha opcional · Premium" aria-label="Senha opcional do mundo" disabled={benefits!==null&&!benefits.canPasswordWorld} value={newPassword} maxLength={64} onChange={event=>setNewPassword(event.target.value)}/>
               <div className="inline-actions" style={{ alignItems: "flex-start" }}>
@@ -369,7 +335,7 @@ export function LobbyWorldSelector({
           {!directoryError && !filteredWorlds.length && <p>Nenhum mundo encontrado.</p>}
           {filteredWorlds.map(world=><button key={world.slug} type="button" className="world-card lobby-compact-card" onClick={()=>{setSelectedDiscovery(world);setJoinPassword("");setJoinError(null);}} style={{textAlign:"left"}}>
             <strong>{world.name} {world.locked && <Lock size={15} aria-label="Com senha"/>}</strong>
-            <span className="list-meta" style={{display:"block"}}>{world.persistent ? (world.mode === "express" ? "Expresso ×4" : "Normal") : (world.mode === "express" ? "Expresso · 30 dias" : "Clássico · 120 dias")} · {world.players}/{world.capacity} jogadores · {world.status==="open"?"Aguardando":`Dia ${worldDay(world)}`} · {world.combatMode==='competitive'?'Competitivo · PvP':'Cozy · sem PvP'}</span>
+            <span className="list-meta" style={{display:"block"}}>{seasonModeLabel(world.mode,world.persistent)} · {world.players}/{world.capacity} jogadores · {world.status==="open"?"Aguardando":`Dia ${worldDay(world)}`}{PVP_VISIBLE&&` · ${world.combatMode==='competitive'?'Competitivo · PvP':'Cozy · sem PvP'}`}</span>
           </button>)}
           {selectedDiscovery && <div className="world-card lobby-compact-card"><strong>{selectedDiscovery.name}</strong><p className="list-meta">{selectedDiscovery.locked ? "Senha necessária" : "Entrada sem senha"}</p>
             {selectedDiscovery.locked && <input type="password" autoComplete="off" aria-label="Senha do mundo" value={joinPassword} maxLength={64} onChange={event=>setJoinPassword(event.target.value)}/>}

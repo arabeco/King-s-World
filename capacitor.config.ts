@@ -2,24 +2,21 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const appId = process.env.CAPACITOR_APP_ID ?? "com.kingsworld.app";
 const appName = process.env.CAPACITOR_APP_NAME ?? "KingsWorld";
-const serverUrl =
-  process.env.CAPACITOR_SERVER_URL?.trim() ?? "https://king-s-world-three.vercel.app";
+// Debug only: load the screens from a running site instead of the bundled app.
+const remoteUrl = process.env.KW_REMOTE_SHELL_URL?.trim();
 
 const config: CapacitorConfig = {
   appId,
   appName,
-  // The game runs on server.url; package only the connection recovery page.
-  webDir: "native-shell",
+  // The game screens and art ship inside the app (npm run app:build).
+  // They talk to the game server (KW_APP_API_URL) only to validate and save.
+  webDir: "native-app/dist",
   android: {
     path: "android",
   },
-  server: serverUrl
-    ? {
-        url: serverUrl,
-        cleartext: serverUrl.startsWith("http://"),
-        errorPath: `index.html?retry=${encodeURIComponent(serverUrl)}`,
-      }
-    : undefined,
+  server: remoteUrl
+    ? { url: remoteUrl, cleartext: remoteUrl.startsWith("http://") }
+    : { androidScheme: "https", hostname: "localhost" },
 };
 
 export default config;

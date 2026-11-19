@@ -18,11 +18,51 @@ function isProtectedPath(pathname: string): boolean {
   );
 }
 
+// Origins of the installed app (Capacitor serves the bundled screens from these).
+const APP_ORIGINS = new Set(["https://localhost", "capacitor://localhost", "http://localhost"]);
+
+function allowedAppOrigin(request: NextRequest): string | null {
+  const origin = request.headers.get("origin");
+  if (!origin) return null;
+  if (APP_ORIGINS.has(origin)) return origin;
+  // Local development of the app shell (vite on any port).
+  if (process.env.NODE_ENV !== "production" && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
+  return null;
+}
+
+function withAppCors(response: NextResponse, origin: string | null): NextResponse {
+  if (!origin) return response;
+  response.headers.set("Access-Control-Allow-Origin", origin);
+  response.headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "authorization,content-type,x-kw-smoke");
+  response.headers.set("Access-Control-Expose-Headers", "server-timing");
+  response.headers.set("Access-Control-Max-Age", "86400");
+  response.headers.append("Vary", "Origin");
+  return response;
+}
+
 function isAuthPath(pathname: string): boolean {
   return pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/forgot-password");
 }
 
 export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    const appOrigin = allowedAppOrigin(request);
+    if (request.method === "OPTIONS") {
+      return withAppCors(new NextResponse(null, { status: 204 }), appOrigin);
+    }
+    // The installed app authenticates with a bearer token; each route verifies it.
+    if (/^Bearer\s+\S+$/i.test(request.headers.get("authorization")?.trim() ?? "")) {
+      return withAppCors(NextResponse.next(), appOrigin);
+    }
+    if (appOrigin) {
+      return withAppCors(await authMiddleware(request), appOrigin);
+    }
+  }
+  return authMiddleware(request);
+}
+
+async function authMiddleware(request: NextRequest): Promise<NextResponse> {
   const devAuthEnabled = process.env.NODE_ENV !== "production";
   const smokeHeader = devAuthEnabled && request.headers.get("x-kw-smoke") === "1";
   const devUser = devAuthEnabled && (request.cookies.get(DEV_AUTH_COOKIE)?.value === "1" || smokeHeader);

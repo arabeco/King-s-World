@@ -5,6 +5,7 @@ import { LobbyWorldSelector } from "@/components/lobby-world-selector";
 import LobbyAccountBanner from "@/components/LobbyAccountBanner";
 import styles from "@/components/lobby.module.css";
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
+import { persistentWorldsEnabled } from "@/lib/game-modes";
 import { listWorldSummaries } from "@/lib/world-data";
 
 export default async function LobbyPage() {
@@ -15,7 +16,7 @@ export default async function LobbyPage() {
     <h1 className={styles.brand}>KING’S WORLD</h1>
     <AccountNavigation active="worlds"/>
     <LobbyAccountBanner username={appUser.username}/>
-    <LobbyWorldSelector username={appUser.username} worlds={worlds} persistentPreview={process.env.KW_COZY_PERSISTENT_PREVIEW !== "0"}/>
+    <LobbyWorldSelector username={appUser.username} worlds={worlds} persistentPreview={persistentWorldsEnabled()}/>
     <footer className={styles.footer}><AuthSignOutButton/></footer>
   </div></main>;
 }

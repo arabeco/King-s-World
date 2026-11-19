@@ -1,5 +1,7 @@
 # Backlog de melhoria
 
+> Backlog legado. Ideias de Centro/Portal, Dragão e rotas abaixo não são regras atuais aprovadas. Conferir [REGRAS_DO_JOGO.md](REGRAS_DO_JOGO.md) e [DIRECAO_MAPA.md](DIRECAO_MAPA.md) antes de retomá-las. O trabalho atual é fechar os desafios das cinco áreas da Coroa.
+
 ## UI global do reino
 
 - Deixar a home global mais premium no mobile.

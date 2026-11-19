@@ -1,12 +1,12 @@
 import {NextResponse} from 'next/server';
+import {isTrustedOrigin} from "@/lib/request-origin";
 import {requireAuthenticatedAppUser} from '@/lib/app-user';
 import {supabaseRpc} from '@/lib/supabase-rest';
 
 export const dynamic='force-dynamic';
 export async function POST(request:Request,{params}:{params:{worldId:string}}){
  try{
-  const origin=request.headers.get('origin');
-  if(origin){let valid=false;try{const parsed=new URL(origin);valid=['http:','https:'].includes(parsed.protocol)&&parsed.host===(request.headers.get('host')??new URL(request.url).host);}catch{}if(!valid)return NextResponse.json({error:'Origem inválida.'},{status:403});}
+  if(!isTrustedOrigin(request))return NextResponse.json({error:'Origem inválida.'},{status:403});
   if(!/^[a-zA-Z0-9_-]{1,100}$/.test(params.worldId))return NextResponse.json({error:'Mundo inválido.'},{status:400});
   const user=await requireAuthenticatedAppUser();
   await supabaseRpc('kw_delete_solo_cozy_world',{p_slug:params.worldId,p_user_id:user.id});

@@ -1,12 +1,14 @@
 import { hashLobbyPassword } from "@/lib/cozy/lobby-password";
+import {isTrustedOrigin} from "@/lib/request-origin";
 import { NextResponse } from "next/server";
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
 import { supabaseRpc } from "@/lib/supabase-rest";
 import { cozyErrorResponse } from "@/lib/cozy/server";
+import { persistentWorldsEnabled, pvpEnabledOnServer } from "@/lib/game-modes";
 
 export async function POST(request: Request) {
   try {
-    const origin=request.headers.get('origin');if(origin){let valid=false;try{const parsed=new URL(origin);valid=['http:','https:'].includes(parsed.protocol)&&parsed.host===(request.headers.get('host')??new URL(request.url).host);}catch{}if(!valid)return NextResponse.json({error:'Origem inválida.'},{status:403});}
+    if(!isTrustedOrigin(request))return NextResponse.json({error:'Origem inválida.'},{status:403});
     const user = await requireAuthenticatedAppUser();
     const body = (await request.json().catch(() => ({}))) as {
       name?: unknown;
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({error:"A senha deve ter de 4 a 64 caracteres."},{status:400});
     if(body.combatMode!==undefined&&(typeof body.combatMode!=='string'||!['cozy','competitive'].includes(body.combatMode)))return NextResponse.json({error:'Escolha Cozy ou competitivo.'},{status:400});
     const combatMode=body.combatMode==='competitive'?'competitive':'cozy';
+    if(combatMode==='competitive'&&!pvpEnabledOnServer())return NextResponse.json({error:'O modo competitivo ainda não está aberto.'},{status:400});
     const mode = body.mode === "express" ? "express" : "normal";
     type CreatedWorld = {
       id: string;
@@ -39,7 +42,7 @@ export async function POST(request: Request) {
     };
     let world:CreatedWorld;
     const founding = combatMode === "cozy" && process.env.KW_COZY_FOUNDATION_PREVIEW === "1";
-    const persistent = combatMode === "cozy" && process.env.KW_COZY_PERSISTENT_PREVIEW !== "0";
+    const persistent = combatMode === "cozy" && persistentWorldsEnabled();
     const createRpc = persistent ? "kw_cozy_create_persistent" : founding ? "kw_cozy_create_founding" :
       combatMode === "competitive" ? "kw_cozy_create_with_rules" : "kw_cozy_create_lobby";
     try {world=await supabaseRpc<CreatedWorld>(createRpc,{...params,...(combatMode==='competitive'?{p_combat_mode:combatMode}:{}),p_password_hash:password ? hashLobbyPassword(password) : null});}

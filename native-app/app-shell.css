@@ -1,0 +1,9 @@
+/* Shell-only rules for the installed app. Game styles come from app/globals.css. */
+html, body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.kw-app-boot {
+  min-height: 100dvh;
+}

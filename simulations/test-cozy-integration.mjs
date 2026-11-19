@@ -28,6 +28,8 @@ const server = spawn(
     env: {
       ...process.env,
       NEXT_DIST_DIR: ".next-cozy-test",
+      // PvP worlds stay hidden from players; the suite still covers them.
+      KW_ENABLE_PVP: "1",
       NEXT_PUBLIC_SUPABASE_URL: rest.url,
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "fixture-public",
       SUPABASE_SECRET_KEY: "fixture-service",
@@ -1068,8 +1070,9 @@ try {
           await confirmation.waitFor({ state: "hidden" });
           return { data, request };
         };
-        // Hold the actual successful reply after the database commit. A local
-        // animation or optimistic state must not claim success before the reply.
+        // Hold the actual successful reply after the database commit. Like Elite and
+        // Glyph, a tap the shared rules can foresee shows its result at once; the
+        // server's reply then confirms it (a rejection or an uncertain reply undoes it).
         let releaseFirstReply;
         let committedFirstReply;
         const firstReplyGate = new Promise((resolve) => {
@@ -1096,11 +1099,7 @@ try {
           .click();
         assert.equal(await firstCommit, 200);
         try {
-          assert.equal(
-            await confirmation.count(),
-            0,
-            "No success notice before the server reply arrives",
-          );
+          await confirmation.waitFor({ timeout: 1500 });
         } finally {
           releaseFirstReply();
         }

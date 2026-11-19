@@ -25,8 +25,9 @@ try{
   const dependencies={
    react:window.React,
    '@/lib/cozy/snapshot-order':orderModule.exports,
-   // These lightweight snapshots test transport, while collection UI tests the real recruitment preview.
-   '@/lib/cozy/recruit-preview':{projectRecruitment:payload=>payload},
+   // These lightweight snapshots test transport (the confirmed path). test-app-shell checks
+   // instant taps with the real rules, and that their prediction matches the server.
+   '@/lib/cozy/predict':{predictCozyPayload:()=>null},
   };
   new Function('require','module','exports',hook)(name=>dependencies[name],hookModule,hookModule.exports);
   window.testRoot=ReactDOM.createRoot(document.querySelector('#app'));

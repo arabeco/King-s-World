@@ -8,6 +8,7 @@ import {
   startCozyWorld,
 } from "@/lib/cozy/server";
 import type { CozyAction } from "@/lib/cozy/types";
+import { isTrustedOrigin } from "@/lib/request-origin";
 import { looksLikeUuid } from "@/lib/supabase-rest";
 
 export const dynamic = "force-dynamic";
@@ -55,27 +56,12 @@ export async function POST(
 ) {
   const timing=responseTiming();
   try {
-    const origin = request.headers.get("origin");
-    if (origin) {
-      let sameOrigin = false;
-      try {
-        const parsed = new URL(origin);
-        // Next's internal request URL may use localhost behind the HTTP proxy.
-        // Host is the public authority the browser actually requested.
-        sameOrigin =
-          ["http:", "https:"].includes(parsed.protocol) &&
-          parsed.host ===
-            (request.headers.get("host") ?? new URL(request.url).host);
-      } catch {
-        /* Invalid or opaque origins are rejected. */
-      }
-      if (!sameOrigin)
-        throw new CozyHttpError(
-          "Origem da ação inválida.",
-          403,
-          "INVALID_ORIGIN",
-        );
-    }
+    if (!isTrustedOrigin(request))
+      throw new CozyHttpError(
+        "Origem da ação inválida.",
+        403,
+        "INVALID_ORIGIN",
+      );
     const authStarted=performance.now();
     const user = await requireAuthenticatedAppUser();
     timing.record("auth",performance.now()-authStarted);

@@ -1,5 +1,7 @@
 # KingsWorld: Análise de Progressão e Lógica de Rede (Soberano 2.1)
 
+> Análise histórica do modelo legado. Estratégias, bots, curvas e Portal abaixo não descrevem o Cozy atual. Para preparar o balanceamento, usar [docs/REGRAS_DO_JOGO.md](docs/REGRAS_DO_JOGO.md), especialmente as seções 4, 11 e 12.
+
 ## 1. O Mapa de Progressão Eficiente
 Para maximizar o retorno sobre investimento (ROI), o caminho ótimo não é linear. O sistema de **Níveis de Ruptura (Breakthroughs)** dita o ritmo:
 

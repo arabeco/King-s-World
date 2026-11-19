@@ -1,4 +1,5 @@
 import {NextResponse} from "next/server";
+import {isTrustedOrigin} from "@/lib/request-origin";
 import {requireAuthenticatedAppUser} from "@/lib/app-user";
 import {supabaseRpc,supabaseSelect} from "@/lib/supabase-rest";
 import type {CollectionState} from '@/lib/collection';
@@ -19,7 +20,7 @@ export async function GET(request:Request){try{
  return NextResponse.json(data,{headers});
 }catch(error){return NextResponse.json({error:'Coleção indisponível. Tente novamente.'},{status:String(error).includes('Unauthorized')?401:503,headers});}}
 export async function POST(request:Request){try{
- const origin=request.headers.get('origin');if(origin){let valid=false;try{const url=new URL(origin);valid=['http:','https:'].includes(url.protocol)&&url.host===(request.headers.get('host')??new URL(request.url).host);}catch{}if(!valid)return NextResponse.json({error:'Origem inválida.'},{status:403,headers});}
+ if(!isTrustedOrigin(request))return NextResponse.json({error:'Origem inválida.'},{status:403,headers});
  const user=await requireAuthenticatedAppUser();const body=await request.json();
  if(typeof body.productId!=='string'||typeof body.requestId!=='string')return NextResponse.json({error:'Compra inválida.'},{status:400,headers});
  return NextResponse.json(await supabaseRpc('kw_collection_buy',{p_user_id:user.id,p_product_id:body.productId,p_request_id:body.requestId}),{headers});

@@ -24,3 +24,5 @@ android/app/src/debug/assets/capacitor.config.json
 
 .next-collection-test/
 .next-mvp-validation/
+native-app/dist/
+.next-app-shell-test/
