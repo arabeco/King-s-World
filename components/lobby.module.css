@@ -7,3 +7,11 @@
 .account nav { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .onlyWorld { display: none; }
 .worlds :global(.lobby-selected-world) { min-height: 164px; }
+.page{background:radial-gradient(ellipse at 50% 0%,#c39b4a29,transparent 38%),linear-gradient(145deg,#101418,#202020 50%,#0e1317)}
+.brand{margin-bottom:10px;color:#f1d492;text-shadow:0 2px 12px #d4a84a55}
+.tabs{gap:0;border-color:#ad945445}.tabs button{font-family:Georgia,serif;letter-spacing:.02em}.tabs button[aria-pressed=true]{background:linear-gradient(0deg,#ae853744,transparent);box-shadow:inset 0 -1px #e3bd6b}
+.worlds :global(.lobby-card--entry .section-card__header){display:none}
+.worlds :global(.lobby-selected-world){position:relative;min-height:190px;border:1px solid #c5a56388;border-radius:8px;overflow:hidden;background:linear-gradient(0deg,#0b1114f7 0%,#11191a55 65%,#15171a22),url('/images/capital.jpg') center/cover!important;box-shadow:inset 0 1px #e4c28144,0 9px 24px #0005}
+.worlds :global(.lobby-selected-world strong){color:#ffedc0;text-shadow:0 2px 5px #000}
+.worlds :global(.lobby-selected-world .list-meta){color:#ebddbe;text-shadow:0 1px 4px #000}
+.deleteWorld{min-height:44px;background:none;border:0;color:#c6ad96;font-size:12px;text-decoration:underline;text-underline-offset:4px}.deleteBackdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:16px;background:#05080bd9}.deleteDialog{width:min(100%,420px);padding:20px;border:1px solid #bd9d6577;border-radius:10px;background:linear-gradient(145deg,#302725,#161a1c);box-shadow:0 20px 60px #000b;color:#f2e0c3}.deleteDialog h2{font:700 23px Georgia;margin:0}.deleteDialog p{font:14px/1.5 system-ui;color:#d7c7b0}.deleteDialog>div{display:flex;gap:10px;margin-top:20px}.deleteDialog>div button{flex:1;min-height:46px}.confirmDelete{border:1px solid #d79586;border-radius:5px;background:linear-gradient(#894b40,#613029);color:#fff0dd;font-weight:700}

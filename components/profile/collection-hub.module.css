@@ -60,3 +60,21 @@ dialog.confirm{position:fixed;inset:0;margin:auto;width:min(440px,calc(100vw - 2
 .kingRail [role=group] { display: none; }
 .kingRail article > button:not(.inspectArt) { min-height: 44px; padding: 6px 14px; border: 1px solid #b5955580; border-radius: 5px; background: #3d3222; color: #ffe1a1; }
 .kingRail article > button:disabled { opacity: .65; }
+
+/* A royal gallery: portrait first, then a compact horizontal collection. */
+.root[data-mode=profile] .top{justify-content:flex-end;padding:3px 0;border:0}
+.root .wallet{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:2px 9px;border:1px solid #9e86595c;border-radius:22px;background:linear-gradient(110deg,#24353b,#161b20);text-decoration:none;color:#b9ebf4}
+.root .wallet strong{margin:0;color:#f3e4c4;font:700 15px system-ui}.wallet>span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:linear-gradient(#f5d48a,#b7842d);color:#20170c;font-weight:800}
+.root[data-mode=profile] .sovereignHero{margin:0 0 16px;min-height:255px;grid-template-columns:minmax(130px,45%) 1fr;background:radial-gradient(ellipse at 25% 55%,#c09b4255,transparent 70%),linear-gradient(135deg,#303335,#14181a);border:1px solid #9d815655;border-radius:8px;overflow:hidden}
+.root[data-mode=profile] .sovereignHero .figure{height:265px;filter:drop-shadow(0 4px 7px #000b)}
+.root[data-mode=profile] .sovereignHero>div{padding:12px 10px 12px 0}
+.root[data-mode=profile] h2{display:flex;justify-content:space-between;align-items:center;font:700 21px Georgia;color:#f0ddae;margin:20px 0 4px}
+.root[data-mode=profile] h2 small{font:12px system-ui;color:#c3b58f}
+.root[data-mode=profile] .kingRail{gap:8px;padding:8px 12px 12px;scrollbar-width:thin}
+.root[data-mode=profile] .kingRail>article{flex:0 0 118px;min-height:0;padding:8px 5px;gap:3px;background:linear-gradient(145deg,#343332,#171b1d);border-color:#8d79564d}
+.root[data-mode=profile] .kingRail>article[data-focused=true]{background:linear-gradient(145deg,#51452e,#222323);border-color:#e1bd72}
+.root[data-mode=profile] .kingRail .inspectArt{min-height:72px;width:72px;padding:0}
+.root[data-mode=profile] .kingRail img{width:70px;height:70px}
+.root[data-mode=profile] .kingRail article>strong{font:700 13px Georgia;line-height:1.2}
+.root[data-mode=profile] .kingRail article>small{font-size:10px}
+.root[data-mode=profile] .kingRail article>button:not(.inspectArt){min-height:36px;padding:4px 9px;font-size:11px}
