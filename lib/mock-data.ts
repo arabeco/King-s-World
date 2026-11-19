@@ -18,6 +18,7 @@ export type WorldSummary = {
   founding?: boolean;
   persistent?: boolean;
   reignArchived?: boolean;
+  canDelete?: boolean;
   capitalName?: string;
 };
 

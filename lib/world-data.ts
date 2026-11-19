@@ -27,7 +27,7 @@ const IMPERIAL_CLIENT_STATE_VERSION = 16;
 const REAL_DAY_MS = 24 * 60 * 60 * 1000;
 const STRUCTURE_IDS = ["crown", "economy", "society", "recruitment", "defense"] as const;
 type SeasonMode = "classic" | "express";
-const WORLD_SELECT_BASE = "id,slug,name,status,phase,day_number,starts_at,runtime_started,runtime_real_time_enabled,runtime_anchor_day,runtime_anchor_started_at,sandbox_enabled,player_cap";
+const WORLD_SELECT_BASE = "id,slug,name,status,phase,day_number,starts_at,runtime_started,runtime_real_time_enabled,runtime_anchor_day,runtime_anchor_started_at,sandbox_enabled,player_cap,created_by_user_id";
 const WORLD_SELECT_WITH_MODE = `${WORLD_SELECT_BASE},season_mode,speed_multiplier`;
 const WORLD_SELECT_WITH_RULES = `${WORLD_SELECT_WITH_MODE},rules_version,economy_version`;
 
@@ -37,6 +37,7 @@ type VillageStructureLevels = Partial<Record<CityStructureId, number>>;
 type VillageStructureSkills = Partial<Record<CityStructureId, StructureDots>>;
 
 type DbWorld = {
+  created_by_user_id?: string | null;
   economy_version?: number;
   founding_onboarding?: boolean;
   persistent_cozy?: boolean;
@@ -1170,6 +1171,7 @@ export async function listWorldSummaries(userId?: string): Promise<WorldSummary[
         speedMultiplier: runtime.speedMultiplier,
         durationDays: runtime.durationDays,
         rulesVersion: world.rules_version ?? 1,
+        canDelete: Boolean(userId && world.rules_version===2 && world.created_by_user_id===userId),
         ...(world.persistent_cozy ? { persistent: true, reignArchived } : {}),
         ...(world.founding_onboarding ? {
           founding: !foundingSave || Boolean(foundingSave.founding),

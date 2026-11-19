@@ -64,6 +64,7 @@ export function LobbyWorldSelector({
   const [joiningCode, setJoiningCode] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [reentryPasswordWorld, setReentryPasswordWorld] = useState<string | null>(null);
+  const [deleteOpen,setDeleteOpen]=useState(false),[deleting,setDeleting]=useState(false),[deleteError,setDeleteError]=useState('');
   const selectedWorld = useMemo(
     () => worlds.find((world) => world.id === selectedWorldId) ?? firstPlayableWorld,
     [firstPlayableWorld, selectedWorldId, worlds],
@@ -191,6 +192,21 @@ export function LobbyWorldSelector({
   };
   const joinByCode=()=>void join();
 
+  const deleteWorld=async()=>{
+    if(!selectedWorld||deleting)return;
+    setDeleting(true);setDeleteError('');
+    try{
+      const response=await fetch(`/api/worlds/${encodeURIComponent(selectedWorld.id)}/delete`,{method:'POST'});
+      const result=await response.json();
+      if(!response.ok)throw Error(result.error||'Não foi possível excluir o mundo.');
+      setDeleteOpen(false);setSelectedWorldId('');setView('create');
+      const next=await fetch('/api/me/entitlements',{cache:'no-store'});
+      if(next.ok){const payload=await next.json();if(payload.benefits)setBenefits(payload.benefits);}
+      router.refresh();
+    }catch(error){setDeleteError(error instanceof Error?error.message:'Não foi possível excluir o mundo.');}
+    finally{setDeleting(false);}
+  };
+
   return (
     <div className={styles.worlds}>
       <nav className={styles.tabs} aria-label="Mundos"><button type="button" aria-pressed={view==="mine"} onClick={()=>setView("mine")}>Meus mundos</button><button type="button" aria-pressed={view==="search"} onClick={()=>setView("search")}>Buscar</button><button type="button" aria-pressed={view==="create"} onClick={()=>setView("create")}>Criar</button></nav>
@@ -250,6 +266,14 @@ export function LobbyWorldSelector({
                 {selectedWorld.status === "Finalizado" ? "Ver resultado" : selectedWorld.status === "Em Andamento"
                   ? "Continuar reinado" : "Entrar no mundo"}
               </button>)}
+          {selectedWorld?.canDelete&&<button type="button" className={styles.deleteWorld} onClick={()=>{setDeleteError('');setDeleteOpen(true);}}>Excluir este mundo</button>}
+          {deleteOpen&&selectedWorld&&<div className={styles.deleteBackdrop} role="presentation"><section className={styles.deleteDialog} role="dialog" aria-modal="true" aria-labelledby="delete-world-title" onKeyDown={event=>{if(event.key==='Escape'&&!deleting)setDeleteOpen(false);}}>
+            <h2 id="delete-world-title">Excluir {selectedWorld.name}?</h2>
+            <p>Seu reinado e o progresso deste mundo serão apagados. A vaga será liberada. Esta ação não pode ser desfeita.</p>
+            <p>Por segurança, só é possível excluir um mundo criado por você que nunca recebeu outro jogador.</p>
+            {deleteError&&<p role="alert">{deleteError}</p>}
+            <div><button type="button" className="secondary-button" disabled={deleting} onClick={()=>setDeleteOpen(false)} autoFocus>Voltar</button><button type="button" className={styles.confirmDelete} disabled={deleting} onClick={()=>void deleteWorld()}>{deleting?'Excluindo…':'Excluir mundo'}</button></div>
+          </section></div>}
           {process.env.NODE_ENV !== "production" ? (
             <div className="inline-actions lobby-dev-actions">
               <button className="secondary-button" type="button" onClick={() => createTestWorld("classic")} disabled={creatingWorld} data-smoke="create-test-world">
