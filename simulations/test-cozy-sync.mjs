@@ -22,7 +22,13 @@ try{
   const orderModule={exports:{}};
   new Function('module','exports',ordering)(orderModule,orderModule.exports);
   const hookModule={exports:{}};
-  new Function('require','module','exports',hook)(name=>name==='react'?window.React:orderModule.exports,hookModule,hookModule.exports);
+  const dependencies={
+   react:window.React,
+   '@/lib/cozy/snapshot-order':orderModule.exports,
+   // These lightweight snapshots test transport, while collection UI tests the real recruitment preview.
+   '@/lib/cozy/recruit-preview':{projectRecruitment:payload=>payload},
+  };
+  new Function('require','module','exports',hook)(name=>dependencies[name],hookModule,hookModule.exports);
   window.testRoot=ReactDOM.createRoot(document.querySelector('#app'));
   window.renderWorld=id=>{
    // Keep a stable component identity to exercise the actual world-id effect.
