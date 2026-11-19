@@ -71,7 +71,32 @@ const guides = {
  ]},
 } satisfies Record<string,{title:string;steps:{art:string;title:string;text:string}[]}>;
 
-export default function CozyScreenHelp({screen,playerId,enabled=true,compact=true,inHeader=true}:{screen:keyof typeof guides;playerId:string;enabled?:boolean;compact?:boolean;inHeader?:boolean}){
- const guide=guides[screen];
- return <CozyFirstVisitHelp helpId={`${screen}:${playerId}`} enabled={enabled} compact={compact} inHeader={inHeader} title={guide.title} steps={guide.steps}/>;
+const persistentGuides: Partial<Record<keyof typeof guides,{title:string;steps:{art:string;title:string;text:string}[]}>> = {
+ map: {...guides.map,steps:[...guides.map.steps.slice(0,2),
+  {art:"/icons/action-attack.png",title:"Acampamentos e cidades",text:"Vença acampamentos para trazer saque. Para conquistar uma cidade abandonada, enfraqueça a resistência e depois envie um herói livre."},
+ ]},
+ military: {...guides.military,steps:[
+  {art:"/icons/exercito.png",title:"Preparo do reino",text:"Recrute para aumentar seu poder. Tropas e fortificações somam influência acima da força inicial."},
+  {art:"/icons/action-attack.png",title:"Vitórias de expedição",text:"Vença alvos diferentes no mapa para ganhar influência. O saque chega quando o exército volta."},
+  {art:"/icons/action-defend.png",title:"Patrulhas automáticas",text:"As patrulhas ocorrem por conta própria. Confira a próxima na aba Defesa."},
+ ]},
+ achievements: {...guides.achievements,steps:[
+  {art:"/icons/influence-legacy.png",title:"Marcos do reino",text:"Explore, anexe uma reserva e avance nas cidades. Resgate os marcos concluídos para ganhar influência."},
+  {art:"/buildings/maravilha.png",title:"Duas Maravilhas",text:"Construa em cidades preparadas. As duas primeiras Maravilhas contam para Conquistas."},
+  {art:"/icons/influencia.png",title:"Seu caminho à Ascensão",text:"A aba Ascensão mostra sua influência atual, seu recorde e a meta de 1.500."},
+ ]},
+ influence: {...guides.influence,steps:[
+  {art:"/icons/influencia.png",title:"Cinco caminhos",text:"Veja a influência das cinco áreas da Coroa. Toque em uma área para ver de onde vêm seus pontos."},
+  {art:"/icons/influence-legacy.png",title:"Meta do reinado",text:"Acompanhe sua influência atual e seu recorde na aba Ascensão em Conquistas."},
+ ]},
+ alliance: {...guides.alliance,steps:[
+  guides.alliance.steps[0],
+  {art:"/icons/recursos.png",title:"Presentes entre aliados",text:"Escolha um aliado e um pacote de materiais ou suprimentos. Confira seu saldo antes de enviar. O presente chega na hora."},
+  {art:"/icons/action-defend.png",title:"Apoio e projetos",text:"Pedidos de defesa e projetos continuam na Aliança. Abra os recibos de presentes para ver quem enviou e quanto chegou."},
+ ]},
+};
+
+export default function CozyScreenHelp({screen,playerId,enabled=true,compact=true,inHeader=true,persistent,automatic}:{screen:keyof typeof guides;playerId:string;enabled?:boolean;compact?:boolean;inHeader?:boolean;persistent?:boolean;automatic?:boolean}){
+ const guide=(persistent ? persistentGuides[screen] : undefined) ?? guides[screen];
+ return <CozyFirstVisitHelp helpId={`${screen}:${playerId}`} enabled={enabled} compact={compact} inHeader={inHeader} automatic={automatic} title={guide.title} steps={guide.steps}/>;
 }

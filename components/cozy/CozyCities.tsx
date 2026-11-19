@@ -2,14 +2,18 @@
 
 
 
+import {useState} from "react";
 import CozySymbol from "./CozySymbol";
 
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Hammer } from "lucide-react";
 import { CITY_TYPES, SECTORS, getCityAppearance } from "@/lib/cozy/catalog";
 import type { CozyCity, CozyPayload, CozySector } from "@/lib/cozy/types";
 import styles from "./cozy-cities.module.css";
 import CozyArt from "./CozyArt";
 import CozyMapArt from "./CozyMapArt";
+import {CozyNovelty} from "./CozyNovelty";
+import {cityNotice,isNewNotice} from "@/lib/cozy/notices";
+import {orderQueued,orderStartsAt} from "@/lib/cozy/order-presentation";
 
 type Props = { data: CozyPayload; now: number; onCity: (id: string) => void };
 const sectors: Record<CozySector, { art: string; label: string }> = {
@@ -33,12 +37,20 @@ const remaining = (at: number, now: number) => {
     : `${Math.floor(hours / 24)} d ${hours % 24} h`;
 };
 
-function CityCard({ city, data, now, onCity }: Props & { city: CozyCity }) {
-  const order = data.state.orders.find(
-    (entry) => entry.kind === "upgrade" && entry.cityId === city.id,
-  );
+function CityCard({ city, data, now, onCity, showAvailability }: Props & { city: CozyCity;showAvailability?:boolean }) {
+  const orders = data.state.orders.filter(entry=>entry.kind==="upgrade" && entry.cityId===city.id);
+  const active = orders.find(order=>!orderQueued(order));
+  const waiting = orders.filter(orderQueued).sort((a,b)=>orderStartsAt(a)-orderStartsAt(b));
+  const order = active ?? waiting[0];
   const appearance = getCityAppearance(city);
   const workName = SECTORS.find((sector) => sector.id === order?.sector)?.name;
+  const complete = SECTORS.every(({id})=>city.sectors[id]>=10);
+  const work = order ?
+    <span className={styles.work}><CozySymbol name="time" size={18}/>{workName} · {active ? remaining(active.arrivesAt,now) : `Começa em ${remaining(orderStartsAt(order),now)}`}
+      {waiting.length>0 && <small>· {waiting.length} na fila</small>}</span> :
+    showAvailability ? <span className={styles.work}><Hammer size={15}/>{complete ? "Setores completos" : "Obra livre"}</span> : null;
+  const decision = data.computed.cityLife[city.id]?.decision;
+  const unseen = Boolean(data.world.persistent && decision && isNewNotice(data.state,cityNotice(decision.id)));
   return (
     <button
       type="button"
@@ -46,6 +58,7 @@ function CityCard({ city, data, now, onCity }: Props & { city: CozyCity }) {
       data-city-class={city.capital?"capital":city.cityClass??"neutral"}
       onClick={() => onCity(city.id)}
       aria-label={`Ver cidade ${city.name}`}
+      aria-description={unseen ? "Decisão local nova" : undefined}
     >
       <span className={styles.cityTop}>
         <span className={styles.cityArt}>
@@ -54,6 +67,7 @@ function CityCard({ city, data, now, onCity }: Props & { city: CozyCity }) {
         <span className={styles.cityIdentity}>
           <span className={styles.cityHeading}>
             <strong title={city.name}>{city.name}</strong>
+            {unseen&&<CozyNovelty/>}
             <span className={styles.cityKind} aria-label={`${city.capital ? "Capital" : "Colônia"}, coordenadas ${city.q}, ${city.r}`}>
               {city.capital?"Capital":city.cityClass&&city.cityClass!=="neutral"?CITY_TYPES[city.cityClass]:"Sem tipo"} · {city.q}, {city.r}
             </span>
@@ -75,7 +89,7 @@ function CityCard({ city, data, now, onCity }: Props & { city: CozyCity }) {
           <span
             className={styles.sector}
             data-city-sector={sector.id}
-            data-upgrading={order?.sector === sector.id || undefined}
+            data-upgrading={active?.sector === sector.id || undefined}
             key={sector.id}
             aria-label={`${sector.name}: nível ${city.sectors[sector.id]} de 10`}
           >
@@ -84,21 +98,21 @@ function CityCard({ city, data, now, onCity }: Props & { city: CozyCity }) {
           </span>
         ))}
       </span>
-      {order && !data.computed.readOnly && <span className={styles.cardFoot}>
-        <span className={styles.work}><CozySymbol name="time" size={18}/>{workName} · {remaining(order.arrivesAt,now)}</span>
-      </span>}
+      {work && !data.computed.readOnly && <span className={styles.cardFoot}>{work}</span>}
     </button>
   );
 }
 
-function CityList(props: Props) {
+function CityList(props: Props & {cities?:CozyCity[];showAvailability?:boolean}) {
   if (!props.data.state.cities.length)
     return (
       <p className={styles.empty}>{props.data.state.defeat?'Você não possui mais cidades neste mundo. Os relatos e o ranking continuam disponíveis.':'As cidades do seu reino aparecerão aqui.'}</p>
     );
+  const cities = props.cities ?? props.data.state.cities;
+  if (!cities.length) return <p className={styles.empty}>Nenhuma cidade com obra livre agora.</p>;
   return (
     <div className={styles.cityList}>
-      {props.data.state.cities.map((city) => (
+      {cities.map((city) => (
         <CityCard key={city.id} {...props} city={city} />
       ))}
     </div>
@@ -124,8 +138,12 @@ export function CityCollection(props: Props) {
 }
 
 export function InfrastructureSummary(props: Props) {
-  const { computed } = props.data;
+  const { computed,state,world } = props.data;
+  const [onlyFree,setOnlyFree] = useState(false);
   const paused = computed.readOnly || !computed.started;
+  const showAvailability = Boolean(world.persistent && !paused);
+  const occupied = new Set(state.orders.filter(order=>order.kind==="upgrade").map(order=>order.cityId));
+  const freeCities = state.cities.filter(city=>!occupied.has(city.id)&&SECTORS.some(({id})=>city.sectors[id]<10));
   return (
     <section className={styles.collection} aria-label="Cidades do reino">
       
@@ -135,7 +153,11 @@ export function InfrastructureSummary(props: Props) {
         </div>
         <span className={styles.count}>{props.data.state.cities.length}<small> / 10</small></span>
       </header>
-      <CityList {...props} />
+      {showAvailability&&<div className={styles.workFilters} role="group" aria-label="Filtrar cidades por obra">
+        <button type="button" aria-pressed={!onlyFree} onClick={()=>setOnlyFree(false)}>Todas</button>
+        <button type="button" aria-pressed={onlyFree} onClick={()=>setOnlyFree(true)}>Obras livres <b>{freeCities.length}</b></button>
+      </div>}
+      <CityList {...props} cities={showAvailability&&onlyFree?freeCities:state.cities} showAvailability={showAvailability}/>
       <details
         className={styles.production}
         aria-label="Produção de todas as cidades"

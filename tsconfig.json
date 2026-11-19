@@ -47,7 +47,9 @@
     ".next-collection-test/types/**/*.ts",
     ".next/types/**/*.ts",
     ".next-map-occupation-test/types/**/*.ts",
-    ".next-smart-decisions-test/types/**/*.ts"
+    ".next-smart-decisions-test/types/**/*.ts",
+    ".next-cozy-playtest-rite/types/**/*.ts",
+    ".next-cozy-playtest/types/**/*.ts"
   ],
   "exclude": [
     "reports",

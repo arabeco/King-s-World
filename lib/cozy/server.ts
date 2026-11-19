@@ -1,10 +1,14 @@
 import {incomingPlayerAttacks} from './player-combat';
 import "server-only";
-import {EQUIPMENT_EFFECTS} from "./equipment";
+import {EQUIPMENT_EFFECTS,equipmentDescription} from "./equipment";
+import {ascensionRewardAmounts,ascensionStanding,type CozyAscensionPreview} from "./ascension-preview";
+import {kingLevelFromXp} from "./king-progression";
+import collectionCatalog from "@/lib/collection-catalog.json";
 import {isCrestId} from "./heraldry";
 import {bindWorldBalance} from '@/lib/cozy/progression';
 import {settleWorld} from '@/lib/cozy/settlement';
 import {sanctuaryAt} from '@/lib/cozy/landmarks';
+import {ALLIANCE_GIFT_RECEIVE_LIMIT,allianceGiftUsage,canReceiveAllianceGift} from '@/lib/cozy/alliance-gifts';
 
 import { createHash } from "node:crypto";
 import type { AppUserRecord } from "@/lib/app-user";
@@ -16,10 +20,12 @@ import {
 } from "@/lib/supabase-rest";
 import {
   applyCozyAction,
+  CozyRuleError,
   createCozyShared,
   createCozyState,
   getCozyComputed,
   getCozyTiles,
+  transferAllianceGift,
 } from "@/lib/cozy/engine";
 import type {
   CozyAccount,
@@ -36,6 +42,8 @@ type WorldRow = {
   name: string;
   rules_version: number;
   combat_mode?:"cozy"|"competitive";
+  founding_onboarding?: boolean;
+  persistent_cozy?: boolean;
   influence_version: 1|2;
   status: CozyWorld["status"];
   season_mode: string;
@@ -145,6 +153,8 @@ function toWorld(row: WorldRow): CozyWorld {
   return {
     id: row.id,
     combatMode:row.combat_mode==='competitive'?'competitive':'cozy',
+    ...(row.founding_onboarding && row.combat_mode !== "competitive" && row.economy_version === 3 && row.influence_version === 2
+      ? { foundingOnboarding: true as const, ...(row.persistent_cozy ? { persistent: true as const } : {}) } : {}),
     name: row.name,
     mode: row.season_mode === "express" ? "express" : "classic",
     speedMultiplier: row.season_mode==='express'?(row.economy_version===2?1:row.economy_version===3?4:row.speed_multiplier===2?2:4):1,
@@ -202,7 +212,10 @@ export async function reserveCozyLateSlot(worldRouteId: string, playerId: string
   const row = await fetchWorld(worldRouteId);
   if (row.rules_version !== 2 || row.status !== "open")
     throw new CozyHttpError("Este mundo não aceita novas reservas.", 409, "WORLD_CLOSED");
-  const city = createCozyState(toWorld(row), playerId, "Reino disponível", Date.now()).cities[0];
+  const world = toWorld(row);
+  if (world.foundingOnboarding)
+    throw new CozyHttpError("Este mundo usa fundação de capital por jogador.", 409, "FOUNDING_WORLD");
+  const city = createCozyState(world, playerId, "Reino disponível", Date.now()).cities[0];
   if (sanctuaryAt(city) || (city.q === 0 && city.r === 0))
     throw new CozyHttpError("A posição da vaga está ocupada por uma torre.", 409, "SLOT_OCCUPIED");
   await supabaseRpc("kw_cozy_reserve_late_slot", {
@@ -242,6 +255,55 @@ export async function getCozyAccount(
   return supabaseRpc<AccountData>("kw_cozy_account", { p_user_id: user.id });
 }
 
+/** Read the last confirmed reign and current inventory without a game or collection write. */
+export async function readCozyAscensionPreview(worldRouteId: string,user: AppUserRecord): Promise<CozyAscensionPreview> {
+  const world = await readCozyWorld(worldRouteId);
+  const members = await supabaseSelect<Pick<MemberRow,"id"|"status">>("world_players",
+    query("id,status",{world_id:`eq.${world.id}`,user_id:`eq.${user.id}`,is_ai:"eq.false"}));
+  const member = members.find(entry=>entry.status==="alive");
+  if (!members.length) throw new CozyHttpError("Entre neste mundo para consultar seu reinado.",403,"MEMBERSHIP_REQUIRED");
+  if (!member || !world.persistent || world.status!=="running")
+    throw new CozyHttpError("A prévia está disponível em reinados ativos do Cozy persistente.",409,"ASCENSION_UNAVAILABLE");
+
+  const [saved] = await supabaseSelect<Pick<SavedPlayer,"state_json"|"influence">>("kw_cozy_player_states",
+    query("state_json,influence",{world_id:`eq.${world.id}`,world_player_id:`eq.${member.id}`,user_id:`eq.${user.id}`}));
+  const state = saved?.state_json;
+  if (!state || state.founding || state.defeat || state.finalizedAt!==null || !state.king?.alive || !state.cities.length)
+    throw new CozyHttpError("Funde sua capital para consultar a prévia da Ascensão.",409,"REIGN_UNAVAILABLE");
+
+  const standing = ascensionStanding(saved.influence,state.peakInfluence);
+  const [catalog,inventory,[wallet]] = await Promise.all([
+    supabaseSelect<{product_id:string}>("kw_collection_catalog",
+      query("product_id",{kind:"eq.equipment",starter:"eq.false",rarity:`eq.${standing.medal.rarity}`})),
+    supabaseSelect<{product_id:string;xp:number;added_ad:number;added_cm:number;added_ex:number}>("kw_player_inventory",
+      query("product_id,xp,added_ad,added_cm,added_ex",{user_id:`eq.${user.id}`})),
+    supabaseSelect<{gem_debt?:number}>("kw_player_wallet",query("*",{user_id:`eq.${user.id}`})),
+  ]);
+  if (!catalog.length) throw new CozyHttpError("Os equipamentos desta raridade estão em preparação.",503,"ASCENSION_CATALOG_UNAVAILABLE");
+  const owned = new Set(inventory.map(item=>item.product_id));
+  const eligible = catalog.flatMap(({product_id:id})=>owned.has(id) ? [] : [{
+    id,order:createHash("md5").update(`${world.id}:${member.id}:${state.createdAt}:${id}`).digest("hex"),
+  }]).sort((a,b)=>a.order.localeCompare(b.order) || a.id.localeCompare(b.id));
+  const productId = eligible[0]?.id;
+  const product = collectionCatalog.find(item=>item.id===productId && item.kind==="equipment");
+  const king=inventory.find(item=>item.product_id===state.king?.sovereignId);
+  const level=kingLevelFromXp(king?.xp??0);
+  return {
+    standing,
+    sovereign:king ? {level,xp:king.xp,availablePoints:Math.max(0,level-1-king.added_ad-king.added_cm-king.added_ex)} : null,
+    rewards:{
+      ...ascensionRewardAmounts(world.mode,!productId,wallet?.gem_debt),
+      equipment:productId ? {id:productId,name:product?.name??"Equipamento",image:product?.image,
+        effect:equipmentDescription(productId)} : null,
+    },
+    archive:{
+      worldName:world.name,sovereign:state.king.nickname,foundedAt:state.createdAt,
+      cities:state.cities.map(({id,name,capital})=>({id,name,capital})),
+      milestones:state.quests.length,wonders:new Set(state.progression?.feats.wonders).size,
+    },
+  };
+}
+
 function sameState(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
@@ -264,10 +326,21 @@ function actionFingerprint(action: unknown): string {
     .digest("hex");
 }
 
+async function hasCozyCommandReceipt(playerId: string, requestId: string, hash: string | null) {
+  const [completed] = await supabaseSelect<{ action_hash: string }>(
+    "kw_cozy_commands",
+    query("action_hash",{world_player_id:`eq.${playerId}`,request_id:`eq.${requestId}`}),
+  );
+  if (!completed) return false;
+  if (completed.action_hash !== hash)
+    throw new CozyHttpError("Este identificador já foi usado para outra ação.",409,"REQUEST_REUSED");
+  return true;
+}
+
 export async function getCozyPayload(
   worldRouteId: string,
   user: AppUserRecord,
-  command?: { action: CozyAction; requestId: string },
+  command?: { action: CozyAction; requestId: string; playerId?: string },
 ): Promise<CozyServerPayload> {
   const hash = command ? actionFingerprint(command.action) : null;
   if (command?.action.type === "read_reports") {
@@ -275,6 +348,8 @@ export async function getCozyPayload(
       // Initialize/settle through the normal read path before marking the visible history.
       // The dedicated receipt RPC can only change readAt, never a finished season's economy.
       const snapshot = await getCozyPayload(worldRouteId, user);
+      if (command.playerId && snapshot.state.playerId!==command.playerId)
+        throw new CozyHttpError("Esta ação pertence a outro reinado. Atualize o jogo.",409,"REIGN_CHANGED");
       const saved = (
         await supabaseSelect<SavedPlayer>(
           "kw_cozy_player_states",
@@ -314,47 +389,38 @@ export async function getCozyPayload(
         "LEGACY_WORLD",
       );
     const world = toWorld(row);
-    const members = (
-      await supabaseSelect<MemberRow>(
-        "world_players",
-        query("id,user_id,status,is_ai,joined_at", {
-          world_id: `eq.${world.id}`,
-        }),
-      )
-    ).filter((member) => !member.is_ai);
-    const actor = members.find((member) => member.user_id === user.id);
+    const memberFields="id,user_id,status,is_ai,joined_at";
+    const worldFilter={world_id:`eq.${world.id}`,is_ai:"eq.false"};
+    const [roster,ownReigns]=await Promise.all([
+      supabaseSelect<MemberRow>("world_players",query(memberFields,world.persistent
+        ? {...worldFilter,status:inFilter(["alive","eliminated","resigned"])} : worldFilter)),
+      world.persistent ? supabaseSelect<MemberRow>("world_players",query(memberFields,{
+        ...worldFilter,user_id:`eq.${user.id}`,
+      })) : [],
+    ]);
+    const active = world.persistent
+      ? ownReigns.find(member=>member.status!=="archived")
+      : roster.find(member=>member.user_id===user.id);
+    const archived = ownReigns.filter(member=>member.status==="archived")
+      .sort((a,b)=>Date.parse(b.joined_at)-Date.parse(a.joined_at)||b.id.localeCompare(a.id))[0];
+    const actor = active??archived;
     if (!actor)
       throw new CozyHttpError(
         "Entre neste mundo pelo código de convite.",
         403,
         "MEMBERSHIP_REQUIRED",
       );
+    if (command && ((command.playerId && command.playerId!==actor.id) || (active && archived && !command.playerId)))
+      throw new CozyHttpError("Esta ação pertence a outro reinado. Atualize o jogo.",409,"REIGN_CHANGED");
+    if (command && await hasCozyCommandReceipt(actor.id,command.requestId,hash))
+      return getCozyPayload(worldRouteId,user);
     if (command && actor.status !== "alive")
       throw new CozyHttpError(
         "Este reino não pode realizar novas ações.",
         403,
         "PLAYER_INACTIVE",
       );
-    if (command) {
-      const completed = (
-        await supabaseSelect<{ action_hash: string }>(
-          "kw_cozy_commands",
-          query("action_hash", {
-            world_player_id: `eq.${actor.id}`,
-            request_id: `eq.${command.requestId}`,
-          }),
-        )
-      )[0];
-      if (completed) {
-        if (completed.action_hash !== hash)
-          throw new CozyHttpError(
-            "Este identificador já foi usado para outra ação.",
-            409,
-            "REQUEST_REUSED",
-          );
-        return getCozyPayload(worldRouteId, user);
-      }
-    }
+    const members = world.persistent ? [...roster.filter(member=>member.user_id!==user.id),actor] : roster;
     const [sharedRows, saved, usernames] = await Promise.all([
       supabaseSelect<SavedShared>(
         "kw_cozy_world_states",
@@ -364,6 +430,7 @@ export async function getCozyPayload(
         "kw_cozy_player_states",
         query("world_player_id,user_id,revision,state_json,influence", {
           world_id: `eq.${world.id}`,
+          ...(world.persistent ? {world_player_id:inFilter(members.map(member=>member.id))} : {}),
         }),
       ),
       supabaseSelect<{ id: string; username: string }>(
@@ -381,14 +448,14 @@ export async function getCozyPayload(
       const previous = saved.find(
         (entry) => entry.world_player_id === member.id,
       );
-      if(previous&&((world.influenceVersion===2)!==(previous.state_json.progression?.version===2)))
+      if(previous&&!(world.foundingOnboarding&&previous.state_json.founding)&&((world.influenceVersion===2)!==(previous.state_json.progression?.version===2)))
         throw new CozyHttpError('Esta temporada precisa revisar a versão de influência antes de continuar.',409,'INFLUENCE_VERSION_MISMATCH');
       const joinedAt = Date.parse(member.joined_at);
       const name =
         usernames.find((entry) => entry.id === member.user_id)?.username ??
         "Soberano";
       const initial=previous?.state_json??createCozyState(world,member.id,name,Number.isFinite(joinedAt)?Math.min(now,joinedAt):now);
-      if(world.status!=='finalized'){initial.playerName=name;if(initial.king?.alive)initial.king.nickname=name;}
+      if(world.status!=='finalized'&&!initial.ascension){initial.playerName=name;if(initial.king?.alive)initial.king.nickname=name;}
       if(!previous&&initial.progression){if(balance===null)delete initial.progression.balance;else initial.progression.balance=structuredClone(balance);}
       return {
         playerId: member.id,
@@ -415,7 +482,28 @@ export async function getCozyPayload(
       world.status === "running" &&
       season.endsAt !== null &&
       now >= season.endsAt;
-    if (command && !finalize) {
+    const beforeStart = row.status === "open" && command && (
+      command.action.type === "king_choose" ||
+      (world.foundingOnboarding && (
+        (actorState.state.founding && ["counselor", "hire", "found_capital"].includes(command.action.type)) ||
+        (command.action.type === "decree" && command.action.decreeId === actorState.state.firstAudience?.id)
+      ))
+    );
+    if (command?.action.type === "alliance_gift" && !finalize) {
+      const {recipientId} = command.action;
+      const recipient = players.find(player=>player.playerId===recipientId);
+      try {
+        if (!recipient || !members.some(member=>member.id===recipientId && member.status==="alive"))
+          throw new CozyHttpError("Este reino não pode receber presentes.",422,"GIFT_RECIPIENT_UNAVAILABLE");
+        transferAllianceGift(actorState.state,recipient.state,shared,world,command.action,now);
+      } catch (error) {
+        // A retry can read the new quota after another copy has already delivered the gift.
+        if ((error instanceof CozyRuleError || error instanceof CozyHttpError) &&
+            await hasCozyCommandReceipt(actor.id,command.requestId,hash))
+          return getCozyPayload(worldRouteId,user);
+        throw error;
+      }
+    } else if (command && !finalize) {
       const next = applyCozyAction(
         actorState.state,
         shared,
@@ -426,9 +514,12 @@ export async function getCozyPayload(
       if (command.action.type === "king_choose" && next.state.king) {
         try {
           const collection = await supabaseRpc<{selectedId:string;inventory:{id:string}[]}>('kw_collection_read',{p_user_id:user.id});
-          const kingStats=await supabaseRpc<{revision:number;attributes:{administration:number;command:number;exploration:number}}>('kw_king_stats',{p_user_id:user.id,p_king_id:collection.selectedId});
-          if((command.action.kingId!==undefined&&command.action.kingId!==collection.selectedId)||(command.action.statRevision!==undefined&&command.action.statRevision!==kingStats.revision))throw new CozyHttpError('O rei ou os stats mudaram. Feche e reabra a confirmação do reinado.',409,'KING_SELECTION_CONFLICT');
-          next.state.king.sovereignId=collection.selectedId;
+          const kingId = world.foundingOnboarding ? command.action.kingId ?? collection.selectedId : collection.selectedId;
+          if (world.foundingOnboarding && !collection.inventory.some(item => item.id === kingId && /^sovereign-\d+$/.test(item.id)))
+            throw new CozyHttpError("Escolha um soberano da sua coleção.", 422, "KING_NOT_OWNED");
+          const kingStats=await supabaseRpc<{revision:number;attributes:{administration:number;command:number;exploration:number}}>('kw_king_stats',{p_user_id:user.id,p_king_id:kingId});
+          if((command.action.kingId!==undefined&&command.action.kingId!==kingId)||(command.action.statRevision!==undefined&&command.action.statRevision!==kingStats.revision))throw new CozyHttpError('O rei ou os stats mudaram. Feche e reabra a confirmação do reinado.',409,'KING_SELECTION_CONFLICT');
+          next.state.king.sovereignId=kingId;
           const requested=command.action.equipment??[];
           if(!Array.isArray(requested)||requested.length>3||!requested.every(id=>typeof id==='string'))throw new CozyHttpError('Seleção de equipamentos inválida.',400,'LOADOUT_INVALID');
           const filled=requested.filter(Boolean);
@@ -449,14 +540,15 @@ export async function getCozyPayload(
           (next.shared.realmCrests??={})[actor.id]={id:crestId,finish};
         } catch(error) {
           // Compatibility for environments that have not introduced collections yet.
-          if(!/kw_collection_read.*(does not exist|schema cache|Could not find)/i.test(String(error)))throw error;
+          if(world.foundingOnboarding || !/kw_collection_read.*(does not exist|schema cache|Could not find)/i.test(String(error)))throw error;
           const [attributes]=await supabaseSelect<{administration:number;command:number;exploration:number}>("kw_royal_attributes",query("administration,command,exploration",{user_id:`eq.${user.id}`}));
           next.state.king.attributes=attributes??{administration:5,command:5,exploration:5};
         }
       }
       actorState.state = next.state;
       shared = next.shared;
-      if(command.action.type.startsWith("alliance_")||command.action.type.startsWith("sanctuary_pact_"))shared=settleWorld(players,shared,world,now);
+      if(command.action.type==="ascend"||command.action.type.startsWith("alliance_")||command.action.type.startsWith("sanctuary_pact_"))
+        shared=settleWorld(players,shared,world,now);
     }
     for (const player of players)
       player.influence = getCozyComputed(
@@ -479,7 +571,7 @@ export async function getCozyPayload(
       const result = await supabaseRpc<{
         status: "committed" | "conflict" | "duplicate" | "closed";
         revision?: number;
-      }>(row.status === "open" && command?.action.type === "king_choose" ? "kw_cozy_commit_royal_before_start" : "kw_cozy_commit", {
+      }>(command?.action.type==="ascend" ? "kw_cozy_commit_ascension" : beforeStart ? "kw_cozy_commit_royal_before_start" : "kw_cozy_commit", {
         p_world_id: world.id,
         p_user_id: user.id,
         p_actor_player_id: actor.id,
@@ -506,6 +598,19 @@ export async function getCozyPayload(
     const account = await getCozyAccount(user);
     const computed = getCozyComputed(actorState.state, shared, world, now);
     if(world.combatMode==='competitive')computed.playerThreats=incomingPlayerAttacks(players,actorState.state,now);
+    const giftGroup = shared.alliances.find(group=>group.id===actorState.state.allianceId && group.members.includes(actor.id));
+    const allianceGifts = world.persistent && world.startsAt!==null && computed.started && !computed.readOnly &&
+      actor.status==="alive" && canReceiveAllianceGift(actorState.state) && giftGroup ? {
+        ...allianceGiftUsage(actorState.state,computed.day),
+        allianceId:giftGroup.id,
+        resetsAt:world.startsAt + computed.day*computed.dayMs,
+        recipients:players.filter(player=>player.playerId!==actor.id && giftGroup.members.includes(player.playerId) &&
+          player.state.allianceId===giftGroup.id && canReceiveAllianceGift(player.state) &&
+          members.some(member=>member.id===player.playerId && member.status==="alive")).map(player=>({
+            playerId:player.playerId,
+            receivedLimitReached:allianceGiftUsage(player.state,computed.day).received>=ALLIANCE_GIFT_RECEIVE_LIMIT,
+          })),
+      } : undefined;
     return {
       world,
       state: actorState.state,
@@ -529,6 +634,7 @@ export async function getCozyPayload(
             a.playerId.localeCompare(b.playerId),
         ),
       account: account.account,
+      allianceGifts,
       revision,
       serverNow: now,
       canStart:
@@ -563,6 +669,10 @@ export function cozyErrorResponse(error: unknown): {
       },
     };
   const mappings: [RegExp, number, string, string][] = [
+    [/COZY_ASCENSION_OFFER_CHANGED/,409,"ASCENSION_OFFER_CHANGED","O prêmio mudou. Confira a nova oferta antes de confirmar."],
+    [/COZY_ASCENSION_PROOFS_REQUIRED/,422,"ASCENSION_PROOFS_REQUIRED","Conclua duas provas da Travessia."],
+    [/COZY_ASCENSION_UNAVAILABLE/,409,"ASCENSION_UNAVAILABLE","A Travessia está indisponível agora."],
+    [/COZY_ASCENSION_CATALOG_UNAVAILABLE/,503,"ASCENSION_CATALOG_UNAVAILABLE","As recompensas desta raridade estão em preparação."],
     [/COZY_ACTIVE_WORLD_LIMIT/,409,"ACTIVE_WORLD_LIMIT","Você atingiu seu limite de mundos ativos. Termine uma temporada ou veja o Premium."],
     [/COZY_PASSWORD_PREMIUM_REQUIRED/,403,"PASSWORD_PREMIUM_REQUIRED","Criar um mundo com senha é um benefício Premium. Você pode criar um mundo sem senha."],
     [

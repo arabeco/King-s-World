@@ -11,6 +11,8 @@ coverage
 reports
 supabase/.temp
 .next-cozy-test
+.next-cozy-playtest
+.next-cozy-playtest-rite
 
 .android-qa/
 .next-cozy-android

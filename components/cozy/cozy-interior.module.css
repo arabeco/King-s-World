@@ -30,7 +30,12 @@
 .sectorProgress{display:flex;gap:3px;margin-top:1px;max-width:160px}
 .sectorProgress i{height:3px;flex:1;border-radius:2px;background:#b3c5b21c}
 .sectorProgress i[data-filled]{background:var(--sector-glow)}
-.cardFoot{grid-column:2/-1;display:flex;align-items:center;gap:5px;color:#e3cea2;font-size:12px}
+.cardFoot{display:flex;align-items:center;flex-wrap:wrap;gap:3px 5px;color:#e3cea2;font-size:12px;font-variant-numeric:tabular-nums}
+.batchLink{display:flex;align-items:center;gap:8px;min-height:44px;width:100%;padding:6px 11px;border:1px solid #9f895044;border-radius:6px;background:#242a25;color:#f0ddad;font-weight:700;margin:6px 0}
+.batchLink b{margin-left:auto;font-variant-numeric:tabular-nums}
+.batchWorks{list-style:none;padding:0;margin:0 0 14px}
+.batchWorks li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:9px;min-height:44px;border-bottom:1px solid #b09a6740}
+.batchWorks li span{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
 .sectorCard[data-upgrading]{background:linear-gradient(100deg,#a5bd7918,transparent)}
 .sectorCard:hover{background-color:#c5d5ba08}
 .sectorCard:active{background-color:#c5d5ba15}
@@ -42,7 +47,16 @@
 .interior .decisionHeading h3{margin:0;font:650 19px/1.2 var(--font-display),Georgia,serif}
 .decisionHeading p,.description{margin:7px 0;color:#becbbf;font-size:13px;line-height:1.5}
 .localScene{display:flex;flex-direction:column;justify-content:flex-end;gap:7px;min-height:132px;padding:16px;border-radius:10px;background:linear-gradient(0deg,#20302bf5,#20302b22),url('/images/cidade.jpg') center 54%/cover}
+.localScene{border:7px solid transparent;border-image:url('/images/mapa-cozy/moldura.png') 50 / 7px stretch}
 .localScene[data-sector=economy]{background-image:linear-gradient(0deg,#24352cf5,#20302b15),url('/images/cidade.jpg')}
+.localScene[data-scene=workshops]{background-image:linear-gradient(0deg,#1a2220ee,#18211c22),url('/images/cenas-cozy/oficina.jpg')}
+.localScene[data-scene=market],.localScene[data-scene=barter]{background-image:linear-gradient(0deg,#1a2220ee,#18211c22),url('/images/cenas-cozy/feira.jpg')}
+.localScene[data-scene=caravan]{background-image:linear-gradient(0deg,#1a2220ee,#18211c22),url('/images/cenas-cozy/caravana.jpg')}
+.localScene[data-scene=crisis]{background-image:linear-gradient(0deg,#1a2220ee,#18211c22),url('/images/cenas-cozy/praca.jpg')}
+.localScene[data-scene=repairs]{background-image:linear-gradient(0deg,#1a2220ee,#18211c22),url('/images/cenas-cozy/reparos.jpg')}
+.localScene[data-scene=families]{background-image:linear-gradient(0deg,#1a2220ee,#18211c22),url('/images/cenas-cozy/familias.jpg')}
+.localScene[data-scene=watch]{background-image:linear-gradient(0deg,#1a2220ee,#18211c22),url('/images/cenas-cozy/vigias.jpg')}
+.localScene[data-scene=square]{background-image:linear-gradient(0deg,#1a2220ee,#18211c22),url('/images/cenas-cozy/colheita.jpg')}
 .localDay{color:#e3d5b4;font-size:11px}
 .localScene h3{margin:0;color:#fff0ce;font:650 24px/1.12 var(--font-display),Georgia,serif;text-wrap:balance}
 .localStory{margin:12px 3px 16px;color:#c9d0c4;font-size:13px;line-height:1.55}
@@ -114,3 +128,9 @@
 .renameForm>div{display:flex;justify-content:flex-end;gap:14px;margin:12px 0}.typeOption{display:grid;gap:4px;width:100%;min-height:54px;padding:12px;margin:6px 0;border:1px solid #a6b79833;border-radius:9px;background:#a6b7980a;color:#eee4cb;text-align:left;font:inherit}.typeOption small{color:#becbb6;font-size:12px}
 @media(max-width:350px){.sectorCard{grid-template-columns:56px minmax(0,1fr) 48px;gap:7px;min-height:85px}.sectorImage,.sectorImage img{width:56px;height:56px}.level,.level img{width:48px;height:48px}.sectorCopy>strong{font-size:17px}.interior .sectorCopy .sectorMetric{font-size:11px}.cityHeader{padding-right:7px}.interior .identity h2{font-size:20px}.infraScore strong{font-size:18px}.sheetBody{padding-inline:15px}.upgradeHero{grid-template-columns:106px minmax(0,1fr);gap:8px}.detailArt,.detailArt>img{width:106px;height:112px}.detailTitle{font-size:21px}.localScene{min-height:120px}}
 @media(prefers-reduced-motion:reduce){.localChoiceFrame{transition:none}.primary:active:not(:disabled),.localConfirm:active:not(:disabled){transform:none}}
+.localAuthor { display: flex; align-items: center; gap: 8px; padding: 8px 0 0; }
+.localAuthor img { border-radius: 50%; object-fit: cover; }
+.localAuthor span { display: grid; gap: 2px; }
+.localAuthor small { color: #d1c6ad; }
+.cityHero { display:inline-grid; place-items:center; min-width:36px; min-height:36px; padding:0; border:1px solid #c7ab725a; border-radius:50%; color:#f7daa0; background:#20241f; }
+.cityHero img { border-radius:50%; object-fit:cover; }

@@ -6,8 +6,8 @@ import CozyArt from "./CozyArt";
 import styles from "./cozy-help.module.css";
 const seenThisSession=new Set<string>();
 
-export default function CozyFirstVisitHelp({helpId,enabled,title,steps,compact=true,inHeader=false}:{
- helpId:string;enabled:boolean;title:string;compact?:boolean;inHeader?:boolean;steps:{art:string;title:string;text:string}[];
+export default function CozyFirstVisitHelp({helpId,enabled,title,steps,compact=true,inHeader=false,automatic=true}:{
+ helpId:string;enabled:boolean;title:string;compact?:boolean;inHeader?:boolean;automatic?:boolean;steps:{art:string;title:string;text:string}[];
 }){
  const [open,setOpen]=useState(false),[step,setStep]=useState(0);
  const anchor=useContext(CozyHelpAnchor);
@@ -21,12 +21,12 @@ export default function CozyFirstVisitHelp({helpId,enabled,title,steps,compact=t
  const dialog=useRef<HTMLDialogElement>(null),checked=useRef<string|null>(null);
  const key=`kw-screen-help:v1:${helpId}`;
  useEffect(()=>{
-  if(!enabled||checked.current===key)return;
+  if(!enabled||!automatic||checked.current===key)return;
   checked.current=key;
   if(seenThisSession.has(key))return;
   try{if(localStorage.getItem(key)==="seen")return;}catch{/* Help still works with unavailable storage. */}
   setStep(0);setOpen(true);
- },[enabled,key]);
+ },[automatic,enabled,key]);
  useEffect(()=>{
   if(!open)return;
   const target=document.activeElement,node=dialog.current;

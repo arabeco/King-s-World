@@ -14,8 +14,9 @@ import {
 } from "lucide-react";
 import CozyFirstVisitHelp from "./CozyFirstVisitHelp";
 import CozySanctuaryCard from "./CozySanctuaryCard";
+import CozyAscensionPreview,{type RiteRecovery} from "./CozyAscensionPreview";
 import {wonderPlan} from "@/lib/cozy/legacy-objectives";
-import { QUESTS } from "@/lib/cozy/catalog";
+import { questsForRealm } from "@/lib/cozy/catalog";
 import type { CozyPayload } from "@/lib/cozy/types";
 import {usesMobileReviewRules} from "@/lib/cozy/progression";
 import CozyArt from "./CozyArt";
@@ -29,7 +30,7 @@ import {
 } from "./CozyCrownUI";
 import styles from "./cozy-achievements.module.css";
 
-const TABS = ["Conquistas", "Vitória", "Ranking"] as const;
+const TABS = ["Conquistas", "Vitória", "Ranking", "Ascensão"] as const;
 type LegacyTab = (typeof TABS)[number];
 const QUEST_ART: Record<string, string> = {
   city: "/icons/nav-cities.png",
@@ -50,9 +51,11 @@ export default function CozyAchievements({
   onAlliance,
   onWonderCity,
   onTower,
+  riteRecovery,
   initialTab='Conquistas',
-}: CrownPanelProps & { onCities: () => void; onQuest: (id:string) => void; onAlliance: () => void; onWonderCity:(id:string)=>void; onTower:(q:number,r:number)=>void;initialTab?:LegacyTab }) {
-  const [tab, setTab] = useState<LegacyTab>(initialTab);
+}: CrownPanelProps & { onCities: () => void; onQuest: (id:string) => void; onAlliance: () => void; onWonderCity:(id:string)=>void; onTower:(q:number,r:number)=>void;initialTab?:LegacyTab;riteRecovery:RiteRecovery }) {
+  const tabs: readonly LegacyTab[] = data.world.persistent ? ["Conquistas", "Ascensão"] : ["Conquistas", "Vitória", "Ranking"];
+  const [tab, setTab] = useState<LegacyTab>(tabs.includes(initialTab) ? initialTab : "Conquistas");
   const [towerGuideEnabled,setTowerGuideEnabled]=useState(false);
   const towerDetails=useRef<HTMLDetailsElement>(null);
   const id = useId();
@@ -67,6 +70,7 @@ export default function CozyAchievements({
   const cooperation = computed.influenceDetails.conquests.cooperation;
   const zeroModel=computed.influenceDetails.model==='zero-v1';
   const missionPoints=computed.influenceDetails.conquests.missions;
+  const quests = questsForRealm(state);
   const missions=[...computed.questProgress].sort((a,b)=>Number(b.complete&&!b.claimed)-Number(a.complete&&!a.claimed)||Number(a.claimed)-Number(b.claimed));
   const claimed = computed.questProgress.filter(
     (quest) => quest.claimed,
@@ -77,15 +81,15 @@ export default function CozyAchievements({
 
   function moveTab(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let next = index;
-    if (event.key === "ArrowRight") next = (index + 1) % TABS.length;
+    if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
     else if (event.key === "ArrowLeft")
-      next = (index + TABS.length - 1) % TABS.length;
+      next = (index + tabs.length - 1) % tabs.length;
     else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = TABS.length - 1;
+    else if (event.key === "End") next = tabs.length - 1;
     else return;
     event.preventDefault();
     setTowerGuideEnabled(false);
-    setTab(TABS[next]);
+    setTab(tabs[next]);
     tabRefs.current[next]?.focus();
   }
 
@@ -101,7 +105,7 @@ export default function CozyAchievements({
         </span>
       )}
       <div className={styles.tabs} role="tablist" aria-label="Conquistas">
-        {TABS.map((entry, index) => (
+        {tabs.map((entry, index) => (
           <button
             key={entry}
             ref={(element) => {
@@ -121,7 +125,7 @@ export default function CozyAchievements({
             onKeyDown={(event) => moveTab(event, index)}
           >
             {entry}
-            {entry === "Conquistas" && available > 0 && !computed.readOnly && (
+            {entry === "Conquistas" && available > 0 && !computed.readOnly && !data.world.persistent && (
               <span className={styles.tabDot} aria-hidden="true" />
             )}
           </button>
@@ -130,9 +134,9 @@ export default function CozyAchievements({
 
       <div
         className={styles.content}
-        id={`${id}-panel-${TABS.indexOf(tab)}`}
+        id={`${id}-panel-${tabs.indexOf(tab)}`}
         role="tabpanel"
-        aria-labelledby={`${id}-tab-${TABS.indexOf(tab)}`}
+        aria-labelledby={`${id}-tab-${tabs.indexOf(tab)}`}
         tabIndex={0}
       >
         {tab === "Conquistas" && (
@@ -162,13 +166,14 @@ export default function CozyAchievements({
             </div>
 
             <div className={styles.sectionTitle}>
-              <h3>Missões da temporada</h3>
+              <h3>{data.world.persistent ? "Marcos do reino" : "Missões da temporada"}</h3>
               <span>{available>0&&!computed.readOnly?`${available} ${available===1?"pronta":"prontas"} · `:""}{claimed}/6 registradas</span>
             </div>
             <div className={styles.quests}>
               {missions.map((progress) => {
-                const quest = QUESTS.find((entry) => entry.id === progress.id);
+                const quest = quests.find((entry) => entry.id === progress.id);
                 if (!quest) return null;
+                const reserve = data.world.persistent && progress.id==="defense";
                 return (
                   <article
                     key={progress.id}
@@ -179,7 +184,7 @@ export default function CozyAchievements({
                     <div className={styles.questTop}>
                       <CozyArt
                         src={
-                          QUEST_ART[progress.id] ||
+                          (reserve ? "/icons/resource-gold-v1.png" : QUEST_ART[progress.id]) ||
                           "/icons/influence-legacy.png"
                         }
                         size={42}
@@ -219,7 +224,7 @@ export default function CozyAchievements({
                           <Sparkles size={14} />
                         </CrownButton>
                       ) : (
-                        <CrownButton quiet onClick={()=>onQuest(progress.id)} aria-label={`${computed.readOnly?"Ver":"Avançar"} missão: ${quest.name}`}>{({city:"Cuidar das cidades",expansion:"Explorar o mundo",exploration:"Explorar o mundo",research:"Ver pesquisas",defense:"Preparar exército",council:"Ouvir o Conselho"} as Record<string,string>)[progress.id]??"Continuar"}<ArrowRight size={14}/></CrownButton>
+                        <CrownButton quiet onClick={()=>onQuest(progress.id)} aria-label={`${computed.readOnly?"Ver":"Avançar"} missão: ${quest.name}`}>{reserve ? "Procurar reserva" : ({city:"Cuidar das cidades",expansion:"Explorar o mundo",exploration:"Explorar o mundo",research:"Ver pesquisas",defense:"Preparar exército",council:"Ouvir o Conselho"} as Record<string,string>)[progress.id]??"Continuar"}<ArrowRight size={14}/></CrownButton>
                       )}
                     </div>
                   </article>
@@ -302,6 +307,7 @@ export default function CozyAchievements({
           <Portal data={data} act={act} locked={locked} now={now} />
         )}
         {tab === "Ranking" && <SeasonRanking data={data} />}
+        {tab === "Ascensão" && <CozyAscensionPreview data={data} act={act} locked={locked} now={now} recovery={riteRecovery}/>}
       </div>
     </CrownPanel>
   );

@@ -8,3 +8,4 @@
 .zoom button { border-radius: 6px; background: linear-gradient(#302f29,#1c1d1a); border-color: #bb9b6277; }
 
 .scene{background:radial-gradient(ellipse at 50% 40%,#272a2d,#191c20 75%);}.zoom button{display:grid;place-items:center;padding:0;}.zoom button[aria-pressed=false]{color:#b6b6b2;border-style:dashed;}
+.scene[data-founding] .zoom { top: 10px; }

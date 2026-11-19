@@ -9,7 +9,8 @@ export function damageCityBuildings(state:CozyState,city:CozyCity,defense:number
  for(const hit of damage)for(const order of state.orders){
   // Preserve prepaid work and timing, but show/execute the new actual result level.
   if(order.kind==='upgrade'&&order.cityId===city.id&&order.sector===hit.sector&&order.planned)
-   order.planned.expectedLevel=Math.max(0,order.planned.expectedLevel-(hit.from-hit.to));
+   if (order.planned.expectedLevel !== undefined)
+    order.planned.expectedLevel=Math.max(0,order.planned.expectedLevel-(hit.from-hit.to));
  }
  return damage;
 }

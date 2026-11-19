@@ -11,9 +11,9 @@ import type {
 export const researchCost=(state:CozyState,level:number)=>Math.round(200*1.7**level*(state.progression?.balance?.expressEconomy?0.25:1));
 export const upgradeCost=(state:CozyState,level:number)=>Math.round(150*(state.progression?.balance?.constructionGrowth??1.42)**level);
 export const planningCapacity=(state:CozyState)=>state.progression?.balance?.plannedCapacity??4;
-export function getCozyResearchDurationMs(state:CozyState,research:CozyResearch,dayMs:number):number {
+export function getCozyResearchDurationMs(state:CozyState,research:CozyResearch,dayMs:number,level=state.research[research]):number {
   const sages=state.heroes.filter(hero=>hero.role==="sage"&&hero.cityId!==null).length;
-  return Math.round(dayMs*(0.25+state.research[research]*0.1)*(1-Math.min(4,sages)*0.15));
+  return Math.round(dayMs*(0.25+level*0.1)*(1-Math.min(4,sages)*0.15));
 }
 
 export function getCozyUpgradeDurationMs(
@@ -236,6 +236,14 @@ export const QUESTS = [
     points: 50,
   },
 ];
+
+// The slot ID remains stable for players who already collected the old preview milestone.
+export function questsForRealm(state: CozyState) {
+  if (!state.progression?.feats.frontier) return QUESTS;
+  return QUESTS.map(quest=>quest.id==="defense" ? {
+    ...quest,name:"Uma reserva do reino",description:"Anexe uma área de ouro ou materiais.",target:1,
+  } : quest);
+}
 export const COZY_LIMITS = {
   cities: 10,
   heroes: 10,

@@ -1,0 +1,18 @@
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffd275;
+  box-shadow: 0 0 0 2px #191919;
+  vertical-align: middle;
+}
+
+.dot[data-corner] {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+}
+.visible { display: inline-flex; align-items: center; }
+.anchor { position: absolute; width: 1px; height: 1px; pointer-events: none; }

@@ -10,14 +10,16 @@ import Link from "next/link";
 import type { WorldSummary } from "@/lib/mock-data";
 import styles from "./lobby.module.css";
 
-type DiscoverableWorld = {slug:string;name:string;status:string;mode:string;combatMode?:"cozy"|"competitive";capacity:number;players:number;startsAt:string;locked:boolean};
+type DiscoverableWorld = {slug:string;name:string;status:string;mode:string;combatMode?:"cozy"|"competitive";persistent?:boolean;capacity:number;players:number;startsAt:string;locked:boolean};
 
 function rememberWorld(key:string,value:string){try{window.localStorage.setItem(key,value);}catch{/* Remembering a selection must never block entering a world. */}}
 function worldDay(world: DiscoverableWorld): number {
   if (world.status === "open") return 0;
   const start = Date.parse(world.startsAt);
   const duration = world.mode === "express" ? 30 : 120;
-  return Number.isFinite(start) ? Math.min(duration, Math.max(1, Math.floor((Date.now()-start)/86_400_000)+1)) : 0;
+  if (!Number.isFinite(start)) return 0;
+  const day = Math.max(1, Math.floor((Date.now() - start) / 86_400_000) + 1);
+  return world.persistent ? day : Math.min(duration, day);
 }
 
 function hrefForWorld(world: WorldSummary): string {
@@ -34,13 +36,15 @@ function toneForWorld(world: WorldSummary): "success" | "neutral" | "warning" {
 export function LobbyWorldSelector({
   username,
   worlds,
+  persistentPreview = false,
 }: {
   username: string;
   worlds: WorldSummary[];
+  persistentPreview?: boolean;
 }) {
   const router = useRouter();
   const [view,setView]=useState<"mine"|"search"|"create">(worlds.length?"mine":"create");
-  const firstPlayableWorld = worlds.find((world) => world.rulesVersion === 2 && world.status !== "Finalizado") ?? worlds.find(world=>world.rulesVersion===2) ?? worlds[0] ?? null;
+  const firstPlayableWorld = worlds.find((world) => world.rulesVersion === 2 && world.status !== "Finalizado" && !world.reignArchived) ?? worlds.find(world=>world.rulesVersion===2) ?? worlds[0] ?? null;
   const storageKey = `kw:last-world:${username}`;
   const [selectedWorldId, setSelectedWorldId] = useState(firstPlayableWorld?.id ?? "");
   const [creatingWorld, setCreatingWorld] = useState(false);
@@ -59,6 +63,7 @@ export function LobbyWorldSelector({
   const [joinCode, setJoinCode] = useState("");
   const [joiningCode, setJoiningCode] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [reentryPasswordWorld, setReentryPasswordWorld] = useState<string | null>(null);
   const selectedWorld = useMemo(
     () => worlds.find((world) => world.id === selectedWorldId) ?? firstPlayableWorld,
     [firstPlayableWorld, selectedWorldId, worlds],
@@ -66,7 +71,8 @@ export function LobbyWorldSelector({
 
   const duration=selectedWorld?.durationDays??(selectedWorld?.seasonMode==='express'?30:120);
   const speed=selectedWorld?.speedMultiplier??(selectedWorld?.seasonMode==='express'&&duration===120?4:1);
-  const calendar=seasonDisplay(selectedWorld?.day??0,duration,duration/Math.max(1,speed));
+  const calendar=seasonDisplay(selectedWorld?.day??0,duration,duration/Math.max(1,speed),selectedWorld?.persistent);
+  const creatingPersistent = persistentPreview && combatMode === "cozy";
   useEffect(() => {
     let savedWorldId:string|null=null;try{savedWorldId=window.localStorage.getItem(storageKey);}catch{/* Optional selection preference. */}
     if (savedWorldId && worlds.some((world) => world.id === savedWorldId && world.rulesVersion === 2)) {
@@ -155,19 +161,21 @@ export function LobbyWorldSelector({
     });
   };
 
-  const joinByCode = async () => {
+  const join = async (reentrySlug?:string) => {
     const code = joinCode.trim().toUpperCase();
-    if (!code && !selectedDiscovery) return;
+    const slug = reentrySlug??selectedDiscovery?.slug;
+    if (joiningCode || (!code && !slug)) return;
     setJoiningCode(true);
     setJoinError(null);
     try {
       const response = await fetch("/api/worlds/join", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(selectedDiscovery ? {slug:selectedDiscovery.slug,password:joinPassword} : {code,password:joinPassword}),
+        body: JSON.stringify(slug ? {slug,password:joinPassword} : {code,password:joinPassword}),
       });
-      const payload = (await response.json()) as { world?: { slug?: string; href?: string }; error?: string };
+      const payload = (await response.json()) as { world?: { slug?: string; href?: string }; error?: string; code?: string };
       if (!response.ok || !payload.world?.href) {
+        if(reentrySlug&&payload.code==="PASSWORD_REQUIRED")setReentryPasswordWorld(reentrySlug);
         throw new Error(payload.error ?? "Código inválido.");
       }
       if (payload.world.slug) {
@@ -181,6 +189,7 @@ export function LobbyWorldSelector({
       setJoiningCode(false);
     }
   };
+  const joinByCode=()=>void join();
 
   return (
     <div className={styles.worlds}>
@@ -193,7 +202,7 @@ export function LobbyWorldSelector({
           <select
             aria-label="Trocar mundo"
             value={selectedWorldId}
-            onChange={(event) => setSelectedWorldId(event.target.value)}
+            onChange={(event) => {setSelectedWorldId(event.target.value);setJoinError(null);setReentryPasswordWorld(null);setJoinPassword("");}}
             data-smoke="lobby-world-picker"
           >
             {worlds.map((world) => (
@@ -216,17 +225,31 @@ export function LobbyWorldSelector({
                 <div>
                   <strong>{selectedWorld.name}</strong>
                   <p className="list-meta">
-                    {selectedWorld.seasonMode==='express'?'Expresso':'Normal'} · {selectedWorld.status==='Em Aberto'?'Aguardando abertura':`Dia ${calendar.day}/${calendar.duration} reais`} · {selectedWorld.players} {selectedWorld.players===1?'jogador':'jogadores'}
+                    {selectedWorld.seasonMode==='express'?'Expresso':'Normal'} · {selectedWorld.status==='Em Aberto'?'Aguardando abertura':`Dia ${calendar.day}${selectedWorld.persistent ? "" : `/${calendar.duration} reais`}`} · {selectedWorld.players} {selectedWorld.players===1?'jogador':'jogadores'}
                   </p>
                 </div>
-                <StatusBadge label={selectedWorld.status} tone={toneForWorld(selectedWorld)} />
+                <StatusBadge label={selectedWorld.reignArchived?"Reinado arquivado":selectedWorld.status} tone={toneForWorld(selectedWorld)} />
               </div>
             </div>
           ) : null}
 
-          {selectedWorld&&<button className="primary-button" type="button" onClick={enterWorld} data-smoke="lobby-enter-world">
-            {selectedWorld?.status === "Finalizado" ? "Ver resultado" : selectedWorld?.status === "Em Andamento" ? "Continuar reinado" : "Entrar no mundo"}
-          </button>}
+          {selectedWorld?.reignArchived ? <>
+            {reentryPasswordWorld===selectedWorld.id && <input type="password" autoComplete="off" aria-label="Senha do mundo"
+              value={joinPassword} maxLength={64} onChange={event=>setJoinPassword(event.target.value)}
+              onKeyDown={event=>{if(event.key==="Enter"&&joinPassword)void join(selectedWorld.id);}}/>}
+            <button type="button" className="primary-button" disabled={joiningCode || (reentryPasswordWorld===selectedWorld.id&&!joinPassword)}
+              onClick={()=>void join(selectedWorld.id)}>Começar novo reinado</button>
+            <Link className="secondary-button" href="/inventory/legacy">Ver no Legado</Link>
+            {joinError && <p role="alert">{joinError}</p>}
+          </> : selectedWorld && (selectedWorld.status !== "Finalizado" && (selectedWorld.founding || selectedWorld.capitalName)
+            ? <Link className="primary-button" href={`/world/${selectedWorld.id}/intelligence`} data-smoke="lobby-enter-world"
+                onClick={() => rememberWorld(storageKey, selectedWorld.id)}>
+                {selectedWorld.founding ? "Continuar fundação" : `Continuar em ${selectedWorld.capitalName}`}
+              </Link>
+            : <button className="primary-button" type="button" onClick={enterWorld} data-smoke="lobby-enter-world">
+                {selectedWorld.status === "Finalizado" ? "Ver resultado" : selectedWorld.status === "Em Andamento"
+                  ? "Continuar reinado" : "Entrar no mundo"}
+              </button>)}
           {process.env.NODE_ENV !== "production" ? (
             <div className="inline-actions lobby-dev-actions">
               <button className="secondary-button" type="button" onClick={() => createTestWorld("classic")} disabled={creatingWorld} data-smoke="create-test-world">
@@ -271,7 +294,7 @@ export function LobbyWorldSelector({
                   style={{ flex: 1 }}
                   data-smoke="create-world-normal"
                 >
-                  Clássico · 120 dias reais
+                  {creatingPersistent ? "Normal" : "Clássico · 120 dias reais"}
                 </button>
                 <button
                   type="button"
@@ -280,7 +303,7 @@ export function LobbyWorldSelector({
                   style={{ flex: 1 }}
                   data-smoke="create-world-express"
                 >
-                  Expresso · 30 dias reais
+                  {creatingPersistent ? "Expresso ×4" : "Expresso · 30 dias reais"}
                 </button>
               </div>
               <div className="inline-actions" role="group" aria-label="Confrontos no mundo"><button type="button" disabled={creatingWorld} aria-pressed={combatMode==='cozy'} className={combatMode==='cozy'?'primary-button':'secondary-button'} onClick={()=>setCombatMode('cozy')}>Cozy · sem PvP</button><button type="button" disabled={creatingWorld} aria-pressed={combatMode==='competitive'} className={combatMode==='competitive'?'primary-button':'secondary-button'} onClick={()=>setCombatMode('competitive')}>Competitivo · PvP</button></div>
@@ -322,7 +345,7 @@ export function LobbyWorldSelector({
           {!directoryError && !filteredWorlds.length && <p>Nenhum mundo encontrado.</p>}
           {filteredWorlds.map(world=><button key={world.slug} type="button" className="world-card lobby-compact-card" onClick={()=>{setSelectedDiscovery(world);setJoinPassword("");setJoinError(null);}} style={{textAlign:"left"}}>
             <strong>{world.name} {world.locked && <Lock size={15} aria-label="Com senha"/>}</strong>
-            <span className="list-meta" style={{display:"block"}}>{world.mode==="express"?"Expresso · 30 dias":"Clássico · 120 dias"} · {world.players}/{world.capacity} jogadores · {world.status==="open"?"Aguardando":`Dia ${worldDay(world)}`} · {world.combatMode==='competitive'?'Competitivo · PvP':'Cozy · sem PvP'}</span>
+            <span className="list-meta" style={{display:"block"}}>{world.persistent ? (world.mode === "express" ? "Expresso ×4" : "Normal") : (world.mode === "express" ? "Expresso · 30 dias" : "Clássico · 120 dias")} · {world.players}/{world.capacity} jogadores · {world.status==="open"?"Aguardando":`Dia ${worldDay(world)}`} · {world.combatMode==='competitive'?'Competitivo · PvP':'Cozy · sem PvP'}</span>
           </button>)}
           {selectedDiscovery && <div className="world-card lobby-compact-card"><strong>{selectedDiscovery.name}</strong><p className="list-meta">{selectedDiscovery.locked ? "Senha necessária" : "Entrada sem senha"}</p>
             {selectedDiscovery.locked && <input type="password" autoComplete="off" aria-label="Senha do mundo" value={joinPassword} maxLength={64} onChange={event=>setJoinPassword(event.target.value)}/>}

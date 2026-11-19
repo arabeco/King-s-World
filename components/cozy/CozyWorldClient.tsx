@@ -9,6 +9,8 @@ import {seasonDisplay} from "@/lib/cozy/season-display";
 import {kingdomJourney,type JourneyTarget} from "@/lib/cozy/kingdom-journey";
 import CozyNextSteps from "./CozyNextSteps";
 import CozyRealmUpdates from "./CozyRealmUpdates";
+import {CozyNovelty} from "./CozyNovelty";
+import {allianceNoticeIds,cityNotice,councilNotice,isNewNotice,unreadAllianceGifts} from "@/lib/cozy/notices";
 import {WorldLoadingScreen} from "../world-loading-screen";
 import CozyAlliance from "./CozyAlliance";
 import {WorldEquipmentSlots} from "./WorldEquipmentSlots";
@@ -31,6 +33,7 @@ import CozyMilitary from "./CozyMilitary";
 import HordeCard from "./CozyHordeWarning";
 import CozyGovernment from "./CozyGovernment";
 import CozyCouncil from "./CozyCouncil";
+import CozyFounding from "./CozyFounding";
 import CozyAchievements from "./CozyAchievements";
 import { commandFeedback } from "./cozy-feedback";
 import CozyRealmPanorama from "./CozyRealmPanorama";
@@ -228,15 +231,14 @@ function Progress({
 type GameOverlay =
   CrownPanel | "orders" | "defense" | "influence" | "menu" | "resources" | "royalProfile";
 
-function influenceSources(area:CrownPanel,{state,computed}:CozyPayload): [string,number|string][] {
+function influenceSources(area:CrownPanel,{state,computed,world}:CozyPayload): [string,number|string][] {
   const d=computed.influenceDetails;
   if(area==="infrastructure")return state.cities.map(c=>[c.name,d.cities[c.id]??0]);
   if(area==="achievements")return [["Marcos",d.conquests.missions],["Maravilhas",d.conquests.wonderPoints],...(d.conquests.cooperation?[["Cooperação",d.conquests.cooperation] as [string,number]]:[])];
   if(area==="government")return d.model==="legacy"?[["Heróis em função",d.government.heroes]]:[["Heróis",d.government.heroes],["Pesquisas",d.government.research]];
   if(area==="military"){
     if(d.model==="legacy")return [["Tropas e muralhas",Math.floor(d.military.capacity/6)],["Pesquisa militar",state.research.military*15]];
-    const victories=Math.floor(Math.min(6,state.hordesWon)/6*(state.progression?.balance?.militaryVictoryMax??0));
-    return [["Preparo",computed.influence.military-victories],["Hordas vencidas",victories]];
+    return [["Preparo",d.military.readiness],[world.persistent?"Alvos vencidos":"Hordas vencidas",d.military.victories.points]];
   }
   if(d.model==="legacy")return [["Satisfação",Math.round(state.satisfaction)+"%"],["Sociedade",state.cities.reduce((n,c)=>n+c.sectors.society,0)+" níveis"]];
   const sources=state.progression?.council.sources;
@@ -360,12 +362,13 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
   const [governmentTab, setGovernmentTab] = useState<"heroes" | "research">(
     "heroes",
   );
-  const [achievementEntry,setAchievementEntry]=useState<"Conquistas"|"Vitória"|"Ranking"|undefined>();
+  const [achievementEntry,setAchievementEntry]=useState<Extract<JourneyTarget,{kind:"achievements"}>["tab"]>();
   const [panel, setPanel] = useState<GameOverlay | null>(null);
 
   const [cityId, setCityId] = useState<string | null>(null);
   const [cityEntry, setCityEntry] = useState<CozyCityEntry>("sectors");
   const [cityVisit, setCityVisit] = useState(0);
+  const [focusReportId,setFocusReportId] = useState<string>();
   const [governmentResearch, setGovernmentResearch] = useState<CozyResearch | undefined>();
   const [mapTarget, setMapTarget] = useState<{ q: number; r: number } | null>(
     null,
@@ -459,7 +462,11 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
   const helpCount=data.shared.support.filter(s=>s.allianceId===group?.id&&s.arrivesAt>clock&&s.supporterId===null&&s.requesterId!==state.playerId).length;
   const entryCount=group?.founderId===state.playerId?group.requests?.length??0:0;
   const projectNotice=state.reports.some(r=>r.kind==='alliance'&&r.title==='Projeto da aliança concluído'&&r.at>state.readAt);
-  const allianceNotice=invitationCount?`${invitationCount} convite${invitationCount>1?'s':''} de aliança`:helpCount?`${helpCount} pedido${helpCount>1?'s':''} de ajuda`:entryCount?`${entryCount} pedido${entryCount>1?'s':''} de entrada`:projectNotice?'Projeto concluído':null;
+  const giftCount = world.persistent ? unreadAllianceGifts(state).length : 0;
+  const allianceNew = world.persistent && (giftCount>0 || allianceNoticeIds(state,data.shared,clock).some(id=>isNewNotice(state,id)));
+  const allianceNotice=invitationCount?`${invitationCount} convite${invitationCount>1?'s':''} de aliança`:helpCount?`${helpCount} pedido${helpCount>1?'s':''} de ajuda`:entryCount?`${entryCount} pedido${entryCount>1?'s':''} de entrada`:giftCount?`${giftCount} presente${giftCount===1?' recebido':'s recebidos'}`:!world.persistent&&projectNotice?'Projeto concluído':null;
+  const councilNew = world.persistent && computed.decree && isNewNotice(state,councilNotice(computed.decree.id));
+  const citiesNew = world.persistent && Object.values(computed.cityLife).some(({decision})=>decision && isNewNotice(state,cityNotice(decision.id)));
   const props: PanelProps = { data, act, locked, now: clock };
   const city =
     state.cities.find((entry) => entry.id === cityId) || state.cities[0];
@@ -469,13 +476,23 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
     (entry) => getCityDevelopment(entry) >= 100 && !entry.wonder,
   );
   const journey=kingdomJourney(data,clock);
-  const reference=influenceReference(data,clock);
-  const calendar=seasonDisplay(computed.day,computed.durationDays,computed.realDurationDays);
+  const firstExplore=journey.find(step=>step.id==="first-explore");
+  const reference=world.persistent ? null : influenceReference(data,clock);
+  const calendar=seasonDisplay(computed.day,computed.durationDays,computed.realDurationDays,world.persistent);
   const navigate = (next: Screen) => {
     setPanel(null);
     setScreen(next);
-    if (next === "cities") setCityId(null);
+    if (next === "reports") setFocusReportId(undefined);
+    if (next === "cities") {
+      setCityId(world.foundingOnboarding && state.cities.length === 1 ? state.cities[0].id : null);
+      setCityEntry("sectors");
+      setCityVisit(visit => visit + 1);
+    }
     if (next === "map") setMapTarget(null);
+  };
+  const openReports = (id?: string) => {
+    navigate("reports");
+    setFocusReportId(id);
   };
   const openTreasury=(resource:keyof CozyResources)=>{setTreasuryResource(resource);setPanel("resources");};
   const openCity = (id: string, entry: CozyCityEntry = "sectors") => {
@@ -486,7 +503,13 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
     setScreen("cities");
   };
   const openOrder = (order: CozyOrder) => {
-    if (order.kind === "upgrade" && order.cityId) {
+    if (order.riteExpedition) {
+      setAchievementEntry("Ascensão");
+      setPanel("achievements");
+    } else if (order.tradeRoute) {
+      setGovernmentTab("heroes");
+      setPanel("government");
+    } else if (order.kind === "upgrade" && order.cityId) {
       openCity(order.cityId, order.sector ?? "sectors");
     } else if (order.kind === "portal") {
       setPanel("achievements");
@@ -502,10 +525,11 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
   };
   const followJourney=(target:JourneyTarget)=>{
     if(target.kind==='city')openCity(target.cityId,target.entry);
-    else if(target.kind==='map')navigate('map');
-    else if(target.kind==='reports')navigate('reports');
+    else if(target.kind==='map'){navigate('map');if(target.coord)setMapTarget(target.coord);}
+    else if(target.kind==='reports')openReports(target.reportId);
     else if(target.kind==='achievements'){setAchievementEntry(target.tab);setPanel('achievements');}
     else if(target.kind==='research'){setGovernmentTab('research');setGovernmentResearch(target.research);setPanel('government');}
+    else if(target.kind==='court'){setGovernmentTab('heroes');setGovernmentResearch(undefined);setPanel('government');}
     else setPanel(target.kind);
   };
   const overlayTitles: Record<GameOverlay, string> = {
@@ -587,6 +611,10 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
     </>
   );
 
+  if (state.founding)
+    return <CozyFounding key={`${world.id}:${state.playerId}`} data={data} act={act}
+      locked={pending || Boolean(uncertain)} feedback={feedback} now={clock} />;
+
   return (
     <div className={`${styles.root} ${game.root}`}>
       <div className={game.frame}>
@@ -599,18 +627,20 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
               <span>
                 <strong>{world.name}</strong>
                 <small>
-                  {state.defeat&&state.finalizedAt===null
+                  {state.ascension
+                    ? "Reinado arquivado"
+                    : state.defeat&&state.finalizedAt===null
                     ? `Império derrotado · Dia ${calendar.day} / ${calendar.duration}`
                     : computed.readOnly
                     ? "Temporada encerrada"
                     : computed.started
-                      ? `Dia ${calendar.day} / ${calendar.duration} · ${world.mode === "express" ? world.economyVersion===3?"Expresso ×4" : "Expresso" : "Clássico"}`
+                      ? `Dia ${calendar.day}${world.persistent ? "" : ` / ${calendar.duration}`} · ${world.mode === "express" ? world.economyVersion===3?"Expresso ×4" : "Expresso" : "Clássico"}`
                       : "Aguardando abertura"}
                 </small>
               </span>
             </button>
             <span className={game.hudHelp}>
-              {(!panel||panels.some(area=>area.id===panel))&&<CozyScreenHelp key={panel??(screen==="cities"&&cityId?"city":screen)} screen={(panel as CrownPanel|null)??(screen==="cities"&&cityId?"city":screen)} playerId={state.playerId} enabled={Boolean(state.king?.profileId)} inHeader={false}/>}
+              {(!panel||panels.some(area=>area.id===panel))&&<CozyScreenHelp key={panel??(screen==="cities"&&cityId?"city":screen)} screen={(panel as CrownPanel|null)??(screen==="cities"&&cityId?"city":screen)} playerId={state.playerId} enabled={Boolean(state.king?.profileId)} inHeader={false} persistent={world.persistent} automatic={!(world.foundingOnboarding&&(panel==="council"||(!panel&&screen==="crown")))}/>}
             </span>
             <button
               type="button"
@@ -663,7 +693,11 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
               {state.defeat&&<section className={game.defeatSummary} aria-label="Fim do império"><CozyArt src="/icons/action-defend.png" size={50}/><h2>Seu império foi derrotado</h2><p>{state.finalizedAt!==null?'O resultado da temporada está registrado.':'O mundo continua. Seu resultado será fechado no fim da temporada.'}</p><button type="button" className="primary-button" onClick={()=>navigate('reports')}>Ver relatos</button><button type="button" onClick={()=>setPanel('achievements')}>Ver ranking</button><Link href="/lobby">Voltar ao lobby</Link></section>}
               {!state.defeat&&state.capitalSelectionPending&&<button type="button" className="primary-button" onClick={()=>navigate('cities')}>Escolher nova capital</button>}
               {!state.defeat&&<CozyRealmPanorama cities={state.cities} tiles={data.tiles} owner={state.playerId} royal={<CozyRoyalProfile key={`${state.playerId}:${state.king?.generation??0}:${state.king?.alive??false}`} data={data} act={act} locked={pending||Boolean(uncertain)||computed.readOnly} feedback={feedback} />} />}
-              {!state.defeat&&<CozyRealmUpdates data={data} now={clock} allianceNotice={allianceNotice} onOrders={()=>setPanel("orders")} onDefense={()=>setPanel("defense")} onReports={()=>navigate("reports")} onCouncil={()=>setPanel("council")} onAlliance={()=>navigate("alliance")} onCity={id=>openCity(id,"decisions")}/>}
+              {state.firstAudience&&<div className={game.foundingWelcome}>
+                <ActionButton onClick={()=>setPanel("council")}><CozyArt src="/icons/nav-intel.png" size={24}/>Ouvir o Conselho</ActionButton>
+                {firstExplore&&<ActionButton quiet onClick={()=>followJourney(firstExplore.target)}>Explorar arredores</ActionButton>}
+              </div>}
+              {!state.defeat&&<CozyRealmUpdates data={data} now={clock} allianceNotice={allianceNotice} allianceNew={Boolean(allianceNew)} onOrders={()=>setPanel("orders")} onDefense={()=>setPanel("defense")} onReports={openReports} onCouncil={()=>setPanel("council")} onAlliance={()=>navigate("alliance")} onCity={id=>openCity(id,"decisions")}/>}
 
 
               <div className={game.cityDock}>
@@ -685,7 +719,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                       </ActionButton>
                     )}
                   </div>
-                ) : (
+                ) : !state.firstAudience && (
                   <CozyNextSteps steps={journey} now={clock} onNavigate={followJourney}/>
                 )}
                 </>}
@@ -693,10 +727,11 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                   {panels.map(({id,title,image})=>{
                     const scoreKey = id === "council" ? "society" : id === "achievements" ? "legacy" : id;
                     const score = computed.influence[scoreKey];
-                    return <button type="button" key={id} data-command={id} aria-label={title} aria-haspopup="dialog" onClick={()=>{if(id==="government")setGovernmentTab("heroes");if(id==="achievements")setAchievementEntry(undefined);setPanel(id);}}>
+                    const unseen = id==="council" ? councilNew : id==="infrastructure" ? citiesNew : false;
+                    return <button type="button" key={id} data-command={id} aria-label={title} aria-description={unseen?"Novidade":undefined} aria-haspopup="dialog" onClick={()=>{if(id==="government")setGovernmentTab("heroes");if(id==="achievements")setAchievementEntry(undefined);setPanel(id);}}>
                       <CozyArt src={image} size={36} priority/>
                       <span><strong>{title}</strong><b key={score}>{score}<small>/500</small></b></span>
-                      {((id==="infrastructure"&&wonderReady)||(id==="council"&&computed.decree)||(id==="achievements"&&!!computed.sanctuaryThreats?.length))&&<i aria-label="Atenção"/>}
+                      {world.persistent ? unseen&&<CozyNovelty corner/> : ((id==="infrastructure"&&wonderReady)||(id==="council"&&computed.decree)||(id==="achievements"&&!!computed.sanctuaryThreats?.length))&&<i aria-label="Atenção"/>}
                     </button>;
                   })}
                   <CozyInfluenceTrack score={computed.influence.total} reference={reference} onOpen={()=>setPanel("influence")}/>
@@ -759,8 +794,15 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                   data={data}
                   act={act}
                   busy={pending || Boolean(uncertain)}
+                  focusReportId={focusReportId}
                   onFollowUp={(target,report)=>{
-                    if(target==='world'){navigate('map');if(report?.battle)setMapTarget({q:report.battle.city.q,r:report.battle.city.r});return;}
+                    if(target==='rite'){setAchievementEntry('Ascensão');setPanel('achievements');return;}
+                    if(target==='world'){navigate('map');const location=report?.location??report?.battle?.city;if(location)setMapTarget({q:location.q,r:location.r});return;}
+                    if (target === "cities" && report?.location) {
+                      const location = report.location;
+                      const city = state.cities.find(entry => entry.q === location.q && entry.r === location.r);
+                      if (city) { openCity(city.id,report.kind==="council"?"decisions":"sectors"); return; }
+                    }
                     if(target==='alliance'){navigate('alliance');return;}
                     if(target==='treasury'){openTreasury('materials');return;}
                     if(target==='government'){setGovernmentResearch(undefined);setGovernmentTab('research');}
@@ -781,23 +823,27 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
               ["alliance", "Aliança", "/icons/alliance-crest-v1.png"],
               ["reports", "Relatos", "/icons/nav-intel.png"],
             ] as const
-          ).map(([id, label, art]) => (
+          ).map(([id, label, art]) => {
+            const unseen = world.persistent && (id==="cities"&&citiesNew || id==="alliance"&&allianceNew || id==="reports"&&computed.unreadReports>0);
+            return (
             <button
               type="button"
               key={id}
               aria-label={label}
+              aria-description={unseen?"Novidade":undefined}
               onClick={() => navigate(id)}
               aria-current={screen === id ? "page" : undefined}
             >
               <CozyArt src={art} size={32} priority />
               <span>{label}</span>
-              {id === "reports" && computed.unreadReports > 0 && (
+              {unseen&&<CozyNovelty corner/>}
+              {!world.persistent && id === "reports" && computed.unreadReports > 0 && (
                 <small>
                   {computed.unreadReports > 9 ? "9+" : computed.unreadReports}
                 </small>
               )}
             </button>
-          ))}
+          );})}
           <span
             className={game.syncState}
             role="status"
@@ -855,6 +901,14 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
               <CozyMilitary
                 {...props}
                 onOrders={()=>setPanel('orders')}
+                onExpedition={()=>{
+                  const victories = state.progression?.feats.frontier?.victories ?? [];
+                  const target = data.tiles.filter(tile=>tile.attackable && state.explored.includes(tile.id) &&
+                    !tile.occupation?.canAnnex && !victories.includes(tile.id))
+                    .sort((a,b)=>Number(Boolean(b.combat?.attackWins))-Number(Boolean(a.combat?.attackWins)) || a.distance-b.distance)[0];
+                  navigate("map");
+                  if(target)setMapTarget({q:target.q,r:target.r});
+                }}
                 onThreat={()=>setPanel('defense')}
                 onResources={()=>openTreasury("materials")}
                 onCities={()=>navigate("cities")}
@@ -870,10 +924,13 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
             {panel === "government" && (
               <CozyGovernment {...props} onResources={()=>openTreasury("gold")} initialTab={governmentTab} initialResearch={governmentResearch} onCity={id=>openCity(id,"decisions")} />
             )}
-            {panel === "council" && <CozyCouncil {...props} onCity={id=>openCity(id,"decisions")} />}
+            {panel === "council" && <CozyCouncil {...props}
+              locked={state.firstAudience ? pending || Boolean(uncertain) || computed.readOnly : locked}
+              onCity={id=>openCity(id,"decisions")} onWelcomeCity={id=>openCity(id,"society")} />}
             {panel === "achievements" && (
               <CozyAchievements
                 {...props}
+                riteRecovery={{error,uncertain:Boolean(uncertain),busy:pending,retry:retryCommand}}
                 initialTab={achievementEntry??(state.defeat?'Ranking':'Conquistas')}
                 onWonderCity={id=>openCity(id,"decisions")}
                 onTower={(q,r)=>{setMapTarget({q,r});setPanel(null);setScreen("map");}}
@@ -883,7 +940,13 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                   if(id==="city")navigate("cities");
                   else if(id==="exploration"||id==="expansion")navigate("map");
                   else if(id==="research"){setGovernmentResearch(undefined);setGovernmentTab("research");setPanel("government");}
-                  else if(id==="defense")setPanel("military");
+                  else if(id==="defense"){
+                    if(!world.persistent){setPanel("military");return;}
+                    const target = data.tiles.filter(tile=>tile.area?.canAnnex && tile.area.owners.length===0)
+                      .sort((a,b)=>a.distance-b.distance)[0];
+                    navigate("map");
+                    if(target)setMapTarget({q:target.q,r:target.r});
+                  }
                   else if(id==="council")setPanel("council");
                 }}
               />
@@ -895,6 +958,8 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
               <CozyOrders
                 data={data}
                 now={clock}
+                act={act}
+                locked={locked}
                 onOrder={openOrder}
                 onCities={() => navigate("cities")}
                 onExplore={() => navigate("map")}
@@ -903,7 +968,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
             )}
             {panel === "influence" && (
               <>
-                <CozyScreenHelp screen="influence" playerId={state.playerId}/>
+                <CozyScreenHelp screen="influence" playerId={state.playerId} persistent={world.persistent}/>
                 <Heading
                   eyebrow="A força do seu reino"
                   title={`${number(computed.influence.total)} / 2.500`}
@@ -959,7 +1024,7 @@ export function CozyWorldClient({ worldId }: { worldId: string }) {
                 <Heading eyebrow="KING’S WORLD" title={world.name} />
                 <WorldEquipmentSlots value={state.king?.equipment??[]}/>
                 <p className={styles.intro}>
-                  {world.mode === "express"
+                  {world.persistent ? (world.mode === "express" ? "Mundo persistente · Expresso ×4" : "Mundo persistente · Normal") : world.mode === "express"
                     ? `Expresso · ${computed.realDurationDays} dias reais, ${computed.durationDays} dias de jogo.`
                     : "Clássico · 120 dias de jogo."}
                 </p>

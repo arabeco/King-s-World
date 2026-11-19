@@ -10,6 +10,7 @@ import {Grid3X3, Castle} from 'lucide-react';
 import CozyMapArt from './CozyMapArt';
 import {journeyOrigin} from '@/lib/cozy/map-navigation';
 import {explorationPath,explorationCorridor} from '@/lib/cozy/exploration-route';
+import {orderQueued,orderStartsAt} from '@/lib/cozy/order-presentation';
 import {getCityAppearance} from '@/lib/cozy/catalog';
 import {ALL_SANCTUARIES} from '@/lib/cozy/landmarks';
 import styles from './cozy-map-scene.module.css';
@@ -17,8 +18,8 @@ import styles from './cozy-map-scene.module.css';
 const worldHalfHeight = 1663 * MAP_GROUND_Y;
 
 
-type Props={data:CozyPayload;center:CozyCoord;onCenter:(c:CozyCoord)=>void;onSelect:(t:CozyTile)=>void;onUnknown:(c:CozyCoord)=>void;onChoose:(tiles:CozyTile[])=>void;onEmpires:()=>void;selectedId:string|null;unknownCoord:CozyCoord|null;selectionOpen:boolean;scale:number;onScaleChange:(scale:number)=>void;now:number};
-export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,onChoose,onEmpires,selectedId,unknownCoord,selectionOpen,scale,onScaleChange:setScale,now}:Props){
+type Props={data:CozyPayload;center:CozyCoord;onCenter:(c:CozyCoord)=>void;onSelect:(t:CozyTile)=>void;onUnknown:(c:CozyCoord)=>void;onChoose:(tiles:CozyTile[])=>void;onEmpires?:()=>void;selectedId:string|null;unknownCoord:CozyCoord|null;selectionOpen:boolean;scale:number;onScaleChange:(scale:number)=>void;now:number;founding?:boolean};
+export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,onChoose,onEmpires,selectedId,unknownCoord,selectionOpen,scale,onScaleChange:setScale,now,founding=false}:Props){
  const diagonal=data.computed.worldDiagonalLimit??40;
  const edge=40.5,cut=diagonal-40;
  const worldOutline='M'+[[-cut,-edge],[edge,-edge],[edge,cut],[cut,edge],[-edge,edge],[-edge,-cut]].map(([q,r])=>{const p=mapPoint({q,r});return p.x+','+p.y;}).join(' L')+'Z';
@@ -47,6 +48,11 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
  };
  const regions=useMemo(()=>resourceRegions(data.tiles),[data.tiles]);
  const regionAnchors=useMemo(()=>new Set(regions.map(region=>{const points=region.cells.map(mapPoint),middle={x:points.reduce((sum,p)=>sum+p.x,0)/points.length,y:points.reduce((sum,p)=>sum+p.y,0)/points.length};return [...region.cells].sort((a,b)=>{const p=mapPoint(a),q=mapPoint(b);return Math.hypot(p.x-middle.x,p.y-middle.y)-Math.hypot(q.x-middle.x,q.y-middle.y);})[0].id;})),[regions]);
+ const resourceSizes=useMemo(()=>new Map(regions.map(region=>{
+  const points=region.cells.map(mapPoint),middle={x:points.reduce((sum,p)=>sum+p.x,0)/points.length,y:points.reduce((sum,p)=>sum+p.y,0)/points.length};
+  const anchor=[...region.cells].sort((a,b)=>{const p=mapPoint(a),q=mapPoint(b);return Math.hypot(p.x-middle.x,p.y-middle.y)-Math.hypot(q.x-middle.x,q.y-middle.y);})[0];
+  return [anchor.id,Math.min(64,42+Math.floor(Math.sqrt(region.cells.length-1))*6)] as const;
+ })),[regions]);
  const owners=useMemo(()=>Array.from(new Set(data.tiles.filter(t=>t.revealed).flatMap(t=>(t.ownerId??t.territoryOwnerId)?[t.ownerId??t.territoryOwnerId!]:[]))).sort(),[data.tiles]);
  const territories=useMemo(()=>owners.map(id=>{
   const cells=data.tiles.filter(t=>t.revealed&&(t.ownerId??t.territoryOwnerId)===id);
@@ -75,15 +81,17 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
  const finish=()=>{
   if(gesture.current){const c=mapCoord({x:point.x+offsetRef.current.x,y:point.y+offsetRef.current.y});onCenter({q:Math.max(-40,Math.min(40,c.q)),r:Math.max(-40,Math.min(40,c.r))});setOffset({x:0,y:0});}
  };
- const reset=()=>{setOffset({x:0,y:0});setScale(1);const capital=data.state.cities.find(c=>c.capital)??data.state.cities[0];if(capital)onCenter(capital);};
+ const reset=()=>{setOffset({x:0,y:0});setScale(1);const capital=data.state.cities.find(c=>c.capital)??data.state.cities[0]??data.tiles.find(tile=>tile.id===selectedId)??data.tiles[0];if(capital)onCenter(capital);};
  const journeys=data.state.orders.filter(o=>o.q!==undefined&&o.r!==undefined);
- return <div className={styles.scene} ref={root} data-map-scale={scale}>
-  <div className={styles.scales} aria-label="Escala do mapa">
+ const activeJourneys=journeys.filter(order=>!orderQueued(order));
+ const queuedJourneys=journeys.length-activeJourneys.length;
+ return <div className={styles.scene} ref={root} data-map-scale={scale} data-founding={founding||undefined}>
+  {!founding&&<div className={styles.scales} aria-label="Escala do mapa">
    <button onClick={()=>{setScale(minimum);onCenter({q:0,r:0});setOffset({x:0,y:0});}} aria-pressed={scale<.2}>Mundo</button>
    <button onClick={()=>{setScale(.55);setOffset({x:0,y:0});}} aria-pressed={scale>=.2&&scale<.85}>Região</button>
    <button onClick={()=>setScale(1)} aria-pressed={scale>=.85}>Detalhe</button>
-   <button onClick={onEmpires}>Reinos</button>
-  </div>
+   {onEmpires && <button onClick={onEmpires}>Reinos</button>}
+  </div>}
   <div className={styles.surface} role="grid" aria-label="Territórios próximos" tabIndex={0}
    onKeyDown={e=>{const d:Record<string,[number,number]>={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};if(d[e.key]){e.preventDefault();onCenter({q:Math.max(-40,Math.min(40,cq+d[e.key][0])),r:Math.max(-40,Math.min(40,cr+d[e.key][1]))});}else if((e.key==='Enter'||e.key===' ')&&centeredTile){e.preventDefault();onSelect(centeredTile);}}}
    onPointerDown={e=>{if(e.button!==0&&e.pointerType==='mouse')return;pointers.current.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.current.size===1){gesture.current=false;start.current={x:e.clientX,y:e.clientY};}else{gesture.current=true;for(const id of pointers.current.keys())e.currentTarget.setPointerCapture(id);}}}
@@ -125,7 +133,7 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
     </g>
     <g clipPath={`url(#${uid}known)`} opacity=".32" aria-hidden="true">{regions.map(region=><g key={region.id}>{region.cells.filter(t=>near(t,140)).map(t=>{const p=mapPoint(t);return <circle key={t.id} cx={p.x} cy={p.y} r="65" fill={region.kind==='gold'?'#bda15c':'#40705b'}/>;})}</g>)}</g>
     {visible.map(t=><path key={`land-${t.id}`} d={cellPath(t)} fill={!t.revealed?'transparent':(t.ownerId??t.territoryOwnerId)?ownerColor((t.ownerId??t.territoryOwnerId)!)+"66":'#ffffff29'} stroke="none"/>)}
-    <path data-hex-grid d={worldOutline} fill={grid?`url(#${uid}mesh)`:'none'} opacity={Math.max(.075,Math.min(.30,scale*.36))} pointerEvents="none"/>
+    <path data-hex-grid d={worldOutline} fill={grid||founding?`url(#${uid}mesh)`:'none'} opacity={Math.max(.075,Math.min(.30,scale*.36))} pointerEvents="none"/>
     {regions.map(region=>{
      const footprint=region.footprint??region.cells;if(!footprint.some(t=>near(t)))return null;
      return <g key={`area-${region.id}`} data-resource-region={region.id} aria-hidden="true">
@@ -157,10 +165,11 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
       <path d={borderPath(corridor)} fill="#e0cf8f12" stroke="#e0cf8f" strokeWidth={1/scale} strokeDasharray={`${4/scale} ${4/scale}`}/>
       <path d={preview.map((c,i)=>{const p=mapPoint(c);return `${i?'L':'M'}${p.x} ${p.y}`;}).join(' ')} fill="none" stroke="#ffe4a0" strokeWidth={1.5/scale}/>
     </g>}
-    {journeys.filter(()=>scale>=.3).map(order=>{
+    {scale>=.3&&activeJourneys.map(order=>{
      const origin=order.expeditionOrigin??order.explorationPath?.[0]??journeyOrigin(data.state.cities,{q:order.q!,r:order.r!});if(!origin)return null;
      const from=mapPoint(origin),to=mapPoint({q:order.q!,r:order.r!});
-     const progress=Math.max(0,Math.min(1,(now-order.createdAt)/Math.max(1,order.arrivesAt-order.createdAt)));
+     const start=orderStartsAt(order);
+     const progress=Math.max(0,Math.min(1,(now-start)/Math.max(1,order.arrivesAt-start)));
      const x=from.x+(to.x-from.x)*progress,y=from.y+(to.y-from.y)*progress;
      return <g key={`journey-${order.id}`} data-map-journey={order.id} aria-hidden="true" pointerEvents="none">
       <path d={`M${from.x} ${from.y} L${to.x} ${to.y}`} fill="none" stroke="#102c26" strokeWidth={4/scale}/>
@@ -174,6 +183,9 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
     {selected&&<g data-selection-hex={selected.id} pointerEvents="none" aria-hidden="true">
      <path d={cellPath(selected)} fill="#f3d27b25" stroke="#192722" strokeWidth={5/scale}/>
      <path d={cellPath(selected)} fill="none" stroke="#ffdf87" strokeWidth={2/scale} strokeLinejoin="round"/>
+     {data.state.founding && <g transform={`translate(${mapPoint(selected).x - 18} ${mapPoint(selected).y - 18})`}>
+       <CozyMapArt name="cityConstructionStage1" size={36}/>
+     </g>}
     </g>}
     {visible.filter(t=>scale>=.3||t.kind==='city'||t.id===selectedId||(t.q===cq&&t.r===cr)).map(t=>{const p=mapPoint(t),own=t.ownerId===data.state.playerId,small=scale<.3;
      const resourceCell=(t.kind==='gold'||t.kind==='materials')&&!regionAnchors.has(t.id);
@@ -183,10 +195,10 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
      const city=own?data.state.cities.find(c=>c.id===t.cityId):undefined;
      const appearance=city?getCityAppearance(city):null;
      const spent=Boolean(t.deposit&&t.deposit.remaining<=0&&!t.ownerId);
-     const art=spent?null:t.kind==='city'?(appearance?.art??'city'):t.kind==='gold'?'mine':t.kind==='materials'?'materials':t.kind==='abandoned'?'abandoned':t.kind==='npc'?'npc':t.kind==='portal'?'landmark':t.kind==='ruin'?'ruin':null;
+     const art=spent?null:t.kind==='city'?(appearance?.art??'city'):t.kind==='gold'?'cozyMine':t.kind==='materials'?'cozyQuarry':t.kind==='abandoned'?'abandoned':t.kind==='npc'&&t.campRecoveryAt!==undefined?'cozyCampRecovery':t.kind==='npc'?'npc':t.kind==='portal'?'landmark':t.kind==='ruin'?'ruin':null;
      const box=t.kind==='city'&&!small?Math.max(52,44/scale):(small?22:46)/scale;return <foreignObject key={t.id} x={p.x-box/2} y={p.y-box/2} width={box} height={box} overflow="visible">
       <button type="button" role="gridcell" style={{width:box,height:box}} className={styles.tile} data-cozy-tile={t.id} data-centered={t.q===cq&&t.r===cr} aria-selected={t.id===selectedId} aria-label={`${t.name}, ${t.q}, ${t.r}. ${t.kind==='city'?'Cidade':t.clue}${appearance?` · ${appearance.label}`:""}${work?" · obra em andamento":""}`} tabIndex={t.q===cq&&t.r===cr?0:-1} onClick={()=>onSelect(t)}>
-       {t.landmarkId||noMarker?null:small||quiet?<span className={styles.dot} style={{width:(quiet?3:small?3:9)/scale,height:(quiet?3:small?3:9)/scale,opacity:t.revealed?1:0,background:t.ownerId?ownerColor(t.ownerId):spent?'#899f81':t.kind==='npc'?'#c18d73':t.kind==='gold'?'#ddbc69':t.kind==='materials'?'#8ab6a0':'#899f81'}}/>:art&&t.revealed?<CozyMapArt name={art} size={t.kind==='city'?50:(regionAnchors.has(t.id)?42:32)/scale}/>:<span className={styles.fog} style={{fontSize:13/scale}}>{t.revealed?'·':(!selectionOpen&&t.q===cq&&t.r===cr)?'?':''}</span>}
+       {t.landmarkId||noMarker?null:small||quiet?<span className={styles.dot} style={{width:(quiet?3:small?3:9)/scale,height:(quiet?3:small?3:9)/scale,opacity:t.revealed?1:0,background:t.ownerId?ownerColor(t.ownerId):spent?'#899f81':t.kind==='npc'?'#c18d73':t.kind==='gold'?'#ddbc69':t.kind==='materials'?'#8ab6a0':'#899f81'}}/>:art&&t.revealed?<CozyMapArt name={art} size={t.kind==='city'?50:(resourceSizes.get(t.id)??32)/scale}/>:<span className={styles.fog} style={{fontSize:13/scale}}>{t.revealed?'·':(!selectionOpen&&t.q===cq&&t.r===cr)?'?':''}</span>}
       </button>
      </foreignObject>;
     })}
@@ -218,8 +230,8 @@ export default function CozyMapScene({data,center,onCenter,onSelect,onUnknown,on
 
    </svg>
   </div>
-  <div className={styles.zoom}><button type="button" onClick={toggleGrid} aria-label="Mostrar grade de hexágonos" aria-pressed={grid}><Grid3X3 size={19}/></button><button aria-label="Aproximar mapa" disabled={scale>=MAP_MAX_ZOOM} onClick={()=>zoomAt(1.4)}>+</button><button aria-label="Afastar mapa" disabled={scale<=minimum+.001} onClick={()=>zoomAt(1/1.4)}>−</button><button aria-label="Restaurar visão da capital" onClick={reset}>⌂</button></div>
-  {!selectionOpen&&<div className={styles.legend}><span>━ Fronteira</span><span>┄ Recursos</span><span>● Névoa</span>{journeys.length>0&&<span>┄ Suas rotas {journeys.length}</span>}</div>}
+  <div className={styles.zoom}>{!founding&&<><button type="button" onClick={toggleGrid} aria-label="Mostrar grade de hexágonos" aria-pressed={grid}><Grid3X3 size={19}/></button><button aria-label="Aproximar mapa" disabled={scale>=MAP_MAX_ZOOM} onClick={()=>zoomAt(1.4)}>+</button><button aria-label="Afastar mapa" disabled={scale<=minimum+.001} onClick={()=>zoomAt(1/1.4)}>−</button></>}<button aria-label={founding?"Voltar ao terreno selecionado":"Restaurar visão da capital"} onClick={reset}>⌂</button></div>
+  {!founding&&!selectionOpen&&<div className={styles.legend}><span>━ Fronteira</span><span>┄ Recursos</span><span>● Névoa</span>{activeJourneys.length>0&&<span>┄ Suas rotas {activeJourneys.length}</span>}{queuedJourneys>0&&<span>{queuedJourneys} na fila</span>}</div>}
 
  </div>;
 }

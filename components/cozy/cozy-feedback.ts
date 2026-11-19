@@ -7,10 +7,15 @@ export function commandFeedback(
   data: CozyPayload,
 ): string {
   switch (action.type) {
+    case "found_capital": return `${action.name.trim()} foi fundada como capital.`;
     case "attack_player":return "Investida enviada. O confronto será resolvido na chegada.";
     case "capital_choose":return `${data.state.cities.find(city=>city.id===action.cityId)?.name??'A cidade'} foi confirmada como capital.`;
     case "city_class":return "Especialização da cidade confirmada.";
-    case "plan_upgrade":return "Fila de obras confirmada. Custos reservados e início automático.";
+    case "plan_upgrade":case "plan_city_works":return "Fila de obras confirmada. Custos reservados e início automático.";
+    case "rite_provisions":return "Provisões preparadas.";
+    case "rite_expedition":return "Expedição do Rito enviada.";
+    case "rite_council":return "Audiência da Travessia assinada.";
+    case "ascend":return "Ascensão concluída.";
     case "plan_research":return "Fila de pesquisas confirmada. Custos reservados e início automático.";
     case "cancel_plan":return "Plano cancelado. Reservas das etapas não iniciadas foram devolvidas.";
     case "recruit":
@@ -40,6 +45,9 @@ export function commandFeedback(
     case "explore":
       return "Exploração enviada. A descoberta chegará nos relatos.";
     case "found_city":return "Expedição de fundação enviada. A cidade será criada na chegada.";
+    case "trade_route":return (action.trips??1)>1
+      ? `${action.trips} viagens reservadas. O ouro chega no retorno de cada uma.`
+      : "Caravana comercial enviada. O ouro entra no tesouro no retorno.";
     case "attack":
     case "annex":
       return "Ordem enviada. Acompanhe a chegada nas ordens do reino.";
@@ -68,6 +76,7 @@ export function commandFeedback(
     case "alliance_settings":return "Forma de entrada atualizada.";
     case "alliance_project_start":return "Projeto iniciado. Os aliados já podem contribuir.";
     case "alliance_project_contribute":return data.shared.allianceProjects?.find(p=>p.id===action.projectId)?.completedAt!=null?"Projeto concluído! O bônus coletivo está ativo e sua participação foi registrada.":"Contribuição registrada. Recursos reservados para este projeto.";
+    case "alliance_gift":return "Presente entregue ao aliado.";
     case "alliance_leave":
       return "Você saiu da aliança.";
     case "support_request":
@@ -76,6 +85,8 @@ export function commandFeedback(
       return "Apoio enviado. Seu aliado conta com você.";
     case "read_reports":
       return "Relatos marcados como lidos.";
+    case "notice_seen":
+      return "Novidade vista.";
     case "start_world":
       return "Os portões se abriram. Sua temporada começou!";
   }

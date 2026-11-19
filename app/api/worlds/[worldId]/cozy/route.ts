@@ -4,9 +4,11 @@ import {
   CozyHttpError,
   cozyErrorResponse,
   getCozyPayload,
+  readCozyAscensionPreview,
   startCozyWorld,
 } from "@/lib/cozy/server";
 import type { CozyAction } from "@/lib/cozy/types";
+import { looksLikeUuid } from "@/lib/supabase-rest";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,11 +16,13 @@ export const revalidate = 0;
 const headers = { "Cache-Control": "private, no-store, max-age=0" };
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: { worldId: string } },
 ) {
   try {
     const user = await requireAuthenticatedAppUser();
+    if (new URL(request.url).searchParams.get("view")==="ascension")
+      return NextResponse.json(await readCozyAscensionPreview(params.worldId,user),{headers});
     return NextResponse.json(await getCozyPayload(params.worldId, user), {
       headers,
     });
@@ -66,10 +70,13 @@ export async function POST(
     }
     if (!body || typeof body !== "object" || Array.isArray(body))
       throw new CozyHttpError("Ação inválida.");
-    const { action, requestId } = body as {
+    const { action, requestId, playerId } = body as {
       action?: unknown;
       requestId?: unknown;
+      playerId?: unknown;
     };
+    if(playerId!==undefined && (typeof playerId!=="string" || !looksLikeUuid(playerId)))
+      throw new CozyHttpError("Reinado inválido.",400,"INVALID_REIGN");
     if (
       typeof requestId !== "string" ||
       !/^[a-zA-Z0-9_-]{8,128}$/.test(requestId)
@@ -96,6 +103,7 @@ export async function POST(
       await getCozyPayload(params.worldId, user, {
         action: action as CozyAction,
         requestId,
+        playerId: typeof playerId==="string" ? playerId : undefined,
       }),
       { headers },
     );

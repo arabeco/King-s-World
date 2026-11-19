@@ -1,0 +1,183 @@
+.page {
+  width: min(100%, 42rem);
+  height: 100dvh;
+  overflow: auto;
+  margin-inline: auto;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  color: #f5e7cb;
+  background: radial-gradient(ellipse at top, #292a24 0, #191b1c 22rem);
+}
+
+.header, .content {
+  padding: 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  border-bottom: 1px solid #50442f;
+}
+
+.content {
+  display: grid;
+  gap: 1rem;
+}
+
+.content h1 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(1.55rem, 6vw, 2.25rem);
+}
+
+.content fieldset {
+  min-width: 0;
+  display: grid;
+  gap: .7rem;
+  padding-block: .5rem;
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+}
+
+.choices button {
+  min-height: 44px;
+  display: grid;
+  justify-items: start;
+  gap: .25rem;
+  padding: .6rem;
+  text-align: left;
+  border: 1px solid #594a36;
+  border-radius: .5rem;
+}
+
+.choices button[aria-pressed="true"] {
+  border-color: #e5b961;
+  background: linear-gradient(140deg, #3b3120, #27241f);
+  box-shadow: inset 0 -2px #bb9454;
+}
+
+.choices img {
+  width: 3.25rem;
+  height: 3.25rem;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.step {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.step > span {
+  font-size: 12px;
+  color: #cbb489;
+  white-space: nowrap;
+}
+
+.compactChoices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.compactChoices button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 5px;
+  text-align: left;
+  border: 1px solid #594a36;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.compactChoices button[aria-pressed="true"] {
+  border-color: #e5b961;
+  background: linear-gradient(140deg, #3b3120, #27241f);
+}
+
+.compactChoices img, .foundation button img {
+  border-radius: 5px;
+}
+
+.compactChoices small {
+  display: block;
+  color: #d2c0a3;
+}
+
+.courtSeats summary {
+  min-height: 44px;
+  padding: 10px 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #594a36;
+  font-size: 13px;
+}
+
+.courtSeats summary span {
+  margin-inline-start: 8px;
+  color: #d2c0a3;
+}
+
+.heroBenefit {
+  margin: 0;
+  font-size: 13px;
+  color: #e4d5b6;
+}
+
+.map {
+  position: relative;
+  display: flex;
+  height: clamp(13rem, 35dvh, 27rem);
+  overflow: hidden;
+  border-radius: .55rem;
+}
+
+.foundation {
+  display: grid;
+  gap: 8px;
+}
+
+.site {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.site small, .foundation button small {
+  display: block;
+  font-weight: 500;
+}
+
+.site small {
+  color: #cbb489;
+}
+
+.foundation button {
+  justify-self: stretch;
+  min-height: 48px;
+}
+
+.foundation input {
+  scroll-margin-block: 12px;
+}
+
+.foundation input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-block-start: .3rem;
+  padding-inline: .6rem;
+  font-size: 16px;
+  color: inherit;
+  background: #202224;
+  border: 1px solid #78674c;
+  border-radius: .3rem;
+}

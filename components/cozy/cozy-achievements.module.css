@@ -638,3 +638,73 @@
 .quests { gap: 3px; }
 .questBottom button { min-height: 44px; }
 .seasonPrizes{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;margin-top:15px;padding:10px 12px;border:1px solid var(--kw-action-border);border-radius:6px;background:var(--kw-action-gold);color:var(--kw-action-ink);box-shadow:var(--kw-action-shadow);font-size:14px;font-weight:700;text-decoration:none}.seasonPrizes:focus-visible{outline:2px solid #f2d38b;outline-offset:3px}
+.ascension { display: grid; gap: 9px; padding-inline: 14px; }
+.ascension .portalScore { margin: 0; }
+.ascensionHead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; }
+.ascensionHead h3, .rewardMedal h3 { margin: 0; }
+.ascensionHead span { color: #e5c892; font-size: .8rem; }
+.ascensionHead span[data-ready="true"] { color: #c2dca1; }
+.medalLadder { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 3px; list-style: none; margin: 3px 0; padding: 0; }
+.medalLadder li { display: grid; gap: 3px; padding-block: 5px; border-top: 2px solid #5c5750; text-align: center; font-size: .72rem; }
+.medalLadder span { color: #d2c6ad; font-variant-numeric: tabular-nums; }
+.medalLadder li[data-reached="true"] { border-color: var(--medal); }
+.ascension [data-tier="bronze"] { --medal: #cf9e75; }
+.ascension [data-tier="silver"] { --medal: #bec9cf; }
+.ascension [data-tier="gold"] { --medal: #efd078; }
+.ascension [data-tier="legendary"] { --medal: #dabeed; }
+.ascensionRewards { padding: 9px 0; border-block: 1px solid #cbb17c55; }
+.rewardMedal, .ascensionRewardRow { display: flex; align-items: center; gap: 10px; }
+.rewardMedal h3 { color: var(--medal); }
+.rewardMedal small, .rewardRows small, .ascensionArchive small, .ascensionPending { color: #d2c6ad; }
+.rewardRows { display: grid; gap: 8px; margin-top: 9px; }
+.ascensionRewardRow { padding-top: 7px; border-top: 1px solid #cbb17c33; }
+.ascensionRewardRow svg { color: #b3e1ed; flex: none; }
+.ascensionRewardRow span, .ascensionArchive div { display: grid; gap: 3px; min-width: 0; }
+.ascensionArchive summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
+.ascensionArchive summary svg { margin-left: auto; }
+.ascensionArchive[open] summary svg { transform: rotate(180deg); }
+.ascensionArchive ul { list-style: none; margin: 8px 0; padding: 0; }
+.ascensionArchive li { display: flex; flex-wrap: wrap; gap: 5px; justify-content: space-between; padding-block: 5px; border-bottom: 1px solid #cbb17c33; }
+.ascensionLegacyLink{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;border:1px solid #f3d284;border-radius:7px;background:linear-gradient(#f1d788,#b18432);color:#201808;font-weight:700}
+.rite{display:grid;gap:10px;padding-top:12px;color:#f2e4c6}
+.rite h3{font:700 21px/1.2 var(--font-display),Georgia,serif;margin:2px 0}
+.riteSteps{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;list-style:none;margin:0;padding:0}
+.riteSteps li{padding:6px 2px;text-align:center;border-bottom:2px solid #a8956a44;color:#d8caa8;font-size:11px}
+.riteSteps li[aria-current]{border-color:#ebc46b;color:#fbdd92;font-weight:700}
+.riteProofs,.riteAccount{display:grid;gap:5px}
+.riteProof{display:grid;gap:4px;padding:7px 0;border-bottom:1px solid #ba9d6244;min-width:0}
+.riteLine{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:0;min-width:0;overflow-wrap:anywhere}
+.riteLine>small{margin-left:auto;display:flex;align-items:center;gap:4px;color:#bfdaaa}
+.riteNav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.riteNav>button,.riteProof>button{min-height:44px;padding-inline:5px;white-space:normal}
+.riteNav>button[aria-pressed=true]{border-color:#e4bf64;color:#fbe5af}
+.riteSecondary{display:grid;place-items:center;min-height:44px;padding:4px;text-align:center;border:1px solid #c6a76966;border-radius:7px;color:#e9d6a5}
+.rite small,.riteAccount small{font-size:12px;color:#d5c5aa;line-height:1.35}
+.riteAccount{padding:8px 0;font-size:13px;border-top:1px solid #ba9d6244}
+.rite .riteNote,.rite .riteError{margin:0;font-size:13px;line-height:1.45}
+.rite .riteError{color:#ffbfac}
+.resultWizard{display:grid;gap:13px;padding-top:12px;color:#f4e4c5;--medal-edge:#d5a46c}
+.resultWizard[data-tier=silver]{--medal-edge:#c7d6dc}
+.resultWizard[data-tier=gold]{--medal-edge:#f2cb73}
+.resultWizard[data-tier=legendary]{--medal-edge:#dec1f1}
+.resultWizard>h3{font:700 22px/1.18 var(--font-display),Georgia,serif;margin:2px 0}
+.resultScene{position:relative;isolation:isolate;display:grid;align-content:end;justify-items:center;gap:7px;min-height:210px;margin:0;padding:18px 12px;overflow:hidden;text-align:center;border:1px solid var(--medal-edge);border-radius:9px;background:#292724;color:#fff1cd}
+.resultScene>img{z-index:-2;object-fit:cover}
+.resultScene::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(transparent 35%,#151619e6 100%)}
+.resultScene::after{content:"";position:absolute;inset:5px;pointer-events:none;border:1px solid #f2cf854d;border-radius:6px}
+.resultMedal{display:grid;place-items:center;position:relative;width:106px;height:100px;filter:drop-shadow(0 3px 8px #130d09cc)}
+.resultMedal::after,.resultItem::after,.resultPortrait::after{content:"";position:absolute;inset:0;background:var(--result-frame) center/100% 100% no-repeat;pointer-events:none}
+.resultMedal{--result-frame:url("/rewards/ascensao/moldura-medalha.png")}
+.resultScene figcaption{display:grid;gap:2px;min-width:0;overflow-wrap:anywhere}
+.resultScene figcaption strong{font:700 24px/1 var(--font-display),Georgia,serif;color:var(--medal-edge)}
+.resultScene figcaption span,.resultScores dt,.resultWizard small{font-size:12px;line-height:1.35;color:#d9cbb0}
+.resultScores{display:grid;grid-template-columns:1fr 1fr;margin:0;text-align:center}
+.resultScores>div+div{border-left:1px solid #bd9f6245}
+.resultScores dd{margin:3px 0 0;font-size:21px;font-weight:700;font-variant-numeric:tabular-nums}
+.resultPrizes{display:grid;gap:7px;list-style:none;margin:0;padding:0}
+.resultPrizes li,.resultSovereign{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;padding:10px;border:1px solid #bfa06a70;border-radius:8px;background:linear-gradient(135deg,#4d423334,#1b1e23);overflow-wrap:anywhere}
+.resultPrizes li>span:last-child,.resultSovereign>div{display:grid;gap:3px}
+.resultItem{--result-frame:url("/rewards/ascensao/moldura-item.png");position:relative;display:grid;place-items:center;width:58px;height:58px;border-radius:11px;color:#edcf90;background:radial-gradient(#494034,#1d1e22)}
+.resultPortrait{--result-frame:url("/rewards/ascensao/moldura-retrato.png");position:relative;display:grid;place-items:center;width:52px;height:76px}
+.resultPortrait img{width:43px;height:56px;margin-top:6px;border-radius:7px}
+.resultWizard .ascensionLegacyLink{text-align:center;padding-inline:6px}

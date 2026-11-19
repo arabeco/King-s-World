@@ -8,6 +8,17 @@ check('Starting a build advances guidance to recruitment, not a second build in 
 check('After recruitment the guide explains exploration as distinct from annexation',()=>{const d=setup();d.state.cities[0].sectors.economy=1;d.state.army.militia=26;const step=J(d,at)[0];assert.equal(step.id,'first-explore');assert.match(step.detail,/anexar/);assert.equal(step.target.kind,'map');});
 check('An exploration already in flight is never suggested again',()=>{const d=setup();d.state.cities[0].sectors.economy=1;d.state.army.militia=26;d.state.orders.push({id:'outbound',kind:'explore',createdAt:at,arrivesAt:at+3600000,q:1,r:1});assert(!J(d,at).some(s=>s.id==='first-explore'));});
 check('A returning player gets completed orders, sorted from the real unread receipts',()=>{const d=setup();d.state.cities[0].sectors.economy=1;d.state.army.militia=26;d.state.explored=['1,1'];d.state.readAt=at-100;d.state.reports.push({id:'done',at,kind:'economy',title:'Setor concluído',body:'Economia concluída',positive:true});assert.equal(J(d,at)[0].id,'returned');d.state.readAt=at;assert(!J(d,at).some(s=>s.id==='returned'));});
+check('First exploration produces one result shortcut when it is the only finished order',()=>{
+ const d=setup();
+ d.world.foundingOnboarding=true;
+ d.world.persistent=true;
+ d.state.explored=['1,1'];
+ d.state.readAt=at-100;
+ d.state.reports=[{id:'survey',at,kind:'exploration',location:{q:1,r:1},title:'Exploração concluída',body:'Novos campos',positive:true}];
+ const steps=J(d,at);
+ assert.deepEqual(steps[0].target,{kind:'reports',reportId:'survey'});
+ assert.equal(steps.filter(step=>step.target.reportId==='survey').length,1);
+});
 check('A real incoming player attack takes priority and opens defense',()=>{const d=setup();d.computed.playerThreats=[{orderId:'attack',attackerId:'enemy',attackerName:'Outro',cityId:d.state.cities[0].id,cityName:'Capital',arrivesAt:at+60000,conquest:false}];const step=J(d,at)[0];assert.equal(step.id,'defense');assert.equal(step.target.kind,'defense');assert.equal(step.readyAt,at+60000);});
 check('A near horde needs preparation only when current defense is short',()=>{const d=setup();d.computed.nextHorde={day:2,power:1000,supportPower:0,arrivesAt:at+60000};d.computed.defensePower=45;assert.equal(J(d,at)[0].id,'defense');d.computed.defensePower=1000;assert(!J(d,at).some(s=>s.id==='defense'));});
 check('A city crisis is routed to that city, not blindly to the capital',()=>{const d=setup(),other=structuredClone(d.state.cities[0]);other.id='colony';other.name='Vale';other.capital=false;d.state.cities.push(other);d.computed.cityLife[other.id]={...d.computed.cityLife[d.state.cities[0].id],contentment:20};const step=J(d,at)[0];assert.equal(step.id,'crisis');assert.equal(step.target.cityId,'colony');});
@@ -18,7 +29,42 @@ check('No pending work produces a calm empty state rather than a false instructi
 check('Final results and defeat preserve the final-season boundary',()=>{const d=setup();d.computed.readOnly=true;assert.deepEqual(J(d,at).map(s=>s.id),['results']);d.computed.readOnly=false;d.state.defeat={at,reason:'lost'};assert.equal(J(d,at)[0].id,'defeat');assert.match(J(d,at)[0].detail,/fim da temporada/);});
 check('No suggestions before opening the world',()=>{const d=setup();d.computed.started=false;assert.deepEqual(J(d,at),[]);});
 check('A newly earned victory is celebrated without promising final prizes early',()=>{const d=setup();d.state.portalCrossedAt=at;d.state.readAt=at-1;const step=J(d,at)[0];assert.equal(step.id,'victory');assert.equal(step.target.tab,'Vitória');assert.match(step.detail,/fechamento/);d.state.readAt=at;assert(!J(d,at).some(s=>s.id==='victory'));});
+check('Persistent worlds offer the Ascension preview at 1500 current influence',()=>{
+ const d=setup();d.world.persistent=true;d.state.peakInfluence=2200;
+ d.computed.influence.total=1499;assert(!J(d,at).some(step=>step.id==='ascension'));
+ d.computed.influence.total=1500;
+ const before=structuredClone(d);
+ assert.deepEqual(J(d,at).find(step=>step.id==='ascension')?.target,{kind:'achievements',tab:'Ascensão'});
+ assert.deepEqual(d,before);
+});
 check('A spent local decision never produces a fictitious repair action',()=>{const d=setup();d.state.cities[0].integrity=50;d.computed.cityLife[d.state.cities[0].id].decision=null;assert(!J(d,at).some(s=>s.id==='repair'));});
+check('Returning Cozy players can open the city to review affordable batch work',()=>{
+ const d=setup();d.world.persistent=true;d.computed.decree=null;d.computed.questProgress=[];
+ const city=d.state.cities[0];
+ d.state.explored=['1,1'];
+ assert.equal(J(d,at).find(step=>step.id==='upgrade').action,'Ver melhoria');
+ city.sectors.economy=1;
+ const before=structuredClone(d);
+ const step=J(d,at).find(entry=>entry.id==='upgrade');
+ assert.equal(step.action,'Ver obras');
+ assert.deepEqual(step.target,{kind:'city',cityId:city.id,entry:'sectors'});
+ assert.deepEqual(d,before);
+});
+check('A mature realm can review the price of a hero close to the influence goal',()=>{
+ const d=setup();d.world.persistent=true;
+ d.computed.influence.total=1454;
+ const city=d.state.cities[0];
+ assert(!J(d,at).some(step=>step.id==='court'));
+ for(const sector of Object.keys(city.sectors))city.sectors[sector]=10;
+ const before=structuredClone(d);
+ assert.deepEqual(J(d,at).find(step=>step.id==='court')?.target,{kind:'court'});
+ assert.deepEqual(d,before);
+ d.state.resources.gold=d.computed.heroCost-1;
+ assert(!J(d,at).some(step=>step.id==='court'));
+ d.state.resources.gold=d.computed.heroCost;
+ d.computed.influence.total=1500;
+ assert(!J(d,at).some(step=>step.id==='court'));
+});
 const {seasonDisplay}=loadCozyEngine('season-display');
 check('Express and normal calendars share real-day labels without altering the game clock',()=>{assert.deepEqual(seasonDisplay(5,120,30),{day:2,duration:30});assert.deepEqual(seasonDisplay(120,120,30),{day:30,duration:30});assert.deepEqual(seasonDisplay(5,120,120),{day:5,duration:120});assert.deepEqual(seasonDisplay(5,30,30),{day:5,duration:30});assert.deepEqual(seasonDisplay(0,120,30),{day:0,duration:30});});
 console.log(`PASS ${checks} journey scenarios. Navigation descriptors only; no engine action is called.`);

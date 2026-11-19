@@ -3,11 +3,14 @@
 
 
 import {cityDecisionStory} from "@/lib/cozy/decision-presentation";
+import {cityNotice,isNewNotice} from "@/lib/cozy/notices";
 import {cityTerritoryCells} from "@/lib/cozy/city-territory";
 import CozySymbol from "./CozySymbol";
 import {cityUpgradePreview} from "@/lib/cozy/upgrade-preview";
+import {cityWorksPreview} from "@/lib/cozy/city-works";
 import DecisionEffects,{resourceEffects} from "./DecisionEffects";
 import CozyPlans from './CozyPlans';
+import { orderExpectedLevel, orderQueued } from "@/lib/cozy/order-presentation";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
@@ -15,6 +18,7 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
+  Hammer,
   Pencil,
   Plus,
   Sparkles,
@@ -28,12 +32,16 @@ import {
   CITY_TYPES, getCityAppearance,
   getCityInfrastructure,
   getCozyUpgradeDurationMs,
+  planningCapacity,
+  upgradeCost,
 } from "@/lib/cozy/catalog";
 import type { CozyPayload, CozySector } from "@/lib/cozy/types";
 import type { CozyCommand } from "./useCozyWorld";
 import CozyArt from "./CozyArt";
 import CozyMapArt from "./CozyMapArt";
 import styles from "./cozy-interior.module.css";
+import {CozyNovelty,useNoticeVisible} from "./CozyNovelty";
+import {heroPortraits} from "./cozy-portraits";
 
 export type CozyCityEntry = "sectors" | "decisions" | CozySector;
 type Props = {
@@ -147,6 +155,7 @@ export default function CozyCityInterior({
   const [tab, setTab] = useState<"sectors" | "decisions">(initialEntry === "decisions" ? "decisions" : "sectors");
   const [selected, setSelected] = useState<CozySector | null>(initialEntry === "sectors" || initialEntry === "decisions" ? null : initialEntry);
   const [renaming, setRenaming] = useState(false);
+  const [batch, setBatch] = useState<ReturnType<typeof cityWorksPreview> | null>(null);
   const [name, setName] = useState("");
   const [typeOpen,setTypeOpen]=useState(false);
   const [candidate,setCandidate]=useState<keyof typeof CITY_TYPES|null>(null);
@@ -160,15 +169,22 @@ export default function CozyCityInterior({
     if (renaming) nameInput.current?.focus({ preventScroll: true });
   }, [renaming]);
   const { state, computed } = data;
+  const life = computed.cityLife[cityId];
+  const author = life?.decision?.author;
+  const noticeId = data.world.persistent && life?.decision ? cityNotice(life.decision.id) : undefined;
+  const unseen = Boolean(noticeId && isNewNotice(state,noticeId));
+  const noticeRef = useNoticeVisible(unseen && tab==="decisions" && !selected && !heroPicker && !typeOpen && !renaming ? noticeId : undefined,act);
   const city = state.cities.find((entry) => entry.id === cityId);
   if (!city) return <p>Escolha outra cidade do seu reino.</p>;
   const territory=cityTerritoryCells(state,data.shared,city.id);
   const infrastructure=computed.influenceDetails.cities[city.id]??getCityInfrastructure(city);
-  const life = computed.cityLife[city.id];
   const hero = state.heroes.find((entry) => entry.id === city.heroId);
-  const order = state.orders.find(
-    (entry) => entry.kind === "upgrade" && entry.cityId === city.id,
-  );
+  const cityOrders = state.orders.filter(entry => entry.kind === "upgrade" && entry.cityId === city.id)
+    .sort((a, b) => a.arrivesAt - b.arrivesAt);
+  const order = cityOrders.find(entry => !orderQueued(entry));
+  const waiting = cityOrders.filter(orderQueued);
+  const allowsPlans = data.world.mode === "express" || data.world.economyVersion === 3;
+  const addToQueue = allowsPlans && cityOrders.length > 0;
   const development = getCityDevelopment(city);
   const appearance = getCityAppearance(city);
   const freeHeroes = state.heroes.filter(
@@ -177,6 +193,11 @@ export default function CozyCityInterior({
   );
   const nextHero =
     freeHeroes.find((entry) => entry.id === chosenHero) || freeHeroes[0];
+  const swapHeroes = data.world.persistent && hero && !freeHeroes.length ? state.heroes.filter(
+    entry => entry.cityId && entry.cityId!==city.id && !state.orders.some(item => item.heroId===entry.id),
+  ) : [];
+  const swapHero = swapHeroes.find(entry => entry.id===chosenHero) ?? swapHeroes[0];
+  const swapCity = state.cities.find(entry => entry.id===swapHero?.cityId);
   const lockReason = computed.readOnly
     ? "A temporada terminou."
     : !computed.started
@@ -184,19 +205,25 @@ export default function CozyCityInterior({
       : locked
         ? "Aguarde a confirmação da ação."
         : "";
+  const works = data.world.persistent && computed.started && !computed.readOnly
+    ? cityWorksPreview(state,city,computed.dayMs,now) : null;
   const sector = SECTORS.find((entry) => entry.id === selected);
-  const level = selected ? city.sectors[selected] : 0;
-  const preview=selected?cityUpgradePreview(data,cityId,selected):null;
-  const cost = selected ? (computed.upgradeCosts[city.id]?.[selected] ?? 0) : 0;
+  const level = selected ? city.sectors[selected] +
+    (addToQueue ? cityOrders.filter(entry => entry.sector === selected).length : 0) : 0;
+  const preview = selected ? cityUpgradePreview(data, cityId, selected, level) : null;
+  const cost = selected && level < 10 ? upgradeCost(state, level) : 0;
+  const startsAt = addToQueue ? Math.max(now, ...cityOrders.map(entry => entry.arrivesAt)) : now;
   const duration = selected
-    ? getCozyUpgradeDurationMs(state, city, selected, computed.dayMs)
+    ? getCozyUpgradeDurationMs(state, { ...city, sectors: { ...city.sectors, [selected]: level } }, selected, computed.dayMs)
     : 0;
-  const noTime = computed.endsAt !== null && now + duration > computed.endsAt;
+  const noTime = computed.endsAt !== null && startsAt + duration > computed.endsAt;
   const reason =
     lockReason ||
     (level >= 10
-      ? "Este setor chegou ao nível máximo."
-      : order
+      ? city.sectors[selected!] >= 10 ? "Nível máximo." : "O nível 10 já está previsto."
+      : addToQueue && waiting.length >= planningCapacity(state)
+        ? "Fila cheia."
+      : order && !allowsPlans
         ? order.sector === selected
           ? `Em evolução · ${remaining(order.arrivesAt, now)}`
           : "Conclua a obra atual desta cidade para iniciar outra."
@@ -222,6 +249,10 @@ export default function CozyCityInterior({
       <header className={styles.cityHeader}>
         <div className={styles.identity}>
           <h2>{city.name}</h2><button type="button" className={styles.editIdentity} aria-label="Editar cidade" onClick={()=>{setName(city.name);setRenaming(true);}}><Pencil size={17}/></button>
+          {data.world.persistent&&<button type="button" className={styles.cityHero} aria-label="Gerenciar herói da cidade" title={hero?.name}
+            onClick={()=>{setSelected(null);setTab("decisions");setHeroPicker(true);}}>
+            {hero?<CozyArt src={heroPortraits[hero.role]} size={30}/>:<Plus size={18}/>}
+          </button>}
           <button type="button" className={styles.typeBadge} disabled={city.capital} onClick={()=>{setCandidate(null);setTypeOpen(true);}}>{city.capital?"Capital ♛":city.cityClass&&city.cityClass!=="neutral"?`${CITY_TYPES[city.cityClass]} · fixo`:"Escolher tipo ▾"}</button>
         </div>
         <div className={styles.infraScore}><small>Infra do reino</small><strong aria-label={`Infraestrutura do reino: ${data.computed.influence.infrastructure} de 500`}>{data.computed.influence.infrastructure}/500</strong><small><span aria-label={`Influência desta cidade: ${infrastructure} pontos`}>{infrastructure} pts</span> · <span aria-label={`Território desta cidade: ${territory.length} hexágonos`}>{territory.length} hex</span></small></div>
@@ -285,6 +316,7 @@ export default function CozyCityInterior({
               tabRefs.current[index] = element;
             }}
             role="tab"
+            aria-description={value==="decisions" && unseen ? "Novidade" : undefined}
             id={`${id}-${value}`}
             aria-controls={`${id}-${value}-panel`}
             aria-selected={tab === value}
@@ -303,6 +335,7 @@ export default function CozyCityInterior({
             }}
           >
             {label}
+            {value==="decisions"&&unseen&&<> <CozyNovelty/></>}
           </button>
         ))}
       </div>
@@ -312,9 +345,19 @@ export default function CozyCityInterior({
           id={`${id}-sectors-panel`}
           aria-labelledby={`${id}-sectors`}
         >
-          {order&&!computed.readOnly&&<aside className={styles.construction} aria-label="Obra em andamento"><CozyMapArt name={appearance.stage===1?"cityConstructionStage1":appearance.stage===2?"cityConstructionStage2":"cityConstructionStage3"} size={78}/><div><small>Obra em andamento</small><strong>{SECTORS.find(s=>s.id===order.sector)?.name??'Melhoria da cidade'}</strong><span><CozySymbol name="time" size={18}/>{remaining(order.arrivesAt,now)}</span></div><button type="button" onClick={()=>order.sector&&setSelected(order.sector)} aria-label="Ver detalhes da obra"><ChevronRight size={19}/></button></aside>}
+          {order&&!data.world.foundingOnboarding&&!computed.readOnly&&<aside className={styles.construction} aria-label="Obra em andamento"><CozyMapArt name={appearance.stage===1?"cityConstructionStage1":appearance.stage===2?"cityConstructionStage2":"cityConstructionStage3"} size={78}/><div><small>Obra em andamento</small><strong>{SECTORS.find(s=>s.id===order.sector)?.name??'Melhoria da cidade'}</strong><span><CozySymbol name="time" size={18}/>{remaining(order.arrivesAt,now)}</span></div><button type="button" onClick={()=>order.sector&&setSelected(order.sector)} aria-label="Ver detalhes da obra"><ChevronRight size={19}/></button></aside>}
+          {works && works.works.length > 1 && <button type="button" className={styles.batchLink}
+            disabled={locked} onClick={()=>setBatch(works)}>
+            <Hammer size={18} aria-hidden="true"/>Planejar obras <b>{works.works.length}</b><ChevronRight size={16} aria-hidden="true"/>
+          </button>}
           <div className={styles.sectors}>
-            {SECTORS.map((item) => (
+            {SECTORS.map((item) => {
+              const active = order?.sector === item.id ? order : undefined;
+              const position = waiting.findIndex(entry => entry.sector === item.id);
+              const job = active ?? waiting[position];
+              const target = job ? orderExpectedLevel(job, city.sectors[item.id]) + 1 : 0;
+              const later = waiting.filter(entry => entry.sector === item.id).length - (active ? 0 : 1);
+              return (
               <button
                 type="button"
                 key={item.id}
@@ -323,7 +366,7 @@ export default function CozyCityInterior({
                 data-upgrading={order?.sector === item.id || undefined}
                 onClick={() => setSelected(item.id)}
                 aria-label={`Ver setor ${item.name}`}
-                aria-describedby={`${id}-level-${item.id}`}
+                aria-describedby={`${id}-level-${item.id}${job ? ` ${id}-work-${item.id}` : ""}`}
               >
                 <span className={styles.sectorImage}>
                   <CozyArt src={art[item.id]} size={100} />
@@ -343,19 +386,34 @@ export default function CozyCityInterior({
                 <span className={styles.sectorCopy}>
                   <strong>{item.name}</strong>
                   <small className={styles.sectorMetric}>{sectorBenefit(item.id)}</small>
-                  <span className={styles.sectorProgress} aria-hidden="true">{Array.from({length:10},(_,i)=><i key={i} data-filled={i<city.sectors[item.id]||undefined}/>)}</span>
+                  {job ? (
+                    <span className={styles.cardFoot} id={`${id}-work-${item.id}`}>
+                      <strong>{city.sectors[item.id]} → {target}</strong>
+                      {active ? <Hammer size={15} aria-hidden="true"/> : <CozySymbol name="time" size={15}/>}
+                      <span>{active ? new Date(job.arrivesAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : `${position + 1}ª na fila`}</span>
+                      {later > 0 && <span>+{later} na fila</span>}
+                    </span>
+                  ) : <span className={styles.sectorProgress} aria-hidden="true">{Array.from({length:10},(_,i)=><i key={i} data-filled={i<city.sectors[item.id]||undefined}/>)}</span>}
                 </span>
-                {order?.sector === item.id && (
-                  <span className={styles.cardFoot}>
-                    <>
-                      <CozySymbol name="time" size={18}/>
-                      {remaining(order.arrivesAt, now)}
-                    </>
-                  </span>
-                )}
               </button>
-            ))}
+            );})}
           </div>
+          {batch && <SectorSheet title="Planejar obras" onClose={()=>setBatch(null)}>
+            <ul className={styles.batchWorks} aria-label="Ordem das melhorias">
+              {batch.works.map(({sector,level})=><li key={sector}>
+                <CozyArt src={art[sector]} size={30}/><strong>{SECTORS.find(item=>item.id===sector)?.name}</strong>
+                <span>{level} <ArrowRight size={14} aria-label="para"/> {level+1}</span>
+              </li>)}
+            </ul>
+            <div className={styles.upgradeSummary}>
+              <span aria-label={`Custo: ${number(batch.materials)} materiais`}><CozySymbol name="materials" size={24}/><strong>{number(batch.materials)}</strong></span>
+              <span aria-label={`Última obra em ${remaining(batch.arrivesAt,now)}`}><CozySymbol name="time" size={22}/><strong>{remaining(batch.arrivesAt,now)}</strong></span>
+            </div>
+            <button type="button" className={styles.primary} disabled={Boolean(lockReason)} onClick={async()=>{
+              await act({type:"plan_city_works",cityId,works:batch.works});
+              setBatch(current=>current===batch?null:current);
+            }}>Reservar {batch.works.length} obras</button>
+          </SectorSheet>}
         </section>
       ) : (
         <section
@@ -366,17 +424,19 @@ export default function CozyCityInterior({
         >
           {lockReason && <p className={styles.notice}>{lockReason}</p>}
           {life&&life.contentment<60&&<aside className={styles.crisisNotice} role="status"><strong>{life.status} · satisfação {number(life.contentment)}%</strong><p>{life.daysToRupture!==null?`Recupere a satisfação para pelo menos 35%. Se a crise continuar por mais ${life.daysToRupture} dias de jogo, esta cidade pode se separar.`:"A confiança no governo precisa de atenção. As decisões locais ajudam a recuperar a cidade."}</p></aside>}
-          {life&&life.integrity<100&&<aside className={styles.crisisNotice}><strong>Integridade das estruturas: {life.integrity}%</strong><p>Produção e defesa estão reduzidas. {city.capital?"A capital permanece no reino, mesmo após uma derrota.":"Novos ataques podem causar a perda desta colônia."} Os reparos preservam os níveis que você construiu.</p></aside>}
+          {life&&life.integrity<100&&<aside className={styles.crisisNotice}><strong>Integridade das estruturas: {life.integrity}%</strong><p>Produção e defesa estão reduzidas. {data.world.persistent ? '' : city.capital?"A capital permanece no reino, mesmo após uma derrota.":"Novos ataques podem causar a perda desta colônia."} Os reparos preservam os níveis que você construiu.</p></aside>}
 
           {(!city.renamedBy?.includes(state.playerId)||(!city.capital&&(!city.cityClass||city.cityClass==="neutral")))&&<div className={styles.firstChoices}>
             {!city.renamedBy?.includes(state.playerId)&&<button type="button" onClick={()=>{setName(city.name);setRenaming(true);}}><Pencil size={20}/><span>Dar um nome à cidade</span><ArrowRight size={17}/></button>}
             {!city.capital&&(!city.cityClass||city.cityClass==="neutral")&&<button type="button" onClick={()=>{setCandidate(null);setTypeOpen(true);}}><Sparkles size={20}/><span>Escolher especialização</span><ArrowRight size={17}/></button>}
           </div>}
           {life&&<article className={styles.decisionCard} aria-label="Decisão local da cidade">
-            <div className={styles.localScene} data-sector={life.decision?.sector??'society'}>
-              <span className={styles.localDay}>{life.decision?`Dia de jogo ${computed.day} · Na cidade`:computed.readOnly?"Memórias da cidade":!computed.started?"Aguardando a abertura":"Por hoje, tudo cuidado"}</span>
+            <div className={styles.localScene} data-sector={life.decision?.sector??'society'}
+              data-scene={life.decision?.id.split(":").at(-1)} ref={noticeRef}>
+              <span className={styles.localDay}>{life.decision?`Dia de jogo ${life.decision.day??computed.day} · Na cidade`:computed.readOnly?"Memórias da cidade":!computed.started?"Aguardando a abertura":"Por hoje, tudo cuidado"}</span>
               <h3>{life.decision?.title??(computed.readOnly?"Histórico da cidade":!computed.started?"Um novo começo":"Decisão registrada")}</h3>
             </div>
+            {author&&<div className={styles.localAuthor}><CozyArt src={heroPortraits[author.role]} size={36}/><span><strong>{author.name}</strong><small>{city.name}</small></span></div>}
             {life.decision?<p className={styles.localStory}>{cityDecisionStory(life.decision.id)}</p>:computed.started&&!computed.readOnly?<p className={styles.localStory}>Novas situações no próximo dia de jogo.</p>:null}
             {life.decision?.options.map(option=>{const affordable=Object.entries(option.cost).every(([resource,cost])=>state.resources[resource as keyof typeof state.resources]>=cost!);return <div key={option.id} className={styles.localChoiceFrame} data-selected={localPick?.decisionId===life.decision?.id&&localPick.optionId===option.id||undefined}>
             <button className={styles.localChoice} disabled={Boolean(lockReason)||!affordable} onClick={()=>state.progression?.balance?.unifiedRules?setLocalPick({decisionId:life.decision!.id,optionId:option.id}):void act({type:"city_decision",cityId:city.id,decisionId:life.decision!.id,optionId:option.id})} aria-pressed={state.progression?.balance?.unifiedRules?localPick?.decisionId===life.decision?.id&&localPick.optionId===option.id:undefined} aria-label={`${state.progression?.balance?.unifiedRules?'Escolher':'Decidir'}: ${option.label}`}>
@@ -400,7 +460,7 @@ export default function CozyCityInterior({
             {life.effectEndsAt&&<p className={styles.description}>Produção com {life.efficiency}% de eficiência · {remaining(life.effectEndsAt,now)} restantes.</p>}
           </article>}
 
-          <button type="button" className={styles.heroSlot} onClick={()=>setHeroPicker(true)} aria-label="Gerenciar herói da cidade"><CozyArt src="/icons/influence-government.png" size={42}/><span><strong>{hero?.name??"+"}</strong><small>{heroRole?.name??"Designar herói"}</small></span></button>
+          {!data.world.persistent&&<button type="button" className={styles.heroSlot} onClick={()=>setHeroPicker(true)} aria-label="Gerenciar herói da cidade"><CozyArt src="/icons/influence-government.png" size={42}/><span><strong>{hero?.name??"+"}</strong><small>{heroRole?.name??"Designar herói"}</small></span></button>}
           {heroPicker&&          <SectorSheet title="Herói da cidade" onClose={()=>setHeroPicker(false)}> 
             <div className={styles.decisionHeading}>
               <CozyArt src="/icons/influence-government.png" size={42} />
@@ -469,7 +529,20 @@ export default function CozyCityInterior({
                 </button>
               )
             )}
-            {hero && (
+            {hero && swapHero && swapCity && <>
+              <label className={styles.fieldLabel} htmlFor={`${id}-swap-hero`}>Permutar responsáveis</label>
+              <select id={`${id}-swap-hero`} value={swapHero.id} disabled={locked}
+                onChange={event=>setChosenHero(event.target.value)}>
+                {swapHeroes.map(entry=><option value={entry.id} key={entry.id}>{entry.name} · {state.cities.find(other=>other.id===entry.cityId)?.name}</option>)}
+              </select>
+              <div className={styles.description}>
+                <p>{city.name} recebe {swapHero.name} · {HERO_ROLES.find(role=>role.id===swapHero.role)?.description}</p>
+                <p>{swapCity.name} recebe {hero.name} · {heroRole?.description}</p>
+              </div>
+              <button type="button" className={styles.primary} disabled={locked}
+                onClick={async()=>{if(await act({type:"assign",heroId:swapHero.id,cityId:city.id}))setHeroPicker(false);}}>Permutar heróis</button>
+            </>}
+            {hero && !data.world.persistent && (
               <button
                 type="button"
                 className={styles.textButton}
@@ -553,7 +626,8 @@ export default function CozyCityInterior({
               <span className={styles.levelJourney} aria-label={`Nível ${level} de 10`}>
                 <b>{level}</b>{level<10?<><ArrowRight size={17}/><strong>{level+1}</strong></>:<CheckCircle2 size={22}/>}
               </span>
-              <small>{level<10?'Próximo nível':'Desenvolvimento completo'}</small>
+              <small>{level < 10 ? (addToQueue ? "Após as obras deste setor" : "Próximo nível") :
+                city.sectors[selected] >= 10 ? "Desenvolvimento completo" : "Nível 10 previsto"}</small>
             </div>
           </div>
           <details className={styles.detailMore}><summary>Função do setor <ChevronDown size={15}/></summary><p>{sector.description}</p></details>
@@ -566,19 +640,19 @@ export default function CozyCityInterior({
           <div className={styles.upgradeCommit}>
             {level < 10 && <div className={styles.upgradeSummary}>
               <span aria-label={`Custo: ${number(cost)} materiais`}><CozySymbol name="materials" size={25}/><strong>{number(cost)}</strong></span>
-              <span aria-label={`Duração: ${remaining(now + duration, now)}`}><CozySymbol name="time" size={22}/><strong>{remaining(now + duration, now)}</strong></span>
+              <span aria-label={`Conclusão em ${remaining(startsAt + duration, now)}`}><CozySymbol name="time" size={22}/><strong>{remaining(startsAt + duration, now)}</strong></span>
             </div>}
             {reason && <p className={styles.notice} role="status">{reason}</p>}
             {level < 10 ? <button type="button" className={`${styles.primary} ${styles.upgradeButton}`}
-              aria-label={`Evoluir ${sector.name}`} disabled={!!reason}
-              onClick={async()=>{if(await act({type:'upgrade',cityId:city.id,sector:selected}))setSelected(null);}}>
-              <Plus size={19}/><span>Evoluir para o nível {level+1}</span>
-            </button>:<span className={styles.complete}><CheckCircle2 size={19}/>Nível máximo</span>}
+              aria-label={addToQueue ? `Adicionar ${sector.name} à fila` : `Evoluir ${sector.name}`} disabled={!!reason}
+              onClick={async()=>{if(await act({type:addToQueue ? 'plan_upgrade' : 'upgrade',cityId:city.id,sector:selected,expectedLevel:level}))setSelected(null);}}>
+              <Plus size={19}/><span>{addToQueue ? "Adicionar à fila" : "Evoluir"}</span>
+            </button>:city.sectors[selected] >= 10 && <span className={styles.complete}><CheckCircle2 size={19}/>Nível máximo</span>}
           </div>
           {life&&(selected==="economy"||selected==="society")&&<section className={styles.localIndicators} aria-label={`Indicadores de ${sector.name}`}>
             <div><strong>{selected==="economy"?"Eficiência":"Satisfação local"}</strong><span>{selected==="economy"?life.efficiency:number(life.contentment)}%</span></div>
             <meter min={0} max={selected==="economy"?105:100} value={selected==="economy"?life.efficiency:life.contentment} aria-label={selected==="economy"?"Eficiência de produção":"Satisfação da cidade"}/>
-            {selected==="economy"?<div className={styles.productionRates} aria-label="Produção diária da cidade"><span aria-label={`${number(life.production.materials)} materiais por dia`}><CozySymbol name="materials" size={22}/><strong>{number(life.production.materials)}</strong><small>/dia</small></span><span aria-label={`${number(life.production.supplies)} suprimentos por dia`}><CozySymbol name="supplies" size={22}/><strong>{number(life.production.supplies)}</strong><small>/dia</small></span></div>:<p>{life.status}. {city.capital?"A capital permanece no reino. Cuide da confiança e da recuperação da cidade.":"Abaixo de 35%, uma crise persistente pode levar à separação. Decisões locais e escolhas do Conselho afetam a confiança."}</p>}
+            {selected==="economy"?<div className={styles.productionRates} aria-label="Produção diária da cidade"><span aria-label={`${number(life.production.materials)} materiais por dia`}><CozySymbol name="materials" size={22}/><strong>{number(life.production.materials)}</strong><small>/dia</small></span><span aria-label={`${number(life.production.supplies)} suprimentos por dia`}><CozySymbol name="supplies" size={22}/><strong>{number(life.production.supplies)}</strong><small>/dia</small></span></div>:<p>{life.status}. {data.world.persistent ? 'As decisões locais podem melhorar a confiança.' : city.capital?"A capital permanece no reino. Cuide da confiança e da recuperação da cidade.":"Abaixo de 35%, uma crise persistente pode levar à separação. Decisões locais e escolhas do Conselho afetam a confiança."}</p>}
             <button className={styles.textButton} onClick={()=>{setSelected(null);setTab("decisions");}}>Ver decisões da cidade <ArrowRight size={15}/></button>
           </section>}
 

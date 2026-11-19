@@ -1,4 +1,22 @@
 {
+  "cozyMine": {
+    "src": "/images/mapa-cozy/mina.png",
+    "width": 384,
+    "height": 256,
+    "bounds": [20, 15, 364, 250]
+  },
+  "cozyQuarry": {
+    "src": "/images/mapa-cozy/pedreira.png",
+    "width": 384,
+    "height": 256,
+    "bounds": [15, 10, 369, 250]
+  },
+  "cozyCampRecovery": {
+    "src": "/images/mapa-cozy/acampamento.png",
+    "width": 384,
+    "height": 256,
+    "bounds": [20, 5, 364, 250]
+  },
   "capital": {
     "src": "/cities/royal-capital-v1.png",
     "width": 1254,

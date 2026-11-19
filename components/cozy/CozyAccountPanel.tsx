@@ -4,12 +4,15 @@ import Link from "next/link";
 import {CollectionHub} from "../profile/CollectionHub";
 import { ArrowRight, Crown, Medal, RefreshCw, Trophy } from "lucide-react";
 import type { CozyAccount } from "@/lib/cozy/types";
+import type { CozyAscensionHistory } from "@/lib/cozy/ascension-preview";
+import CozyAscensionMedals from "./CozyAscensionMedals";
 import styles from "./cozy-account.module.css";
 import {AccountAppearance} from "../profile/AccountAppearance";
 
 type AccountData = {
   account: CozyAccount;
   victoryBadgeCount:number;
+  ascensionMedals?:CozyAscensionHistory["medals"] | null;
   history: {
     worldId: string;
     worldName: string;
@@ -87,6 +90,10 @@ export function CozyAccountPanel({username}:{username?:string}={}) {
           </div>}
           {username&&<Link href="/premium">Coroa Premium</Link>}
           {username&&<h2 className={styles.legacyTitle}>Legado</h2>}
+          {username&&data.ascensionMedals&&Object.values(data.ascensionMedals).some(count=>count>0)&&<>
+            <CozyAscensionMedals medals={data.ascensionMedals}/>
+            <Link className={styles.legacyHistoryLink} href="/inventory/legacy">Ver reinados <ArrowRight size={15}/></Link>
+          </>}
           <div className={styles.awards} aria-label="Coleção de temporada">
             {[
               {art:"victory-seal",name:"Insígnia de Vitória",count:data.victoryBadgeCount,rule:"Encerre uma temporada com o Selo de Vitória."},

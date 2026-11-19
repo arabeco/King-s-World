@@ -255,8 +255,11 @@
   color: #c8b982;
   transition: transform 160ms ease;
 }
-.report[open] .chevron {
+.report[open] > summary > .chevron {
   transform: rotate(180deg);
+}
+.report[data-completed-works] > summary {
+  min-height: 54px;
 }
 .body {
   margin: 0 13px 14px;
@@ -344,3 +347,4 @@
 .report[data-battle][data-unread="true"]{background:radial-gradient(ellipse at top right,#b48a3423,transparent 75%),linear-gradient(125deg,#303034,#191b1f)}
 
 .followUp{background:var(--kw-action-gold);color:var(--kw-action-ink);border:1px solid var(--kw-action-border);box-shadow:var(--kw-action-shadow);text-shadow:none;min-height:44px;border-radius:6px;font-weight:700}
+.reportScene{display:block;width:100%;height:auto;max-height:160px;object-fit:cover;border-radius:8px;margin-bottom:10px}

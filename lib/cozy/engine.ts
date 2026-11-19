@@ -3,12 +3,16 @@ import {modernCouncilDecision} from './council-decisions';
 import {CITY_FOUNDATION_COST,CITY_FOUNDATION_DAYS,foundationSite} from './city-foundation';
 import {npcOccupation} from './npc-occupation';
 import {armyPower,cityWallLevels,wallPower,defensePower} from './military-power';
-import {expeditionCost,expeditionTravelMs,explorationPath,explorationCorridor} from './exploration-route';
+import {expeditionCost,expeditionTravelMs,explorationPath,explorationCorridor,explorationQueue,EXPLORATION_QUEUE_LIMIT} from './exploration-route';
+import {cityWorkQuote,cityWorksLane} from './city-works';
+import {ASCENSION_MINIMUM,ascensionRewardAmounts,ascensionStanding,type CozyAscensionConfirmation} from './ascension-preview';
+import {ASCENSION_PROOFS_REQUIRED,RITE,completedAscensionProofs,riteAvailable,riteCouncilCities} from './ascension-rite';
 import {empireArmy,committedTroops,retargetArmyReturns,restoreAbstractArmy} from './expedition-army';
 import {playerCampaign} from './player-campaign';
 import {damageCityBuildings} from './city-damage';
 import {bindCityTerritories,nearestTerritoryCity,restoreCityTerritory} from './city-territory';
 import {economicExpress,seasonDays,waveDays,clockSpeed} from './rhythm';
+import { FRONTIER_RENEWAL_DAYS, renewFrontier, TRADE_ROUTE, TRADE_ROUTE_TRIPS } from "./frontier-renewal";
 import {WAVE_POWER} from "./hordes";
 import {resolveSanctuaryRaids,sanctuaryThreats,syncSanctuaryRaidReports} from "./sanctuary-raids";
 import {councilTopic} from "./council-context";
@@ -18,7 +22,10 @@ import {equipmentBonus} from "./equipment";
 import {ROYAL_PROFILES,royalBonus} from "./royal-profiles";
 import {createProgression,hasZeroProgression,zeroInfluence,progressionBreakdown,localTrustDelta,decreeCareRecognized,councilCredit,recordCityCare,recordStableAdministration,recognizeSupport,usesMobileReviewRules,PROGRESSION} from './progression';
 import {citySocialStatus,SOCIAL_RUPTURE_DAYS,releaseCity} from "./city-crisis";
-import {cityEfficiency,cityDecision} from "./city-life";
+import {cityEfficiency,cityDecision,type CityOutcome} from "./city-life";
+import {prepareFrontierProgress,recordFrontierVictory} from "./frontier-progress";
+import {ALLIANCE_GIFT_PACKS,ALLIANCE_GIFT_RECEIVE_LIMIT,ALLIANCE_GIFT_RESOURCES,allianceGiftUsage,canReceiveAllianceGift} from "./alliance-gifts";
+import {activeNoticeIds,isUnreadReport} from "./notices";
 import {combatAssessment} from "./combat";
 import {knownMapCells, visibleTerrainCells} from "./map-visibility";
 import {sanctuaryAt, ALL_SANCTUARIES} from "./landmarks";
@@ -28,6 +35,7 @@ import {
   COUNSELORS,
   HERO_ROLES,
   QUESTS,
+  questsForRealm,
   RESEARCHES,
   SECTORS,
   TROOPS,
@@ -44,11 +52,13 @@ import type {
   CozyComputed,
   CozyCoord,
   CozyDecree,
+  CozyDecreeEffects,
   CozyHeroRole,
   CozyInfluence,
   CozyOrder,
   CozyReport,
   CozyResources,
+  CozySector,
   CozyShared,
   CozyState,
   CozyTile,
@@ -95,7 +105,7 @@ function dayMs(world: CozyWorld) {
   return DAY/clockSpeed(world);
 }
 function endAt(world: CozyWorld) {
-  return world.startsAt === null ? null : world.startsAt + dayMs(world) * seasonDays(world);
+  return world.persistent || world.startsAt === null ? null : world.startsAt + dayMs(world) * seasonDays(world);
 }
 export function getCozyDay(world: CozyWorld, now: number): number {
   if (
@@ -104,7 +114,8 @@ export function getCozyDay(world: CozyWorld, now: number): number {
     world.status === "open"
   )
     return 0;
-  return clamp(Math.floor((now - world.startsAt) / dayMs(world)) + 1, 1, seasonDays(world));
+  const day = Math.floor((now - world.startsAt) / dayMs(world)) + 1;
+  return world.persistent ? day : clamp(day, 1, seasonDays(world));
 }
 function arrivalForDay(world: CozyWorld, day: number) {
   return (world.startsAt ?? 0) + (day - 1) * dayMs(world);
@@ -123,16 +134,22 @@ function report(
   title: string,
   body: string,
   positive = true,
+  location?: CozyCoord,
+  decisionAuthor?: CozyReport["decisionAuthor"],
 ) {
-  state.reports.unshift({
+  const entry: CozyReport = {
     id: nextId(state, "report"),
     at,
     kind,
     title,
     body,
     positive,
-  });
+    ...(location ? { location } : {}),
+    ...(decisionAuthor ? { decisionAuthor } : {}),
+  };
+  state.reports.unshift(entry);
   state.reports = state.reports.slice(0, 80);
+  return entry;
 }
 function heroesOf(state: CozyState, role: CozyHeroRole) {
   return state.heroes.filter(
@@ -188,6 +205,10 @@ function production(state: CozyState, at=state.settledAt, cities=state.cities): 
   );
 }
 function influence(state: CozyState): CozyInfluence {
+  if (state.founding) {
+    const government = state.heroes.length * PROGRESSION.hero;
+    return { infrastructure: 0, government, military: 0, society: 0, legacy: 0, total: government };
+  }
   if(state.defeat)return {infrastructure:0,government:0,military:0,society:0,legacy:0,total:0};
   if(hasZeroProgression(state))return zeroInfluence(state,armyPower({...state,army:empireArmy(state)}),wallPower(state));
   const infrastructure = Math.min(
@@ -235,6 +256,7 @@ function influence(state: CozyState): CozyInfluence {
   };
 }
 function questProgress(state: CozyState) {
+  const frontier = state.progression?.feats.frontier;
   const progress: Record<string, number> = {
     city: Math.max(...state.cities.map(getCityDevelopment)),
     expansion: state.cities.length,
@@ -243,10 +265,10 @@ function questProgress(state: CozyState) {
       (sum, level) => sum + level,
       0,
     ),
-    defense: state.hordesWon,
+    defense: frontier ? Number(frontier.resourceAreaClaimed) : state.hordesWon,
     council: state.decreesSigned.length,
   };
-  return QUESTS.map((quest) => {
+  return questsForRealm(state).map((quest) => {
     const target=quest.id==="exploration"&&usesMobileReviewRules(state)?40:quest.target;
     return {
     id: quest.id,
@@ -262,21 +284,55 @@ function getDecree(
   shared: CozyShared,
   world: CozyWorld,
   now: number,
+  capture = false,
 ): CozyDecree | null {
+  if (state.founding) return null;
+  if (state.firstAudience) {
+    const audience = state.firstAudience;
+    const city = state.cities.find(candidate => candidate.capital);
+    const trust = city?.life?.contentment ?? state.satisfaction;
+    const stateGain = (gain: number) => clamp(state.satisfaction + gain, 0, 100) - state.satisfaction;
+    return {
+      ...audience,
+      options: audience.options.map(option => ({
+        ...option, effects: {
+          ...option.effects,
+          satisfaction: stateGain(option.effects.satisfaction),
+          localSatisfaction: Object.fromEntries(state.cities.map(candidate => [
+            candidate.id, candidate.id === city?.id
+              ? clamp(trust + option.effects.satisfaction, 0, 100) - trust
+              : 0,
+          ])),
+        },
+      })),
+    };
+  }
   const day = getCozyDay(world, now);
   if (!day || state.finalizedAt !== null) return null;
   const decreeDay = 1 + Math.floor((day - 1) / 3) * 3;
+  if (world.persistent && !capture) {
+    const pending = state.decisionInbox?.council;
+    if (!pending) return null;
+    const normalize = (outcome: CozyDecreeEffects) => ({
+      ...outcome, ...councilTrustEffects(state, outcome.materials, outcome.satisfaction),
+    });
+    return {
+      ...pending,
+      options: pending.options.map(option => option.resolution === "chance" ?
+        {...option, effects: normalize(option.effects), failure: normalize(option.failure)} :
+        {...option, effects: normalize(option.effects)}),
+    };
+  }
+  if (world.persistent && state.decisionInbox?.councilResolvedCycle === decreeDay) return null;
   if (state.decreesSigned.includes(decreeDay)) return null;
   const seat = Math.floor((decreeDay - 1) / 3) % 2;
   const counselorId = state.counselors[seat];
   const counselor = COUNSELORS.find((person) => person.id === counselorId)!;
-  const {careLabel,investLabel,careDescription,investDescription,...topic}=councilTopic(state,decreeDay,day,nextHorde(state,shared,world,now)?.day??null);
+  const upcomingWave = world.persistent ? null : nextHorde(state,shared,world,now)?.day ?? null;
+  const {careLabel,investLabel,careDescription,investDescription,...topic}=councilTopic(state,decreeDay,day,upcomingWave);
   const generous = counselorId === "helena" || counselorId === "ines";
-  const effects=(materials:number,requested:number)=>{
-    const satisfaction=clamp(state.satisfaction+requested,0,100)-state.satisfaction;
-    return {materials,satisfaction,...(hasZeroProgression(state)?{localSatisfaction:Object.fromEntries(state.cities.map(city=>[city.id,clamp((city.life?.contentment??state.satisfaction)+localTrustDelta(state,city,requested),0,100)-(city.life?.contentment??state.satisfaction)]))}:{})};
-  };
-  if(state.progression?.balance?.unifiedRules)return modernCouncilDecision(state,decreeDay,day,nextHorde(state,shared,world,now)?.day??null,counselorId,effects,now);
+  const effects=(materials:number,requested:number)=>capture ? {materials,satisfaction:requested} : councilTrustEffects(state,materials,requested);
+  if(state.progression?.balance?.unifiedRules)return modernCouncilDecision(state,decreeDay,day,upcomingWave,counselorId,effects,now);
   return {
     id: `${decreeDay}:${counselorId}`,
     day: decreeDay,
@@ -309,6 +365,38 @@ function getDecree(
       }]:[]),
     ],
   };
+}
+function councilTrustEffects(state: CozyState, materials: number, requested: number) {
+  const satisfaction = clamp(state.satisfaction + requested, 0, 100) - state.satisfaction;
+  if (!hasZeroProgression(state)) return {materials,satisfaction};
+  const localSatisfaction = Object.fromEntries(state.cities.map(city => {
+    const trust = city.life?.contentment ?? state.satisfaction;
+    return [city.id, clamp(trust + localTrustDelta(state,city,requested),0,100)-trust];
+  }));
+  return {materials,satisfaction,localSatisfaction};
+}
+function syncDecisionInbox(state: CozyState, shared: CozyShared, world: CozyWorld, now: number) {
+  if (!world.persistent || state.founding || state.defeat || state.finalizedAt !== null) return;
+  const day = getCozyDay(world,now);
+  const inbox = state.decisionInbox ??= {cities:{},affinity:{}};
+  if (!state.firstAudience && !inbox.council) {
+    const draft = getDecree(state,shared,world,now,true);
+    if (draft) {
+      const prefersCare = draft.counselorId === "helena" || draft.counselorId === "ines";
+      const suggested = draft.options.find(option => option.id === (prefersCare ? "care" : "invest"));
+      inbox.council = {...draft,suggestedOptionId:suggested?.id};
+    }
+  }
+  const owned = new Set(state.cities.map(city => city.id));
+  for (const id of Object.keys(inbox.cities)) if (!owned.has(id)) delete inbox.cities[id];
+  for (const city of state.cities) {
+    if (inbox.cities[city.id]) continue;
+    const hero = state.heroes.find(candidate => candidate.id === city.heroId && candidate.cityId === city.id);
+    const context = state.progression?.balance?.unifiedRules
+      ? {resources:state.resources,now,hordeSoon:false,heroRole:hero?.role} : undefined;
+    const draft = cityDecision(city,day,context);
+    if (draft) inbox.cities[city.id] = {...draft,day,...(hero ? {author:{name:hero.name,role:hero.role}} : {})};
+  }
 }
 function nextHorde(
   state: CozyState,
@@ -366,15 +454,16 @@ export function getCozyComputed(
     0.35,
     sumSectors(state, "recruitment") * 0.004,
   );
-  const portalOpen = started && !readOnly;
+  const portalOpen = started && !readOnly && !world.persistent;
   const supportOffer=Math.max(20,Math.floor(defensePower(state,now)*0.2));
+  const horde = state.founding ? null : nextHorde(state,shared,world,now);
   return {
     day,
     durationDays: seasonDays(world),
     realDurationDays: dayMs(world)*seasonDays(world)/DAY,
     dayMs: dayMs(world),
     endsAt,
-    phase: state.defeat?"Império derrotado":!started
+    phase: state.ascension?"Reinado arquivado":state.defeat?"Império derrotado":!started
       ? "Préparação"
       : readOnly
         ? "Temporada encerrada"
@@ -403,8 +492,42 @@ export function getCozyComputed(
     recruitmentDiscount,
     armyCapacity: 200 + state.cities.filter(c=>!c.capital&&c.cityClass==="posto_avancado").length*10 + sumSectors(state, "recruitment") * 30,
     productionPerDay: production(state,now),
-    cityLife:Object.fromEntries(state.cities.map(city=>{const rates=production(state,now,[city]),decision=started&&!readOnly?cityDecision(city,day,state.progression?.balance?.unifiedRules?{resources:state.resources,now,hordeSoon:Boolean(nextHorde(state,shared,world,now)&&nextHorde(state,shared,world,now)!.day-day<=3)}:undefined):null;if(decision&&hasZeroProgression(state))decision.options=decision.options.map(option=>({...option,contentment:localTrustDelta(state,city,option.contentment),...(option.chance?{chance:{...option.chance,failure:{...option.chance.failure,contentment:localTrustDelta(state,city,option.chance.failure.contentment)}}}:{})}));return [city.id,{contentment:city.life?.contentment??state.satisfaction,status:citySocialStatus(city),unrestDays:city.life?.unrestDays??0,integrity:city.integrity??100,daysToRupture:!city.capital&&state.cities.length>1&&(city.life?.contentment??state.satisfaction)<35?Math.max(0,SOCIAL_RUPTURE_DAYS-(city.life?.unrestDays??0)):null,efficiency:cityEfficiency(city,now),production:{materials:rates.materials,supplies:rates.supplies},administrationMaterials:rates.materials*15/(120+city.sectors.economy*85+city.sectors.administration*15),recruitmentCapacity:city.sectors.recruitment*30+(!city.capital&&city.cityClass==="posto_avancado"?10:0),fortification:Math.floor(cityWallLevels(city)*18*(1+state.research.fortification*0.15)),effectEndsAt:city.life?.productionEffect&&city.life.productionEffect.endsAt>now?city.life.productionEffect.endsAt:null,decision}];})),
-    nextHorde: nextHorde(state, shared, world, now),
+    cityLife: Object.fromEntries(state.cities.map(city => {
+      const rates = production(state,now,[city]);
+      const trust = city.life?.contentment ?? state.satisfaction;
+      const integrity = city.integrity ?? 100;
+      const activeEffect = city.life?.productionEffect;
+      const effect = activeEffect && activeEffect.endsAt > now ? activeEffect : null;
+      const raw = !started || readOnly ? null : world.persistent
+        ? state.decisionInbox?.cities[city.id] ?? null
+        : cityDecision(city,day,state.progression?.balance?.unifiedRules
+          ? {resources:state.resources,now,hordeSoon:Boolean(!world.persistent && horde && horde.day-day<=3)} : undefined);
+      const normalize = <T extends CityOutcome>(outcome: T): T => {
+        const delta = localTrustDelta(state,city,outcome.contentment);
+        if (!world.persistent) return {...outcome,contentment:delta};
+        return {
+          ...outcome,
+          contentment: clamp(trust+delta,0,100)-trust,
+          ...(outcome.integrityRestore ? {integrityRestore:Math.min(outcome.integrityRestore,100-integrity)} : {}),
+          productionBonus: outcome.productionBonus >= (effect?.bonus ?? 0) ? outcome.productionBonus : 0,
+        };
+      };
+      const decision = raw ? {...raw,options:raw.options.map(option => ({
+        ...normalize(option),
+        ...(option.chance ? {chance:{...option.chance,failure:normalize(option.chance.failure)}} : {}),
+      }))} : null;
+      return [city.id,{
+        contentment:trust,status:citySocialStatus(city),unrestDays:city.life?.unrestDays??0,integrity,
+        daysToRupture:!world.persistent&&!city.capital&&state.cities.length>1&&trust<35
+          ? Math.max(0,SOCIAL_RUPTURE_DAYS-(city.life?.unrestDays??0)) : null,
+        efficiency:cityEfficiency(city,now),production:{materials:rates.materials,supplies:rates.supplies},
+        administrationMaterials:rates.materials*15/(120+city.sectors.economy*85+city.sectors.administration*15),
+        recruitmentCapacity:city.sectors.recruitment*30+(!city.capital&&city.cityClass==="posto_avancado"?10:0),
+        fortification:Math.floor(cityWallLevels(city)*18*(1+state.research.fortification*0.15)),
+        effectEndsAt:effect?.endsAt??null,decision,
+      }];
+    })),
+    nextHorde: horde,
     decree: readOnly ? null : getDecree(state, shared, world, now),
     portalOpen,
     canEnterPortal:
@@ -412,11 +535,16 @@ export function getCozyComputed(
       score.total >= 1500 &&
       state.portalCrossedAt === null &&
       !state.orders.some((order) => order.kind === "portal"),
-    unreadReports: state.reports.filter((item) => item.at > state.readAt)
+    unreadReports: state.reports.filter((item) => isUnreadReport(state,item,world.persistent))
       .length,
     heroCost: state.progression?.balance?.expressEconomy
       ? (state.heroes.length === 0 ? 150 : 225 + (state.heroes.length - 1) * 25)
       : 200 + state.heroes.length * 100,
+    ...(world.persistent && !state.founding ? { tradeRoute: {
+      gold: TRADE_ROUTE.gold, supplies: TRADE_ROUTE.supplies, durationMs: TRADE_ROUTE.travelDays * dayMs(world),
+      intervalMs: (TRADE_ROUTE.travelDays + TRADE_ROUTE.cooldownDays) * dayMs(world),
+      nextAt: state.nextTradeAt ?? 0, arrivesAt: state.orders.find(order => order.tradeRoute)?.arrivesAt ?? null,
+    } } : {}),
     troopCosts: Object.fromEntries(
       TROOPS.map((troop) => [
         troop.id,
@@ -489,7 +617,7 @@ function baseTile(
     kind=district<15?'gold':district<30?'materials':coord.q===q0+3&&coord.r===r0+3&&district<65?'abandoned':n<2?'npc':n<4?'ruin':'plain';
   }
   const names = {
-    npc: "Aldeia da horda",
+    npc: world.persistent ? "Acampamento da horda" : "Aldeia da horda",
     abandoned: "Cidade abandonada",
     ruin: "Ruínas antigas",
     gold: "Veio de ouro",
@@ -519,6 +647,25 @@ function tileDistance(state: CozyState, coord: CozyCoord) {
     Math.min(...state.cities.map((city) => distance(city, coord))),
   );
 }
+
+function capitalSites(state: CozyState, shared: CozyShared, world: CozyWorld): CozyCoord[] {
+  const origin = state.founding!.origin;
+  const sites: CozyCoord[] = [];
+  for (let radius = 0; radius <= 18 && sites.length < 12; radius++) {
+    for (let q = -radius; q <= radius && sites.length < 12; q++) {
+      for (let r = -radius; r <= radius && sites.length < 12; r++) {
+        const coord = { q: origin.q + q, r: origin.r + r };
+        const id = key(coord);
+        if (distance(origin, coord) !== radius || Math.abs(coord.q) > 40 ||
+          Math.abs(coord.r) > 40 || Math.abs(coord.q + coord.r) > 40 ||
+          sanctuaryAt(coord) || shared.deposits[id] || shared.territories?.[id] ||
+          baseTile(world, coord, shared).kind !== "plain" || foundationSite(state, shared, coord)) continue;
+        sites.push(coord);
+      }
+    }
+  }
+  return sites;
+}
 function travelMs(state:CozyState,world:CozyWorld,coord:CozyCoord){return expeditionTravelMs(state,world,coord);}
 function exploreCost(state:CozyState,coord:CozyCoord){return expeditionCost(state,coord);}
 function mapTile(
@@ -543,6 +690,8 @@ function mapTile(
     claim?.playerId === state.playerId
       ? state.cities.find((item) => item.id === claim.cityId)
       : undefined;
+  const camp = world.persistent && base.kind === "npc" && !shared.independentCities?.[id];
+  const resistance = shared.npcResistance?.[id];
   return {
     ...coord,
     id,
@@ -552,7 +701,7 @@ function mapTile(
     name: !revealed ? "Território desconhecido" : claim?.name ?? (reserved ? sanctuary!.name : base.name),
     revealed,
     terrainVisible: revealed || sight.has(id),
-    attackable: !shared.claims[id] && !reserved && (base.kind === "npc" || base.kind === "abandoned"),
+    attackable: !shared.claims[id] && !reserved && (base.kind === "npc" || base.kind === "abandoned") && !(camp && base.power === 0),
     ownerId: claim?.playerId ?? null,
     reservedSlot: claim?.reservedSlot === true,
     cityId: claim?.cityId ?? null,
@@ -570,11 +719,15 @@ function mapTile(
         ? base.power
         : null,
     deposit: !reserved && revealed ? (area?.reserve ?? shared.deposits[id] ?? null) : null,
+    ...(revealed && area && shared.depletedAreas?.[area.id] !== undefined
+      ? { replenishesAt: shared.depletedAreas[area.id] + FRONTIER_RENEWAL_DAYS * dayMs(world) } : {}),
+    ...(revealed && !claim && !reserved && camp && resistance?.remaining === 0
+      ? { campRecoveryAt: resistance.at + FRONTIER_RENEWAL_DAYS * dayMs(world) } : {}),
     territoryOwnerId: revealed ? shared.territories?.[id] ?? null : null,
     area: areaKnown ? {exclusive:area.exclusive,id:area.id,cells:area.cells,owners:area.owners,canCollect:canUseArea(shared,area,state.playerId),blockedReason:areaConflict?'Há território de outro império nesta área.':null,canAnnex:!areaConflict&&area.reserve.surveys===3&&area.reserve.remaining>0&&(!area.owners.length||(!area.exclusive&&!area.owners.includes(state.playerId)&&areaAllied(shared,area.owners[0],state.playerId)))} : world.economyVersion===3&&revealed&&!reserved&&['gold','materials'].includes(base.kind)?{exclusive:true,id:resourceAreaId(coord,base.kind as 'gold'|'materials'),cells:areaCells(coord,true),owners:[],canAnnex:false,canCollect:false}:null,
-    ...(world.economyVersion===3&&revealed&&!claim&&['npc','abandoned'].includes(base.kind)?{occupation:npcOccupation(base.power,shared.npcResistance?.[id]?.initial??base.power)}:{}),
-    ...(world.economyVersion===3&&revealed&&!claim&&!reserved&&base.kind==='plain'?{foundation:{canFound:!foundationSite(state,shared,coord),reason:foundationSite(state,shared,coord),materials:CITY_FOUNDATION_COST.materials,supplies:CITY_FOUNDATION_COST.supplies+exploreCost(state,coord),durationMs:travelMs(state,world,coord)+CITY_FOUNDATION_DAYS*dayMs(world)}}:{}),
-    distance: tileDistance(state, coord),
+    ...(world.economyVersion===3&&revealed&&!claim&&!camp&&['npc','abandoned'].includes(base.kind)?{occupation:npcOccupation(base.power,resistance?.initial??base.power)}:{}),
+    ...(!state.founding&&world.economyVersion===3&&revealed&&!claim&&!reserved&&base.kind==='plain'?{foundation:{canFound:!foundationSite(state,shared,coord),reason:foundationSite(state,shared,coord),materials:CITY_FOUNDATION_COST.materials,supplies:CITY_FOUNDATION_COST.supplies+exploreCost(state,coord),durationMs:travelMs(state,world,coord)+CITY_FOUNDATION_DAYS*dayMs(world)}}:{}),
+    distance: state.founding ? distance(state.founding.origin, coord) : tileDistance(state, coord),
     combat: !reserved&&revealed&&(base.kind==="npc"||base.kind==="abandoned")&&!claim ? combatAssessment(armyPower(state),base.power) : null,
     exploreCost: exploreCost(state, coord),
     travelMs: travelMs(state, world, coord),
@@ -585,6 +738,14 @@ export function getCozyTiles(
   shared: CozyShared,
   world: CozyWorld,
 ): CozyTile[] {
+  if (state.founding) {
+    const sites = capitalSites(state, shared, world);
+    const visible = new Set(sites.map(key));
+    return sites.map(coord => ({
+      ...mapTile(state, shared, world, coord, visible, visible),
+      foundation: { canFound: true, reason: null, materials: 0, supplies: 0, durationMs: 0 },
+    }));
+  }
   const limit = worldDiagonalLimit(state,shared);
   const known = knownMapCells(state, shared);
   const sight = visibleTerrainCells(state);
@@ -651,11 +812,11 @@ export function createCozyState(
     citySystemsAt: now,
     settledAt: endsAt === null ? now : Math.min(now, endsAt),
     resources: { gold: 350, materials: 1800, supplies: 500 },
-    cities: [city],
+    cities: world.foundingOnboarding ? [] : [city],
     army: { militia: 25, shooters: 0, scouts: 0, machinery: 0 },
     heroes: [],
     research: { economy: 0, military: 0, exploration: 0, fortification: 0 },
-    counselors: ["helena", "ines"],
+    counselors: world.foundingOnboarding ? ["", ""] : ["helena", "ines"],
     satisfaction: 70,
     explored: [],
     raided: {},
@@ -678,6 +839,10 @@ export function createCozyState(
     seasonXp: 0,
     sequence: 0,
   };
+  if (world.foundingOnboarding) {
+    state.founding = { origin: { q, r } };
+    return state;
+  }
   if(world.influenceVersion===2)createProgression(state,armyPower(state)+wallPower(state),economicExpress(world),world.economyVersion===3);
   report(
     state,
@@ -800,6 +965,36 @@ function resolveHorde(
     won,
   );
 }
+function settlePeacefulDefense(state: CozyState, shared: CozyShared, world: CozyWorld, at: number) {
+  const day = state.pendingDefenseDay;
+  if (day === undefined || state.orders.some(order => order.kind === "attack" && !order.foundation && !order.occupationOnly)) return;
+  delete state.pendingDefenseDay;
+  const enemy = WAVE_POWER[waveDays(world).indexOf(day)];
+  const due = arrivalForDay(world, day);
+  let supportPower = 0;
+  for (const support of shared.support) {
+    if (support.requesterId !== state.playerId || support.waveDay !== day ||
+      support.acceptedAt === null || support.acceptedAt >= due) continue;
+    support.resolvedAt ??= at;
+    supportPower += support.power;
+  }
+  const defense = defensePower(state, at) + supportPower;
+  const won = defense >= enemy;
+  if (won) {
+    state.hordesWon += 1;
+    state.satisfaction = clamp(state.satisfaction + 3, 0, 100);
+    for (const city of state.cities) if (city.life)
+      city.life.contentment = clamp(city.life.contentment + 3, 0, 100);
+  }
+  const alliance = shared.alliances.find(group => group.id === state.allianceId && group.members.includes(state.playerId));
+  if (alliance) (shared.allianceBattles ??= []).push({
+    id: `${state.playerId}:horde:${day}`, allianceId: alliance.id, playerId: state.playerId,
+    waveDay: day, at, won, defense, enemyPower: enemy, troopsLost: 0, supportPower,
+  });
+  report(state, at, "horde", won ? "Patrulha conteve a horda" : "Patrulha voltou ao reino",
+    `${defense} de defesa contra ${enemy} de poder. ${won ? "O encontro reforçou a confiança nas cidades." : "As cidades e as tropas estão a salvo."}`, won);
+}
+
 function establishCity(
   state: CozyState,
   shared: CozyShared,
@@ -857,8 +1052,20 @@ function establishCity(
     "progress",
     `${city.name} se une ao reino`,
     `${hero.name} assumiu a cidade. ${foundation?"O investimento de fundação foi aplicado aos primeiros assentamentos.":"A cidade foi anexada após a expedição."} A infraestrutura e os bônus passam a contar para o reino.`,
+    true,
+    coord,
   );
 }
+function returnNpcExpedition(state: CozyState, world: CozyWorld, order: CozyOrder, target: CozyCoord, cargo?: Partial<CozyResources>) {
+  const home = state.cities.find(city=>city.capital) ?? state.cities[0];
+  if (!home) return;
+  const at = order.arrivesAt;
+  const returning = {...order,id:nextId(state,"return"),createdAt:at,q:home.q,r:home.r,returning:true,
+    conquest:false,arrivesAt:at+(order.returnTravelMs??travelMs(state,world,target)),...(cargo?{cargo}:{})};
+  delete returning.heroId;
+  state.orders.push(returning);
+}
+
 function resolveOrder(
   state: CozyState,
   shared: CozyShared,
@@ -866,6 +1073,21 @@ function resolveOrder(
   order: CozyOrder,
 ) {
   const at = order.arrivesAt;
+  if(order.riteExpedition){
+    const power=armyPower(state);
+    const won=combatAssessment(power,RITE.expedition.enemyPower).attackWins;
+    const losses=loseTroops(state,won?.06:.2);
+    if(won)(state.ascensionProofs??={}).expedition=at;
+    report(state,at,"combat",won?"Caminho da Travessia aberto":"Guardiões do Rito resistiram",
+      `${power} de poder contra ${RITE.expedition.enemyPower} dos guardiões. ${losses} baixas. O exército voltou ao reino.`,won);
+    return;
+  }
+  if (order.tradeRoute) {
+    const gold = order.cargo?.gold ?? 0;
+    state.resources.gold += gold;
+    report(state, at, "economy", "Caravana comercial voltou", `+${gold} de ouro no tesouro.`);
+    return;
+  }
   if(order.returning){
     for(const resource of ['gold','materials','supplies'] as const)state.resources[resource]+=order.cargo?.[resource]??0;
     report(state,at,'combat','Expedição retornou',`A investida foi concluída. ${order.cargo?.gold??0} de ouro e ${order.cargo?.materials??0} materiais foram entregues. Uma nova investida está disponível.`);return;
@@ -875,13 +1097,16 @@ function resolveOrder(
     if (city && order.sector) {
       city.sectors[order.sector] = Math.min(10, city.sectors[order.sector] + 1);
       if(order.sector==='society'&&state.progression)state.progression.council.careSince[`${city.q},${city.r}`]??=getCozyDay(world,at);
-      report(
+      const receipt = report(
         state,
         at,
         "progress",
         "Setor concluído",
         `${SECTORS.find((item) => item.id === order.sector)!.name} de ${city.name} chegou ao nível ${city.sectors[order.sector]}.`,
+        true,
+        world.persistent ? {q:city.q,r:city.r} : undefined,
       );
+      if(world.persistent) receipt.completedWork={cityId:city.id,cityName:city.name};
     }
     return;
   }
@@ -901,7 +1126,7 @@ function resolveOrder(
   }
   if (order.kind === "portal") {
     // Historical travel orders no longer gate victory.
-    recordInfluenceVictory(state, at);
+    recordInfluenceVictory(state, world, at);
     return;
   }
   if (order.kind === "explore" && order.sanctuaryId) {
@@ -923,7 +1148,7 @@ function resolveOrder(
     const power=armyPower(state),won=combatAssessment(power,pact.guardian.power).attackWins;
     const losses=loseTroops(state,won?.06:.2);
     attempt.outcome=won?"won":"lost";attempt.attackPower=power;attempt.losses=losses;
-    if(won)activateSanctuaryPact(pact,at,dayMs(world),endAt(world)!,waveDays(world).map((day,index)=>({day,arrivesAt:arrivalForDay(world,day),power:WAVE_POWER[index]})));
+    if(won)activateSanctuaryPact(pact,at,dayMs(world),endAt(world)??Infinity,waveDays(world).map((day,index)=>({day,arrivesAt:arrivalForDay(world,day),power:WAVE_POWER[index]})));
     report(state,at,"combat",won?"Guardiões da torre superados":"Guardiões repeliram a expedição",`${power} de poder contra ${pact.guardian.power}. ${losses} tropas perdidas. ${won?"A sintonia foi ativada; o benefício começa nesta chegada.":"As reservas do pacto permanecem disponíveis para outra tentativa ou cancelamento."} Este confronto não causa dano às cidades e não gera saque, missão ou influência por vitória.`,won);
     return;
   }
@@ -949,7 +1174,7 @@ function resolveOrder(
     if(order.explorationPath)state.scoutedCells=[...new Set([...(state.scoutedCells??[]),...explorationCorridor(order.explorationPath,worldDiagonalLimit(state,shared))])].sort();
     const first = !state.explored.includes(id);
     if (first) state.explored.push(id);
-    if(shared.claims[id]){report(state,at,"exploration","Cidade de outro reino reconhecida",`${shared.claims[id].name} foi localizada. Reconhecer não altera a posse e não concede reservas de NPC.`);return;}
+    if(shared.claims[id]){report(state,at,"exploration","Cidade de outro reino reconhecida",`${shared.claims[id].name} foi localizada. Reconhecer não altera a posse e não concede reservas de NPC.`,true,coord);return;}
     let detail = base.clue;
     if (base.kind === "gold" || base.kind === "materials") {
       let area = resourceArea(shared,coord,base.kind);
@@ -971,7 +1196,7 @@ function resolveOrder(
       state.resources.gold += gold;
       detail = `${base.kind === "ruin" ? "Uma antiga reserva foi encontrada." : "Os moradores deixaram uma pequena reserva."} +${gold} de ouro.`;
     }
-    report(state, at, "exploration", `${base.name} revelado`, detail);
+    report(state, at, "exploration", `${base.name} revelado`, detail, true, coord);
     return;
   }
   if (order.kind === "attack") {
@@ -979,9 +1204,12 @@ function resolveOrder(
     if(order.foundation){
       const hero=state.heroes.find(h=>h.id===order.heroId&&h.cityId===null);
       if(base.kind!=="plain"||foundationSite(state,shared,coord)||!hero){state.resources.materials+=order.foundationMaterials??CITY_FOUNDATION_COST.materials;report(state,at,"progress","Fundação interrompida","O local ou o herói ficou indisponível. Os materiais de construção foram devolvidos; os suprimentos da expedição foram gastos.",false);return;}
-      establishCity(state,shared,world,coord,hero.id,at,true);report(state,at,"progress","Nova cidade fundada","A cidade começa com os cinco setores no nível zero. Escolha seu tipo e desenvolva as construções.");return;
+      establishCity(state,shared,world,coord,hero.id,at,true);
+      if (!world.persistent) report(state,at,"progress","Nova cidade fundada","A cidade começa com os cinco setores no nível zero. Escolha seu tipo e desenvolva as construções.");
+      return;
     }
     if (shared.claims[id]) {
+      if (world.persistent && !order.conquest) returnNpcExpedition(state,world,order,coord);
       report(
         state,
         at,
@@ -1005,14 +1233,27 @@ function resolveOrder(
     const power = armyPower(state);
     const won = combatAssessment(power,base.power).attackWins;
     if(world.economyVersion===3&&!order.conquest){
-      const losses=loseTroops(state,won?.06:.2);
       const initial=shared.npcResistance?.[id]?.initial??base.power;
+      const camp = world.persistent && base.kind==="npc" && !shared.independentCities?.[id];
+      const alreadyBeaten = camp ? base.power===0 : npcOccupation(base.power,initial).canAnnex;
+      if (world.persistent && alreadyBeaten) {
+        returnNpcExpedition(state,world,order,coord);
+        report(state,at,"combat","Alvo já vencido","A expedição encontrou o local sem resistência e iniciou o retorno.",false,coord);
+        return;
+      }
+      const losses=loseTroops(state,won?.06:.2);
       const remaining=won?0:Math.max(1,base.power-Math.max(1,Math.floor(power*.35)));
       (shared.npcResistance??={})[id]={initial,remaining,at};state.raided[id]=at;
-      const home=state.cities.find(c=>c.capital)??state.cities[0];
-      if(home){const returning={...order,id:nextId(state,'return'),createdAt:at,q:home.q,r:home.r,returning:true,conquest:false,arrivesAt:at+(order.returnTravelMs??travelMs(state,world,coord)),...(won?{cargo:{gold:100+Math.floor(initial*.6),materials:100+initial}}:{})};delete returning.heroId;state.orders.push(returning);}
+      returnNpcExpedition(state,world,order,coord,won?{gold:100+Math.floor(initial*.6),materials:100+initial}:undefined);
+      const points = world.persistent && won ? recordFrontierVictory(state,id) : 0;
+      const merit = points ? ` +${points} de influência militar pelo novo alvo vencido.` : "";
+      if (camp) {
+        report(state,at,"combat",won?"Acampamento vencido":"Resistência enfraquecida",
+          `${power} de poder contra ${base.power}. ${losses} tropas perdidas. ${won?"O saque chega com o retorno.":"A defesa restante diminuiu."}${merit}`,won,coord);
+        return;
+      }
       const occupation=npcOccupation(remaining,initial);
-      report(state,at,"combat",occupation.canAnnex?"Cidade pronta para anexar":"Resistência enfraquecida",`${power} de poder contra ${base.power}. ${losses} tropas perdidas. Controle: ${Math.ceil(occupation.control)}%. Anexação liberada em ${occupation.threshold}% ou menos. ${occupation.canAnnex?"Envie um herói disponível para anexar; a cidade ainda não pertence ao reino.":"Reforce as tropas e ataque novamente."}`,won);
+      report(state,at,"combat",occupation.canAnnex?"Cidade pronta para anexar":"Resistência enfraquecida",`${power} de poder contra ${base.power}. ${losses} tropas perdidas. Controle: ${Math.ceil(occupation.control)}%. Anexação liberada em ${occupation.threshold}% ou menos. ${occupation.canAnnex?"Envie um herói disponível para anexar; a cidade ainda não pertence ao reino.":"Reforce as tropas e ataque novamente."}${merit}`,won,coord);
       return;
     }
     const losses =
@@ -1058,7 +1299,11 @@ function resolveOrder(
   }
 }
 /** Keep the persisted timestamp key compatible with historical saves and rankings. */
-function recordInfluenceVictory(state: CozyState, at: number) {
+function recordInfluenceVictory(state: CozyState, world: CozyWorld, at: number) {
+  if (world.persistent) {
+    state.peakInfluence = Math.max(state.peakInfluence ?? 0, influence(state).total);
+    return;
+  }
   if (state.portalCrossedAt !== null || influence(state).total < 1500) return;
   state.portalCrossedAt = at;
   report(state, at, "portal", "Selo de Vitória conquistado",
@@ -1075,6 +1320,11 @@ export function settleCozyState(
   rule(Number.isFinite(now) && now >= 0, "Horário inválido.");
   const state = clone(input),
     shared = clone(sharedInput);
+  if (state.ascension) return {state,shared};
+  if (state.founding) {
+    state.settledAt = Math.max(state.settledAt, Math.min(now, endAt(world) ?? now));
+    return { state, shared };
+  }
   if(state.defeat){
     const ends=endAt(world),until=ends===null?now:Math.min(now,ends);
     state.settledAt=Math.max(state.settledAt,until);
@@ -1088,6 +1338,7 @@ export function settleCozyState(
   ensureCapitalClaim(state, shared);
   retargetArmyReturns(state);
   migrateResourceAreas(shared);
+  if (world.persistent) prepareFrontierProgress(state,shared);
   for(const city of state.cities){city.life??={contentment:state.satisfaction,lastDecisionDay:null};city.life.lastSocialDay??=getCozyDay(world,Math.min(now,endAt(world)??now));city.life.unrestDays??=0;}
   if (state.finalizedAt !== null) return { state, shared };
   bindCityTerritories(state,shared);
@@ -1099,15 +1350,15 @@ export function settleCozyState(
     state.settledAt = Math.max(state.settledAt, now);
     return { state, shared };
   }
-  const until = Math.max(state.settledAt, Math.min(now, endsAt!));
-  if(until>=endsAt!)cancelUnfinishedPacts(shared,endsAt!);
+  const until = Math.max(state.settledAt, Math.min(now, endsAt ?? now));
+  if (endsAt !== null && until >= endsAt) cancelUnfinishedPacts(shared, endsAt);
   const events: {
     at: number;
     kind: "order" | "planStart" | "tower" | "horde" | "social" | "alliance";
     order?: CozyOrder;
     day?: number;
   }[] = state.orders
-    .filter((order) => order.arrivesAt <= until && order.arrivesAt <= endsAt!)
+    .filter((order) => order.arrivesAt <= until && (endsAt === null || order.arrivesAt <= endsAt))
     .map((order) => ({ at: order.arrivesAt, kind: "order", order }));
   for(const order of state.orders)if(order.planned&&!order.planned.started&&order.planned.startsAt<=until)
     events.push({at:order.planned.startsAt,kind:'planStart',order});
@@ -1121,7 +1372,9 @@ export function settleCozyState(
       events.push({ at, kind: "horde", day });
   });
   const socialFrom=Math.max(1,Math.min(...state.cities.map(c=>c.life!.lastSocialDay??1)));
-  for(let day=socialFrom+1;day<=Math.min(seasonDays(world),getCozyDay(world,until));day++){const at=arrivalForDay(world,day);if(at>=state.createdAt)events.push({at,kind:"social",day});}
+  if (!world.persistent) {
+    for(let day=socialFrom+1;day<=Math.min(seasonDays(world),getCozyDay(world,until));day++){const at=arrivalForDay(world,day);if(at>=state.createdAt)events.push({at,kind:"social",day});}
+  }
   for(const project of shared.allianceProjects??[]){const at=project.completedAt??project.canceledAt;if(at!==undefined&&at!==null&&at>state.settledAt&&at<=until)events.push({at,kind:"alliance"});}
   for(const pact of shared.sanctuaryPacts??[]){const at=pact.completedAt??pact.canceledAt;if(at!==undefined&&at!==null&&at>state.settledAt&&at<=until)events.push({at,kind:"alliance"});}
   const towerBoundaries=new Set((shared.sanctuaryPacts??[]).flatMap(p=>(p.raids?.waves??[]).map(w=>w.arrivesAt)));
@@ -1129,16 +1382,32 @@ export function settleCozyState(
   if(options)for(let i=events.length-1;i>=0;i--)if(events[i].at===options.deferWorldEventsAt&&(events[i].kind==="horde"||events[i].kind==="social"))events.splice(i,1);
   events.sort((a, b) => a.at - b.at || ({order:0,planStart:1,tower:2,alliance:3,horde:4,social:5}[a.kind]-{order:0,planStart:1,tower:2,alliance:3,horde:4,social:5}[b.kind]));
   let cursor = Math.max(state.settledAt, world.startsAt);
-  if (until >= cursor) recordInfluenceVictory(state, cursor);
+  const renewAt = (at: number) => {
+    if (world.persistent) renewFrontier(shared, at, dayMs(world), id => baseTile(world, fromKey(id), shared).kind === "npc");
+  };
+  if (until >= cursor) recordInfluenceVictory(state, world, cursor);
   for (const event of events) {
+    renewAt(event.at);
     accrue(state, world, cursor, event.at);
     cursor = Math.max(cursor, event.at);
     if(event.kind==='planStart'&&event.order){
       const order=state.orders.find(o=>o.id===event.order!.id);
       if(order?.planned){
         const level=order.kind==='research'?state.research[order.research!]:state.cities.find(c=>c.id===order.cityId)?.sectors[order.sector!];
-        if(level===order.planned.expectedLevel)order.planned.started=true;
-        else {cancelPlans(state,order);report(state,event.at,'economy','Fila interrompida','O destino ou nível previsto mudou. As reservas dos planos que não começaram foram devolvidas.',false);}
+        const target = order.kind==="explore" && order.q!==undefined && order.r!==undefined ? key({q:order.q,r:order.r}) : null;
+        const origin = order.explorationPath?.[0];
+        const canExplore = target!==null && !state.explored.includes(target) && shared.claims[target]?.playerId!==state.playerId &&
+          origin && state.cities.some(city=>city.q===origin.q&&city.r===origin.r);
+        if(order.tradeRoute || canExplore || (level!==undefined&&level===order.planned.expectedLevel))order.planned.started=true;
+        else if(order.kind==="explore"){
+          state.resources.supplies+=order.planned.cost.supplies??0;
+          state.orders=state.orders.filter(item=>item.id!==order.id);
+          report(state,event.at,'economy','Exploração cancelada','A origem ou o destino mudou. Os suprimentos reservados voltaram ao tesouro.',false);
+        }
+        else {
+          cancelPlans(state,order);
+          report(state,event.at,'economy','Fila interrompida','O destino ou nível previsto mudou. As reservas dos planos que não começaram foram devolvidas.',false);
+        }
       }
     } else if(event.kind==="social"){
       for(const city of [...state.cities]){
@@ -1159,24 +1428,31 @@ export function settleCozyState(
         (order) => order.id !== event.order!.id,
       );
       resolveOrder(state, shared, world, event.order);
-    } else if(event.kind==="horde") resolveHorde(state, shared, world, event.day!, event.at);
+    } else if (event.kind === "horde") {
+      if (world.persistent) {
+        state.hordesResolved.push(event.day!);
+        state.pendingDefenseDay ??= event.day!;
+      } else resolveHorde(state, shared, world, event.day!, event.at);
+    }
+    if (world.persistent) settlePeacefulDefense(state, shared, world, event.at);
     syncAllianceProjects(state,shared,event.at,(title,body)=>report(state,event.at,"alliance",title,body));
   syncSanctuaryPacts(state,shared,event.at,(title,body,refund)=>report(state,event.at,refund?"economy":"progress",title,body));
   syncSanctuaryRaidReports(state,shared,event.at,(at,title,body,positive)=>report(state,at,"combat",title,body,positive));
     recognizeSupport(state,shared,event.at);
-    recordInfluenceVictory(state, event.at);
+    recordInfluenceVictory(state, world, event.at);
   }
   retargetArmyReturns(state);
   accrue(state, world, cursor, until);
+  renewAt(until);
   syncAllianceProjects(state,shared,until,(title,body)=>report(state,until,"alliance",title,body));
   syncSanctuaryPacts(state,shared,until,(title,body,refund)=>report(state,until,refund?"economy":"progress",title,body));
   syncSanctuaryRaidReports(state,shared,until,(at,title,body,positive)=>report(state,at,"combat",title,body,positive));
   recognizeSupport(state,shared,until);
-  if (until >= world.startsAt) recordInfluenceVictory(state, until);
+  if (until >= world.startsAt) recordInfluenceVictory(state, world, until);
   const previousDay = getCozyDay(world, state.settledAt);
   state.settledAt = until;
   const currentDay = getCozyDay(world, until);
-  if (currentDay > previousDay && until < endsAt!)
+  if (!world.persistent && currentDay > previousDay && endsAt !== null && until < endsAt)
     report(
       state,
       until,
@@ -1184,7 +1460,7 @@ export function settleCozyState(
       `Relatório do dia ${currentDay}`,
       `Seu reino continuou produzindo durante sua ausência. ${state.cities.length} cidades, ${influence(state).total} de Influência e ${state.orders.length} ações em andamento.`,
     );
-  if ((now >= endsAt! || world.status === "finalized") && options?.deferWorldEventsAt!==until) {
+  if (endsAt !== null && (now >= endsAt || world.status === "finalized") && options?.deferWorldEventsAt!==until) {
     if(state.progression)state.progression.mobileReviewRules=true;
     state.finalizedAt = Math.min(now, endsAt!);
     state.finalScore = influence(state).total;
@@ -1200,12 +1476,76 @@ export function settleCozyState(
       `${state.finalScore} de Influência final. ${state.portalCrossedAt !== null ? "O Selo de Vitória está garantido." : "A história do reino foi preservada."}`,
     );
   }
+  syncDecisionInbox(state,shared,world,until);
   return { state, shared };
 }
 function cancelPlans(state:CozyState,target:CozyOrder){
- const canceled=state.orders.filter(o=>o.planned&&!o.planned.started&&o.kind===target.kind&&(o.kind==='research'||o.cityId===target.cityId)&&o.planned.startsAt>=target.planned!.startsAt);
+ const startsAt = target.planned!.startsAt;
+ const canceled=state.orders.filter(o=>o.planned&&!o.planned.started&&o.kind===target.kind&&o.tradeRoute===target.tradeRoute&&
+   (o.kind!=='upgrade'||o.cityId===target.cityId)&&o.planned.startsAt>=startsAt);
+ if (target.tradeRoute) state.nextTradeAt=startsAt;
  for(const o of canceled)for(const resource of ['gold','materials','supplies'] as const)state.resources[resource]+=o.planned!.cost[resource]??0;
  state.orders=state.orders.filter(o=>!canceled.includes(o));
+}
+
+/** Finalize a settled reign after the server has approved its rite. This is not a player command. */
+export function archiveCozyReign(input:CozyState,sharedInput:CozyShared,world:CozyWorld,confirmation:CozyAscensionConfirmation,now:number){
+  rule(world.persistent&&world.status==="running"&&input.settledAt===now&&input.finalizedAt===null&&
+    !input.founding&&!input.defeat&&input.king?.alive&&input.cities.length,"O reinado não pode ser arquivado agora.");
+  const standing=ascensionStanding(influence(input).total,input.peakInfluence);
+  rule(standing.current>=ASCENSION_MINIMUM,"A Ascensão exige 1.500 de Influência atual.");
+  rule(standing.medal.id===confirmation.medal,"A medalha mudou. Reveja a prévia.");
+
+  const state=clone(input),shared=clone(sharedInput),id=state.playerId;
+  if(shared.alliances.some(group=>group.id===state.allianceId&&group.members.includes(id)))
+    applyAllianceAction(state,shared,{type:"alliance_leave"},now,dayMs(world),prefix=>nextId(state,prefix));
+  state.allianceId=null;
+  for(const group of shared.alliances){
+    if(group.requests)group.requests=group.requests.filter(player=>player!==id);
+    if(group.invitations)group.invitations=group.invitations.filter(player=>player!==id);
+    if(group.requestEvents)delete group.requestEvents[id];
+    if(group.invitationEvents)delete group.invitationEvents[id];
+  }
+  shared.support=shared.support.filter(support=>support.resolvedAt!==undefined||
+    (support.requesterId!==id&&support.supporterId!==id));
+  cancelOrphanedPacts(shared,now);
+  for(const pact of shared.sanctuaryPacts??[]){
+    if(!pact.allianceId&&pact.ownerPlayerId===id&&pact.canceledAt===undefined){
+      if(pact.completedAt===null)pact.canceledAt=now;
+      else pact.endedAt=Math.min(pact.endedAt??now,now);
+    }
+    for(const wave of pact.raids?.waves??[])
+      if(!wave.outcome)wave.defenders=wave.defenders.filter(defender=>defender.playerId!==id);
+    for(const attempt of pact.guardian?.attempts??[])
+      if(attempt.playerId===id&&!attempt.outcome){attempt.outcome="canceled";attempt.at=now;}
+  }
+
+  for(const order of state.orders){
+    if(order.kind!=="collect"||order.tradeRoute||!order.collectResource||
+      !order.collectAmount||order.q===undefined||order.r===undefined)continue;
+    const area=resourceArea(shared,{q:order.q,r:order.r},order.collectResource);
+    if(!area)continue;
+    area.reserve.remaining=Math.min(area.reserve.capacity,area.reserve.remaining+order.collectAmount);
+    if(shared.depletedAreas)delete shared.depletedAreas[area.id];
+    syncAreaDeposits(shared,area);
+  }
+  for(const [cell,claim] of Object.entries(shared.claims))if(claim.playerId===id)delete shared.claims[cell];
+  for(const [cell,owner] of Object.entries(shared.territories??{}))if(owner===id)delete shared.territories![cell];
+  for(const [cell,ownership] of Object.entries(shared.territoryCities??{}))if(ownership.playerId===id)delete shared.territoryCities![cell];
+  for(const area of Object.values(shared.areas??{})){
+    if(area.owners.includes(id))area.owners=area.owners.filter(owner=>owner!==id);
+    if(area.ownerCities)delete area.ownerCities[id];
+  }
+  if(shared.realmCrests)delete shared.realmCrests[id];
+  state.army=empireArmy(state);
+  state.orders=[];
+  state.peakInfluence=standing.peak;
+  state.finalScore=standing.current;
+  if(state.progression)state.progression.mobileReviewRules=true;
+  state.finalizedAt=now;
+  state.ascension=structuredClone(confirmation);
+  report(state,now,"progress","Reinado arquivado","Sua medalha e o recibo estão no Legado.");
+  return {state,shared,influence:standing.current};
 }
 // Existing possessions, surveys and journeys outside the new diagonal retain access.
 export function worldDiagonalLimit(state:CozyState,shared:CozyShared):number {
@@ -1248,6 +1588,40 @@ function currentAlliance(state: CozyState, shared: CozyShared) {
   rule(alliance, "Entre em uma aliança para cooperar.");
   return alliance;
 }
+/** The server commits both drafts under the same world revision and command receipt. */
+export function transferAllianceGift(
+  sender: CozyState,
+  recipient: CozyState,
+  shared: CozyShared,
+  world: CozyWorld,
+  action: Extract<CozyAction,{type:"alliance_gift"}>,
+  now: number,
+) {
+  const day = getCozyDay(world,now);
+  rule(world.persistent && world.status==="running" && day>0,"Presentes estão disponíveis no Cozy persistente.");
+  rule(action.day===day,"Virou o dia de jogo. Confira a cota e confirme o presente de novo.");
+  rule(sender.playerId!==recipient.playerId && action.recipientId===recipient.playerId &&
+    canReceiveAllianceGift(sender) && canReceiveAllianceGift(recipient),"Escolha um reino ativo para receber o presente.");
+  const alliance = currentAlliance(sender,shared);
+  rule(action.allianceId===alliance.id && recipient.allianceId===alliance.id &&
+    alliance.members.includes(recipient.playerId),"Só é possível presentear membros da sua aliança.");
+  rule(action.resource==="materials" || action.resource==="supplies","Escolha materiais ou suprimentos.");
+  rule(ALLIANCE_GIFT_PACKS.some(amount=>amount===action.amount),"Escolha um dos pacotes de presente.");
+  const sent = allianceGiftUsage(sender,day);
+  const received = allianceGiftUsage(recipient,day);
+  rule(!sent.sentTo.includes(recipient.playerId),"Você já enviou um presente para este aliado hoje.");
+  rule(received.received<ALLIANCE_GIFT_RECEIVE_LIMIT,"Este aliado já recebeu três presentes neste dia de jogo.");
+  resourceSpend(sender,{[action.resource]:action.amount});
+  recipient.resources[action.resource] += action.amount;
+  sender.allianceGiftDay = {...sent,sentTo:[...sent.sentTo,recipient.playerId]};
+  recipient.allianceGiftDay = {...received,received:received.received+1};
+  const {resource,amount} = action;
+  const label = ALLIANCE_GIFT_RESOURCES[resource];
+  report(sender,now,"alliance","Presente entregue",`Você enviou ${amount} de ${label} para ${recipient.playerName}.`)
+    .allianceGift = {direction:"sent",resource,amount,otherPlayerName:recipient.playerName};
+  report(recipient,now,"alliance","Presente recebido",`${sender.playerName} enviou ${amount} de ${label} para seu tesouro.`)
+    .allianceGift = {direction:"received",resource,amount,otherPlayerName:sender.playerName};
+}
 function addOrder(
   state: CozyState,
   world: CozyWorld,
@@ -1255,7 +1629,7 @@ function addOrder(
   order: Omit<CozyOrder, "id" | "createdAt">,
 ) {
   rule(
-    order.arrivesAt <= endAt(world)!,
+    order.arrivesAt <= (endAt(world) ?? Infinity),
     "Não há tempo para concluir essa ação antes do fim da temporada.",
   );
   const pending={ ...order, id: nextId(state, "order"), createdAt: now };
@@ -1263,6 +1637,7 @@ function addOrder(
   return pending;
 }
 export function nextCityDayAt(state:CozyState,world:CozyWorld){
+ if(world.persistent)return null;
  if(world.startsAt===null||world.status!=="running"||state.finalizedAt!==null||state.defeat)return null;
  const days=state.cities.flatMap(city=>city.life?.lastSocialDay!==undefined?[city.life.lastSocialDay]:[]);
  if(!days.length)return null;
@@ -1286,15 +1661,116 @@ export function applyCozyAction(
     state.readAt = now;
     return { state, shared };
   }
-  if(action.type!=="king_choose")rule(
+  if (action.type === "notice_seen") {
+    rule(world.persistent && typeof action.id === "string" && action.id.length <= 512, "Novidade inválida.");
+    const active = new Set(activeNoticeIds(state,shared,computed,now));
+    const seen = new Set((state.seenNotices ?? []).filter(id => active.has(id)));
+    if (active.has(action.id)) seen.add(action.id);
+    state.seenNotices = [...seen];
+    return { state, shared };
+  }
+  const preparing = Boolean(state.founding) &&
+    (action.type === "king_choose" || action.type === "counselor" || action.type === "hire" || action.type === "found_capital");
+  const signingWelcome = action.type === "decree" && action.decreeId === state.firstAudience?.id;
+  if (state.founding) rule(preparing, "Funde sua capital antes desta ação.");
+  if(action.type!=="king_choose" && !preparing && !signingWelcome)rule(
     computed.started && !computed.readOnly,
     computed.readOnly
       ? "Esta temporada já terminou."
       : "Aguarde o início da temporada.",
   );
-  if(action.type==="king_choose")rule(!computed.readOnly,"Esta temporada já terminou.");
+  if(action.type==="king_choose" || preparing || signingWelcome)rule(!computed.readOnly,"Esta temporada já terminou.");
   rule(!state.defeat,"Seu império foi derrotado. Você ainda pode acompanhar os relatos e o resultado.");
   switch (action.type) {
+    case "rite_provisions":
+    case "rite_expedition":
+    case "rite_council":
+    case "ascend": {
+      rule(world.persistent&&riteAvailable(state,computed.influence.total),
+        "O Rito exige um reinado ativo com pelo menos 1.500 de Influência.");
+      const proofs=completedAscensionProofs(state);
+      if(action.type==="ascend"){
+        rule(proofs.length>=ASCENSION_PROOFS_REQUIRED,"Conclua duas provas da Travessia.");
+        rule(!state.orders.some(order=>order.riteExpedition),"Aguarde o retorno da expedição do Rito.");
+        const confirmation=action.confirmation;
+        const maximumGems=ascensionRewardAmounts(world.mode,true).totalGems;
+        rule(confirmation&&typeof confirmation==="object"&&
+          (confirmation.equipmentId===null||(typeof confirmation.equipmentId==="string"&&/^item-[a-z0-9-]+$/.test(confirmation.equipmentId)))&&
+          Number.isInteger(confirmation.creditedGems)&&confirmation.creditedGems>=0&&
+          Number.isInteger(confirmation.refundOffset)&&confirmation.refundOffset>=0&&
+          confirmation.creditedGems+confirmation.refundOffset<=maximumGems,"Confirme as recompensas da prévia.");
+        return archiveCozyReign(state,shared,world,{
+          medal:confirmation.medal,equipmentId:confirmation.equipmentId,
+          creditedGems:confirmation.creditedGems,refundOffset:confirmation.refundOffset,
+        },now);
+      }
+      if(action.type==="rite_provisions"){
+        rule(!proofs.includes("provisions"),"As provisões da Travessia já foram preparadas.");
+        resourceSpend(state,RITE.provisions);
+        (state.ascensionProofs??={}).provisions=now;
+        report(state,now,"progress","Provisões da Travessia","O carregamento da Travessia foi preparado.");
+      } else if(action.type==="rite_expedition"){
+        rule(!proofs.includes("expedition"),"O caminho da Travessia já foi aberto.");
+        rule(!state.orders.some(order=>order.kind==="attack"),"Aguarde o retorno do exército.");
+        rule(computed.armyPower>0,"Recrute tropas para enfrentar os guardiões.");
+        resourceSpend(state,{supplies:RITE.expedition.supplies});
+        addOrder(state,world,now,{kind:"attack",riteExpedition:true,
+          arrivesAt:now+Math.round(RITE.expedition.days*computed.dayMs)});
+      } else {
+        rule(!proofs.includes("council"),"O Conselho já concluiu a prova.");
+        rule(action.choice==="welcome"||action.choice==="repair","Escolha uma decisão da audiência.");
+        const cities=riteCouncilCities(state);
+        rule(state.counselors.every(Boolean)&&cities.length,"Reúna os dois conselheiros e uma cidade estável com herói.");
+        for(const city of cities){
+          if(action.choice==="welcome"){
+            city.life??={contentment:state.satisfaction,lastDecisionDay:null};
+            city.life.contentment=clamp(city.life.contentment+RITE.council.trustBonus,0,100);
+          } else city.integrity=clamp((city.integrity??100)+RITE.council.repair,0,100);
+        }
+        (state.ascensionProofs??={}).council=now;
+        report(state,now,"council","Conselho reunido para a Travessia",
+          `${cities.map(city=>city.name).join(", ")} participaram da audiência.`);
+      }
+      break;
+    }
+    case "found_capital": {
+      rule(world.foundingOnboarding && state.founding, "Sua capital já foi fundada.");
+      rule(state.king?.alive && state.counselors.every(Boolean), "Escolha o soberano e os dois conselheiros.");
+      const hero = validateFreeHero(state, action.heroId);
+      const coord = validateCoord(action, state, shared);
+      rule(capitalSites(state, shared, world).some(site => key(site) === key(coord)), "Este terreno mudou. Escolha outro local para a capital.");
+      const name = typeof action.name === "string" ? action.name.trim() : "";
+      rule(name.length >= 2 && name.length <= 32 && !/[\u0000-\u001f]/.test(name), "Use um nome de cidade entre 2 e 32 caracteres.");
+      const day = Math.max(1, computed.day);
+      const city: CozyCity = {
+        ...coord, id: `${state.playerId}:capital`, name, capital: true, heroId: hero.id, wonder: false,
+        sectors: { administration: 0, economy: 0, society: 0, recruitment: 0, defense: 0 },
+        life: { contentment: state.satisfaction, lastDecisionDay: null, lastSocialDay: day },
+      };
+      hero.cityId = city.id;
+      state.cities.push(city);
+      delete state.founding;
+      state.createdAt = now;
+      state.citySystemsAt = now;
+      state.hordesResolved = waveDays(world).filter(wave => world.startsAt !== null && arrivalForDay(world, wave) < now);
+      createProgression(state, armyPower(state) + wallPower(state), false, true);
+      ensureCapitalClaim(state, shared);
+      state.firstAudience = {
+        id: `welcome:${state.playerId}`,
+        day: 1 + Math.floor((day - 1) / 3) * 3,
+        counselorId: state.counselors[0],
+        title: "A primeira feira",
+        body: `Os moradores de ${name} se reúnem para organizar a primeira feira.`,
+        options: [
+          { id: "listen", label: "Ouvir os moradores", description: "Acolher as propostas para a praça.", resolution: "certain",
+            effects: { materials: 0, satisfaction: 4 } },
+          { id: "market", label: "Abastecer a feira", description: "Trocar provisões por materiais para as oficinas.", resolution: "certain",
+            cost: { supplies: 60 }, effects: { materials: 80, satisfaction: 0 } },
+        ],
+      };
+      report(state, now, "welcome", "Capital fundada", `${hero.name} assumiu a cidade de ${name}.`);
+      break;
+    }
     case "capital_choose": {
       rule(world.combatMode==='competitive'&&state.capitalSelectionPending,"A capital não está aguardando escolha.");
       const city=cityById(state,action.cityId);rule((city.integrity??100)>0,"Recupere a integridade da cidade antes de escolher a capital.");
@@ -1332,26 +1808,63 @@ export function applyCozyAction(
       rule(decision&&decision.id===action.decisionId,"Esta decisão da cidade já foi resolvida ou mudou.");
       const option=decision.options.find(o=>o.id===action.optionId);rule(option,"Opção de cidade inválida.");
       resourceSpend(state,option.cost);
-      const succeeded=!option.chance||hash(`local:${world.id}:${state.playerId}:${city.id}:${computed.day}:${decision.id}`)%100<option.chance.successPercent;
+      const succeeded=!option.chance||hash(`local:${world.id}:${state.playerId}:${city.id}:${decision.day??computed.day}:${decision.id}`)%100<option.chance.successPercent;
       const outcome=option.chance&&!succeeded?option.chance.failure:option;
       city.life??={contentment:state.satisfaction,lastDecisionDay:null};
       const priorTrust=city.life.contentment,priorIntegrity=city.integrity??100,priorBonus=city.life.productionEffect&&city.life.productionEffect.endsAt>now?city.life.productionEffect.bonus:0;
       city.life.contentment=clamp(city.life.contentment+outcome.contentment,0,100);
       if(city.life.contentment>=35)city.life.unrestDays=0;
       city.life.lastDecisionDay=computed.day;
+      if (state.decisionInbox) delete state.decisionInbox.cities[city.id];
       state.resources.materials+=outcome.materialsReward??0;
       for(const resource of ['gold','materials','supplies'] as const)state.resources[resource]+=outcome.rewards?.[resource]??0;
       if(outcome.integrityRestore)city.integrity=clamp((city.integrity??100)+outcome.integrityRestore,0,100);
       if(outcome.productionBonus)city.life.productionEffect={bonus:outcome.productionBonus,endsAt:now+2*dayMs(world)};
       recordCityCare(state,city,computed.day,city.life.contentment-priorTrust,(city.integrity??100)>priorIntegrity||outcome.productionBonus>priorBonus);
+      if (world.persistent && succeeded) recordStableAdministration(state,city,computed.day);
       const receipt=state.progression?.balance?.unifiedRules?decisionReceipt(option.cost,{...outcome.rewards,materials:(outcome.materialsReward??0)+(outcome.rewards?.materials??0)}):'';
-      report(state,now,"council",`${city.name}: ${option.chance&&!succeeded?"o plano não deu certo":"decisão concluída"}`,`${option.label}.${receipt?` ${receipt}.`:''}${!state.progression?.balance?.unifiedRules&&outcome.rewards?` ${Object.entries(outcome.rewards).map(([key,value])=>`+${value} ${key==='gold'?'ouro':key==='supplies'?'suprimentos':'materiais'}`).join(', ')}.`:''}${outcome.integrityRestore?` Integridade: ${city.integrity}%.`:""}${!state.progression?.balance?.unifiedRules&&outcome.materialsReward?` +${outcome.materialsReward} materiais.`:""}${outcome.contentment?` Satisfação local: ${city.life.contentment}%.`:''}${outcome.productionBonus?` Eficiência de produção: +${outcome.productionBonus}% por dois dias de jogo.`:''}`,succeeded&&outcome.contentment>=0);
+      const title = `${city.name}: ${option.chance&&!succeeded?"o plano não deu certo":"decisão concluída"}`;
+      const legacyRewards = !state.progression?.balance?.unifiedRules && outcome.rewards
+        ? Object.entries(outcome.rewards).map(([key,value])=>`+${value} ${key==='gold'?'ouro':key==='supplies'?'suprimentos':'materiais'}`).join(", ") : "";
+      const notes = [
+        option.label,receipt,legacyRewards,
+        !state.progression?.balance?.unifiedRules && outcome.materialsReward ? `+${outcome.materialsReward} materiais` : "",
+        outcome.integrityRestore ? `Integridade: ${city.integrity}%` : "",
+        outcome.contentment ? `Satisfação local: ${city.life.contentment}%` : "",
+        outcome.productionBonus ? `Eficiência de produção: +${outcome.productionBonus}% por dois dias de jogo` : "",
+      ].filter(Boolean);
+      report(state,now,"council",title,`${notes.join(". ")}.`,succeeded&&outcome.contentment>=0,
+        world.persistent ? {q:city.q,r:city.r} : undefined,
+        decision.author ? {kind:"hero",...decision.author} : undefined);
       break;
     }
     case 'cancel_plan': {
       const target=state.orders.find(o=>o.id===action.orderId);
       rule(target?.planned&&!target.planned.started,'Somente planos que ainda não começaram podem ser cancelados.');
       cancelPlans(state,target!);report(state,now,'economy','Planejamento cancelado','Este plano e os seguintes foram retirados da fila. As reservas que não foram utilizadas voltaram ao tesouro.');break;
+    }
+    case 'plan_city_works': {
+      rule(world.persistent,'Este planejamento está disponível no Cozy persistente.');
+      const city=cityById(state,action.cityId);
+      const lane=cityWorksLane(state,city.id,now);
+      rule(Array.isArray(action.works)&&action.works.length>0&&action.works.length<=SECTORS.length,'Escolha entre uma e cinco obras.');
+      rule(action.works.length<=lane.slots,'Fila de obras cheia. Confira novamente o planejamento.');
+      const seen=new Set<CozySector>();
+      let startsAt=lane.startsAt;
+      for(const work of action.works){
+        rule(work&&SECTORS.some(sector=>sector.id===work.sector)&&!seen.has(work.sector),'Setor inválido ou repetido.');
+        rule(!lane.orders.some(order=>order.sector===work.sector)&&city.sectors[work.sector]===work.level&&work.level<10,
+          'A fila mudou. Confira novamente os níveis e custos.');
+        const quote=cityWorkQuote(state,city,work.sector,work.level,dayMs(world));
+        const cost={materials:quote.materials};
+        const arrivesAt=startsAt+quote.duration;
+        resourceSpend(state,cost);
+        addOrder(state,world,now,{kind:'upgrade',cityId:city.id,sector:work.sector,arrivesAt,
+          planned:{startsAt,expectedLevel:work.level,cost,started:startsAt===now}});
+        seen.add(work.sector);
+        startsAt=arrivesAt;
+      }
+      break;
     }
     case 'plan_upgrade':case 'plan_research': {
       rule(world.mode==='express'||world.economyVersion===3,'O planejamento exige as regras de filas desta temporada.');
@@ -1368,6 +1881,8 @@ export function applyCozyAction(
       rule(lane.filter(o=>o.planned&&!o.planned.started).length<planningCapacity(state),`Você já tem ${planningCapacity(state)} planos aguardando nesta fila.`);
       const shadow=clone(state);
       const expected=research?state.research[action.research]+lane.filter(o=>o.research===action.research).length:city!.sectors[action.sector]+lane.filter(o=>o.sector===action.sector).length;
+      if (action.type === "plan_upgrade" && action.expectedLevel !== undefined)
+        rule(expected === action.expectedLevel, "A fila mudou. Confira novamente o nível e o custo.");
       rule(expected<(research?5:10),'O plano ultrapassa o nível máximo.');
       if(action.type==='plan_research')shadow.research[action.research]=expected;
       else shadow.cities.find(c=>c.id===city!.id)!.sectors[action.sector]=expected;
@@ -1389,6 +1904,8 @@ export function applyCozyAction(
         city.sectors[action.sector] < 10,
         "Este setor já chegou ao nível 10.",
       );
+      if (action.expectedLevel !== undefined)
+        rule(city.sectors[action.sector] === action.expectedLevel, "O setor mudou. Confira o novo nível e o custo.");
       rule(
         !state.orders.some(
           (order) => order.kind === "upgrade" && order.cityId === city.id,
@@ -1446,6 +1963,10 @@ export function applyCozyAction(
       break;
     }
     case "hire": {
+      if (state.founding) {
+        rule(state.king?.alive && state.counselors.every(Boolean), "Escolha o soberano e os dois conselheiros.");
+        rule(state.heroes.length === 0, "O primeiro herói já está na corte.");
+      }
       rule(
         HERO_ROLES.some((item) => item.id === action.role),
         "Tipo de herói inválido.",
@@ -1470,6 +1991,17 @@ export function applyCozyAction(
       );
       const city =
         action.cityId === null ? null : cityById(state, action.cityId);
+      const origin = state.cities.find(item => item.heroId === hero.id);
+      if (world.persistent && origin && city?.id !== origin.id) {
+        const outgoing = state.heroes.find(item => item.id === city?.heroId);
+        rule(outgoing && city && !state.orders.some(order => order.heroId === outgoing.id),"Escolha outro responsável para manter as duas cidades atendidas.");
+        origin.heroId = outgoing.id;
+        outgoing.cityId = origin.id;
+        city.heroId = hero.id;
+        hero.cityId = city.id;
+        break;
+      }
+      if (city?.id && city.id === origin?.id) break;
       state.cities
         .filter((item) => item.heroId === hero.id)
         .forEach((item) => {
@@ -1507,6 +2039,7 @@ export function applyCozyAction(
       break;
     }
     case "counselor": {
+      if (state.founding) rule(state.king?.alive, "Escolha o soberano antes de nomear conselheiros.");
       rule(
         action.slot === 0 || action.slot === 1,
         "Cadeira do Conselho inválida.",
@@ -1539,6 +2072,18 @@ export function applyCozyAction(
       for(const city of state.cities)if(city.life){const before=city.life.contentment;city.life.contentment=clamp(city.life.contentment+(effects.localSatisfaction?.[city.id]??satisfaction),0,100);if(city.life.contentment>=35)city.life.unrestDays=0;if(effects.integrityRestore)city.integrity=clamp((city.integrity??100)+effects.integrityRestore,0,100);if(effects.productionBonus&&(!city.life.productionEffect||city.life.productionEffect.endsAt<=now||city.life.productionEffect.bonus<=effects.productionBonus))city.life.productionEffect={bonus:effects.productionBonus,endsAt:now+2*dayMs(world)};recordCityCare(state,city,computed.day,city.life.contentment-before,false,false);}
       if(meaningfulCare&&satisfaction>=0&&state.cities.every(city=>(city.life?.contentment??0)>=60&&!((state.progression?.council.selfHarm[`${city.q},${city.r}`]??0)>0)))councilCredit(state,`decree:${decree.day}`,PROGRESSION.decreeMerit);
       state.decreesSigned.push(decree.day);
+      if (world.persistent && state.decisionInbox) {
+        const {affinity} = state.decisionInbox;
+        if (decree.suggestedOptionId) {
+          const recent = affinity[decree.counselorId] ?? [];
+          affinity[decree.counselorId] = [...recent,option.id===decree.suggestedOptionId].slice(-3);
+        }
+        delete state.decisionInbox.council;
+        state.decisionInbox.councilResolvedCycle = 1 + Math.floor((computed.day-1)/3)*3;
+      }
+      if (world.persistent && meaningfulCare && succeeded)
+        for (const city of state.cities) recordStableAdministration(state,city,Math.max(1,computed.day));
+      if (signingWelcome) delete state.firstAudience;
       report(
         state,
         now,
@@ -1546,6 +2091,8 @@ export function applyCozyAction(
         option.resolution==="certain"?"Decreto assinado":succeeded?"A caravana voltou":"A caravana não voltou",
         state.progression?.balance?.unifiedRules?`${option.label}.${decisionReceipt(option.cost??{},{materials,gold:effects.gold,supplies:effects.supplies})?` ${decisionReceipt(option.cost??{},{materials,gold:effects.gold,supplies:effects.supplies})}.`:''}${satisfaction?` ${satisfaction>0?'+':''}${satisfaction} de confiança.`:''}${effects.integrityRestore?` Até +${effects.integrityRestore}% de integridade nas cidades.`:''}${effects.productionBonus?` +${effects.productionBonus}% de eficiência-base por dois dias de jogo; efeitos mais fortes preservados.`:''}`:`${option.label}: ${satisfaction >= 0 ? "+" : ""}${satisfaction} de contentamento e +${materials} materiais.`,
         satisfaction >= 0,
+        undefined,
+        world.persistent ? {kind:"counselor",id:decree.counselorId} : undefined,
       );
       break;
     }
@@ -1569,7 +2116,7 @@ export function applyCozyAction(
       rule(armyPower(state)>0,"Recrute tropas antes de enfrentar os guardiões.");
       const tower=ALL_SANCTUARIES.find(t=>t.id===pact.sanctuaryId)!;
       const arrivesAt=now+travelMs(state,world,tower);
-      rule(arrivesAt<endAt(world)!,"Não há tempo para concluir o desafio antes do fim da temporada.");
+      rule(arrivesAt<(endAt(world)??Infinity),"Não há tempo para concluir o desafio antes do fim da temporada.");
       resourceSpend(state,{supplies:exploreCost(state,tower)});
       const pending=addOrder(state,world,now,{kind:"attack",sanctuaryPactId:pact.id,q:tower.q,r:tower.r,arrivesAt});
       pact.guardian.attempts.push({orderId:pending.id,playerId:state.playerId,arrivesAt});
@@ -1578,9 +2125,9 @@ export function applyCozyAction(
     case "sanctuary_pact_start":case "sanctuary_pact_contribute":case "sanctuary_pact_cancel": {
       if(action.type==="sanctuary_pact_start"){
         const tower=ALL_SANCTUARIES.find(t=>t.id===action.sanctuaryId);
-        rule(!tower||now+travelMs(state,world,tower)<endAt(world)!,"Não há tempo para concluir o desafio antes do fim da temporada.");
+        rule(!tower||now+travelMs(state,world,tower)<(endAt(world)??Infinity),"Não há tempo para concluir o desafio antes do fim da temporada.");
       }
-      try{applySanctuaryPactAction(state,shared,action,now,dayMs(world),endAt(world)!,prefix=>nextId(state,prefix),sanctuaryGuardianPower(world,now));}
+      try{applySanctuaryPactAction(state,shared,action,now,dayMs(world),endAt(world)??Infinity,prefix=>nextId(state,prefix),sanctuaryGuardianPower(world,now));}
       catch(error){if(error instanceof SanctuaryPactError)throw new CozyRuleError(error.message);throw error;}
       syncSanctuaryPacts(state,shared,now,(title,body,refund)=>report(state,now,refund?"economy":"progress",title,body));
       break;
@@ -1604,23 +2151,45 @@ export function applyCozyAction(
         "Este ponto já é conhecido.",
       );
 
-      rule(
-        !state.orders.some((order) => order.kind === "explore"),
-        "Uma exploração já está em andamento.",
-      );
+      const lane = explorationQueue(state,now);
+      const mayQueue = world.persistent && action.queue===true;
+      rule(!lane.orders.length || mayQueue,"Uma exploração já está em andamento.");
+      rule(lane.orders.length < EXPLORATION_QUEUE_LIMIT,"A fila de exploração está cheia.");
+      rule(!lane.orders.some(order=>order.q===coord.q&&order.r===coord.r),"Este destino já está na fila de exploração.");
+      if (lane.orders.length) rule(state.cities.length>0,"Você precisa de uma cidade para organizar a exploração.");
       rule(
         !state.explored.includes(id) ||
           ((base.kind === "gold" || base.kind === "materials") &&
             (resourceArea(shared,coord,base.kind)?.reserve.surveys ?? shared.deposits[id]?.surveys ?? 0) < 3),
         "Essa área já foi totalmente explorada.",
       );
-      resourceSpend(state, { supplies: exploreCost(state, coord) });
+      if (lane.orders.length) rule(!state.explored.includes(id),"Escolha outro destino para a fila.");
+      const supplies = exploreCost(state, coord);
+      resourceSpend(state, { supplies });
       addOrder(state, world, now, {
         kind: "explore",
         ...coord,
         explorationPath:explorationPath(state,coord),
-        arrivesAt: now + travelMs(state, world, coord),
+        arrivesAt: lane.startsAt + travelMs(state, world, coord),
+        ...(lane.orders.length ? {planned:{startsAt:lane.startsAt,started:false,cost:{supplies}}} : {}),
       });
+      break;
+    }
+    case "trade_route": {
+      const route = computed.tradeRoute;
+      const capital = state.cities.find(city => city.capital);
+      rule(world.persistent && route && capital, "A caravana comercial precisa de uma capital neste mundo.");
+      rule(route.arrivesAt === null && now >= route.nextAt, "A caravana comercial ainda está em viagem ou em descanso.");
+      rule(action.trips===undefined || TRADE_ROUTE_TRIPS.includes(action.trips),"Escolha de uma a três viagens.");
+      const trips=action.trips??1;
+      resourceSpend(state,{supplies:route.supplies*trips});
+      for(let index=0;index<trips;index++){
+        const startsAt=now+index*route.intervalMs;
+        addOrder(state,world,now,{kind:"collect",tradeRoute:true,q:capital.q,r:capital.r,
+          arrivesAt:startsAt+route.durationMs,cargo:{gold:route.gold},
+          ...(index>0 ? {planned:{startsAt,started:false,cost:{supplies:route.supplies}}} : {})});
+      }
+      state.nextTradeAt=now+trips*route.intervalMs;
       break;
     }
     case "found_city": {
@@ -1663,10 +2232,17 @@ export function applyCozyAction(
         );
       const staged=world.economyVersion===3;
       if(staged){
+        const camp = world.persistent && base.kind==="npc" && !shared.independentCities?.[id];
         rule(state.explored.includes(id),"Explore a cidade antes de atacar ou anexar.");
         rule(action.type!=="attack"||!action.conquest,"Primeiro ataque; a anexação é uma ação separada, depois da vitória.");
-        rule(action.type!=="annex"||npcOccupation(base.power,shared.npcResistance?.[id]?.initial??base.power).canAnnex,"Ainda há resistência. Ataque antes de anexar.");
-        rule(action.type!=="attack"||!npcOccupation(base.power,shared.npcResistance?.[id]?.initial??base.power).canAnnex,"A cidade já foi vencida. Agora envie um herói para anexar.");
+        if (camp) {
+          rule(action.type==="attack","Você pode saquear o acampamento. Para anexar, escolha uma cidade abandonada.");
+          rule(base.power>0,"O acampamento ainda está se recuperando.");
+        } else {
+          const ready = npcOccupation(base.power,shared.npcResistance?.[id]?.initial??base.power).canAnnex;
+          rule(action.type!=="annex"||ready,"Ainda há resistência. Ataque antes de anexar.");
+          rule(action.type!=="attack"||!ready,"A cidade já foi vencida. Agora envie um herói para anexar.");
+        }
       }
       if (action.type === "annex"&&!staged)
         rule(
@@ -1713,6 +2289,7 @@ export function applyCozyAction(
       rule(!area!.owners.length||(!area!.exclusive&&areaAllied(shared,area!.owners[0],state.playerId)),"Esta área já pertence a outro reino. A aliança não transfere a reserva.");
       rule(area!.cells.every(id=>{const owner=shared.claims[id]?.playerId??shared.territories?.[id];return !owner||owner===state.playerId||(!area!.exclusive&&areaAllied(shared,owner,state.playerId));}),"Há território de outro império nesta área.");
       area!.owners.push(state.playerId);area!.annexedAt??=now;
+      if (state.progression?.feats.frontier) state.progression.feats.frontier.resourceAreaClaimed = true;
       const territoryCity=nearestTerritoryCity(state,coord)!;(area!.ownerCities??={})[state.playerId]=territoryCity.id;shared.territoryCities??={};
       for(const id of area!.cells)if(!shared.claims[id]&&!shared.independentCities?.[id]&&!shared.territories![id]&&!sanctuaryAt(fromKey(id))) {shared.territories![id]=state.playerId;shared.territoryCities[id]={playerId:state.playerId,cityId:territoryCity.id};}
       report(state,now,"progress","Área anexada",area!.owners.length>1?"O acesso ao recurso está compartilhado em aliança. As terras de cada império permanecem.":"A reserva pertence ao reino. O território permanece quando o recurso se esgotar.");
@@ -1726,7 +2303,7 @@ export function applyCozyAction(
       rule(Boolean(area)&&canUseArea(shared,area!,state.playerId),"Anexe a área ou compartilhe-a em aliança antes de coletar.");
       rule(deposit.remaining > 0, "Esse depósito está esgotado.");
       rule(
-        !state.orders.some((order) => order.kind === "collect"),
+        !state.orders.some((order) => order.kind === "collect" && !order.tradeRoute),
         "Uma coleta já está em andamento.",
       );
       const amount = Math.min(
@@ -1735,6 +2312,7 @@ export function applyCozyAction(
       );
       // Reserve under the same shared CAS as the order. Offline arrival order cannot duplicate a deposit.
       deposit.remaining -= amount;
+      if (world.persistent && area && deposit.remaining === 0) (shared.depletedAreas ??= {})[area.id] = now;
       if(area)syncAreaDeposits(shared,area);
       addOrder(state, world, now, {
         kind: "collect",
@@ -1778,14 +2356,15 @@ export function applyCozyAction(
         now,
         "progress",
         "Conquista registrada",
-        `${QUESTS.find((item) => item.id === action.questId)!.name}: +50 de Conquistas.`,
+        `${questsForRealm(state).find((item) => item.id === action.questId)!.name}: +50 de Conquistas.`,
       );
       break;
     }
     case "portal": {
+      rule(!world.persistent, "A Ascensão ainda está em preparação neste mundo.");
       // Compatibility for older clients: no travel or positional requirement.
       rule(influence(state).total >= 1500, "Alcance 1.500 de Influência para conquistar o Selo de Vitória.");
-      recordInfluenceVictory(state, now);
+      recordInfluenceVictory(state, world, now);
       break;
     }
     case "alliance_create":case "alliance_join":case "alliance_leave":
@@ -1888,6 +2467,8 @@ export function applyCozyAction(
     default:
       throw new CozyRuleError("Ação desconhecida.");
   }
-  if(computed.started)recordInfluenceVictory(state, now);
+  if (world.persistent) prepareFrontierProgress(state,shared);
+  if(computed.started)recordInfluenceVictory(state, world, now);
+  syncDecisionInbox(state,shared,world,now);
   return { state, shared };
 }

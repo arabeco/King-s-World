@@ -1,0 +1,22 @@
+.title{margin:20px 0 12px;font-family:var(--font-display),Georgia,serif}
+.legacyCover{display:flex;align-items:flex-end;min-height:116px;padding:0 14px;border-radius:8px;overflow:hidden;background:linear-gradient(0deg,#171819ed,transparent 90%),url('/images/cenas-cozy/livro-legado.jpg') center 28%/cover}
+.cities{list-style:none;margin:0;padding:0}
+.figures dd{font-variant-numeric:tabular-nums}
+.archive{display:grid;gap:8px}
+.receipt{min-width:0;border:1px solid #b6a07550;border-radius:8px;background:#242522}
+.receipt summary{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;padding:10px;min-height:62px;cursor:pointer;list-style:none}
+.receipt summary::-webkit-details-marker{display:none}
+.receipt summary span{display:grid;gap:3px;min-width:0;overflow-wrap:anywhere}
+.receipt summary span:last-child{text-align:right;color:#f0d48e}
+.receipt summary small,.receipt time,.detail p,.cities small{color:#c3baab;font-size:12px}
+.detail{border-top:1px solid #b6a07544;padding:12px}
+.detail h2{font-size:16px;margin:14px 0 5px}
+.detail p{margin:5px 0;line-height:1.45}
+.figures{display:flex;flex-wrap:wrap;gap:10px 18px;margin:0 0 10px}
+.figures dt{color:#c3baab;font-size:12px}
+.figures dd{margin:4px 0;color:#f4d890;font-weight:700}
+.cities li{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:9px 0;border-bottom:1px solid #b6a07535;overflow-wrap:anywhere}
+.cities li span{margin-left:auto}
+.prize,.paging a,.empty a{display:inline-flex;align-items:center;gap:7px;min-height:44px;color:#f4d890}
+.paging{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px}
+.empty{padding:13px 0;color:#c3baab}

@@ -17,6 +17,7 @@ import {hordeRecruitment,recruitPreview} from "@/lib/cozy/recruit-preview";
 import CozyArt from "./CozyArt";
 import {
   CrownCost,
+  CrownButton,
   CrownPanel,
   CrownProgress,
   crownNumber as number,
@@ -31,8 +32,8 @@ export default function CozyMilitary({
   locked,
   onResearch,
   onCity,
-  now,onResources,onCities,onAlliance,onOrders,onThreat,
-}: CrownPanelProps & { onResearch: (research: CozyResearch) => void; onCity: (id:string)=>void;onResources:()=>void;onCities:()=>void;onAlliance:()=>void;onOrders:()=>void;onThreat:()=>void }) {
+  now,onResources,onCities,onAlliance,onOrders,onThreat,onExpedition,
+}: CrownPanelProps & { onResearch: (research: CozyResearch) => void; onCity: (id:string)=>void;onResources:()=>void;onCities:()=>void;onAlliance:()=>void;onOrders:()=>void;onThreat:()=>void;onExpedition:()=>void }) {
   const { state, computed } = data;
   const [tab,setTab]=useState<"recruit"|"defense">("recruit");
   const [lots, setLots] = useState<Record<string, number | "max">>({});
@@ -48,6 +49,8 @@ export default function CozyMilitary({
   const horde=computed.nextHorde;
   const totalDefense=computed.defensePower+(horde?.supportPower??0);
   const campaign=state.orders.find(o=>o.kind==='attack');
+  const victories=computed.influenceDetails.military.victories;
+  const frontier=Boolean(data.world.persistent && victories.max);
   const total = Object.values(state.army).reduce(
     (sum, value) => sum + value,
     0,
@@ -93,7 +96,14 @@ export default function CozyMilitary({
           label="Capacidade do exército"
         />
       </header>
-      {horde&&tab==='recruit'&&<button type="button" className={styles.hordeTarget} data-ready={totalDefense>=horde.power} onClick={onThreat} aria-label="Ver preparação contra a horda">
+      {frontier && tab==="recruit" && <section className={styles.frontier} aria-label="Vitórias da expedição">
+        <div><CozyArt src="/icons/action-attack.png" size={27}/><strong>Alvos vencidos</strong><b>{victories.count}/{victories.target}</b></div>
+        <CrownProgress value={victories.count} max={victories.target} label="Vitórias em alvos diferentes"/>
+        <div><span>{victories.points}/{victories.max} influência</span>
+          {victories.count<victories.target && !campaign && <CrownButton quiet onClick={onExpedition}>Explorar alvos <ArrowRight size={15}/></CrownButton>}
+        </div>
+      </section>}
+      {horde&&!frontier&&tab==='recruit'&&<button type="button" className={styles.hordeTarget} data-ready={totalDefense>=horde.power} onClick={onThreat} aria-label="Ver preparação contra a horda">
         <CozyArt src="/icons/action-defend.png" size={27}/><span><strong>Horda · dia {seasonDisplay(horde.day,computed.durationDays,computed.realDurationDays).day}</strong><small>{crownRemaining(horde.arrivesAt,now)}</small></span>
         <span><strong>{number(totalDefense)} / {number(horde.power)}</strong><small>{totalDefense>=horde.power?'Defesa suficiente hoje':`Faltam ${number(horde.power-totalDefense)} de defesa`}</small></span>
       </button>}
@@ -112,7 +122,7 @@ export default function CozyMilitary({
           <p className={styles.readiness} data-ready={totalDefense>=horde.power}>{totalDefense>=horde.power?'Sua defesa atual cobre a força estimada.':`Faltam ${number(horde.power-totalDefense)} de defesa na força atual.`}</p>
           <div className={styles.defenseActions}><button type="button" onClick={()=>{setTab('recruit');recruitTab.current?.focus();}}>Preparar tropas<ArrowRight size={15}/></button><button type="button" onClick={onAlliance}><CozySymbol name="alliance" size={18}/>{state.allianceId?'Ver apoio da aliança':'Encontrar aliados'}</button></div>
           {(computed.royalDefenseBonus>0||computed.allianceDefenseBonus>0||(computed.towerDefenseBonus??0)>0||(computed.equipmentDefenseBonus??0)>0)&&<details className={styles.bonusDetails}><summary>Bônus já incluídos na sua defesa</summary>{computed.royalDefenseBonus>0&&<p>Comando do rei: +{number(computed.royalDefenseBonus)} de defesa.</p>}{computed.allianceDefenseBonus>0&&<p>Projeto da aliança: +{number(computed.allianceDefenseBonus)} de defesa.</p>}{(computed.towerDefenseBonus??0)>0&&<p>Torre: +{number(computed.towerDefenseBonus??0)} de defesa.</p>}{(computed.equipmentDefenseBonus??0)>0&&<p>Equipamentos: +{number(computed.equipmentDefenseBonus??0)} de defesa.</p>}</details>}
-        </div></article>:<p>Nenhuma horda pendente nesta temporada.</p>}
+        </div></article>:<p>{state.pendingDefenseDay!==undefined?"A patrulha sai após a volta do exército.":"Nenhuma horda pendente."}</p>}
         <article className={styles.defenseCard}><CozyArt src="/icons/building-wall.png" size={42}/><div><h3>Fortificações</h3><strong>+{number(computed.fortificationPower)} de defesa</strong></div></article>
         <h3 className={styles.defenseSection}>Defesa das cidades <small>{state.cities.length}</small></h3>
         {state.cities.map(city=><button key={city.id} type="button" className={styles.cityDefense} onClick={()=>onCity(city.id)} aria-label={`Cuidar da defesa de ${city.name}`}><CozyArt src={`/icons/${String(city.sectors.defense).padStart(2,"0")}.png`} size={42}/><span><strong>{city.name}</strong><small>Defesa · nível {city.sectors.defense}/10</small><small data-damaged={(city.integrity??100)<100||undefined}>Integridade · {number(city.integrity??100)}%{(city.integrity??100)<100?" · precisa de reparos":""}</small><progress aria-label={`Integridade de ${city.name}`} value={city.integrity??100} max={100}/></span><ArrowRight size={17}/></button>)}
@@ -127,7 +137,7 @@ export default function CozyMilitary({
           const amount = lots[troop.id] ?? 1;
           const quantity = amount === "max" ? maxUnits : Math.min(amount,Math.max(1,maxUnits));
           const preview=available?recruitPreview(data,troop.id,quantity,now):null;
-          const hordeLot=available&&horde&&totalDefense<horde.power?hordeRecruitment(data,troop.id,maxUnits,now):0;
+          const hordeLot=!frontier&&available&&horde&&totalDefense<horde.power?hordeRecruitment(data,troop.id,maxUnits,now):0;
           return (
             <article
               key={troop.id}
@@ -215,7 +225,7 @@ export default function CozyMilitary({
       </div>}
       <details className={styles.details}>
         <summary>Preparo e defesa</summary>
-        {computed.influenceDetails.model==='zero-v1'&&<p>A força inicial já protege o reino. O preparo desenvolvido além dessa base pode perder influência com baixas ou dano.{state.progression?.balance?.militaryVictoryMax?' As vitórias contra hordas completam o reconhecimento e permanecem registradas.':''}</p>}
+        {computed.influenceDetails.model==='zero-v1'&&<p>A força inicial já protege o reino. O preparo desenvolvido além dessa base pode perder influência com baixas ou dano.{frontier?' Cada novo acampamento ou cidade abandonada vencida conta uma vez.':victories.max?' As vitórias contra hordas completam o reconhecimento e permanecem registradas.':''}</p>}
         {state.progression?.balance&&<p>{usesMobileReviewRules(state)?"Nos primeiros 50 de força extra, cada 5 valem 1 ponto de preparo. ":""}Depois, cada {state.progression.balance.militaryDivisor} de força extra vale 1 ponto. Tropas e fortificações contam nessa força.</p>}
         <p>
           A defesa contra hordas é automática. Tropas não consomem suprimentos por

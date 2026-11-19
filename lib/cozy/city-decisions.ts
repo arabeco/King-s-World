@@ -1,6 +1,6 @@
-import type {CozyCity,CozyResources} from './types';
+import type {CozyCity,CozyHeroRole,CozyResources} from './types';
 import type {CityChoice,CityLifeView} from './city-life';
-export type CityDecisionContext={resources:CozyResources;now:number;hordeSoon:boolean};
+export type CityDecisionContext={resources:CozyResources;now:number;hordeSoon:boolean;heroRole?:CozyHeroRole};
 
 /** City-scale situations. No random draw while displaying a card, no direct influence grants. */
 export function modernCityDecision(city:CozyCity,day:number,context:CityDecisionContext):CityLifeView['decision']{
@@ -40,14 +40,14 @@ export function modernCityDecision(city:CozyCity,day:number,context:CityDecision
   choice('buy-food','Comprar mantimentos',{gold:15},{rewards:{supplies:90}}),
   choice('trade','Trocar mantimentos por materiais',{supplies:90},{rewards:{materials:50}}),
  ]);
- if(cycle===2&&!(city.life?.productionEffect&&city.life.productionEffect.endsAt>context.now)){
+ if((cycle===2||(cycle===4&&context.heroRole==='engineer'))&&!(city.life?.productionEffect&&city.life.productionEffect.endsAt>context.now)){
   const investment=Math.max(20,Math.round((120+city.sectors.economy*85+city.sectors.administration*15)*.12));
   return card('workshops','Um pedido das oficinas','economy',[
    choice('maintenance','Renovar ferramentas',{materials:investment},{productionBonus:8}),
    choice('team','Abastecer os artesãos',{supplies:60},{productionBonus:5}),
   ]);
  }
- if(cycle===3)return card('caravan','Uma rota pouco conhecida','economy',[
+ if(cycle===3||(cycle===4&&context.heroRole==='explorer'))return card('caravan','Uma rota pouco conhecida','economy',[
   choice('escort','Fazer uma entrega curta',{supplies:60},{rewards:{gold:6}}),
   choice('venture','Arriscar a rota longa',{supplies:60},{rewards:{gold:20},chance:{successPercent:65,failure:{contentment:-3,productionBonus:0}}}),
  ]);

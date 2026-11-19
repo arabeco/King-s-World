@@ -223,6 +223,34 @@ try{
   assert.equal(await other.evaluate(()=>JSON.parse(localStorage.getItem('kw-cozy-pending:d:player-d')).requestId),saved.requestId);
   await other.close();
  });
+ await check('A restarted Cozy reign rejects the archived tab receipt and a delayed archived snapshot',async()=>{
+  const tab=await browser.newPage();await mountHarness(tab);
+  const previous=snapshot('reentry',4),fresh=snapshot('reentry',5);
+  previous.world.persistent=true;previous.state.createdAt=1000;
+  fresh.world.persistent=true;fresh.state.createdAt=2000;fresh.state.playerId='player-reentry-next';
+  const stored={requestId:'saved-archived-action',action:{type:'hire',role:'engineer'}};
+  await tab.evaluate(saved=>localStorage.setItem('kw-cozy-pending:reentry:player-reentry',JSON.stringify(saved)),stored);
+  let reply=previous,posts=[];
+  await tab.route('**/api/worlds/*/cozy',route=>{
+   if(route.request().method()==='POST')posts.push(route.request().postDataJSON());
+   return route.fulfill({json:reply});
+  });
+  await tab.evaluate(()=>window.renderWorld('reentry'));
+  await tab.waitForFunction(()=>window.cozy?.uncertain?.requestId==='saved-archived-action');
+  await tab.evaluate(()=>{window.replayOld=window.cozy.retryCommand;});
+  reply=fresh;
+  await tab.evaluate(()=>window.cozy.refresh());
+  await tab.waitForFunction(()=>window.cozy?.payload?.state.playerId==='player-reentry-next'&&!window.cozy.uncertain);
+  assert.equal(await tab.evaluate(()=>window.replayOld()),false);
+  assert.deepEqual(posts,[]);
+  reply={...previous,revision:6,serverNow:fresh.serverNow+1};
+  await tab.evaluate(()=>window.cozy.refresh());
+  assert.equal(await tab.evaluate(()=>window.cozy.payload.state.playerId),'player-reentry-next');
+  reply={...fresh,revision:6};
+  assert(await tab.evaluate(()=>window.cozy.act({type:'king_choose',profileId:'builder',nickname:'Teste'})));
+  assert.equal(posts[0].playerId,'player-reentry-next');
+  await tab.close();
+ });
  await check('Malformed stored actions do not block entry and unavailable storage does not block commands',async()=>{
   const clean=await browser.newPage();await mountHarness(clean);
   await clean.evaluate(()=>localStorage.setItem('kw-cozy-pending:e:player-e',JSON.stringify({requestId:'valid-receipt',action:[]})));

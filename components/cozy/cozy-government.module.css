@@ -450,3 +450,7 @@
 .researchTile[aria-pressed=true]{border-radius:6px;outline:1px solid #75adce88;outline-offset:-1px;background:linear-gradient(110deg,#42607155,#24303b22)}
 .researchSelection{margin-top:12px;padding:12px;border:1px solid #c4a96d55;border-radius:6px;background:linear-gradient(120deg,#39382c44,#192125);color:#e4d3a6}
 .researchSelection>strong{font-size:13px}.researchSelection>button{width:100%;min-height:44px}.researchSelection .detailQuote{padding:8px 0;justify-content:space-between;font-size:13px}.researchSelection .detailQuote>span{font-size:13px}.researchExplanation{font-size:12px;margin:6px 0}.researchExplanation summary{min-height:28px;cursor:pointer}.researchExplanation p{line-height:1.5}
+.tradePlan { display: grid; gap: 7px; padding-block: 5px; }
+.tradeChoices { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; }
+.tradeChoices button { min-height: 44px; border: 1px solid #97b1b760; border-radius: 5px; background: #222e32; color: #f1e7d5; font: inherit; }
+.tradeChoices button[aria-pressed="true"] { border-color: #d9c07e; background: #46514d; }

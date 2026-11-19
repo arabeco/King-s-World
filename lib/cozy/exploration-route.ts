@@ -2,6 +2,11 @@ import {clockSpeed} from './rhythm';
 import {royalBonus} from './royal-profiles';
 import {equipmentBonus} from './equipment';
 import type {CozyCoord,CozyState,CozyWorld} from './types';
+export const EXPLORATION_QUEUE_LIMIT = 3;
+export function explorationQueue(state:CozyState, now:number) {
+ const orders = state.orders.filter(order=>order.kind==="explore");
+ return {orders,startsAt:Math.max(now,...orders.map(order=>order.arrivesAt))};
+}
 export const hexDistance=(a:CozyCoord,b:CozyCoord)=>Math.max(Math.abs(a.q-b.q),Math.abs(a.r-b.r),Math.abs(a.q+a.r-b.q-b.r));
 export function expeditionOrigin(state:CozyState,target:CozyCoord){return [...state.cities].sort((a,b)=>hexDistance(a,target)-hexDistance(b,target)||a.id.localeCompare(b.id))[0];}
 export function expeditionCost(state:CozyState,target:CozyCoord){const origin=expeditionOrigin(state,target);return Math.ceil((30+Math.max(1,origin?hexDistance(origin,target):0)*8)*(1-state.research.exploration*.08));}

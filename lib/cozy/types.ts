@@ -1,5 +1,7 @@
-import type {CityLifeView} from "./city-life";
+import type {CityDecision,CityLifeView} from "./city-life";
 import type {progressionBreakdown} from './progression';
+import type {CozyAscensionConfirmation} from "./ascension-preview";
+import type {AscensionProof} from "./ascension-rite";
 /** Version two is a separate, server-owned season. Legacy saves remain untouched. */
 export type CozyWorld = {
   id: string;
@@ -11,6 +13,8 @@ export type CozyWorld = {
   startsAt: number | null;
   influenceVersion?: 1 | 2;
   combatMode?:"cozy"|"competitive";
+  foundingOnboarding?: true;
+  persistent?: true;
 };
 export type CozyCoord = { q: number; r: number };
 export type CozySector =
@@ -36,6 +40,21 @@ export type CozyResources = {
   gold: number;
   materials: number;
   supplies: number;
+};
+export type CozyGiftResource = "materials" | "supplies";
+export type CozyAllianceGift = {
+  direction: "sent" | "received";
+  resource: CozyGiftResource;
+  amount: number;
+  otherPlayerName: string;
+};
+export type CozyAllianceGiftAvailability = {
+  allianceId: string;
+  day: number;
+  resetsAt: number;
+  sentTo: string[];
+  received: number;
+  recipients: {playerId:string; receivedLimitReached:boolean}[];
 };
 export type CozyCity = CozyCoord & {
   renamedBy?:string[];
@@ -80,10 +99,12 @@ export type CozyOrder = {
   cargo?:Partial<CozyResources>;
   expeditionOrigin?:CozyCoord;
   explorationPath?:CozyCoord[];
-  planned?: {startsAt:number; expectedLevel:number; cost:Partial<CozyResources>; started:boolean};
+  planned?: {startsAt:number; expectedLevel?:number; cost:Partial<CozyResources>; started:boolean};
   conquest?: boolean;
   areaRules?: boolean;
   collectResource?: "gold" | "materials";
+  tradeRoute?: true;
+  riteExpedition?: true;
   collectAmount?: number;
 };
 export type CozyReport = {
@@ -103,6 +124,10 @@ export type CozyReport = {
   title: string;
   body: string;
   positive: boolean;
+  allianceGift?: CozyAllianceGift;
+  completedWork?: {cityId:string;cityName:string};
+  decisionAuthor?: { kind: "counselor"; id: string } | { kind: "hero"; name: string; role: CozyHeroRole };
+  location?: CozyCoord;
   battle?: {
     city: CozyCoord & {name:string};
     perspective: 'attacker'|'defender';
@@ -125,6 +150,7 @@ export type CozyDecree = {
   id: string;
   day: number;
   counselorId: string;
+  suggestedOptionId?: string;
   title: string;
   body: string;
   options: ({id:string; label:string; description:string; cost?:Partial<CozyResources>; effects:CozyDecreeEffects} &
@@ -138,9 +164,23 @@ export type CozyProgression = {
   capitalLevels: Record<CozySector,number>;
   militaryBaseline: number;
   council: {sources?:{decree:number;local:number;stable:number};merit:number;episodes:string[];careSince:Record<string,number>;selfHarm:Record<string,number>};
-  feats: {wonders:string[];surveys:string[];collected:Record<string,number>;supports:string[];projects?:string[]};
+  feats: {wonders:string[];surveys:string[];collected:Record<string,number>;supports:string[];projects?:string[];
+    frontier?: {victories:string[];resourceAreaClaimed:boolean}};
 };
 export type CozyState = {
+  founding?: { origin: CozyCoord };
+  firstAudience?: CozyDecree;
+  decisionInbox?: {
+    council?: CozyDecree;
+    councilResolvedCycle?: number;
+    cities: Record<string, CityDecision>;
+    affinity: Record<string, boolean[]>;
+  };
+  seenNotices?: string[];
+  allianceGiftDay?: {day:number; sentTo:string[]; received:number};
+  peakInfluence?: number;
+  pendingDefenseDay?: number;
+  nextTradeAt?: number;
   knownTerritories?:string[];
   scoutedCells?:string[];
   defeat?:{at:number;byPlayerId:string;lastCityId:string};
@@ -182,6 +222,8 @@ export type CozyState = {
   cooperation: number;
   portalCrossedAt: number | null;
   finalizedAt: number | null;
+  ascension?: CozyAscensionConfirmation;
+  ascensionProofs?: Partial<Record<AscensionProof,number>>;
   finalScore: number | null;
   seasonXp: number;
   sequence: number;
@@ -224,6 +266,8 @@ export type CozyAlliance = {
   admission?: "open"|"approval";
   invitations?: string[];
   requests?: string[];
+  invitationEvents?: Record<string, string>;
+  requestEvents?: Record<string, string>;
   members: string[];
   createdAt: number;
 };
@@ -240,6 +284,7 @@ export type CozySupport = {
   resolvedAt?:number;
 };
 export type CozyShared = {
+  depletedAreas?: Record<string, number>;
   npcResistance?:Record<string,{initial:number;remaining:number;at:number}>;
   realmCrests?:Record<string,{id:string;finish:'plain'|'imperial'}>;
   version: 2;
@@ -282,6 +327,8 @@ export type CozyTile = CozyCoord & {
   color: "fog" | "neutral" | "yellow" | "green" | "ally";
   power: number | null;
   deposit: CozyDeposit | null;
+  replenishesAt?: number;
+  campRecoveryAt?: number;
   territoryOwnerId?: string | null;
   landmarkId?: string | null;
   combat?: {attackRequired:number;occupationRequired:number;attackWins:boolean;occupationMargin:boolean} | null;
@@ -336,6 +383,7 @@ export type CozyComputed = {
   canEnterPortal: boolean;
   unreadReports: number;
   heroCost: number;
+  tradeRoute?: { gold: number; supplies: number; durationMs: number; intervalMs:number; nextAt: number; arrivesAt: number | null };
   troopCosts: Record<CozyTroop, number>;
   researchCosts: Record<CozyResearch, number>;
   upgradeCosts: Record<string, Record<CozySector, number>>;
@@ -352,21 +400,28 @@ export type CozyComputed = {
   }[];
 };
 export type CozyAction =
+  | {type:"rite_provisions"}
+  | {type:"rite_expedition"}
+  | {type:"rite_council";choice:"welcome"|"repair"}
+  | {type:"ascend";confirmation:CozyAscensionConfirmation}
+  | { type: "trade_route"; trips?:1|2|3 }
+  | { type: "found_capital"; q: number; r: number; name: string; heroId: string }
   | {type:"attack_player";q:number;r:number;conquest?:boolean;heroId?:string}
   | {type:"capital_choose";cityId:string}
-  | {type:'plan_upgrade';cityId:string;sector:CozySector;steps?:1|2|3|4}
+  | {type:'plan_upgrade';cityId:string;sector:CozySector;steps?:1|2|3|4;expectedLevel?:number}
+  | {type:'plan_city_works';cityId:string;works:{sector:CozySector;level:number}[]}
   | {type:'plan_research';research:CozyResearch;steps?:1|2|3|4}
   | {type:'cancel_plan';orderId:string}
   | {type:"king_choose";profileId:string;nickname:string;equipment?:string[];kingId?:string;statRevision?:number;crestId?:string;crestFinish?:'plain'|'imperial'}
   | {type:"city_decision";cityId:string;decisionId:string;optionId:string}
-  | { type: "upgrade"; cityId: string; sector: CozySector }
+  | { type: "upgrade"; cityId: string; sector: CozySector; expectedLevel?: number }
   | { type: "recruit"; troop: CozyTroop; amount: number | "max" }
   | { type: "hire"; role: CozyHeroRole }
   | { type: "assign"; heroId: string; cityId: string | null }
   | { type: "research"; research: CozyResearch }
   | { type: "counselor"; slot: 0 | 1; counselorId: string }
   | { type: "decree"; decreeId: string; optionId: string }
-  | { type: "explore"; q: number; r: number }
+  | { type: "explore"; q: number; r: number; queue?:true }
   | {
       type: "attack";
       q: number;
@@ -398,9 +453,11 @@ export type CozyAction =
   | {type:"alliance_settings";admission:"open"|"approval"}
   | {type:"alliance_project_start";kind:CozyAllianceProjectKind}
   | {type:"alliance_project_contribute";projectId:string;resource:keyof CozyResources;amount:50|100|"max"}
+  | {type:"alliance_gift";allianceId:string;recipientId:string;day:number;resource:CozyGiftResource;amount:number}
   | { type: "support_request" }
   | { type: "support_send"; requestId: string }
   | { type: "read_reports" }
+  | { type: "notice_seen"; id: string }
   | { type: "city_class"; cityId:string; cityClass:import("../cities").CityClass }
   | { type: "rename_city"; cityId: string; name: string };
 export type CozyPlayerSummary = {
@@ -427,6 +484,7 @@ export type CozyPayload = {
   tiles: CozyTile[];
   players: CozyPlayerSummary[];
   account: CozyAccount;
+  allianceGifts?: CozyAllianceGiftAvailability;
   revision: number;
   serverNow: number;
 };

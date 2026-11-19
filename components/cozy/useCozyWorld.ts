@@ -5,12 +5,12 @@ import {newerCozySnapshot} from "@/lib/cozy/snapshot-order";
 import type { CozyAction, CozyPayload } from "@/lib/cozy/types";
 
 export type CozyCommand = CozyAction | { type: "start_world" };
-type PendingCommand = { action: CozyCommand; requestId: string };
+type PendingCommand = { action: CozyCommand; requestId: string; playerId?: string };
 
 function pendingKey(worldId: string, playerId: string) {
   return `kw-cozy-pending:${encodeURIComponent(worldId)}:${encodeURIComponent(playerId)}`;
 }
-function restorePending(key: string): PendingCommand | null {
+function restorePending(key: string, playerId?: string): PendingCommand | null {
   for (const store of [() => localStorage, () => sessionStorage]) {
     try {
       const storage = store(), raw = storage.getItem(key);
@@ -21,7 +21,8 @@ function restorePending(key: string): PendingCommand | null {
           value.action && typeof value.action === "object" && !Array.isArray(value.action) &&
           typeof value.action.type === "string" && value.action.type.length > 0 && value.action.type.length <= 64) {
         if(value.action.type==='read_reports'){storage.removeItem(key);continue;}
-        return { action: value.action, requestId: value.requestId };
+        if(value.playerId!==undefined && value.playerId!==playerId){storage.removeItem(key);continue;}
+        return { action: value.action, requestId: value.requestId, ...(playerId?{playerId}:{}) };
       }
       storage.removeItem(key);
     } catch { /* Disabled storage or an invalid receipt must not prevent entry. */ }
@@ -55,6 +56,7 @@ export function useCozyWorld(worldId: string) {
   const epoch=useRef(0),readingEpoch=useRef<number|null>(null),currentPayload=useRef<CozyPayload|null>(null);
   const receiptScope = useRef<string | null>(null);
   const acknowledging=useRef<{epoch:number;promise:Promise<boolean>}|null>(null);
+  const noticeRequests = useRef(new Map<string,Promise<boolean>>());
   const endpoint = `/api/worlds/${encodeURIComponent(worldId)}/cozy`;
 
   const accept = useCallback((next:CozyPayload,requestEpoch:number)=>{
@@ -62,7 +64,7 @@ export function useCozyWorld(worldId: string) {
     const scope = pendingKey(worldId, next.state.playerId);
     if (receiptScope.current !== scope) {
       receiptScope.current = scope;
-      setUncertain(restorePending(scope));
+      setUncertain(restorePending(scope,next.world.persistent?next.state.playerId:undefined));
     }
     currentPayload.current=next;serverOffset.current=next.serverNow-Date.now();setClock(next.serverNow);setPayload(next);setLastSyncedAt(Date.now());
   },[worldId]);
@@ -135,6 +137,9 @@ export function useCozyWorld(worldId: string) {
   useEffect(() => {
     if (!payload || pending) return;
     const arrivals = payload.state.orders.map((order) => order.arrivesAt);
+    for(const order of payload.state.orders)
+      if(order.planned&&!order.planned.started&&order.planned.startsAt-payload.serverNow<=30_000)
+        arrivals.push(order.planned.startsAt);
       for(const benefit of payload.state.allianceBenefits??[])if(benefit.allianceId===payload.state.allianceId)arrivals.push(benefit.until);
     for(const benefit of payload.state.sanctuaryBenefits??[])arrivals.push(benefit.until);
     for(const threat of payload.computed.sanctuaryThreats??[])arrivals.push(threat.arrivesAt);
@@ -142,6 +147,8 @@ export function useCozyWorld(worldId: string) {
     for(const city of Object.values(payload.computed.cityLife))if(city.effectEndsAt)arrivals.push(city.effectEndsAt);
     if (payload.computed.nextHorde)
       arrivals.push(payload.computed.nextHorde.arrivesAt);
+    if (payload.allianceGifts && payload.allianceGifts.resetsAt-payload.serverNow<=30_000)
+      arrivals.push(payload.allianceGifts.resetsAt);
     const next = Math.min(...arrivals.filter((at) => at > payload.serverNow));
     if (!Number.isFinite(next)) return;
     const timer = window.setTimeout(
@@ -157,7 +164,9 @@ export function useCozyWorld(worldId: string) {
   const execute = useCallback(
     async (command: PendingCommand) => {
       if (inFlight.current || !currentPayload.current?.state.playerId) return false;
-      const commandKey = pendingKey(worldId, currentPayload.current.state.playerId);
+      const playerId = currentPayload.current.state.playerId;
+      if (currentPayload.current.world.persistent && command.playerId!==playerId) return false;
+      const commandKey = pendingKey(worldId, playerId);
       const requestEpoch=epoch.current;
       const controller=new AbortController(),timeout=window.setTimeout(()=>controller.abort(),20_000);
       inFlight.current = true;
@@ -220,7 +229,7 @@ export function useCozyWorld(worldId: string) {
     const promise=(async()=>{
       const controller=new AbortController(),timeout=window.setTimeout(()=>controller.abort(),5000);
       try{
-        const response=await fetch(endpoint,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({action:{type:'read_reports'},requestId:crypto.randomUUID()})});
+        const response=await fetch(endpoint,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({action:{type:'read_reports'},requestId:crypto.randomUUID(),playerId:currentPayload.current?.state.playerId})});
         if(!response.ok)return false;
         const next=await response.json();
         if(!alive.current||requestEpoch!==epoch.current)return false;
@@ -231,13 +240,44 @@ export function useCozyWorld(worldId: string) {
     acknowledging.current={epoch:requestEpoch,promise};return promise;
   },[accept,endpoint]);
 
+  const acknowledgeNotice = useCallback((id: string) => {
+    const requestEpoch = epoch.current;
+    if (!alive.current || !currentPayload.current?.world.persistent) return Promise.resolve(false);
+    if (currentPayload.current.state.seenNotices?.includes(id)) return Promise.resolve(true);
+    const key = `${requestEpoch}:${id}`;
+    const pendingNotice = noticeRequests.current.get(key);
+    if (pendingNotice) return pendingNotice;
+    const promise = (async () => {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 8000);
+      try {
+        const response = await fetch(endpoint, {
+          method:"POST", signal:controller.signal, headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({action:{type:"notice_seen",id},requestId:crypto.randomUUID(),playerId:currentPayload.current?.state.playerId}),
+        });
+        if (!response.ok || !alive.current || requestEpoch !== epoch.current) return false;
+        accept(await response.json() as CozyPayload,requestEpoch);
+        return true;
+      } catch {
+        return false;
+      } finally {
+        window.clearTimeout(timeout);
+        noticeRequests.current.delete(key);
+      }
+    })();
+    noticeRequests.current.set(key,promise);
+    return promise;
+  },[accept,endpoint]);
+
   const act = useCallback(
     (action: CozyCommand) => {
+      if(action.type==='notice_seen')return acknowledgeNotice(action.id);
       if (uncertain || inFlight.current) return Promise.resolve(false);
       if(action.type==='read_reports')return acknowledgeReports();
-      return execute({ action, requestId: crypto.randomUUID() });
+      return execute({ action, requestId: crypto.randomUUID(),
+        ...(payload?.world.persistent ? {playerId:payload.state.playerId} : {}) });
     },
-    [execute, uncertain,acknowledgeReports],
+    [execute, uncertain,acknowledgeReports,acknowledgeNotice,payload?.world.persistent,payload?.state.playerId],
   );
 
   return {

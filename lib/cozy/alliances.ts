@@ -37,7 +37,18 @@ export function syncAllianceProjects(state:CozyState,shared:CozyShared,at:number
 export function applyAllianceAction(state:CozyState,shared:CozyShared,action:CozyAction,now:number,dayMs:number,nextId:(prefix:string)=>string){
  const me=state.playerId;
  const current=()=>{const group=shared.alliances.find(a=>a.id===state.allianceId&&a.members.includes(me));requireRule(group,'Você precisa pertencer a uma aliança.');return group;};
- const clearPending=()=>{for(const group of shared.alliances){group.invitations=group.invitations?.filter(id=>id!==me);group.requests=group.requests?.filter(id=>id!==me);}};
+ const clearFor=(group:CozyShared["alliances"][number],id:string)=>{
+  group.invitations=group.invitations?.filter(entry=>entry!==id);
+  group.requests=group.requests?.filter(entry=>entry!==id);
+  if(group.invitationEvents)delete group.invitationEvents[id];
+  if(group.requestEvents)delete group.requestEvents[id];
+ };
+ const clearPending=()=>{for(const group of shared.alliances)clearFor(group,me);};
+ const invite=(group:CozyShared["alliances"][number],id:string)=>{
+  if(group.invitations?.includes(id))return;
+  (group.invitations??=[]).push(id);
+  (group.invitationEvents??={})[id]=nextId('invitation');
+ };
  const known=(id:string)=>Object.values(shared.claims).some(c=>c.playerId===id);
  switch(action.type){
  case 'alliance_create':{
@@ -65,20 +76,20 @@ export function applyAllianceAction(state:CozyState,shared:CozyShared,action:Coz
  case 'alliance_invite':{
   const group=current();requireRule(group.members.length<ALLIANCE_LIMIT,'Essa aliança chegou a 5 membros.');
   requireRule(typeof action.playerId==='string'&&known(action.playerId)&&!shared.alliances.some(a=>a.members.includes(action.playerId)),'Convide um jogador deste mundo que esteja sem aliança.');
-  requireRule(!group.invitations?.includes(action.playerId),'Esse jogador já recebeu um convite.');(group.invitations??=[]).push(action.playerId);return;
+  requireRule(!group.invitations?.includes(action.playerId),'Esse jogador já recebeu um convite.');invite(group,action.playerId);return;
  }
  case 'alliance_request':{
   requireRule(state.allianceId===null,'Você já pertence a uma aliança.');const group=shared.alliances.find(a=>a.id===action.allianceId);requireRule(group,'Aliança não encontrada.');
   requireRule(group.members.length<ALLIANCE_LIMIT,'Essa aliança chegou a 5 membros.');requireRule(group.admission==='approval','Esta aliança aceita entrada livre.');
-  requireRule(!group.requests?.includes(me)&&!group.invitations?.includes(me),'Sua entrada já está pendente.');(group.requests??=[]).push(me);return;
+  requireRule(!group.requests?.includes(me)&&!group.invitations?.includes(me),'Sua entrada já está pendente.');(group.requests??=[]).push(me);(group.requestEvents??={})[me]=nextId('alliance-entry');return;
  }
  case 'alliance_respond':{
   const group=current();requireRule(group.founderId===me,'Só o líder pode responder aos pedidos.');requireRule(typeof action.accept==='boolean'&&group.requests?.includes(action.playerId),'Pedido de entrada não encontrado.');
-  if(action.accept){requireRule(group.members.length<ALLIANCE_LIMIT,'Essa aliança chegou a 5 membros.');requireRule(!shared.alliances.some(a=>a.members.includes(action.playerId)),'Esse jogador já entrou em outra aliança.');if(!group.invitations?.includes(action.playerId))(group.invitations??=[]).push(action.playerId);}
-  group.requests=group.requests!.filter(id=>id!==action.playerId);return;
+  if(action.accept){requireRule(group.members.length<ALLIANCE_LIMIT,'Essa aliança chegou a 5 membros.');requireRule(!shared.alliances.some(a=>a.members.includes(action.playerId)),'Esse jogador já entrou em outra aliança.');invite(group,action.playerId);}
+  group.requests=group.requests!.filter(id=>id!==action.playerId);if(group.requestEvents)delete group.requestEvents[action.playerId];return;
  }
  case 'alliance_decline':{
-  const group=shared.alliances.find(a=>a.id===action.allianceId);requireRule(group?.invitations?.includes(me)||group?.requests?.includes(me),'Nenhum convite ou pedido pendente.');group.invitations=group.invitations?.filter(id=>id!==me);group.requests=group.requests?.filter(id=>id!==me);return;
+  const group=shared.alliances.find(a=>a.id===action.allianceId);requireRule(group?.invitations?.includes(me)||group?.requests?.includes(me),'Nenhum convite ou pedido pendente.');clearFor(group,me);return;
  }
  case 'alliance_project_start':{
   const group=current();requireRule(group.founderId===me,'Só o líder pode escolher o projeto.');requireRule(Object.hasOwn(ALLIANCE_PROJECTS,action.kind),'Projeto inválido.');

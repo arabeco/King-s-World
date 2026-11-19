@@ -293,3 +293,7 @@
 .cityCard[data-city-class="bastiao"]{--village-tint:#304762}
 .cityCard[data-city-class="celeiro"]{--village-tint:#354e30}
 .cityCard[data-city-class="capital"]{--village-tint:#58482e}
+.workFilters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 7px; }
+.workFilters button { min-height: 44px; padding: 5px 12px; border-radius: 6px; border: 1px solid #a7ba903f; background: #232c25; color: #e6ebdc; font: inherit; }
+.workFilters button[aria-pressed="true"] { border-color: #b1c497; background: #384835; }
+.workFilters b { color: #e3d6a9; margin-left: 4px; }

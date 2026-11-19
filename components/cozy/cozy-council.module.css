@@ -429,3 +429,20 @@
 .cityCare{background:#b0bba009;border-color:#b0bba02b;box-shadow:none}
 @media(max-width:350px){.seatRack{gap:7px}.seatRack button{gap:4px;padding:6px 2px}.seatRack .counselorPortrait{flex-basis:38px;width:38px;height:38px}.seatRack .counselorPortrait img{width:38px;height:38px}.seatRack strong{font-size:14px}.decision .scene:not([data-empty]){min-height:145px}.sceneTitle h2{font-size:23px}}
 @media(prefers-reduced-motion:reduce){.optionFrame{transition:none}}
+.affinity {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 0;
+}
+.affinityTrack { display: inline-flex; gap: 4px; }
+.affinityTrack i { width: 16px; height: 4px; border-radius: 2px; background: #b79eb8; }
+.affinityTrack i[data-state="agree"] { background: #f0cd82; }
+.affinityTrack i[data-state="empty"] { background: transparent; border: 1px solid #ada5ac; }
+.suggestion { display: flex; align-items: center; gap: 5px; color: #e7c985; }
+.suggestion img, .author img { border-radius: 50%; }
+.counselorProfile { grid-column: 1 / -1; }
+.counselorProfile p { margin: 8px 0 0; color: #e3d8de; font-size: 0.82rem; }
+.counselorProfile .signDecree { margin: 8px 0 0; }

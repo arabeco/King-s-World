@@ -72,7 +72,7 @@ try{
  response=page.waitForResponse(reply=>reply.url()===endpoint&&reply.request().method()==='POST'&&reply.request().postDataJSON()?.action?.type==='upgrade');
  await economy.getByRole('button',{name:'Evoluir Economia',exact:true}).tap();reply=await response;assert.equal(reply.status(),200,await reply.text());
  const upgraded=await reply.json();assert(upgraded.state.resources.materials<result.state.resources.materials);assert(upgraded.state.orders.some(order=>order.kind==='upgrade'&&order.sector==='economy'));
- await page.getByRole('button',{name:'Ver setor Economia',exact:true}).tap();assert.equal(await economy.getByRole('button',{name:'Evoluir Economia',exact:true}).isDisabled(),true);
+ await page.getByRole('button',{name:'Ver setor Economia',exact:true}).tap();await economy.getByRole('button',{name:'Adicionar Economia à fila',exact:true}).waitFor();
  await page.screenshot({path:path.join(root,'reports/cozy/welcoming-upgrade-waiting-390.png')});
  await economy.getByRole('button',{name:'Fechar setor',exact:true}).tap();
  // Arrival tracking survives reload without recommending a duplicate exploration.

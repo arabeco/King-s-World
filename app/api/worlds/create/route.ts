@@ -38,10 +38,14 @@ export async function POST(request: Request) {
       p_mode: mode,
     };
     let world:CreatedWorld;
-    try {world=await supabaseRpc<CreatedWorld>(combatMode==='competitive'?'kw_cozy_create_with_rules':'kw_cozy_create_lobby',{...params,...(combatMode==='competitive'?{p_combat_mode:combatMode}:{}),p_password_hash:password ? hashLobbyPassword(password) : null});}
+    const founding = combatMode === "cozy" && process.env.KW_COZY_FOUNDATION_PREVIEW === "1";
+    const persistent = combatMode === "cozy" && process.env.KW_COZY_PERSISTENT_PREVIEW !== "0";
+    const createRpc = persistent ? "kw_cozy_create_persistent" : founding ? "kw_cozy_create_founding" :
+      combatMode === "competitive" ? "kw_cozy_create_with_rules" : "kw_cozy_create_lobby";
+    try {world=await supabaseRpc<CreatedWorld>(createRpc,{...params,...(combatMode==='competitive'?{p_combat_mode:combatMode}:{}),p_password_hash:password ? hashLobbyPassword(password) : null});}
     catch(error){
       const message=error instanceof Error?error.message:'';
-      if(combatMode==='competitive'||password || !(/Could not find the function public\.kw_cozy_create_lobby|function (?:public\.)?kw_cozy_create_lobby[^\n]*does not exist/i.test(message)))throw error;
+      if(persistent||founding||combatMode==='competitive'||password || !(/Could not find the function public\.kw_cozy_create_lobby|function (?:public\.)?kw_cozy_create_lobby[^\n]*does not exist/i.test(message)))throw error;
       try {world=await supabaseRpc<CreatedWorld>(mode==='express'?'kw_cozy_create_economic':'kw_cozy_create',params);}
       catch(e){if(mode!=='express'||!(/kw_cozy_create_economic/.test(String(e))&&/does not exist|Could not find/.test(String(e))))throw e;world=await supabaseRpc<CreatedWorld>('kw_cozy_create',params);}
     }

@@ -15,7 +15,7 @@ export default async function LobbyPage() {
     <h1 className={styles.brand}>KING’S WORLD</h1>
     <AccountNavigation active="worlds"/>
     <LobbyAccountBanner username={appUser.username}/>
-    <LobbyWorldSelector username={appUser.username} worlds={worlds}/>
+    <LobbyWorldSelector username={appUser.username} worlds={worlds} persistentPreview={process.env.KW_COZY_PERSISTENT_PREVIEW !== "0"}/>
     <footer className={styles.footer}><AuthSignOutButton/></footer>
   </div></main>;
 }

@@ -7,21 +7,27 @@ import Image from "next/image";
 import CozySymbol from "./CozySymbol";
 import { ArrowRight, ChevronDown, Feather } from "lucide-react";
 import { COUNSELORS } from "@/lib/cozy/catalog";
+import {councilNotice,isNewNotice} from "@/lib/cozy/notices";
 import type {CozyDecree} from '@/lib/cozy/types';
 import CozyArt from "./CozyArt";
 import DecisionEffects,{resourceEffects,type DecisionEffect} from "./DecisionEffects";
 import { CrownPanel, type CrownPanelProps } from "./CozyCrownUI";
 import styles from "./cozy-council.module.css";
+import {counselorPortraits as PORTRAITS} from "./cozy-portraits";
+import {useNoticeVisible} from "./CozyNovelty";
 
-const PORTRAITS: Record<string,string> = {
-  helena:"/herois/hero-helena-draven.jpg", tomas:"/herois/hero-tomas-ferrocorte.jpg",
-  ines:"/herois/hero-maelis-verdan.jpg", bento:"/herois/hero-boris-ardheim.jpg",
-};
-
-export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelProps & {onCity:(id:string)=>void}) {
+export default function CozyCouncil({ data, act, locked, onCity, onWelcomeCity }: CrownPanelProps & {
+  onCity: (id: string) => void;
+  onWelcomeCity?: (id: string) => void;
+}) {
   const { state, computed } = data;
   const [seat,setSeat]=useState<0|1|null>(null);
+  const [candidateId,setCandidateId]=useState<string>();
+  const [welcomeResult, setWelcomeResult] = useState(false);
+  const capital = state.cities.find(city => city.capital);
   const decree = computed.decree;
+  const noticeId = data.world.persistent && decree ? councilNotice(decree.id) : undefined;
+  const noticeRef = useNoticeVisible(noticeId && isNewNotice(state,noticeId) ? noticeId : undefined,act);
   const [choice, setChoice] = useState<{ decreeId: string; optionId: string } | null>(null);
   const chosen = decree && choice?.decreeId === decree.id ? decree.options.find(option => option.id === choice.optionId) : undefined;
   const zeroModel=computed.influenceDetails.model==='zero-v1';
@@ -29,6 +35,9 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
   const care=state.cities.filter(city=>(computed.cityLife[city.id]?.contentment??state.satisfaction)<60).sort((a,b)=>(computed.cityLife[a.id]?.contentment??state.satisfaction)-(computed.cityLife[b.id]?.contentment??state.satisfaction));
   const critical=care.filter(city=>(computed.cityLife[city.id]?.contentment??state.satisfaction)<35);
   const author = COUNSELORS.find((person) => person.id === decree?.counselorId);
+  const seated = seat===null ? undefined : COUNSELORS.find(person=>person.id===state.counselors[seat]);
+  const candidate = COUNSELORS.find(person=>person.id===candidateId) ?? seated;
+  const recent = candidate ? state.decisionInbox?.affinity[candidate.id] ?? [] : [];
   const trustEffect=(effects:CozyDecree['options'][number]['effects'])=>{
     const signed=(n:number)=>`${n>0?'+':''}${n}`;
     if(!effects.localSatisfaction)return `${signed(effects.satisfaction)}`;
@@ -50,14 +59,28 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
         {([0,1] as const).map(slot=>{
           const current=COUNSELORS.find(person=>person.id===state.counselors[slot]);
           const label=slot===0?"Política":"Vida do povo";
-          return <button type="button" key={slot} aria-expanded={seat===slot} onClick={()=>setSeat(seat===slot?null:slot)}>
+          return <button type="button" key={slot} aria-expanded={seat===slot} onClick={()=>{setCandidateId(undefined);setSeat(seat===slot?null:slot);}}>
             {current&&<span className={styles.counselorPortrait}><CozyArt src={PORTRAITS[current.id]} size={52}/></span>}
             <span><small>{label}</small><strong>{current?.name??"+"}</strong></span><ChevronDown size={15}/>
           </button>;
         })}
       </section>
       {seat!==null&&<div className={styles.seatPicker} aria-label="Escolher conselheiro">
-        {COUNSELORS.filter(person=>person.seat===(seat===0?"political":"internal")).map(person=><button key={person.id} type="button" disabled={locked} aria-pressed={state.counselors[seat]===person.id} onClick={async()=>{if(person.id===state.counselors[seat]||await act({type:"counselor",slot:seat,counselorId:person.id}))setSeat(null);}}><span className={styles.counselorPortrait}><CozyArt src={PORTRAITS[person.id]} size={52}/></span><span><strong>{person.name}</strong><small>{person.moral}</small></span></button>)}
+        {COUNSELORS.filter(person=>person.seat===(seat===0?"political":"internal")).map(person=><button key={person.id} type="button" disabled={!data.world.persistent&&locked} aria-pressed={(data.world.persistent?candidate?.id:state.counselors[seat])===person.id} onClick={async()=>{
+          if(data.world.persistent)setCandidateId(person.id);
+          else if(person.id===state.counselors[seat]||await act({type:"counselor",slot:seat,counselorId:person.id}))setSeat(null);
+        }}><span className={styles.counselorPortrait}><CozyArt src={PORTRAITS[person.id]} size={52}/></span><span><strong>{person.name}</strong><small>{person.moral}</small></span></button>)}
+        {data.world.persistent && candidate && <div className={styles.counselorProfile}>
+          <p>{candidate.description}</p>
+          <div className={styles.affinity}>
+            <strong>Sintonia</strong>
+            <span aria-hidden="true" className={styles.affinityTrack}>{[0,1,2].map(index =>
+              <i key={index} data-state={index >= recent.length ? "empty" : recent[index] ? "agree" : "differ"}/>)}</span>
+            <small>{recent.length ? `${recent.filter(Boolean).length} de ${recent.length} decisões em acordo` : "Ainda vão decidir juntos"}</small>
+          </div>
+          {candidate.id!==seated?.id&&<button type="button" className={styles.signDecree} disabled={locked}
+            onClick={async()=>{if(await act({type:"counselor",slot:seat,counselorId:candidate.id}))setSeat(null);}}>Nomear {candidate.name}</button>}
+        </div>}
       </div>}
       <article
         className={styles.decision}
@@ -65,7 +88,7 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
       >
         <header className={styles.scene} data-empty={!decree || undefined}>
           <Image
-            src="/images/conselho.jpg"
+            src={decree && state.firstAudience?.id === decree.id ? "/images/cenas-cozy/feira.jpg" : "/images/cenas-cozy/conselho.jpg"}
             alt=""
             fill
             sizes="(max-width: 700px) 100vw, 600px"
@@ -81,7 +104,7 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
               {trust}%
             </span>
           </div>
-          <div className={styles.sceneTitle}>
+          <div className={styles.sceneTitle} ref={noticeRef}>
             <h2 id="council-decision-title">{decree?.title ?? (computed.readOnly?"Temporada encerrada":!computed.started?"Decisões após a abertura":"O Conselho está em dia")}
             </h2>
           </div>
@@ -90,8 +113,9 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
         {decree ? (
           <div className={styles.decreeBody}>
             <div className={styles.author}>
+              {data.world.persistent && author && <CozyArt src={PORTRAITS[author.id]} size={28}/>}
               <span>{author?.name ?? "Seu Conselho"}</span>
-              {author && <span>{author.moral}</span>}
+              {data.world.persistent ? <span>{state.firstAudience?.id === decree.id ? capital?.name : "Todo o reino"}</span> : author && <span>{author.moral}</span>}
             </div>
             <p className={styles.story}>{decree.body}</p>
             <div className={styles.options}>
@@ -103,6 +127,7 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
                     <span className={styles.choiceDot} aria-hidden="true" />
                   </button>
                   <DecisionEffects flow items={[...resourceEffects(option.cost??{},true),...effectsList(option.effects)]} label="Consequências previstas"/>
+                  {decree.suggestedOptionId===option.id&&author&&<small className={styles.suggestion}><CozyArt src={PORTRAITS[author.id]} size={20}/>Sugestão de {author.name}</small>}
                   {option.resolution==='chance'&&<div className={styles.venture}><details><summary>{option.successPercent}% de sucesso</summary><small>O custo é gasto também se falhar.</small></details><span>Se falhar</span><DecisionEffects items={effectsList(option.failure)} label="Se falhar"/></div>}
                   {!affordable(option)&&<small className={styles.riskFailure}>Reserva insuficiente</small>}
                 </div>
@@ -110,12 +135,18 @@ export default function CozyCouncil({ data, act, locked, onCity }: CrownPanelPro
             </div>
             {chosen&&!state.progression?.balance?.unifiedRules && <p className={styles.choiceNote}>{chosen.description}</p>}
             <button className={styles.signDecree} disabled={locked || !chosen || !affordable(chosen)}
-              onClick={() => chosen && void act({ type: "decree", decreeId: decree.id, optionId: chosen.id })}>
+              onClick={async () => {
+                if (!chosen) return;
+                const signed = await act({ type: "decree", decreeId: decree.id, optionId: chosen.id });
+                if (signed && state.firstAudience?.id === decree.id) setWelcomeResult(true);
+              }}>
               <Feather size={16}/> Assinar
             </button>
           </div>
         ) : null}
       </article>
+      {welcomeResult && capital && <button type="button" className={styles.signDecree}
+        onClick={() => onWelcomeCity?.(capital.id)}>Ver {capital.name}</button>}
       {care.length>0&&computed.started&&!computed.readOnly&&<section className={styles.cityCare} aria-label="Cidades que precisam de cuidado"><div><CozyArt src="/icons/influence-society.png" size={31}/><span><strong>{critical.length?`${critical.length} ${critical.length===1?'cidade em crise':'cidades em crise'}`:`${care.length} ${care.length===1?'cidade em tensão':'cidades em tensão'}`}</strong></span></div><p>{care[0].name} · confiança {computed.cityLife[care[0].id]?.contentment??state.satisfaction}%</p><button type="button" onClick={()=>onCity(care[0].id)}>Cuidar de {care[0].name}<ArrowRight size={15}/></button></section>}
 
     </CrownPanel>

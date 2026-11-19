@@ -1,8 +1,8 @@
 "use client";
 
 
-import {expeditionCost,expeditionTravelMs,explorationPath,explorationCorridor} from "@/lib/cozy/exploration-route";
-import {orderMapLabel} from '@/lib/cozy/order-presentation';
+import {expeditionCost,expeditionTravelMs,explorationPath,explorationCorridor,explorationQueue,EXPLORATION_QUEUE_LIMIT} from "@/lib/cozy/exploration-route";
+import {orderMapLabel,orderQueued} from '@/lib/cozy/order-presentation';
 import {playerCampaign} from '@/lib/cozy/player-campaign';
 import CozyMapEmblem from "./CozyMapEmblem";
 import CozySymbol from "./CozySymbol";
@@ -309,14 +309,58 @@ export default function CozyMap({
         (order) => order.q === selected.q && order.r === selected.r,
       )
     : undefined;
-  const exploration = data.state.orders.find(order=>order.kind==="explore");
-  const exploring = Boolean(exploration);
-  const explorationBlocked = !locked&&exploration ? `Exploração em andamento · ${remaining(exploration.arrivesAt,now)} restantes. Aguarde a chegada para enviar outra.` : undefined;
+  const exploration = explorationQueue(data.state,now);
+  const exploring = exploration.orders.length>0;
+  const explorationAction = (coord:{q:number;r:number},label:string) => {
+    const cost = expeditionCost(data.state,coord);
+    const onQueue = data.world.persistent && exploring;
+    const same = exploration.orders.some(order=>order.q===coord.q && order.r===coord.r);
+    const reason = same ? "Este destino já tem uma exploração." :
+      onQueue && exploration.orders.length>=EXPLORATION_QUEUE_LIMIT ? "Fila de exploração cheia." :
+      onQueue && data.state.explored.includes(`${coord.q},${coord.r}`) ? "Escolha outro destino para a fila." :
+      !data.world.persistent && exploring ? `Exploração em andamento · ${remaining(exploration.orders[0].arrivesAt,now)} restantes.` :
+      data.state.resources.supplies<cost ? "Suprimentos insuficientes." : undefined;
+    const arrivesAt = exploration.startsAt+expeditionTravelMs(data.state,data.world,coord);
+    return <><ActionButton blockedReason={!locked ? reason : undefined}
+      disabled={locked || !data.state.cities.length || Boolean(reason)}
+      onClick={()=>void act({type:"explore",q:coord.q,r:coord.r,...(onQueue?{queue:true}:{})})}>
+      <Compass size={16}/><span>{onQueue ? "Adicionar à fila" : label}</span>
+      <span className={styles.actionQuote}><ResourceCost amount={cost} kind="supplies"/>
+        <CozySymbol name="time" size={18}/>{remaining(arrivesAt,now)}</span>
+    </ActionButton>
+    {reason && <small role="status">{reason}</small>}
+    {onQueue && !reason && <small>{exploration.orders.length+1}ª viagem · parte em {remaining(exploration.startsAt,now)}</small>}</>;
+  };
   const attacking = data.state.orders.some((order) => order.kind === "attack");
   const collecting = data.state.orders.some(
-    (order) => order.kind === "collect",
+    (order) => order.kind === "collect" && !order.tradeRoute,
   );
-  const selectedAction=selected?.occupation?(selected.occupation.canAnnex?<ActionButton disabled={locked||attacking||!selectedHero||data.state.cities.length>=10||data.state.resources.supplies<selected.exploreCost} onClick={()=>void act({type:'annex',q:selected.q,r:selected.r,heroId:selectedHero})}><Flag size={18}/>Anexar cidade<ResourceCost amount={selected.exploreCost} kind="supplies"/></ActionButton>:<ActionButton disabled={locked||attacking||data.computed.armyPower<=0||data.state.resources.supplies<selected.exploreCost} onClick={()=>void act({type:'attack',q:selected.q,r:selected.r,conquest:false})}><Swords size={18}/>Atacar cidade<ResourceCost amount={selected.exploreCost} kind="supplies"/></ActionButton>):selected?.foundation?.canFound?<ActionButton disabled={locked||attacking||!selectedHero||data.state.resources.materials<selected.foundation.materials||data.state.resources.supplies<selected.foundation.supplies} onClick={()=>void act({type:'found_city',q:selected.q,r:selected.r,heroId:selectedHero})}><Castle size={18}/>Fundar cidade</ActionButton>:null;
+  const hasCitySlot = data.state.cities.length < 10;
+  const canShowExpansion = !data.world.foundingOnboarding || (Boolean(selectedHero) && hasCitySlot);
+  const selectedCamp = data.world.persistent && selected?.kind==="npc" && !selected.occupation;
+  const selectedAction = selected?.occupation?.canAnnex ? (
+    canShowExpansion && <ActionButton
+      disabled={locked || attacking || !selectedHero || !hasCitySlot || data.state.resources.supplies < selected.exploreCost}
+      onClick={() => void act({ type: "annex", q: selected.q, r: selected.r, heroId: selectedHero })}>
+      <Flag size={18}/>{data.world.foundingOnboarding ? "Conquistar cidade" : "Anexar cidade"}
+      <ResourceCost amount={selected.exploreCost} kind="supplies"/>
+    </ActionButton>
+  ) : selected?.occupation ? (
+    <ActionButton disabled={locked || attacking || data.computed.armyPower <= 0 || data.state.resources.supplies < selected.exploreCost}
+      onClick={() => void act({ type: "attack", q: selected.q, r: selected.r, conquest: false })}>
+      <Swords size={18}/>Atacar cidade<ResourceCost amount={selected.exploreCost} kind="supplies"/>
+    </ActionButton>
+  ) : selectedCamp && selected.attackable ? (
+    <ActionButton disabled={locked || attacking || data.computed.armyPower <= 0 || data.state.resources.supplies < selected.exploreCost}
+      onClick={()=>void act({type:"attack",q:selected.q,r:selected.r})}>
+      <Swords size={18}/>Atacar acampamento<ResourceCost amount={selected.exploreCost} kind="supplies"/>
+    </ActionButton>
+  ) : canShowExpansion && selected?.foundation?.canFound ? (
+    <ActionButton disabled={locked || attacking || !selectedHero || data.state.resources.materials < selected.foundation.materials || data.state.resources.supplies < selected.foundation.supplies}
+      onClick={() => void act({ type: "found_city", q: selected.q, r: selected.r, heroId: selectedHero })}>
+      <Castle size={18}/>Fundar cidade
+    </ActionButton>
+  ) : null;
   const select = (tile: CozyTile) => {
     setUnknownCoord(null);
     setSelectedId(tile.id);
@@ -358,7 +402,9 @@ export default function CozyMap({
       {view==="empires"&&<MapSheet title="Reinos conhecidos" closeLabel="Fechar reinos" onClose={()=>setView(null)}><div className={styles.discoveryList}>{Array.from(new Set(data.tiles.filter(t=>t.revealed).flatMap(t=>(t.ownerId??t.territoryOwnerId)?[t.ownerId??t.territoryOwnerId!]:[]))).sort().map(id=>{const tile=data.tiles.find(t=>t.revealed&&t.ownerId===id&&t.kind==='city')??data.tiles.find(t=>t.revealed&&t.territoryOwnerId===id)!;const player=data.players.find(p=>p.playerId===id);return <button key={id} data-map-realm={id} onClick={()=>{setCenter(tile);setZoom(.55);setSelectedId(null);setView(null);}}><CozyMapEmblem ownerId={id} crest={data.shared.realmCrests?.[id]}/><span><strong>{player?.playerName??'Outro reino'}</strong><small>{mapOwnership(tile,data)}</small></span><ChevronRight size={18}/></button>;})}</div></MapSheet>}
       {view==="choose"&&<MapSheet title="Escolher cidade" closeLabel="Fechar cidades próximas" onClose={()=>setView(null)}><div className={styles.discoveryList}>{candidates.map(tile=><button key={tile.id} onClick={()=>select(tile)} data-map-choice={tile.id}>{tile.ownerId&&<CozyMapEmblem ownerId={tile.ownerId} crest={data.shared.realmCrests?.[tile.ownerId]}/>}<span><strong>{tile.name}</strong><small>{mapOwnership(tile,data)}</small></span><small>{tile.q}, {tile.r}</small></button>)}</div></MapSheet>}
       {view === "unknown" && unknownCoord && <MapSheet compact title="Território desconhecido" closeLabel="Fechar território" onClose={()=>setView(null)}>
-        <div className={styles.selectedTileBody}><div className={styles.ownership}>{unknownCoord.q}, {unknownCoord.r}</div><span>{explorationCorridor(explorationPath(data.state,unknownCoord),data.computed.worldDiagonalLimit??40).filter(id=>!data.tiles.some(t=>t.id===id&&t.revealed)).length} hexágonos novos · caminho e arredores</span><ActionButton blockedReason={explorationBlocked} disabled={locked||exploring||!data.state.cities.length||data.state.resources.supplies<expeditionCost(data.state,unknownCoord)} onClick={()=>void act({type:'explore',...unknownCoord})}><Compass size={16}/>Explorar caminho<span className={styles.actionQuote}><ResourceCost amount={expeditionCost(data.state,unknownCoord)} kind="supplies"/><CozySymbol name="time" size={18}/>{remaining(now+expeditionTravelMs(data.state,data.world,unknownCoord),now)}</span></ActionButton></div>
+        <div className={styles.selectedTileBody}><div className={styles.ownership}>{unknownCoord.q}, {unknownCoord.r}</div>
+          <span>{explorationCorridor(explorationPath(data.state,unknownCoord),data.computed.worldDiagonalLimit??40).length} hexágonos na rota e arredores</span>
+          {explorationAction(unknownCoord,"Explorar caminho")}</div>
       </MapSheet>}
       {view === "territory" && selected && (
         <MapSheet
@@ -378,7 +424,7 @@ export default function CozyMap({
           <div ref={feedbackRef}>{feedback}</div>
           <div className={styles.selectedTileArt} hidden={Boolean(selected.occupation||selected.foundation)}>
             {selectedCity?<CozyMapArt name={getCityAppearance(selectedCity).art} size={160}/>:<img
-              src={selected.landmarkId ? (selected.landmarkId==="sanctuary-central"?"/landmarks/observatory-study-v1.png":"/landmarks/sanctuary-district-v1.png") : `/images/${selected.kind === "portal" ? "portal-closed.jpg" : selected.kind === "city" ? "capital.jpg" : selected.kind === "npc" ? "territory-hostile.jpg" : selected.kind === "gold" || selected.kind === "materials" ? "treasure.jpg" : selected.revealed ? "territory-known-empty.jpg" : "territory-unknown.jpg"}`}
+              src={selected.landmarkId ? (selected.landmarkId==="sanctuary-central"?"/landmarks/observatory-study-v1.png":"/landmarks/sanctuary-district-v1.png") : selected.revealed && selected.kind==="gold" ? "/images/cenas-cozy/mapa-mina.jpg" : selected.revealed && selected.kind==="materials" ? "/images/cenas-cozy/mapa-pedreira.jpg" : selected.revealed && selected.kind==="npc" && selected.campRecoveryAt!==undefined ? "/images/cenas-cozy/mapa-acampamento.jpg" : `/images/${selected.kind === "portal" ? "portal-closed.jpg" : selected.kind === "city" ? "capital.jpg" : selected.kind === "npc" ? "territory-hostile.jpg" : selected.kind === "gold" || selected.kind === "materials" ? "treasure.jpg" : selected.revealed ? "territory-known-empty.jpg" : "territory-unknown.jpg"}`}
               alt=""
             />}
             <div>
@@ -396,47 +442,24 @@ export default function CozyMap({
             </div>
             {selected.kind!=="city"&&!selectedTower&&!selected.occupation&&!selected.foundation&&<details className={styles.tileInfo}><summary>ⓘ Detalhes</summary><p>{selected.clue}</p></details>}
             {selectedTower&&<CozySanctuaryCard tower={selectedTower} data={data} act={act} locked={locked} now={now}/>}
-            {!selected.occupation&&selected.power !== null && selected.power > 0 && (
+            {!selectedCamp&&!selected.occupation&&selected.power !== null && selected.power > 0 && (
               <div className={styles.inlineNotice}>
                 <Shield size={16} />
                 Defesa da aldeia: {number(selected.power)}
               </div>
             )}
-            {!selected.occupation&&selected.power!==null&&selected.attackable&&<div className={styles.combatQuote}><span>Seu ataque <strong>{number(data.computed.armyPower)}</strong></span><span>Mínimo para iniciar ocupação <strong>{number(selected.combat?.occupationRequired??Math.ceil(selected.power*1.25))}</strong></span><small>O combate pode causar perdas. A margem de ocupação usa a força na chegada, antes das baixas.</small><span><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)} até a chegada</span></div>}
+            {!selectedCamp&&!selected.occupation&&selected.power!==null&&selected.attackable&&<div className={styles.combatQuote}><span>Seu ataque <strong>{number(data.computed.armyPower)}</strong></span><span>Mínimo para iniciar ocupação <strong>{number(selected.combat?.occupationRequired??Math.ceil(selected.power*1.25))}</strong></span><small>O combate pode causar perdas. A margem de ocupação usa a força na chegada, antes das baixas.</small><span><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)} até a chegada</span></div>}
             {tileOrder && (
               <div className={styles.inlineNotice}>
                 <CozySymbol name="time" size={18}/>
                 {orderMapLabel(tileOrder)} ·{" "}
-                {remaining(tileOrder.arrivesAt, now)}
+                {orderQueued(tileOrder) ? "Na fila · " : ""}{remaining(tileOrder.arrivesAt, now)}
               </div>
             )}
             {!selected.revealed && (
-              <div className={styles.mapActionBlock}>
-                <ActionButton
-                  blockedReason={explorationBlocked}
-                  disabled={
-                    locked ||
-                    exploring ||
-                    data.state.resources.supplies < selected.exploreCost
-                  }
-                  onClick={() =>
-                    void act({
-                      type: "explore",
-                      q: selected.q,
-                      r: selected.r,
-                    })
-                  }
-                >
-                  <Compass size={16} />
-                  <span>Explorar caminho</span>
-                  <span className={styles.actionQuote}><ResourceCost amount={selected.exploreCost} kind="supplies"/><span><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)}</span></span>
-                </ActionButton>
-                {exploring && (
-                  <small role="status">{explorationBlocked}</small>
-                )}
-              </div>
+              <div className={styles.mapActionBlock}>{explorationAction(selected,"Explorar caminho")}</div>
             )}
-            {selected.foundation&&<div className={styles.mapActionBlock}>
+            {selected.foundation&&canShowExpansion&&<div className={styles.mapActionBlock}>
               <h4>Fundar uma cidade</h4>
               {selected.foundation.reason?<small>{selected.foundation.reason}</small>:<>
                 <div className={styles.row}><ResourceCost amount={selected.foundation.materials} kind="materials"/><ResourceCost amount={selected.foundation.supplies} kind="supplies"/><small><CozySymbol name="time" size={18}/>{remaining(now+selected.foundation.durationMs,now)}</small></div>
@@ -470,7 +493,15 @@ export default function CozyMap({
             {selected.revealed &&
               ["npc", "abandoned"].includes(selected.kind) &&
               !selected.ownerId && (
-                data.world.economyVersion===3?<div className={styles.mapActionBlock}>
+                selectedCamp ? <div className={styles.mapActionBlock}>
+                  {selected.campRecoveryAt!==undefined ? <span className={styles.inlineNotice}>
+                    <CozySymbol name="time" size={18}/>Se recuperando · {remaining(selected.campRecoveryAt,now)}
+                  </span> : <div className={styles.combatQuote}>
+                    <span>Seu ataque <strong>{number(data.computed.armyPower)}</strong></span>
+                    <span>Resistência <strong>{number(selected.power??0)}</strong></span>
+                    <span><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)} até a chegada</span>
+                  </div>}
+                </div> : data.world.economyVersion===3?<div className={styles.mapActionBlock}>
                   {!selected.occupation?.canAnnex&&<div className={styles.row}><span>Defesa restante</span><strong>{number(selected.power??0)}</strong></div>}
                   {selected.occupation&&<div className={styles.occupationControl} aria-label="Controle da cidade">
                     <div><strong>Controle · {Math.ceil(selected.occupation.control)}%</strong><small>Anexar em ≤ {selected.occupation.threshold}%</small></div>
@@ -479,11 +510,11 @@ export default function CozyMap({
                   {!selected.occupation?.canAnnex?<>
                     <small>Atacar reduz a defesa. Só anexar muda a posse da cidade.</small>
                     <small><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)} até a chegada</small>
-                  </>:<>
+                  </>:canShowExpansion?<>
                     <strong>Heróis disponíveis · {freeHeroes.length}/10</strong>
                     {heroSlots("Herói para anexar cidade")}
                     <small>{data.state.cities.length}/10 cidades · o herói será enviado ao confirmar.</small>
-                  </>}
+                  </>:null}
                 </div>:<div className={styles.mapActionBlock}>
                   <h4>
                     {selected.kind === "npc"
@@ -575,7 +606,7 @@ export default function CozyMap({
               )}
             {selected.revealed&&!selected.deposit&&['gold','materials'].includes(selected.kind)&&<div className={styles.mapActionBlock}>
               <h4>{selected.kind==='gold'?'Área de ouro':'Área de materiais'}</h4><small>Reconheça a reserva para anexar a área inteira.</small>
-              <ActionButton blockedReason={explorationBlocked} disabled={locked||exploring||data.state.resources.supplies<selected.exploreCost} onClick={()=>void act({type:'explore',q:selected.q,r:selected.r})}><Compass size={18}/>Reconhecer área<ResourceCost amount={selected.exploreCost} kind="supplies"/></ActionButton>
+              {explorationAction(selected,"Reconhecer área")}
             </div>}
             {selected.deposit && (
               <div className={styles.mapActionBlock}>
@@ -601,30 +632,7 @@ export default function CozyMap({
                 {selected.area && <p>{selected.area.owners.length ? `Posse da área: ${selected.area.owners.map(id=>data.players.find(p=>p.playerId===id)?.playerName??id).join(", ")}.` : "Área ainda não anexada."}</p>}
                 {selected.area&&selected.area.owners.includes(data.state.playerId)&&!selected.area.canCollect&&<p>O acesso compartilhado exige uma aliança vigente com o primeiro anexante.</p>}
                 {selected.area?.canAnnex && <ActionButton disabled={locked} onClick={()=>void act({type:"area_annex",q:selected.q,r:selected.r})}><Flag size={16}/>{selected.area.owners.length ? "Compartilhar em aliança" : "Anexar área"}</ActionButton>}
-                {selected.deposit.surveys < 3 ? (
-                  <ActionButton
-                    disabled={
-                      locked ||
-                      exploring ||
-                      data.state.resources.supplies < selected.exploreCost
-                    }
-                    onClick={() =>
-                      void act({
-                        type: "explore",
-                        q: selected.q,
-                        r: selected.r,
-                      })
-                    }
-                  >
-                    <Compass size={16} />
-                    Reconhecer área{" "}
-                    <ResourceCost
-                      amount={selected.exploreCost}
-                      kind="supplies"
-                    />
-                    <span className={styles.actionQuote}><CozySymbol name="time" size={18}/>{remaining(now+selected.travelMs,now)}</span>
-                  </ActionButton>
-                ) : (
+                {selected.deposit.surveys < 3 ? explorationAction(selected,"Reconhecer área") : (
                   <ActionButton
                     disabled={
                       locked || collecting || selected.deposit.remaining <= 0 || !selected.area?.canCollect
@@ -639,7 +647,7 @@ export default function CozyMap({
                   >
                     <ArrowDownToLine size={16} />
                     {selected.deposit.remaining <= 0
-                      ? "Depósito esgotado"
+                      ? (selected.replenishesAt ? `Reserva em recuperação · ${remaining(selected.replenishesAt, now)}` : "Depósito esgotado")
                       : "Iniciar coleta"}
                   </ActionButton>
                 )}
@@ -647,7 +655,7 @@ export default function CozyMap({
             )}
             {selected.kind === "portal" && (
               <div className={styles.mapActionBlock}>
-                <p>Um marco antigo do mundo. O Selo de Vitória é conquistado ao alcançar 1.500 de influência.</p>
+                <p>{data.world.persistent?"Um marco antigo do mundo. Acompanhe a meta de Ascensão em Conquistas.":"Um marco antigo do mundo. O Selo de Vitória é conquistado ao alcançar 1.500 de influência."}</p>
               </div>
             )}
           </div>
@@ -741,14 +749,14 @@ export default function CozyMap({
                 data-map-destination={tile.id}
                 data-map-accesses={accesses}
                 onClick={() => select(tile)}
-                aria-label={`${tile.revealed?tile.name:"Exploração em andamento"}, ${tile.q}, ${tile.r}`}
+                aria-label={`${tile.revealed?tile.name:"Destino de exploração"}, ${tile.q}, ${tile.r}`}
               >
                 <span className={styles.discoveryIcon}>{tile.revealed&&(tile.ownerId??tile.territoryOwnerId)?<CozyMapEmblem ownerId={(tile.ownerId??tile.territoryOwnerId)!} crest={data.shared.realmCrests?.[(tile.ownerId??tile.territoryOwnerId)!]}/>:tileIcon(tile)}</span>
                 <span>
-                  <strong>{tile.revealed?tile.name:"Exploração em andamento"}</strong>
+                  <strong>{tile.revealed?tile.name:"Destino de exploração"}</strong>
                   <small>{accesses>1?`${accesses} acessos conhecidos · uma reserva`:tile.revealed?mapOwnership(tile,data):"Destino ainda não revelado"}</small>
                   {tile.deposit&&tile.revealed&&<small>{mapAreaAccess(tile,data.state.playerId)} · {number(tile.deposit.remaining)} restantes</small>}
-                  {orders.length>0&&<small className={styles.journeyLabel}><CozySymbol name="time" size={18}/>{orderMapLabel([...orders].sort((a,b)=>a.arrivesAt-b.arrivesAt)[0])} · {remaining(Math.min(...orders.map(o=>o.arrivesAt)),now)}</small>}
+                  {orders.length>0&&<small className={styles.journeyLabel}><CozySymbol name="time" size={18}/>{orderMapLabel([...orders].sort((a,b)=>a.arrivesAt-b.arrivesAt)[0])} · {orders.every(orderQueued)&&"Na fila · "}{remaining(Math.min(...orders.map(o=>o.arrivesAt)),now)}</small>}
                 </span>
                 <small>
                   {tile.q},{tile.r}

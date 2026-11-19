@@ -15,6 +15,10 @@ export type WorldSummary = {
   speedMultiplier?: number;
   durationDays?: number;
   rulesVersion?: number;
+  founding?: boolean;
+  persistent?: boolean;
+  reignArchived?: boolean;
+  capitalName?: string;
 };
 
 export type VillageBuildingLevels = Partial<Record<BuildingId, number>>;

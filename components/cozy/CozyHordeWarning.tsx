@@ -17,11 +17,11 @@ export default function CozyHordeWarning({data,now,onAlliance,onCity,onThreatCit
   {horde?<>
    <header><CozyArt src="/icons/action-defend.png" size={48}/><div><h3>Horda · dia {seasonDisplay(horde.day,computed.durationDays,computed.realDurationDays).day}</h3><span><CozySymbol name="time" size={18}/>{crownRemaining(horde.arrivesAt,now)} até a chegada</span></div></header>
    <div className={styles.comparison} aria-label="Comparação de forças"><div><Swords size={22}/><span>Força da horda</span><strong>{number(horde.power)}</strong></div><b aria-hidden="true">×</b><div><Shield size={22}/><span>Sua defesa total</span><strong>{number(defense)}</strong></div></div>
-   <div className={styles.forecast} data-ready={gap===0} role="status"><strong>{gap>0?`Faltam ${number(gap)} de defesa`:'Defesa suficiente hoje'}</strong><progress aria-label="Preparo para a horda" value={Math.min(defense,horde.power)} max={horde.power}/><small>{gap>0?'Derrota pode causar baixas e dano às cidades.':'Mantenha essa força até a chegada.'}</small></div>
+   <div className={styles.forecast} data-ready={gap===0} role="status"><strong>{gap>0?`Faltam ${number(gap)} de defesa`:'Defesa suficiente hoje'}</strong><progress aria-label="Preparo para a horda" value={Math.min(defense,horde.power)} max={horde.power}/><small>{data.world.persistent?'A patrulha retorna em segurança.':gap>0?'Derrota pode causar baixas e dano às cidades.':'Mantenha essa força até a chegada.'}</small></div>
    {horde.supportPower>0&&<small className={styles.note}>Apoio aliado incluído: +{number(horde.supportPower)}</small>}
    <button type="button" className="primary-button" onClick={onMilitary}><Swords size={20}/>Preparar tropas<ArrowRight size={18}/></button>
    <div className={styles.alternatives}>{city&&<button type="button" onClick={()=>onCity(city.id)}><CozyArt src="/icons/building-wall.png" size={23}/>Fortificar cidade</button>}<button type="button" onClick={onAlliance}><CozySymbol name="alliance" size={22}/>Pedir apoio</button></div>
    <small className={styles.note}>Defesa automática · resultado em Relatos.<br/>Bônus e apoio podem mudar até a chegada.</small>
-  </>:<p>{computed.readOnly?'Temporada encerrada.':'Nenhuma horda pendente.'}</p>}
+  </>:<p>{state.pendingDefenseDay!==undefined?'A patrulha sai quando o exército voltar.':computed.readOnly?'Temporada encerrada.':'Nenhuma horda pendente.'}</p>}
  </section>;
 }

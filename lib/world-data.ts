@@ -38,6 +38,8 @@ type VillageStructureSkills = Partial<Record<CityStructureId, StructureDots>>;
 
 type DbWorld = {
   economy_version?: number;
+  founding_onboarding?: boolean;
+  persistent_cozy?: boolean;
   id: string;
   slug: string;
   name: string;
@@ -264,7 +266,8 @@ function computeRuntime(world: DbWorld) {
     const durationDays = economicExpress ? 30 : 120;
     const started = world.status !== "open";
     const anchorStartedAtMs = world.starts_at ? Date.parse(world.starts_at) : world.runtime_anchor_started_at ? Date.parse(world.runtime_anchor_started_at) : null;
-    const day = !started || anchorStartedAtMs === null ? 0 : Math.min(durationDays, Math.max(1, 1 + Math.floor((Date.now() - anchorStartedAtMs) / (REAL_DAY_MS / speedMultiplier))));
+    const elapsedDay = !started || anchorStartedAtMs === null ? 0 : Math.max(1, 1 + Math.floor((Date.now() - anchorStartedAtMs) / (REAL_DAY_MS / speedMultiplier)));
+    const day = world.persistent_cozy ? elapsedDay : Math.min(durationDays, elapsedDay);
     return { currentDay: day, seasonMode, speedMultiplier, durationDays, portalStartDay: portalStartDay(durationDays),
       runtimeState: { started, realTimeEnabled: started, anchorDay: 1, anchorStartedAtMs, seasonMode, speedMultiplier, durationDays } };
   }
@@ -1114,7 +1117,10 @@ export async function listWorldSummaries(userId?: string): Promise<WorldSummary[
 
   try {
     const params = new URLSearchParams();
-    params.set("select", WORLD_SELECT_WITH_RULES);
+    const persistentPreview = process.env.KW_COZY_PERSISTENT_PREVIEW === "1";
+    const previewEnabled = persistentPreview || process.env.KW_COZY_FOUNDATION_PREVIEW === "1";
+    params.set("select", WORLD_SELECT_WITH_RULES + (previewEnabled ? ",founding_onboarding" : "") +
+      (persistentPreview ? ",persistent_cozy" : ""));
     let worlds: DbWorld[];
     try {
       worlds = await supabaseSelect<DbWorld>("worlds", params);
@@ -1126,15 +1132,32 @@ export async function listWorldSummaries(userId?: string): Promise<WorldSummary[
       worlds = await supabaseSelect<DbWorld>("worlds", params);
     }
 
-    const worldPlayers = await supabaseSelect<Pick<DbWorldPlayer, "world_id" | "user_id">>("world_players", new URLSearchParams([["select", "world_id,user_id"]]));
+    const worldPlayers = await supabaseSelect<Pick<DbWorldPlayer, "id" | "world_id" | "user_id" | "status">>("world_players",
+      new URLSearchParams({select:"id,world_id,user_id,status"}));
+    const persistentWorlds=new Set(worlds.filter(world=>world.persistent_cozy).map(world=>world.id));
+    const retired=(player:typeof worldPlayers[number])=>player.status==="archived"&&persistentWorlds.has(player.world_id);
+    const currentMemberships=new Map(worldPlayers.filter(player=>player.user_id===userId&&!retired(player))
+      .map(player=>[player.world_id,player.id]));
     const memberships = new Set(worldPlayers.filter(player=>player.user_id===userId).map(player=>player.world_id));
     const counts = new Map<string, number>();
     for (const row of worldPlayers) {
+      if(retired(row)) continue;
       counts.set(row.world_id, (counts.get(row.world_id) ?? 0) + 1);
     }
 
+    const foundingPlayerIds = worlds.filter(world => world.founding_onboarding)
+      .flatMap(world=>currentMemberships.get(world.id)??[]);
+    const foundingSaves = userId && foundingPlayerIds.length
+      ? await supabaseSelect<{ world_player_id: string; state_json: Pick<import("./cozy/types").CozyState, "founding" | "cities" | "ascension"> }>(
+        "kw_cozy_player_states", new URLSearchParams({
+          select: "world_player_id,state_json", user_id: `eq.${userId}`, world_player_id: inFilter(foundingPlayerIds),
+        }))
+      : [];
     return worlds.filter(world => !userId || memberships.has(world.id)).map((world) => {
       const runtime = computeRuntime(world);
+      const playerId=currentMemberships.get(world.id);
+      const foundingSave = foundingSaves.find(save => save.world_player_id === playerId)?.state_json;
+      const reignArchived = Boolean(world.persistent_cozy && userId && !playerId && memberships.has(world.id));
       return {
         id: world.slug,
         name: world.name,
@@ -1147,6 +1170,11 @@ export async function listWorldSummaries(userId?: string): Promise<WorldSummary[
         speedMultiplier: runtime.speedMultiplier,
         durationDays: runtime.durationDays,
         rulesVersion: world.rules_version ?? 1,
+        ...(world.persistent_cozy ? { persistent: true, reignArchived } : {}),
+        ...(world.founding_onboarding ? {
+          founding: !foundingSave || Boolean(foundingSave.founding),
+          capitalName: foundingSave?.cities.find(city => city.capital)?.name,
+        } : {}),
       };
     });
   } catch (error) {

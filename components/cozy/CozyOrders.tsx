@@ -7,6 +7,7 @@ import CozyScreenHelp from "./CozyScreenHelp";
 import {useState} from "react";
 import { ArrowRight } from "lucide-react";
 import type { CozyOrder, CozyPayload } from "@/lib/cozy/types";
+import type {CozyCommand} from "./useCozyWorld";
 import { RESEARCHES, SECTORS } from "@/lib/cozy/catalog";
 import CozyArt from "./CozyArt";
 import styles from "./cozy-activity.module.css";
@@ -37,6 +38,8 @@ export default function CozyOrders({
   onCities,
   onExplore,
   onGovernment,
+  act,
+  locked,
 }: {
   data: CozyPayload;
   now: number;
@@ -44,12 +47,15 @@ export default function CozyOrders({
   onCities: () => void;
   onExplore: () => void;
   onGovernment:()=>void;
+  act:(action:CozyCommand)=>Promise<boolean>;
+  locked:boolean;
 }) {
   const orders = [...data.state.orders].sort(
     (a, b) => a.arrivesAt - b.arrivesAt,
   );
   const summary=orderSummary(orders);
   const [filter,setFilter]=useState<'all'|'cities'|'journeys'|'research'>('all');
+  const [cancelFrom,setCancelFrom]=useState<string|null>(null);
   const groups=[{id:'all',label:'Todas',accept:()=>true},{id:'cities',label:'Cidades',accept:(o:CozyOrder)=>o.kind==='upgrade'},{id:'journeys',label:'Viagens',accept:(o:CozyOrder)=>['explore','collect','attack','portal'].includes(o.kind)},{id:'research',label:'Pesquisa',accept:(o:CozyOrder)=>o.kind==='research'}] as const;
   const visible=orders.filter(groups.find(g=>g.id===filter)!.accept);
   return (
@@ -64,7 +70,9 @@ export default function CozyOrders({
       {visible.length ? (
         <div className={styles.orderList}>
           {visible.map((order) => {
-            const info = order.foundation?{title:"Fundação de cidade",art:"nav-cities.png"}:order.occupationOnly?{title:"Anexação da cidade",art:"action-enter-world.png"}:orderInfo[order.kind];
+            const info = order.riteExpedition?{title:"Expedição do Rito",art:"action-attack.png"}:
+              order.foundation?{title:"Fundação de cidade",art:"nav-cities.png"}:
+              order.occupationOnly?{title:"Anexação da cidade",art:"action-enter-world.png"}:orderInfo[order.kind];
             const city = data.state.cities.find(
               (entry) => entry.id === order.cityId,
             );
@@ -72,7 +80,7 @@ export default function CozyOrders({
             const research = RESEARCHES.find(
               (entry) => entry.id === order.research,
             );
-            const title = order.foundation||order.occupationOnly||order.returning||order.targetPlayerId?orderMapLabel(order):order.sanctuaryPactId?"Desafio aos guardiões da torre":order.sanctuaryId?`Reconhecimento: ${data.computed.sanctuaries.find(t=>t.id===order.sanctuaryId)?.name??"Torre"}`:
+            const title = order.tradeRoute||order.foundation||order.occupationOnly||order.returning||order.targetPlayerId?orderMapLabel(order):order.sanctuaryPactId?"Desafio aos guardiões da torre":order.sanctuaryId?`Reconhecimento: ${data.computed.sanctuaries.find(t=>t.id===order.sanctuaryId)?.name??"Torre"}`:
               order.kind === "upgrade" && sector
                 ? sector.name
                 : order.kind === "research" && research
@@ -101,7 +109,7 @@ export default function CozyOrders({
                     {order.kind==="upgrade"&&city&&order.sector&&<span className={styles.resultLevel}>Nível {orderExpectedLevel(order,city.sectors[order.sector])} <ArrowRight size={12} aria-hidden="true"/> {orderExpectedLevel(order,city.sectors[order.sector])+1}</span>}
                     {order.kind==="research"&&order.research&&<span className={styles.resultLevel}>Nível {orderExpectedLevel(order,data.state.research[order.research])} <ArrowRight size={12} aria-hidden="true"/> {orderExpectedLevel(order,data.state.research[order.research])+1}</span>}
                     <p>{target}</p>
-                    {order.returning&&<div className={styles.expeditionCargo}><span><CozySymbol name="gold" size={18}/>{order.cargo?.gold??0}</span><span><CozySymbol name="materials" size={18}/>{order.cargo?.materials??0}</span></div>}
+                    {(order.returning||order.tradeRoute)&&<div className={styles.expeditionCargo}><span><CozySymbol name="gold" size={18}/>{order.cargo?.gold??0}</span>{!order.tradeRoute&&<span><CozySymbol name="materials" size={18}/>{order.cargo?.materials??0}</span>}</div>}
                   </div>
                 </div>
                 <div className={styles.orderTime}>
@@ -109,7 +117,7 @@ export default function CozyOrders({
                     <CozySymbol name="time" size={18}/>
                     {queued?"Início previsto em":arriving
                       ? "Aguardando confirmação do reino"
-                      : order.returning?"Retorno em":order.targetPlayerId?"Chegada em":"Tempo restante"}
+                      : order.returning||order.tradeRoute?"Retorno em":order.targetPlayerId?"Chegada em":"Tempo restante"}
                   </span>
                   <time dateTime={new Date(queued?orderStartsAt(order):order.arrivesAt).toISOString()}>
                     {countdown(queued?orderStartsAt(order):order.arrivesAt, now)}
@@ -132,13 +140,23 @@ export default function CozyOrders({
                   onClick={() => onOrder(order)}
                   aria-label={`Ver ordem: ${title}`}
                 >
-                  {order.kind === "upgrade"
+                  {order.riteExpedition ? "Ver Travessia" : order.kind === "upgrade"
                     ? "Ver cidade"
                     : order.kind === "research"
                       ? "Ver pesquisa"
                       : order.kind==="portal"?"Ver registro":"Ver destino"}
                   <ArrowRight size={16} aria-hidden="true" />
                 </button>
+                {data.world.persistent && queued && order.kind==="explore" &&
+                  (cancelFrom===order.id ? <div role="group" aria-label="Cancelar explorações da fila">
+                    <p>Suprimentos devolvidos: {orders.filter(item=>item.kind==="explore"&&orderQueued(item)&&
+                      orderStartsAt(item)>=orderStartsAt(order)).reduce((sum,item)=>sum+(item.planned?.cost.supplies??0),0)}.</p>
+                    <button type="button" onClick={()=>setCancelFrom(null)}>Manter fila</button>
+                    <button type="button" className={styles.orderLink} disabled={locked} onClick={async()=>{
+                      if(await act({type:"cancel_plan",orderId:order.id}))setCancelFrom(null);
+                    }}>Confirmar cancelamento</button>
+                  </div> : <button type="button" className={styles.orderLink} disabled={locked}
+                    onClick={()=>setCancelFrom(order.id)}>Cancelar daqui em diante</button>)}
               </article>
             );
           })}

@@ -7,7 +7,7 @@ export default function CozyMapArt({ name, size = 30 }: {
 }) {
   const art = assets[name];
   const [left, top, right, bottom] = art.bounds;
-  const source=(name==="construction"||name.startsWith("cityConstruction")||name==="cityCompleted"||name==="capital"||["gold","time","alliance","uiMaterials","uiSupplies"].includes(name))?`/_next/image?url=${encodeURIComponent(art.src)}&w=${size<=48?128:256}&q=85`:art.src;
+  const source=(name==="construction"||name.startsWith("cityConstruction")||name==="cityCompleted"||name==="capital"||name.startsWith("cozy")||["gold","time","alliance","uiMaterials","uiSupplies"].includes(name))?`/_next/image?url=${encodeURIComponent(art.src)}&w=${size<=48?128:256}&q=85`:art.src;
   const padding = Math.max(right - left, bottom - top) * .05;
   return (
     <svg data-map-art={name} width={size} height={size} aria-hidden="true" focusable="false"

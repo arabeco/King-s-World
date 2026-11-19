@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {loadCozyEngine} from './lib/load-cozy-engine.mjs';
 const E=loadCozyEngine(),A=loadCozyEngine('alliances');
+const {allianceNoticeIds,invitationNotice,entryNotice,isNewNotice,supportNotice}=loadCozyEngine('notices');
 const START=1800000000000,DAY=86400000;
 const world={id:'alliance-tests',name:'Cinco reinos',mode:'classic',status:'running',startsAt:START,influenceVersion:2};
 function realm(w=world){
@@ -41,6 +42,85 @@ test('A player can cancel a pending request and creating a group clears other pe
  const r=realm(),id=create(r);r.act('p1',{type:'alliance_settings',admission:'approval'});
  r.act('p2',{type:'alliance_request',allianceId:id});r.act('p2',{type:'alliance_decline',allianceId:id});assert.equal(r.shared.alliances[0].requests.length,0);
  r.act('p1',{type:'alliance_invite',playerId:'p2'});r.act('p2',{type:'alliance_create',name:'Outra aliança'});assert.equal(r.shared.alliances[0].invitations.length,0);
+});
+test('Persistent gift packages conserve resources and enforce both daily quotas in Normal and Expresso',()=>{
+ for(const mode of ['classic','express']){
+  const w={...world,mode,persistent:true},r=realm(w),id=create(r);
+  for(const playerId of ['p2','p3','p4','p5'])r.act(playerId,{type:'alliance_join',allianceId:id});
+  const gift=(sender,recipient,overrides={},at=START)=>E.transferAllianceGift(
+   r.states[sender],r.states[recipient],r.shared,w,
+   {type:'alliance_gift',allianceId:id,recipientId:recipient,day:1,resource:'materials',amount:100,...overrides},at);
+  const before=structuredClone(r.states);
+  assert.throws(()=>gift('p1','p1'),/reino ativo/);
+  assert.throws(()=>gift('p1','p6'),/membros/);
+  assert.throws(()=>gift('p1','p2',{allianceId:'old-group'}),/membros/);
+  assert.throws(()=>gift('p1','p2',{day:2}),/Virou o dia/);
+  assert.throws(()=>gift('p1','p2',{resource:'gold'}),/materiais ou suprimentos/);
+  for(const amount of [0,-50,50.5,500,'50'])assert.throws(()=>gift('p1','p2',{amount}),/pacotes/);
+  assert.deepEqual(r.states,before);
+  r.states.p1.resources.materials=99;
+  assert.throws(()=>gift('p1','p2'),/mais materiais/);
+  assert.equal(r.states.p2.allianceGiftDay,undefined);
+  r.states.p1.resources.materials=5000;
+  const scores=Object.keys(r.states).map(player=>r.view(player).influence.total);
+  gift('p1','p2');
+  assert.equal(r.states.p1.resources.materials,4900);
+  assert.equal(r.states.p2.resources.materials,5100);
+  assert.equal(r.states.p1.reports[0].allianceGift.direction,'sent');
+  assert.equal(r.states.p2.reports[0].allianceGift.direction,'received');
+  assert.throws(()=>gift('p1','p2',{resource:'supplies',amount:50}),/já enviou/);
+  gift('p3','p2',{resource:'supplies',amount:50});
+  gift('p4','p2');
+  assert.equal(r.states.p2.allianceGiftDay.received,3);
+  assert.throws(()=>gift('p5','p2'),/três presentes/);
+  r.act('p2',{type:'alliance_leave'});
+  r.act('p6',{type:'alliance_create',name:'Outro Vale'});
+  const otherId = r.states.p6.allianceId;
+  r.act('p2',{type:'alliance_join',allianceId:otherId});
+  assert.throws(()=>gift('p6','p2',{allianceId:otherId}),/três presentes/);
+  r.act('p2',{type:'alliance_leave'});
+  r.act('p2',{type:'alliance_join',allianceId:id});
+  assert.throws(()=>gift('p5','p2'),/três presentes/);
+  assert.deepEqual(Object.keys(r.states).map(player=>r.view(player).influence.total),scores);
+  const tomorrow=START+r.view('p1').dayMs;
+  assert.throws(()=>gift('p1','p2',{},tomorrow),/Virou o dia/);
+  gift('p1','p2',{day:2,resource:'supplies',amount:50},tomorrow);
+  assert.equal(r.states.p1.resources.supplies,4950);
+  assert.equal(r.states.p2.resources.supplies,5100);
+  assert.equal(r.states.p2.allianceGiftDay.received,1);
+ }
+});
+test('Persistent alliance notices belong to the recipient and reissued requests are new',()=>{
+ const r=realm({...world,persistent:true}),id=create(r);
+ r.act('p1',{type:'alliance_invite',playerId:'p2'});
+ let event=invitationNotice(r.shared.alliances[0],'p2');
+ assert.deepEqual(allianceNoticeIds(r.states.p2,r.shared,START),[event]);
+ r.act('p3',{type:'notice_seen',id:event});
+ assert(isNewNotice(r.states.p3,event));
+ r.act('p2',{type:'notice_seen',id:event});
+ assert(!isNewNotice(r.states.p2,event));
+ assert(r.shared.alliances[0].invitations.includes('p2'));
+ r.act('p2',{type:'alliance_decline',allianceId:id});
+ r.act('p1',{type:'alliance_invite',playerId:'p2'});
+ const renewed=invitationNotice(r.shared.alliances[0],'p2');
+ assert.notEqual(renewed,event);
+ assert(isNewNotice(r.states.p2,renewed));
+ r.act('p2',{type:'alliance_join',allianceId:id});
+ r.act('p1',{type:'alliance_settings',admission:'approval'});
+ r.act('p3',{type:'alliance_request',allianceId:id});
+ event=entryNotice(r.shared.alliances[0],'p3');
+ assert.deepEqual(allianceNoticeIds(r.states.p1,r.shared,START),[event]);
+ assert.deepEqual(allianceNoticeIds(r.states.p2,r.shared,START),[]);
+ r.act('p1',{type:'notice_seen',id:event});
+ assert(r.shared.alliances[0].requests.includes('p3'));
+ r.act('p1',{type:'support_request'});
+ event=supportNotice(r.shared.support[0].id);
+ assert.deepEqual(allianceNoticeIds(r.states.p2,r.shared,START),[event]);
+ r.act('p2',{type:'notice_seen',id:event});
+ assert(!isNewNotice(r.states.p2,event));
+ assert.equal(r.shared.support[0].supporterId,null);
+ r.act('p2',{type:'support_send',requestId:r.shared.support[0].id});
+ assert.equal(r.shared.support[0].supporterId,'p2');
 });
 test('Contributions reserve only missing quantities and completion credits actual participants once',()=>{
  const r=realm(),id=create(r);r.act('p2',{type:'alliance_join',allianceId:id});r.act('p1',{type:'alliance_project_start',kind:'defense'});let p=r.shared.allianceProjects[0];

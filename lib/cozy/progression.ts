@@ -1,5 +1,6 @@
 import type {CozyCity,CozyInfluence,CozyShared,CozyState} from './types';
 import {getCityInfrastructure,QUESTS} from './catalog';
+import {militaryVictoryProgress} from "./frontier-progress";
 
 /** Provisional weights, centralized for later balancing. No economy/timer constants here. */
 export const PROGRESSION = {
@@ -104,21 +105,20 @@ export function progressionBreakdown(state:CozyState,army:number,walls:number){
  const collected=p?Object.values(p.feats.collected).reduce((a,b)=>a+b,0):0;
  const cooperation=p?Math.min(PROGRESSION.cooperationMax,p.feats.surveys.length*PROGRESSION.survey+Math.floor(collected/PROGRESSION.collectionStep)*PROGRESSION.collectionCredit+p.feats.supports.length*PROGRESSION.support+(p.feats.projects?.length??0)*PROGRESSION.project):Math.min(80,state.cooperation*4);
  const military=Math.max(0,army+walls-(p?.militaryBaseline??0));
+ const victories=militaryVictoryProgress(state);
+ const divisor=p?.balance?.militaryDivisor??PROGRESSION.militaryDivisor;
+ const early=revised?Math.min(50,military):0;
+ const readiness=clamp(Math.floor(early/5)+Math.floor((military-early)/divisor),500-victories.max);
  return {model:p?'zero-v1' as const:'legacy' as const,cities,government:{heroes:(revised?Math.min(10,state.heroes.length):assigned)*(p?PROGRESSION.hero:50),research:p?research*PROGRESSION.researchLevel:0},
   council:{merit:p?.council.merit??0,stability:councilStability(state),episodes:p?.council.episodes.length??0},
   conquests:{missions,wonders,wonderPoints:wonders*(revised?100:PROGRESSION.wonder),cooperation:revised?0:cooperation,surveySteps:p?.feats.surveys.length??0,collectedUnits:collected,supports:p?.feats.supports.length??0,projects:p?.feats.projects?.length??0},
-  military:{baseline:p?.militaryBaseline??0,capacity:army+walls,earned:military}};
+  military:{baseline:p?.militaryBaseline??0,capacity:army+walls,earned:military,readiness,victories}};
 }
 export function zeroInfluence(state:CozyState,army:number,walls:number):CozyInfluence{
  const d=progressionBreakdown(state,army,walls);
  const infrastructure=clamp(Object.values(d.cities).reduce((a,b)=>a+b,0));
  const government=clamp(d.government.heroes+d.government.research);
- const victoryMax=state.progression?.balance?.militaryVictoryMax??0;
- const divisor=state.progression?.balance?.militaryDivisor??PROGRESSION.militaryDivisor;
- const earned=d.military.earned;
- const early=usesMobileReviewRules(state)?Math.min(50,earned):0;
- const readiness=clamp(Math.floor(early/5)+Math.floor((earned-early)/divisor),500-victoryMax);
- const military=clamp(readiness+Math.floor(Math.min(6,state.hordesWon)/6*victoryMax));
+ const military=clamp(d.military.readiness+d.military.victories.points);
  const society=clamp(Math.round(d.council.merit*d.council.stability));
  const legacy=clamp(d.conquests.missions+d.conquests.wonderPoints+d.conquests.cooperation);
  return {infrastructure,government,military,society,legacy,total:infrastructure+government+military+society+legacy};
