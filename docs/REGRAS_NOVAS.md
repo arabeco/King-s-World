@@ -26,6 +26,7 @@ Documento em branco, preenchido item por item, com perguntas. Cada item tem **De
 - [x] 18. Áreas de recursos coletivas
 - [x] 19. A Coroa: os 5 cards do centro do reino
 - [x] 20. Elementos cozy
+- [x] 21. Telas, cidades e prédios (20/11)
 
 ---
 
@@ -75,6 +76,8 @@ Documento em branco, preenchido item por item, com perguntas. Cada item tem **De
 
 ## 5. Cidades e setores
 
+> **Os setores foram substituídos pelos 5 prédios do item 21.** Continua valendo: capital mais 9 colônias, no máximo 10 cidades, e cada cidade nova custa mais.
+
 **Decisão:** Capital mais 9 colônias, no máximo 10 cidades. Cada cidade tem 5 setores (cards). Os 5 precisam existir pra infraestrutura subir, e os 5 precisam ser bons.
 
 **Notas:**
@@ -97,6 +100,8 @@ Documento em branco, preenchido item por item, com perguntas. Cada item tem **De
 - Subir o Recrutamento nas cidades dá bônus ou abre limite. Acho que baixa o custo (vai pro balanceamento).
 
 ## 7. Hordas e defesa
+
+> **Substituído pelo item 21:** a horda virou missão opcional, com dificuldade inteligente.
 
 **Decisão:** Hordas atacam em ondas e a defesa é automática: o poder global do exército responde sozinho. O jogador também ataca NPCs (cidade inexplorada ou para conquistar). O ataque tem tempo de chegada, avisa quando chega, e o relatório do combate cai nas notificações na hora da chegada.
 
@@ -204,6 +209,8 @@ Documento em branco, preenchido item por item, com perguntas. Cada item tem **De
 
 ## 19. A Coroa: os 5 cards do centro do reino
 
+> **Substituído pelo item 21:** os 5 cards da Coroa viraram a barra de baixo (Reino + as 5 áreas de influência).
+
 **Decisão:** A Coroa tem 5 cards: Infraestrutura, Militar, Governo, Conselho e Conquistas.
 
 **Notas:**
@@ -222,6 +229,60 @@ Documento em branco, preenchido item por item, com perguntas. Cada item tem **De
 - Colheita: um toque na Coroa recolhe de todas as cidades de uma vez, com a animação passando pelas cidades. Dentro de uma cidade, dá pra recolher só a dela.
 - Sem castigo por sumir: quem fica uns dias fora não perde nada. A horda é resolvida pelo exército, a colheita acumula, e na volta a carta do Conselho resume o que aconteceu.
 - Presente pro aliado: além do apoio de defesa, dá pra mandar suprimentos ou materiais pra um aliado, sem tropa. Ouro não vai, pra ninguém usar conta reserva pra juntar ouro numa conta principal.
+
+## 21. Telas, cidades e prédios
+
+**Decisão:** O jogo fica com menos telas e o reino fala com você. A barra de baixo tem 6 botões: **Reino** (home) e as 5 áreas de influência (**Infra, Militar, Governo, Sociedade, Legado**). Cada botão acende um sinal quando tem algo pra fazer e mostra um anelzinho de progresso da área (sem número). As cidades têm **5 prédios**, de 0 a 3, no lugar dos setores.
+
+**Notas:**
+- **Reino (home):** a vista bonita das suas cidades. Em cada cidade: **!** quando tem algo pendente, barrinhas e o evento que está rolando. Atalhos: **Mapa** (muda a visão ou dá zoom ali mesmo) e **Relatos**.
+- **Infra:** lista das cidades em cards, com **!** e nível (ex.: 7/15). Tocar abre a cidade direto nas **Decisões**. Quando resolve as importantes, aparece "Tudo certo por aqui", com a opção de ver as decisões pequenas.
+- **Notícias de reação:** além das decisões, chegam notícias boas pra recolher (ex.: "os mercadores agradeceram a festa" → Recolher +80 ouro). Podem dar recurso, satisfação ou um empurrão de influência via Conselho.
+- **Militar:** um exército só, do reino. Recruta **em grupos**, não unidade. Mostra as missões em andamento. Atalho pra pesquisa ("liberar tropas mais fortes"). A pesquisa militar pode pedir uma cidade com Quartel no nível X.
+- **Infra (topo):** aviso "X cidades precisam de atenção", com o motivo (ex.: Pedravale, greve; Aurora, lealdade baixa).
+- **Governo:** heróis em cima, um card por herói (rosto, tipo, cidade que governa). Heróis livres aparecem como "prontos pra uma cidade nova". Contratar com ouro, até 10. **O tipo do herói turbina um prédio da cidade e muda os cards que ele traz** (ex.: General → Quartel e assuntos de guerra; Administrador → Fábrica e comércio).
+- **Pesquisa (no Governo):** grade 3×3 de cards quadrados (PNG/SVG bonitos). Linhas Militar, Economia e Exploração, 3 níveis cada. Apagado = não pesquisado, aceso = pesquisado. Tocar abre um modal: o que faz, custo em ouro, tempo e o que pede (ex.: cidade com Quartel 2). O Sábio acelera.
+- **Sociedade = a aba mais importante.** Subabas em cima: **Conselho** e **Aliança** (a aliança precisa da tela inteira; também dá pra chegar pelo mapa).
+  - Topo: os 2 conselheiros, um de cada lado, com a **relação** de cada um com você. A relação muda os cards e decide se ele quer sair. Relação baixa: primeiro um aviso ou card no Conselho; se não cuidar, ele vai embora e você escolhe outro.
+  - **Decisões:** banners no meio da tela. Tocar abre as decisões uma por uma, em banner. Só coisas importantes; as pequenas ficam nas cidades.
+  - **Notícias e resgates:** bloco separado, sem escolha, só recolher (ex.: ruína achada explorando → Recolher +120 materiais).
+  - **O Conselho é a central de notificações do reino**, incluindo o que você acha explorando. Separar sempre o que é notícia/resgate do que é decisão.
+- **Legado = quests:** checklist do que foi cumprido e do que liberou (ex.: se o Monumento abriu). As missões chegam e são aceitas no Conselho; o Legado mostra o que elas viraram.
+- **Livro do Reino (Legado):** quests em **capítulos da temporada** (ex.: Fundação, Crescimento, Glória, Êxodo). **Nenhum capítulo é trancado:** todos dá pra fazer, só ficam **colapsados**, e o capítulo atual aparece aberto. Cada quest tem check e uma recompensinha pra recolher. Capítulo completo dá algo grande (influência de Legado, cosmético ou liberar o Monumento). As quests usam as coisas novas: prédios, festas, lealdade alta, missões cumpridas, ajudar aliado. Substitui as 6 quests de hoje (várias falam de horda e nível 40, que mudaram).
+- **Quests do Livro do Reino:**
+  - **1 · Fundação** (recompensa: um herói, pra 2ª cidade): construir a primeira Fábrica; tomar a primeira decisão no Conselho; explorar 5 pontos do mapa; recrutar o primeiro grupo; dar uma festa numa cidade. O capítulo 1 ensina o jogo sem tutorial.
+  - **2 · Crescimento** (recompensa: cosmético, brasão ou visual da cidade, + Legado): governar 3 cidades; levar um prédio ao nível 3; vencer 3 missões; concluir 2 pesquisas; ter uma cidade com lealdade alta.
+  - **3 · Glória** (recompensa: muito Legado + título): levar uma cidade a 15/15; erguer um Monumento; ajudar um aliado **ou** atender 5 pedidos do povo (quem joga sozinho não trava); passar um dia sem nenhuma cidade triste; ter uma Festa e uma Feira no mesmo dia.
+  - **4 · Êxodo** (recompensa: Selo de Vitória): juntar 1500 de Glória; preparar a caravana pro Portal; atravessar o Portal.
+- **A horda vira missão opcional.** O Conselheiro 2 traz a ameaça como card (ex.: "Saqueadores rondam a estrada de Pedravale"). Você aceita ou deixa passar. **Dificuldade inteligente:** o inimigo é calculado pelo seu exército, e a chance aparece antes ("chance alta", "arriscado"); nunca vem surpresa impossível. Recompensa: recurso, influência militar e itens pras quests do Legado.
+- **Deixar a missão passar:** a cidade fica um pouco triste, com limite. Quem fica um mês fora volta com cidades no máximo "meio pra baixo", nunca em revolta, sem perder prédio nem tropa. Sempre dá pra consertar.
+- **Ordens do rei (no modal da cidade):** o rei age por conta própria sobre a cidade. Poucas ações, com custo e tempo de espera: **Dar uma festa** (satisfação sobe bastante), **Visitar a cidade** (lealdade sobe), **Perdoar impostos** (mais barato, abre mão de ouro por uns dias), **Promover algo** (feira, torneio: puxa evento bom). O Conselho só avisa ("Pedravale anda triste") e o card leva direto pra cidade. **Regra de lugar:** o Conselho traz coisas até você (reativo); na cidade, você age sobre ela (proativo).
+- **Público (princípio):** proteger o jogador cozy e agradar mulheres e adolescentes. Tom de aventura, não de carnificina: proteger aldeões, escoltar caravana, resgatar viajantes.
+- **Influência (como aparece):** continua com 5 áreas de 0 a 500 (total 2500, Portal com 1500), mas **sem planilha na tela**:
+  - **Glória do Reino:** uma barra só no topo, enchendo até o Portal (1500).
+  - Na barra de baixo, cada área tem **um anelzinho que vai enchendo, sem número**. A área mais fraca brilha ("cresça aqui").
+  - Quem quiser os números exatos toca na barra de Glória e vê o detalhe (pro jogador competitivo e pro ranking).
+  - Fontes: Infra = Fábricas e cidades; Militar = Quartéis e missões vencidas; Governo = Palácios, heróis e pesquisas; Sociedade = Praças e decisões do Conselho; Legado = Templos, Livro do Reino e Monumento.
+- **Cards ligados a tudo (princípio):** o que decide os cards: evento da cidade, satisfação, lealdade, tipo do herói, nível dos prédios, próximo ataque, conselheiro que fala e fase da temporada. O que os cards mexem: recursos, barrinhas, prédios, herói, influência e os próximos eventos.
+- **Vozes:** o Conselheiro 1 traz as decisões importantes do reino. O Conselheiro 2 traz missões e assuntos militares. Nas cidades, você fala com o **herói daquela cidade**.
+- **Heróis:** toda cidade tem herói. Pra pegar uma cidade, precisa mandar um herói, e ele fica como a voz dela. **Você é o herói da capital**: não nomeia ninguém no começo.
+- **Prédios (0 a 3 cada, máx. 15 por cidade).** Subir é caro, e o recurso volta a ser bloqueio:
+  - **Fábrica:** produção e coleta de materiais (Infra). Os cards podem mexer nas duas.
+  - **Quartel:** vagas do exército do reino e defesa da cidade (Militar).
+  - **Palácio:** herói da cidade mais forte, cards melhores (Governo). Na capital, o Palácio é o seu.
+  - **Praça:** satisfação (Sociedade).
+  - **Templo:** lealdade (Legado).
+  - **Monumento:** slot extra, aparece num espaço vazio quando a cidade chega em 15/15. É a maravilha.
+- **Duas barrinhas por cidade:**
+  - **Satisfação** (Praça): a vida do povo. Muda rápido. Mexe na produção e gera eventos (festa, greve).
+  - **Lealdade** (Templo): a relação com a Coroa. Muda devagar. Baixa: a cidade pensa em se separar. Alta: as decisões arriscadas dão certo com mais frequência.
+  - As decisões puxam uma contra a outra (ex.: imposto na festa = +ouro, −lealdade; justiça dura = +lealdade, −satisfação).
+- **Eventos da cidade:** são o que está rolando ali, não o status. Nascem do status: abundância → festa, feira, mercadores; insatisfeita → greve, protesto; ameaçada → pânico, voluntários. **O evento define os cards que o herói traz.**
+- **Decisões com risco:** antes de escolher você vê o que ganha se der certo e o que perde se der errado. Descobre na hora, e a cidade reage. As decisões têm peso: alta, média, baixa ou muito baixa.
+
+**Em aberto:**
+- Quanto dá cada recompensinha das quests (balanceamento).
+- Quanto cada fonte dá de influência (balanceamento).
 
 ---
 
