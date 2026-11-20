@@ -173,6 +173,7 @@ Documento em branco, preenchido item por item, com perguntas. Cada item tem **De
 
 **Notas:**
 - O Portal não tem cooldown.
+- Como atravessar (ascender agora ou um dos 3 ritos): item 21.
 - Ao fim da temporada: ranking, relatório e dados. Hall da Fama e troféu pro 1º lugar.
 
 ## 15. Cosméticos, Selo de Vitória e Hall da Fama
@@ -253,7 +254,16 @@ Documento em branco, preenchido item por item, com perguntas. Cada item tem **De
   - **1 · Fundação** (recompensa: um herói, pra 2ª cidade): construir a primeira Fábrica; tomar a primeira decisão no Conselho; explorar 5 pontos do mapa; recrutar o primeiro grupo; dar uma festa numa cidade. O capítulo 1 ensina o jogo sem tutorial.
   - **2 · Crescimento** (recompensa: cosmético, brasão ou visual da cidade, + Legado): governar 3 cidades; levar um prédio ao nível 3; vencer 3 missões; concluir 2 pesquisas; ter uma cidade com lealdade alta.
   - **3 · Glória** (recompensa: muito Legado + título): levar uma cidade a 15/15; erguer um Monumento; ajudar um aliado **ou** atender 5 pedidos do povo (quem joga sozinho não trava); passar um dia sem nenhuma cidade triste; ter uma Festa e uma Feira no mesmo dia.
-  - **4 · Êxodo** (recompensa: Selo de Vitória): juntar 1500 de Glória; preparar a caravana pro Portal; atravessar o Portal.
+  - **4 · Êxodo** (recompensa: Selo de Vitória): juntar 1500 de Glória; escolher como atravessar; atravessar o Portal.
+- **Travessia do Portal (4 caminhos, escolhe 1):**
+  - **Ascender agora:** o mais cozy. Atravessa na hora, sem prova. Ganha o Selo de Vitória.
+  - **Rei guerreiro:** rito de batalhas pra abrir caminho até o Portal.
+  - **Rei próspero:** rito de riqueza pra equipar a grande caravana.
+  - **Rei amado:** rito do povo pra reunir as cidades leais.
+  - Os 3 ritos são caprichados e **duram um tempo**: algumas etapas ao longo de alguns dias, cada uma chegando como card do Conselho com escolha e acontecimento, e o herói contando como foi. Dificuldade inteligente.
+  - **Se der errado, não perde nada:** tenta de novo ou desiste e ascende agora.
+  - **Recompensa do rito:** Selo de Vitória + título e visual do caminho (ex.: "o Guerreiro", brasão de batalha) + mais Legado.
+  - Vem do Rito da Travessia que já existe no modo persistente (hoje: 2 de 3 provas), agora como 1 de 3, mais longo e caprichado.
 - **A horda vira missão opcional.** O Conselheiro 2 traz a ameaça como card (ex.: "Saqueadores rondam a estrada de Pedravale"). Você aceita ou deixa passar. **Dificuldade inteligente:** o inimigo é calculado pelo seu exército, e a chance aparece antes ("chance alta", "arriscado"); nunca vem surpresa impossível. Recompensa: recurso, influência militar e itens pras quests do Legado.
 - **Deixar a missão passar:** a cidade fica um pouco triste, com limite. Quem fica um mês fora volta com cidades no máximo "meio pra baixo", nunca em revolta, sem perder prédio nem tropa. Sempre dá pra consertar.
 - **Ordens do rei (no modal da cidade):** o rei age por conta própria sobre a cidade. Poucas ações, com custo e tempo de espera: **Dar uma festa** (satisfação sobe bastante), **Visitar a cidade** (lealdade sobe), **Perdoar impostos** (mais barato, abre mão de ouro por uns dias), **Promover algo** (feira, torneio: puxa evento bom). O Conselho só avisa ("Pedravale anda triste") e o card leva direto pra cidade. **Regra de lugar:** o Conselho traz coisas até você (reativo); na cidade, você age sobre ela (proativo).
